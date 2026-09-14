@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.ilbrief.live",
+        "sha256_cert_fingerprints": ["3D:56:E4:40:9A:11:D3:C9:86:27:B4:69:E6:CB:C6:64:B8:C0:54:48:51:CB:9E:0A:33:4D:00:AB:1E:AC:E0:70"]
+      }
+    }]
