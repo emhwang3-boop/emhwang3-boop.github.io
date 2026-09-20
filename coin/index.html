@@ -2115,7 +2115,7 @@ function cvRecoRender() {
       const w = total * m[1] / 100, v = have[m[0]] || 0, d = w - v;
       h += '<tr><td style="text-align:left"><b>' + m[0] + '</b></td>'
          + '<td>' + (v / total * 100).toFixed(1) + '% → ' + m[1] + '%</td>'
-         + '<td>' + (Math.abs(d) <= total * 0.02 ? "맞음"
+         + '<td>' + (Math.abs(d) <= total * 0.02 ? "없음"
              : (d > 0 ? '<span class="svbuy">+' + cvUsd(d) + '</span>'
                       : '<span class="svover">−' + cvUsd(-d) + '</span>')) + '</td></tr>';
     });
