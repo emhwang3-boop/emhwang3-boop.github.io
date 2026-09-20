@@ -2025,7 +2025,8 @@ function cvRecoRender() {
   if (!c) { box.innerHTML = '<div class="svsub">오늘 자료를 받는 중입니다…</div>'; return; }
 
   // 신호 표는 성향과 무관하게 늘 보여 준다(정보)
-  let h = '<div class="svsub">헐(HMA) 100 · SMA 120 게이트 · 리본 폭 0.3% 이상 — 우리가 재서 고른 규칙입니다.</div>'
+  // 🔴 "우리가 재서 고른 규칙입니다" 문구는 뺐다(2026-09-20 사장님).
+  let h = '<div class="svsub">헐(HMA) 100 · SMA 120 게이트 · 리본 폭 0.3% 이상</div>'
         + '<table class="mhtab"><tr><th>코인</th><th>신호</th><th>현재가</th><th>120일선</th></tr>';
   Object.keys(c).forEach(function (k) {
     const x = c[k], st = CV_STATE[x.state] || CV_STATE.cash;
