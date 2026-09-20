@@ -2175,9 +2175,11 @@ function cvChg(v) {
   v = +v || 0;
   return (v > 0 ? "+" : "") + v.toFixed(2) + "%";
 }
-function cvChgCol(v) {
+// 🔴 색은 앱이 이미 쓰는 반(.up 초록 #00a868 · .dn 빨강 #ff433d)을 그대로 쓴다.
+//    처음에 오름을 빨강으로 했다가 사장님께 지적받았다 (2026-09-20).
+function cvChgCls(v) {
   v = +v || 0;
-  return v > 0 ? "#e03131" : (v < 0 ? "#1c7ed6" : "#868e96");
+  return v > 0 ? "up" : (v < 0 ? "dn" : "fl");
 }
 // 24시간 거래대금 — 억 단위는 읽기 어려워 B(십억)·M(백만)으로 줄여 적는다.
 function cvTurn(v) {
@@ -2297,7 +2299,7 @@ function cvRecoRender() {
     const x = c[k];
     h += '<tr><td style="text-align:left"><b>' + k + '</b></td>'
        + '<td>' + cvUsd(x.price) + '</td>'
-       + '<td style="color:' + cvChgCol(x.chg) + '">' + cvChg(x.chg) + '</td>'
+       + '<td class="' + cvChgCls(x.chg) + '">' + cvChg(x.chg) + '</td>'
        + '<td>' + cvTurn(x.turn) + '</td></tr>';
   });
   h += '</table><div class="svsub">' + ((CVR && CVR.at) || "") + ' 기준</div>';
@@ -2353,7 +2355,7 @@ function cvRecoRender() {
   }
 
   // ③ 자산군별 코인 — **이름만** (비중 없음)
-  // 🔴 롱·숏 딱지와 공매도 문장은 뺐다 (사장님 2026-09-20 "매매 한다는 인상을 주면 안 돼").
+  // 🔴 방향 딱지와 그에 딸린 위험 설명 문장은 뺐다 (사장님 2026-09-20 "매매 한다는 인상을 주면 안 돼").
   //    주식앱과 같은 꼴로 간다 — 자산군과 이름뿐, 방향도 매매 말도 쓰지 않는다.
   const held = {};
   H.forEach(function (x) { held[x.sym] = 1; });
