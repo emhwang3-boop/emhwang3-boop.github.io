@@ -295,6 +295,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px"><span id="vcMsg" style="font-size:12px;color:var(--sub)"></span>
 <button id="vcBtn" onclick="vcSend()" style="border:0;border-radius:9px;padding:7px 16px;background:#1c7ed6;color:#fff;font-weight:700;cursor:pointer">보내기</button></div><div class="discNote">본 창구는 앱 오류(버그) 제보 및 기능 건의 전용 공간입니다. 개별 종목 추천이나 투자 상담 등 금융 관련 질문에는 답변을 드리지 않으며, 접수된 문의에 대한 별도의 회신(답변) 기능은 제공되지 않습니다.</div></div>
 
+<div class="card discCard"><div class="discNote"><b>앱 로직</b> — ① 자산 종류별 비중은 <b>미리 정해져</b> 있습니다(BTC · ETH · 알트, 그 안에서 현물과 선물). ② 코인은 <b>현물 일봉</b>을 기준으로, 추세선이 상승 중이고 가격이 기준선 위에 있으며 추세의 기울기가 일정 수준 이상인 코인을 고릅니다. ③ 알트는 <b>최근 3거래일 안에</b> 그 조건을 새로 충족한 것만 고르고, BTC · ETH 는 조건을 충족하면 그대로 둡니다. ④ 목록은 BTC · ETH 와 <b>24시간 거래대금 상위</b> 코인으로 만듭니다. ⑤ 모든 이용자에게 <b>같은 규칙·같은 결과</b>가 적용되며, 개별 상담이나 맞춤 조언이 아닙니다.</div></div>
 
 <div class="card discCard">
   <h3>투자 유의사항</h3>
@@ -2274,13 +2275,6 @@ function cvRecoRender() {
   });
 
   h += '<div class="svsub">앱 로직에 따른 추천이며, 투자 결정과 주문은 고객님이 거래소에서 하십니다.</div>';
-  // 🔴 앱 로직을 밝힌다 (사장님 2026-09-20). **숫자는 빼고 원리만** — 길이·문턱은 우리 노하우다.
-  h += '<div class="svsub"><b>앱 로직</b> — ① 자산 종류별 비중은 <b>미리 정해져</b> 있습니다'
-     + '(BTC · ETH · 알트, 그 안에서 현물과 선물). ② 코인은 <b>현물 일봉</b>을 기준으로, 추세선이 '
-     + '상승 중이고 가격이 기준선 위에 있으며 추세의 기울기가 일정 수준 이상인 코인을 고릅니다. '
-     + '③ 알트는 <b>최근 3거래일 안에</b> 그 조건을 새로 충족한 것만 고르고, BTC · ETH 는 조건을 '
-     + '충족하면 그대로 둡니다. ④ 목록은 BTC · ETH 와 <b>24시간 거래대금 상위</b> 코인으로 만듭니다. '
-     + '⑤ 모든 이용자에게 <b>같은 규칙·같은 결과</b>가 적용되며, 개별 상담이나 맞춤 조언이 아닙니다.</div>';
   box.innerHTML = h;
 }
 
