@@ -268,7 +268,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   <canvas id="stkChart" class="stkchart" hidden></canvas>
   <div id="stkChartLbl" class="stkcl" hidden></div>
   <div id="svOrderBox"></div>
-  <button class="svbtn" onclick="bkAddCurrent()">바스켓에 담기</button>
+  <button class="svbtn" onclick="bkAddCurrent()">가상 바스켓에 담기</button>
   <button class="svbtn svgo" onclick="svOrderToggle()">주문 — 내 증권사 앱 열기</button>
 </div>
 
@@ -2201,7 +2201,7 @@ document.addEventListener("click", function (e) {
 
 // ── 바스켓 백테스트 — 주식앱 쪽 (사장님 2026-09-20) ───────────────────
 const BK_HELP = "조회한 종목을 담아 가상 포트폴리오를 만들어 보십니다. 비중은 똑같이 나눕니다.";
-const BK_EMPTY = "아래 [종목 조회]에서 종목을 고른 뒤 [바스켓에 담기]를 누르십시오.";
+const BK_EMPTY = "아래 [종목 조회]에서 종목을 고른 뒤 [가상 바스켓에 담기]를 누르십시오.";
 const BK_COL = "종목";
 // 🔴 봉은 앱이 이미 쓰는 통로로 받는다 — 국내는 허브 릴레이, 미국은 usFetch.
 async function bkBars(x) {
