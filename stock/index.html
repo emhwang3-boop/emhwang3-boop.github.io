@@ -1928,7 +1928,7 @@ async function bkRun(days) {
     h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="' + cls(x.r) + '">' + pc(x.r) + '</td></tr>';
   });
   rows.filter(function (x) { return x.err; }).forEach(function (x) {
-    h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="fl">' + KE("자료 없음", "No data") + '</td></tr>';
+    h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="fl" style="white-space:nowrap">' + KE("자료 없음", "No data") + '</td></tr>';
   });
   h += '</table>';
   h += '<div class="svsub">' + KE("제일 좋았던 것 ", "Best: ") + best.nm + ' ' + pc(best.r)
