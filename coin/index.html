@@ -2098,7 +2098,7 @@ function cvRecoRender() {
   if (!c) { box.innerHTML = '<div class="svsub">오늘 자료를 받는 중입니다…</div>'; return; }
 
   // 신호 표는 성향과 무관하게 늘 보여 준다(정보)
-  let h = '<div class="svsub"><b>헐(Hull) 규칙 · 일봉에 근거한 추천</b>입니다 — '
+  let h = '<div class="svsub" style="color:#e03131"><b>헐(Hull) 규칙 · 일봉에 근거한 추천</b>입니다 — '
         + '헐(HMA) 100 · SMA 120 게이트 · 리본 폭 0.3% 이상 · 바이낸스 현물 일봉(UTC).</div>'
         + '<table class="mhtab"><tr><th>코인</th><th>신호</th><th>현재가</th><th>120일선</th></tr>';
   Object.keys(c).forEach(function (k) {
