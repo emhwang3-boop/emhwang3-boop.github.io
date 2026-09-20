@@ -226,7 +226,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   <div class="right"><span class="clock" id="clk">--:--:--</span>
    <span class="shwrap"><button class="tgl shbtn" id="shb" onclick="shToggle()" title="공유">공유</button>
    <div class="shpanel" id="shPanel" hidden></div></span>
-   <button class="tgl" id="lng" onclick="toggleLang()">EN</button>
+   <button class="tgl" id="lng" onclick="toggleLang()" hidden>EN</button>
    <button class="tgl" id="tg" onclick="toggle()">🌙</button></div>
 </div>
 <div class="asof" id="asof">불러오는 중…</div>
@@ -384,7 +384,7 @@ function _showInstall(){if(_standalone())return;_il();var b=document.getElementB
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",_showInstall);else _showInstall();
 // ---- 언어(한/영) ----
 let LANG="ko"; try{var _lp=(new URLSearchParams(location.search)).get("lang");
-  LANG=(_lp==="en"||_lp==="ko")?_lp:(localStorage.getItem("brief_lang")||"ko");
+  LANG="ko";   // 이 앱은 한글만 — EN 단추를 감췄다(2026-09-20)
   localStorage.setItem("brief_lang",LANG);}catch(e){}
 const NM={"국내":"KR Indices","미국 지수":"US Indices","미국 야간선물":"US Futures (Night)","아시아":"Asia",
  "금리·채권":"Rates / Bonds","환율·달러":"FX / Dollar","원자재":"Commodities",
