@@ -2012,13 +2012,8 @@ async function cvRecoLoad() {
   try { CVR = await fetch(RECO_URL + "?t=" + Date.now(), {cache: "no-store"}).then(function (r) { return r.json(); }); } catch (e) {}
   try { cvRecoRender(); cvHoldRender(); } catch (e) {}
 }
-// 신호는 셋 — 롱 · 숏 · 쉼 (사장님 2026-09-20 "롱·숏으로 나눠줘")
-// 🔴 셋째 칸(설명)은 뺐다. 아무 데서도 쓰지 않으면서 규칙만 드러내고 있었다.
-const CV_STATE = {
-  long: ["롱 (매수)", "#2f9e44"],
-  short: ["숏 (매도)", "#e03131"],
-  cash: ["쉼", "#868e96"],
-};
+// 🔴 CV_STATE(롱·숏·쉼 딱지)는 통째로 뺐다 (사장님 2026-09-20 "매매 한다는 인상을 주면 안 돼").
+//    state 값은 reco.json 안에서 후보를 고르는 데만 쓰고, 화면에는 글자로 내보내지 않는다.
 function cvNum(n) { return (+n).toLocaleString(undefined, {maximumFractionDigits: 2}); }
 setTimeout(function () { try { cvRecoLoad(); } catch (e) {} }, 800);
 setInterval(function () { try { cvRecoLoad(); } catch (e) {} }, 30 * 60000);
@@ -2357,7 +2352,9 @@ function cvRecoRender() {
     h += '<div class="svsub">위 보유부에 코인이나 현금을 넣으시면 지금 비중과 견주어 드립니다.</div>';
   }
 
-  // ③ 자산군별 코인 — 롱·숏을 갈라 이름만 (비중 없음)
+  // ③ 자산군별 코인 — **이름만** (비중 없음)
+  // 🔴 롱·숏 딱지와 공매도 문장은 뺐다 (사장님 2026-09-20 "매매 한다는 인상을 주면 안 돼").
+  //    주식앱과 같은 꼴로 간다 — 자산군과 이름뿐, 방향도 매매 말도 쓰지 않는다.
   const held = {};
   H.forEach(function (x) { held[x.sym] = 1; });
   h += '<div class="svsub" style="margin-top:10px"><b>자산 종류별 추천 코인</b> — 오늘 신호가 난 것만입니다.</div>';
@@ -2367,24 +2364,19 @@ function cvRecoRender() {
       return grp === "알트" ? (k !== "BTC" && k !== "ETH") : (k === grp);
     });
     const L = keys.filter(function (k) { return c[k].state === "long"; });
-    const S = keys.filter(function (k) { return c[k].state === "short"; });
     // 🔴 코인 이름을 누르면 아래 [코인 조회]로 내려가 그래프까지 바뀐다 (사장님 2026-09-20).
     //    onclick 에 따옴표를 넣으면 깨져서, 값은 data- 로 싣고 누름은 아래 한 곳에서 받는다.
     const chip = function (k) {
       return '<span class="cvgo" data-sym="' + k + '">' + k + '</span>';
     };
     let body = "";
-    if (L.length) body += '<div class="svitem"><b style="color:#2f9e44">롱</b> '
-      + L.map(chip).join(' · ') + '</div>';
-    if (S.length) body += '<div class="svitem"><b style="color:#e03131">숏</b> '
-      + S.map(chip).join(' · ') + '</div>';
-    if (!body) body = '<div class="svitem dplbl">오늘은 신호가 없습니다 — 규칙은 이 자리를 현금으로 두라고 합니다</div>';
+    if (L.length) body += '<div class="svitem">' + L.map(chip).join(' · ') + '</div>';
+    if (!body) body = '<div class="svitem dplbl">오늘은 해당하는 코인이 없습니다</div>';
     h += '<div class="svgrp"><div class="svgrpt"><i style="background:' + svColor(grp, 0) + '"></i>' + grp
        + ' <span class="dplbl">' + m[1] + '%</span></div>' + body + '</div>';
   });
 
-  h += '<div class="svsub">숏은 기초자산을 공매도 하는 거래여서 값이 오르면 손실이 끝없이 커질 수 있고, 거래소 강제 청산 대상이 될 수 있습니다.</div>';
-  h += '<div class="svsub">앱 로직에 따른 추천이며, 사고파는 결정과 주문은 고객님이 거래소에서 하십니다.</div>';
+  h += '<div class="svsub">앱 로직에 따른 추천이며, 투자 결정과 주문은 고객님이 거래소에서 하십니다.</div>';
   box.innerHTML = h;
 }
 
