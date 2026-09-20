@@ -121,7 +121,10 @@ body.light .mk img.lt{display:block}
 .svgrp{margin:9px 0 0}
 .svgrpt{font-size:12.5px;font-weight:800;color:var(--nm);display:flex;align-items:center;gap:6px}
 .svgrpt i{display:inline-block;width:10px;height:10px;border-radius:3px}
-.svitem{font-size:12.5px;color:var(--nm);padding:4px 0 4px 16px;border-bottom:1px solid var(--bd)}
+.svitem{font-size:12.5px;color:var(--nm);padding:6px 0 6px 16px;border-bottom:1px solid var(--bd)}
+.svitem.svgo2{cursor:pointer;display:flex;align-items:center;gap:6px}
+.svitem.svgo2:active{background:rgba(127,127,127,.12)}
+.svarrow{margin-left:auto;color:#1c7ed6;font-size:11.5px;font-weight:700;white-space:nowrap}
 .cvwarn{margin-top:10px;padding:11px 12px;border:1px solid #e03131;border-radius:10px;background:rgba(224,49,49,.08);
   color:#e03131;font-size:12.5px;line-height:1.65}
 .cvok{margin-top:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;font-size:11.5px;color:var(--sub);line-height:1.6}
@@ -1962,12 +1965,22 @@ function svRecoRender() {
     cand = cand.filter(function (c) { return !c.code || !heldCodes[String(c.code).replace(/\.US$/, "")]; });
     // 비중이 작은 자산군까지 여러 종목을 늘어놓으면 파이 조각이 잘게 쪼개져 보여, 목표 비중만큼만 보여 준다 (사장님 2026-09-20)
     cand = cand.slice(0, m[1] >= 20 ? 3 : (m[1] >= 10 ? 2 : 1));
+    const isUs = (cls === "해외 주식" || cls === "해외 ETF(달러)");
     h += '<div class="svgrp"><div class="svgrpt"><i style="background:' + svColor(cls, 0) + '"></i>' + cls
        + ' <span class="dplbl">' + m[1] + '%</span></div>'
        + (cand.length
           ? cand.map(function (c) {
-              return '<div class="svitem">' + c.name + (c.code && /^\d/.test(c.code)
-                ? ' <span class="dplbl">' + c.code + '</span>' : '') + '</div>';
+              // 🔴 누르면 아래 [종목 조회]로 내려가 그래프까지 바뀐다 (사장님 2026-09-20).
+              //    조회할 수 없는 것(예금·달러 ETF 처럼 코드가 없는 것)은 누를 수 없게 둔다.
+              const code = c.code || (isUs ? String(c.name).split(" ")[0] : "");
+              const can = !!code && (isUs || /^\d{6}$/.test(code));
+              const lbl = c.name + (c.code && /^\d/.test(c.code) ? ' <span class="dplbl">' + c.code + '</span>' : '');
+              // 🔴 onclick 안에 따옴표를 넣으면 깨진다. 값은 data- 로 싣고 누름은 아래에서 한 번에 받는다.
+              return can
+                ? '<div class="svitem svgo2" data-code="' + code + '" data-us="' + (isUs ? 1 : 0)
+                   + '" data-nm="' + String(c.name).replace(/"/g, "") + '">'
+                   + lbl + ' <span class="svarrow">조회 ›</span></div>'
+                : '<div class="svitem">' + lbl + '</div>';
             }).join("")
           : '<div class="svitem dplbl">오늘 조건을 채운 종목이 없습니다</div>')
        + '</div>';
@@ -2003,6 +2016,8 @@ const SV_MTS = [
   ["kb", "KB증권 M-able", "com.kbsec.mts.iplustarngm2"],
   ["shinhan", "신한투자 SOL증권", "com.shinhaninvest.nsmts"],
   ["toss", "토스증권", "viva.republica.toss"],
+  // 🔴 카카오페이증권은 **따로 앱이 없다** — 카카오페이 앱 안에 있다(2026-09-20 Play 확인).
+  ["kakaopay", "카카오페이증권 (카카오페이 앱)", "com.kakaopay.app"],
 ];
 function svOpenMts(code) {
   const m = SV_MTS.filter(function (x) { return x[0] === code; })[0];
@@ -2035,6 +2050,24 @@ setTimeout(function () {
 setInterval(function () { try { svRecoRender(); } catch (e) {} }, 60000);   // 시세가 들어오면 금액도 따라 움직인다
 setTimeout(function () { try { svRender(); svRecoLoad(); } catch (e) {} }, 800);
 setInterval(function () { try { svRecoLoad(); } catch (e) {} }, 30 * 60000);
+
+// 추천 종목을 누르면 아래 [종목 조회]에 넣고 그래프까지 바꾼다 (사장님 2026-09-20)
+// 🔴 본앱이 이미 가진 pickStock / pickStockUS 를 그대로 부른다 — 새로 만들지 않는다.
+function svGoStock(code, name, us) {
+  try {
+    if (us) { pickStockUS(/\.US$/.test(code) ? code : code + ".US", name); }
+    else { pickStock(code, name); }
+  } catch (e) { return; }
+  const card = document.getElementById("stock");
+  if (card && card.scrollIntoView) card.scrollIntoView({behavior: "smooth", block: "start"});
+}
+// 누름은 한 군데서 받는다 — 목록은 다시 그려져도 이 귀는 살아 있다.
+document.addEventListener("click", function (e) {
+  const el = (e.target && e.target.closest) ? e.target.closest(".svgo2") : null;
+  if (!el) return;
+  svGoStock(el.getAttribute("data-code"), el.getAttribute("data-nm") || "",
+            el.getAttribute("data-us") === "1");
+});
 
 </script>
 <script>
