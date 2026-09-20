@@ -1329,161 +1329,9 @@ function usFxLive(){var e=_etnow();                                             
 function updStkTag(){const live=krLiveNow();
   const el=E("stkTag");if(el){el.className="tag "+(live?"live":"delay");el.textContent=live?L("live"):L("delayed2");}}
 updStkTag();setInterval(updStkTag,20000);
-// ── 내 보유종목 (사장님 2026-09-16) — 국내·미국 한 표 · 추가/지움 · 이 폰에만 저장 ──
-let MH=[], mhSel=null, mhPx={}, mhSeq=0, mhT=null;
-function mhLoad(){try{MH=JSON.parse(localStorage.getItem("brief_holds")||"[]")||[];}catch(e){MH=[];}}
-function mhSave(){try{localStorage.setItem("brief_holds",JSON.stringify(MH));}catch(e){}}
-function mhNum(v){v=parseFloat(String(v).replace(/,/g,""));return isFinite(v)?v:0;}
-function mhFmt(mk,v){return (mk==="us"||mk==="coinS"||mk==="coinF")
-  ?("$"+(+v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))
-  :(Math.round(v).toLocaleString()+(LANG==="en"?"":"원"));}
-function mhEsc(t){return String(t==null?"":t).replace(/[<>&"]/g,function(c){
-  return {"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"}[c];});}
-function mhIsCoin(mk){return mk==="coinS"||mk==="coinF";}
-function mhPickSel(mk,code,name){
-  mhSel={mk:mk,code:code,name:name};
-  E("mhResults").innerHTML="";E("mhq").value="";
-  // 🔴 코인 선물만 레버 칸을 보인다 — 주식·현물엔 없는 값이다
-  const lv=E("mhLev"); if(lv){lv.hidden=(mk!=="coinF"); if(mk!=="coinF")lv.value="";}
-  const tail=mk==="coinS"?(LANG==="en"?" SPOT":" 현물"):mk==="coinF"?(LANG==="en"?" PERP":" 선물"):"";
-  E("mhPick").textContent=name+" ("+(mk==="us"?code.replace(/\.US$/,""):code)+")"+tail;
-  E("mhQty").focus();
-}
-function mhAdd(){
-  const en=LANG==="en";
-  if(!mhSel){E("mhPick").textContent=en?"Pick a stock first":"종목을 먼저 고르세요";return;}
-  const q=mhNum(E("mhQty").value), b=mhNum(E("mhBuy").value);
-  if(q<=0||b<=0){E("mhPick").textContent=en?"Enter qty and cost":"수량과 매입가를 넣으세요";return;}
-  const lv=Math.max(1,Math.round(mhNum(E("mhLev")&&E("mhLev").value))||1);
-  const i=MH.findIndex(function(h){return h.code===mhSel.code&&h.mk===mhSel.mk;});
-  if(i>=0){const o=MH[i],tq=o.qty+q;o.buy=(o.buy*o.qty+b*q)/tq;o.qty=tq;
-           if(mhSel.mk==="coinF")o.lev=lv;}   // 같은 종목이면 평단으로 합친다
-  else MH.push({mk:mhSel.mk,code:mhSel.code,name:mhSel.name,qty:q,buy:b,
-                lev:(mhSel.mk==="coinF"?lv:1)});
-  mhSave();mhSel=null;
-  E("mhPick").textContent="";E("mhQty").value="";E("mhBuy").value="";
-  if(E("mhLev")){E("mhLev").value="";E("mhLev").hidden=true;}
-  mhRender();mhTick();
-}
-function mhDel(i){MH.splice(i,1);mhSave();mhRender();}
-function mhRender(){
-  const en=LANG==="en", box=E("mhBody"); if(!box)return;
-  if(!MH.length){box.innerHTML='<div class="mhempty">'+(en
-    ?"Pick a stock above, enter qty and average cost, then press Add. Saved on this phone only."
-    :"위에서 종목을 골라 수량·매입가를 넣고 [추가]를 누르세요. 이 폰에만 저장됩니다.")+'</div>';return;}
-  const cls=function(x){return x>0?"up":(x<0?"dn":"fl");},
-        arw=function(x){return x>0?"▲":(x<0?"▼":"");};
-  let h='<table class="mhtab"><tr><th>'+(en?"Stock":"종목")+'</th><th>'+(en?"Qty":"수량")
-   +'</th><th>'+(en?"Avg cost":"매입가")+'</th><th>'+(en?"Price":"현재가")
-   +'</th><th>'+(en?"P/L %<br>P/L":"손익률<br>손익금")+'</th><th></th></tr>';
-  let vk=0,ck=0,vu=0,cu=0,vc=0,cc=0;
-  MH.forEach(function(x,i){
-    const px=mhPx[x.code], val=px?px*x.qty:0;
-    // 🔴 선물은 레버를 곱해야 손익률이 맞다. 현물·주식은 1배다.
-    const lv=(x.mk==="coinF")?Math.max(1,+x.lev||1):1;
-    const pct=px?((px-x.buy)/x.buy*100*lv):null;
-    if(px){ if(x.mk==="us"){vu+=val;cu+=x.buy*x.qty;}
-            else if(mhIsCoin(x.mk)){vc+=val;cc+=x.buy*x.qty;}
-            else {vk+=val;ck+=x.buy*x.qty;} }
-    const en2=(LANG==="en");
-    const tg=(x.mk==="us")?"US":(x.mk==="coinS")?(en2?"SPOT":"현물")
-            :(x.mk==="coinF")?((en2?"PERP ":"선물 ")+lv+"x"):"KR";
-    const tc=(x.mk==="us")?" us":(x.mk==="coinS")?" sp":(x.mk==="coinF")?" fu":"";
-    h+='<tr><td>'+mhEsc(x.name)+' <span class="mkt'+tc+'">'+tg+'</span></td>'
-     +'<td>'+x.qty.toLocaleString()+'</td><td>'+mhFmt(x.mk,x.buy)+'</td>'
-     +'<td>'+(px?mhFmt(x.mk,px):"-")+'</td>'
-     +'<td class="'+(pct==null?"fl":cls(pct))+'">'
-     +(pct==null?"-":(arw(pct)+Math.abs(pct).toFixed(2)+"%"
-       +"<br>"+((px-x.buy)>=0?"+":"-")+mhFmt(x.mk,Math.abs((px-x.buy)*x.qty))))+'</td>'
-     +'<td><span class="mhx" onclick="mhDel('+i+')">✕</span></td></tr>';
-  });
-  const sum=function(v,c,mk){const p=c?((v-c)/c*100):0;
-    const _nm=(mk==="us")?"US":(mk==="coinS"||mk==="coinF")?(en?"COIN":"코인"):"KR";
-    return '<tr class="mhsum"><td>'+(en?"Total":"합계")+' '+_nm
-      +'</td><td></td><td>'+mhFmt(mk,c)+'</td><td></td>'
-      +'<td class="'+cls(p)+'">'+arw(p)+Math.abs(p).toFixed(2)+'%'
-      +'<br>'+((v-c)>=0?"+":"-")+mhFmt(mk,Math.abs(v-c))+'</td><td></td></tr>';};
-  if(ck>0)h+=sum(vk,ck,"kr");
-  if(cu>0)h+=sum(vu,cu,"us");
-  if(cc>0)h+=sum(vc,cc,"coinS");
-  let fx=0;
-  try{const gs=((window._lastD||{}).groups||[]);
-    for(const g of gs){for(const it of (g.items||[])){
-      if(/원\/달러|USD\/KRW/i.test(it.nm||"")){fx=mhNum(it.val);break;}}
-      if(fx)break;}
-  }catch(e){}
-  if(fx>0&&cu>0&&ck>0){const v=vk+vu*fx,c=ck+cu*fx,p=c?((v-c)/c*100):0;
-    h+='<tr class="mhsum"><td>'+(en?"Total (KRW)":"총합(원)")+'</td><td></td><td>'+mhFmt("kr",c)
-      +'</td><td></td><td class="'+cls(p)+'">'
-      +arw(p)+Math.abs(p).toFixed(2)+'%'
-      +'<br>'+((v-c)>=0?"+":"-")+mhFmt("kr",Math.abs(v-c))+'</td><td></td></tr>';}
-  // 🔴 코인 금액은 USDT 다 — 칸이 좁아 $ 로 적고 여기서 밝힌다(데모앱과 같은 규칙)
-  const _hasCoin=MH.some(function(x){return mhIsCoin(x.mk);});
-  const _note=_hasCoin?('<div class="mhnote">'+(en
-    ?"In crypto, $ means USDT."
-    :"암호화폐에서 $는 USDT를 의미함")+'</div>'):"";
-  box.innerHTML=h+'</table>'+_note;
-}
-async function mhTick(){
-  if(!MH.length)return;
-  // 국내는 집 PC 릴레이라 첫 응답이 2초쯤 걸린다 -> 대기를 넉넉히(8번) 주고,
-  // 종목마다 줄 서면 느리니 한꺼번에 보낸다.
-  await Promise.all(MH.slice().map(async function(x){
-    try{
-      if(mhIsCoin(x.mk)){
-        // 🔴 허브를 안 거친다 — 국내조회 일꾼이 하나뿐이라 끼어들면 본앱 조회가 줄을 선다
-        const d=await fetch("https://api.binance.com/api/v3/ticker/price?symbol="
-                            +encodeURIComponent(x.code)).then(function(r){return r.json();});
-        if(d&&d.price)mhPx[x.code]=+d.price;
-      }else if(x.mk==="us"){
-        const d=await usFetch("quote","codes="+encodeURIComponent(x.code));
-        const p=d&&d.data&&d.data[0]&&+d.data[0].p; if(p)mhPx[x.code]=p;
-      }else{
-        const d=await krFetch("stock","code="+x.code,8); if(d&&d.cur)mhPx[x.code]=+d.cur;
-      }
-    }catch(e){}
-  }));
-  mhRender();
-}
-E("mhq").addEventListener("input",function(){
-  clearTimeout(mhT); const q=this.value.trim();
-  if(q.length<1){E("mhResults").innerHTML="";return;}
-  const seq=++mhSeq;
-  mhT=setTimeout(function(){
-    E("mhResults").innerHTML='<div class="soonrow">'+(LANG==="en"?"Searching…":"검색 중…")+'</div>';
-    const latin=/[A-Za-z]/.test(q)&&!/[가-힣]/.test(q);
-    let kr=[],us=[],co=[];
-    const paint=function(){
-      const en=LANG==="en";
-      let h=kr.map(function(r){const dn=(((en&&r.en)?r.en:r.name)||r.code).replace(/['"]/g,"");
-        return '<a onclick="mhPickSel(&quot;kr&quot;,&quot;'+r.code+'&quot;,&quot;'+dn+'&quot;)">'
-          +'<span>'+mhEsc(dn)+' <span class="mkt">KR</span></span><span class="c">'+r.code+'</span></a>';}).join("");
-      h+=us.map(function(r){const dn=(r.name||r.tick).replace(/['"]/g,"");
-        return '<a onclick="mhPickSel(&quot;us&quot;,&quot;'+r.code+'&quot;,&quot;'+dn+'&quot;)">'
-          +'<span>'+mhEsc(dn)+' <span class="mkt us">US</span></span><span class="c">'+r.tick+'</span></a>';}).join("");
-      // 🔴 코인도 같이 — 주식이 KR·US 로 갈리듯 한 코인이 현물·선물 두 줄로 나온다
-      h+=co.map(function(b){
-        const sym=b+"USDT";
-        return ['coinF','coinS'].map(function(mk){
-          const kl=(mk==="coinF")?(en?"PERP":"선물"):(en?"SPOT":"현물");
-          const cc=(mk==="coinF")?"fu":"sp";
-          return '<a onclick="mhPickSel(&quot;'+mk+'&quot;,&quot;'+sym+'&quot;,&quot;'+b+'&quot;)">'
-            +'<span>'+mhEsc(b)+' <span class="mkt '+cc+'">'+kl+'</span></span>'
-            +'<span class="c">'+sym+'</span></a>';}).join("");}).join("");
-      E("mhResults").innerHTML=h||'<div class="soonrow">'+(en?"No results":"결과 없음")+'</div>';};
-    if(latin)usFetch("search","q="+encodeURIComponent(q)).then(function(d){
-      if(seq!==mhSeq)return;us=(d&&d.data)||[];paint();});
-    krFetch("search","q="+encodeURIComponent(q),4).then(function(rows){
-      if(seq!==mhSeq)return;kr=rows||[];paint();});
-    // 코인은 이미 받아 둔 심볼 목록에서 고른다(본앱 코인 검색과 같은 자리)
-    if(typeof coinSyms==="function")coinSyms().then(function(all){
-      if(seq!==mhSeq)return;
-      const U=q.toUpperCase();
-      co=(all||[]).filter(function(b){return b.indexOf(U)===0;}).slice(0,6);
-      paint();});
-  },350);
-});
-mhLoad(); mhRender(); mhTick(); setInterval(mhTick,10000);
+// 🔴 보유종목 코드는 두 앱에서 통째로 들어냈다 — 고객 자산을 받지 않는다(2026-09-20).
+let MH=[], mhPx={};
+function mhLoad(){}function mhSave(){}function mhRender(){}async function mhTick(){}
 
 // ── 첫 화면 자리 맞추기 (사장님 2026-09-18) ────────────────────────
 // 🔴 비어 있는 카드가 맨 위에 있으면 처음 온 사람은 볼 게 없다. 비면 내리고 차면 올린다.
@@ -1773,11 +1621,12 @@ function appOpen(pkg, name) {
 
 </script>
 <script>
-// 공용 — 투자 성향 설문 · 등급 · 입체 원그래프 (주식앱·코인앱이 같이 쓴다, 2026-09-20)
+// 공용 — 포트폴리오 목록 · 입체 원그래프 (주식앱·코인앱이 같이 쓴다, 2026-09-20)
 // 🔴 설문·배점·등급 구간은 금융투자협회 표준투자권유준칙 별지 제1호·제2호 그대로다.
-// 🔴 답은 이 폰에만 저장한다(sv_profile_v2). 서버로 보내지 않는다.
+// 🔴 저장하는 것은 **고객이 고른 포트폴리오 번호 하나**뿐이다. 이 폰에만 둔다.
+//    고객의 성향을 재거나 등급을 매기지 않는다 — 진단도 저장도 하지 않는다.
 
-const SV_KEY = "sv_profile_v2";      // {at:"YYYY-MM-DD", raw:n, score:n(100점), grade:i, ans:[...]}
+const SV_KEY = "sv_pick_v1";         // {at:"YYYY-MM-DD", pick:i}  — 고른 포트폴리오 번호
 
 // 🔴 가상 계좌 — 모두에게 같은 금액을 준다. 고객이 고칠 수 없다 (사장님 2026-09-20).
 const SV_KRW = 100000000;            // 원화 1억
@@ -1824,7 +1673,7 @@ function svSave(o) { try { localStorage.setItem(SV_KEY, JSON.stringify(o)); } ca
 // ── 포트폴리오 고르기 ─────────────────────────────────────
 // 🔴 제한이 없다. 어느 것이든 누를 수 있다 (사장님 2026-09-20 "여기서 제한을 두면 안 됨").
 function svPick(i) {
-  svSave({grade: i, at: new Date().toISOString().slice(0, 10)});
+  svSave({pick: i, at: new Date().toISOString().slice(0, 10)});
   svRender();
   try { if (window.svAfterProfile) svAfterProfile(); } catch (e) {}
 }
@@ -1833,7 +1682,7 @@ function svRender() {
   const box = document.getElementById("svBody");
   if (!box) return;
   const p = svGet();
-  const cur = p ? p.grade : -1;
+  const cur = p ? p.pick : -1;
   let h = '<div class="svsub">아래에서 하나를 고르십시오. 고른 포트폴리오에 맞추어 자산 종류별 비중과 '
         + '종목을 보여 드립니다. 언제든 바꾸실 수 있습니다.</div>';
   SV_GRADE.forEach(function (g, i) {
@@ -2035,7 +1884,7 @@ async function bkRun(days) {
 const RECO_URL="https://emhwang3-boop.github.io/morning-brief/reco.json";
 // 데일리 브리프 라이브 — 주식앱 전용 (2026-09-20)
 // 🔴 설문·등급·원그래프는 공용 profile.js 에 있다(코인앱과 같이 쓴다).
-// 🔴 고객 정보를 서버로 보내지 않는다. 성향 답·증권사 선택·보유 입력은 모두 이 폰에만 저장한다.
+// 🔴 고객 정보를 서버로 보내지 않는다. 고른 포트폴리오와 증권사 선택은 이 폰에만 저장한다.
 // 🔴 주문은 하지 않는다. [주문]은 고객이 고른 증권사 MTS 를 여는 것으로 끝난다(로그인 화면까지).
 
 window.svAfterProfile = function () { try { svRecoRender(); } catch (e) {} };
@@ -2075,7 +1924,7 @@ async function svRecoLoad() {
   try { svRecoRender(); } catch (e) {}
 }
 
-// ── 성향별 추천 — **자산군 중심** (사장님 2026-09-20) ───────────────────
+// ── 포트폴리오별 자산 배분 — **자산군 중심** (사장님 2026-09-20) ───────────────
 //   🔴 우리는 **자산군 비중**과 **그 자산군에 들 만한 종목**까지만 내놓는다.
 //      어느 종목에 얼마를 넣을지는 **고객이 정한다** — 종목별 비중·수량은 내지 않는다.
 //   🔴 이미 가지고 계신 종목은 추천 목록에서 뺀다.
@@ -2084,7 +1933,7 @@ function svRecoRender() {
   if (!box) return;
   const p = svGet();
   if (!p) { box.innerHTML = '<div class="soonrow">위에서 포트폴리오를 고르시면 자산 배분을 보여 드립니다.</div>'; return; }
-  const g = SV_GRADE[p.grade];
+  const g = SV_GRADE[p.pick];
 
   // 🔴 원화 계좌와 달러 계좌를 따로 본다 (사장님 2026-09-20 "1-가"). 환율로 섞지 않는다.
   //    각 통화 안에서 그 통화에 속한 자산군끼리 비중을 다시 100 으로 맞춘다.
@@ -2093,7 +1942,7 @@ function svRecoRender() {
   const sum = function (a) { return a.reduce(function (t, m) { return t + m[1]; }, 0); };
   const kS = sum(krw), uS = sum(usd);
 
-  let h = '<div class="svsub"><b>' + svPortNm(p.grade) + '</b>에 맞춘 자산 배분입니다. '
+  let h = '<div class="svsub"><b>' + svPortNm(p.pick) + '</b>에 맞춘 자산 배분입니다. '
         + '아래 금액은 모든 이용자에게 똑같이 주어지는 가상 금액입니다.</div>';
 
   // ── 원화 계좌 ──────────────────────────────────────────
