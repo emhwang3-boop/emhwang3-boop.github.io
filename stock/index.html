@@ -2036,8 +2036,10 @@ function svBroker() { try { return localStorage.getItem(SV_BROKER) || ""; } catc
 const SV_PROD = {
   "예금": [["은행 정기예금", "은행별 금리를 비교해 고르십니다"]],
   "국내 ETF": [["KODEX 200", "069500"], ["TIGER 200", "102110"], ["KODEX 국고채30년액티브", "439870"]],
+  // 🔴 규칙 통과가 없는 날 대신 보여 줄 것 — **지수 추종 둘**만 (사장님 2026-09-20).
+  //    배당(미국배당다우존스)은 덜 흔들리지만 3.1년 연수익이 13.6% 대 22.2% 로 크게 뒤진다.
   "해외 ETF(원화)": [["TIGER 미국S&P500", "360750"], ["TIGER 미국나스닥100", "133690"]],
-  "해외 ETF(달러)": [["SPY (S&P500)", ""], ["QQQ (나스닥100)", ""], ["VOO (S&P500)", ""]],
+  "해외 ETF(달러)": [["SPY (S&P500)", ""], ["QQQ (나스닥100)", ""]],
 };
 
 // 🔴 보유부·현금 입력은 통째로 들어냈다 (사장님 2026-09-20, 변호사 지적).
@@ -2127,7 +2129,11 @@ function svRecoRender() {
       cand = SVR.levw.buy.map(function (r) { return {name: r.name, code: r.code}; });
     } else if (cls === "레버리지 ETF(달러)" && SVR && SVR.levu && SVR.levu.buy) {
       cand = SVR.levu.buy.map(function (r) { return {name: r.name, code: r.code}; });
-    } else if (cls === "해외 ETF(원화)" && SVR && SVR.etfw && SVR.etfw.buy) {
+    } else if (cls === "해외 ETF(달러)" && SVR && SVR.etfu && SVR.etfu.buy && SVR.etfu.buy.length) {
+      // 🔴 규칙 통과가 하나도 없는 날엔 아래 else 로 떨어져 **고정 목록**을 보여 준다
+      //    (사장님 2026-09-20 "달러만 그렇게 해"). 지수 추종이라 비는 것보다 낫다.
+      cand = SVR.etfu.buy.map(function (r) { return {name: r.name, code: r.code}; });
+    } else if (cls === "해외 ETF(원화)" && SVR && SVR.etfw && SVR.etfw.buy && SVR.etfw.buy.length) {
       // 🔴 해외 ETF(원화)도 날마다 고른다 (사장님 2026-09-20). 시총 상위 30 안에서 같은 규칙.
       //    개별 주식과 달리 3일 거르개는 안 건다 — 후보가 30개뿐이라 칸이 너무 자주 빈다(실측).
       cand = SVR.etfw.buy.map(function (r) { return {name: r.name, code: r.code}; });
