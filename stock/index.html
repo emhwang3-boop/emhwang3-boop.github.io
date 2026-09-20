@@ -268,7 +268,13 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   <canvas id="stkChart" class="stkchart" hidden></canvas>
   <div id="stkChartLbl" class="stkcl" hidden></div>
   <div id="svOrderBox"></div>
+  <button class="svbtn" onclick="bkAddCurrent()">바스켓에 담기</button>
   <button class="svbtn svgo" onclick="svOrderToggle()">주문 — 내 증권사 앱 열기</button>
+</div>
+
+<div class="card svcard" id="bkCard">
+  <h3>가상 바스켓</h3>
+  <div id="bkBody"></div>
 </div>
 
 <div class="card">
@@ -1837,6 +1843,125 @@ function svPie(mix) {
 
 </script>
 <script>
+// 바스켓 백테스트 — 고객이 고른 것을 그때 샀더라면 (사장님 2026-09-20)
+// 🔴 추천이 아니다. 고객이 직접 담은 것의 **과거 성적**만 낸다.
+// 🔴 종목별 비중은 균등이 기본. 담고 빼는 것은 이 폰에만 저장한다.
+// 🔴 봉을 받아오는 함수(bkBars)는 앱마다 다르다 — 각 앱 파일에서 채워 넣는다.
+const BK_KEY = "bk_basket_v1";
+const BK_SPANS = [[63, "3개월"], [126, "6개월"], [252, "1년"]];
+const BK_NOTE = "과거의 수익률에 근거한 것이며 고객님의 미래 수익을 보장하지 않습니다.";
+
+function bkGet() { try { return JSON.parse(localStorage.getItem(BK_KEY) || "[]") || []; } catch (e) { return []; } }
+function bkSave(a) { try { localStorage.setItem(BK_KEY, JSON.stringify(a)); } catch (e) {} }
+function bkAdd(code, name, mk) {
+  if (!code) return;
+  const a = bkGet();
+  if (a.some(function (x) { return x.code === code; })) { bkRender(); return; }
+  if (a.length >= 10) { bkMsg("한 번에 열 개까지 담을 수 있습니다."); return; }
+  a.push({code: code, name: name || code, mk: mk || "kr"});
+  bkSave(a); bkRender();
+}
+function bkDel(i) { const a = bkGet(); a.splice(i, 1); bkSave(a); bkRender(); }
+function bkClear() { bkSave([]); bkRender(); }
+function bkMsg(t) {
+  const m = document.getElementById("bkMsg");
+  if (m) { m.textContent = t || ""; m.hidden = !t; }
+}
+
+function bkRender() {
+  const box = document.getElementById("bkBody");
+  if (!box) return;
+  const a = bkGet();
+  let h = '<div class="svsub">' + BK_HELP + '</div>';
+  if (!a.length) {
+    h += '<div class="mhempty">' + BK_EMPTY + '</div>';
+    box.innerHTML = h;
+    return;
+  }
+  const w = 100 / a.length;
+  h += svPie(a.map(function (x) { return [x.name, w]; }));
+  h += '<table class="mhtab"><tr><th>' + BK_COL + '</th><th>비중</th><th></th></tr>';
+  a.forEach(function (x, i) {
+    h += '<tr><td style="text-align:left">' + x.name + (/^\d/.test(x.code) ? ' <span class="dplbl">' + x.code + '</span>' : '')
+       + '</td><td>' + w.toFixed(1) + '%</td>'
+       + '<td><span class="mhx" onclick="bkDel(' + i + ')">✕</span></td></tr>';
+  });
+  h += '</table>';
+  h += '<div class="cvrow">' + BK_SPANS.map(function (s) {
+      return '<button class="svbtn" style="flex:1;text-align:center;margin:0" onclick="bkRun(' + s[0] + ')">' + s[1] + '</button>';
+    }).join("") + '<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="bkClear()">비우기</button></div>';
+  h += '<div id="bkMsg" class="c21msg" hidden></div><div id="bkOut"></div>';
+  h += '<div class="discNote">' + BK_NOTE + '<br>고른 종목의 과거 성적입니다. '
+     + '지금 좋아 보이는 것을 담으면 과거 성적은 높게 나옵니다.</div>';
+  box.innerHTML = h;
+}
+
+// 기간 수익률 — 균등 비중으로 그때 사서 지금까지 든 셈
+async function bkRun(days) {
+  const a = bkGet();
+  if (!a.length) return;
+  bkMsg("받는 중… 종목마다 몇 초 걸립니다");
+  document.getElementById("bkOut").innerHTML = "";
+  const rows = [];
+  for (let i = 0; i < a.length; i++) {
+    let cs = null;
+    try { cs = await bkBars(a[i]); } catch (e) { cs = null; }
+    if (!cs || cs.length < 5) { rows.push({nm: a[i].name, err: true}); continue; }
+    const n = Math.min(days, cs.length - 1);
+    const from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
+    if (!(from > 0)) { rows.push({nm: a[i].name, err: true}); continue; }
+    rows.push({nm: a[i].name, r: to / from - 1, n: n, cs: cs.slice(cs.length - 1 - n)});
+  }
+  const ok = rows.filter(function (x) { return !x.err; });
+  if (!ok.length) { bkMsg("자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요."); return; }
+  bkMsg("");
+
+  // 바스켓 = 균등 비중. 흔들림은 하루 수익률의 표준편차로 본다.
+  const L = Math.min.apply(null, ok.map(function (x) { return x.cs.length; }));
+  const daily = [];
+  for (let t = 1; t < L; t++) {
+    let s = 0;
+    ok.forEach(function (x) { const c = x.cs.slice(x.cs.length - L); s += c[t] / c[t - 1] - 1; });
+    daily.push(s / ok.length);
+  }
+  let eq = 1;
+  daily.forEach(function (r) { eq *= (1 + r); });
+  const mean = daily.reduce(function (s, r) { return s + r; }, 0) / (daily.length || 1);
+  const sd = Math.sqrt(daily.reduce(function (s, r) { return s + (r - mean) * (r - mean); }, 0) / (daily.length || 1));
+  const worst = ok.slice().sort(function (p, q) { return p.r - q.r; })[0];
+  const best = ok.slice().sort(function (p, q) { return q.r - p.r; })[0];
+  // 한 종목만 들었을 때의 흔들림(평균)과 견준다 — 섞으면 덜 흔들린다는 것을 보이려고
+  let sdOne = 0;
+  ok.forEach(function (x) {
+    const c = x.cs.slice(x.cs.length - L), d = [];
+    for (let t = 1; t < L; t++) d.push(c[t] / c[t - 1] - 1);
+    const m = d.reduce(function (s, r) { return s + r; }, 0) / (d.length || 1);
+    sdOne += Math.sqrt(d.reduce(function (s, r) { return s + (r - m) * (r - m); }, 0) / (d.length || 1));
+  });
+  sdOne /= ok.length;
+
+  const pc = function (v) { return (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%"; };
+  const cls = function (v) { return v > 0 ? "up" : (v < 0 ? "dn" : "fl"); };
+  let h = '<table class="mhtab"><tr><th>' + BK_COL + '</th><th>' + (L - 1) + '일 수익률</th></tr>';
+  h += '<tr class="mhsum"><td style="text-align:left"><b>바스켓(균등)</b></td>'
+     + '<td class="' + cls(eq - 1) + '"><b>' + pc(eq - 1) + '</b></td></tr>';
+  ok.slice().sort(function (p, q) { return q.r - p.r; }).forEach(function (x) {
+    h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="' + cls(x.r) + '">' + pc(x.r) + '</td></tr>';
+  });
+  rows.filter(function (x) { return x.err; }).forEach(function (x) {
+    h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="fl">자료 없음</td></tr>';
+  });
+  h += '</table>';
+  h += '<div class="svsub">제일 좋았던 것 ' + best.nm + ' ' + pc(best.r)
+     + ' · 제일 나빴던 것 ' + worst.nm + ' ' + pc(worst.r) + '</div>';
+  h += '<div class="svsub">하루 흔들림 — 바스켓 ' + (sd * 100).toFixed(2) + '%'
+     + ' · 한 종목만 들었을 때 평균 ' + (sdOne * 100).toFixed(2) + '%'
+     + (sd < sdOne ? ' → <b>섞으니 덜 흔들렸습니다.</b>' : '') + '</div>';
+  document.getElementById("bkOut").innerHTML = h;
+}
+
+</script>
+<script>
 const RECO_URL="https://emhwang3-boop.github.io/morning-brief/reco.json";
 // 데일리 브리프 라이브 — 주식앱 전용 (2026-09-20)
 // 🔴 설문·등급·원그래프는 공용 profile.js 에 있다(코인앱과 같이 쓴다).
@@ -2070,6 +2195,32 @@ document.addEventListener("click", function (e) {
   svGoStock(el.getAttribute("data-code"), el.getAttribute("data-nm") || "",
             el.getAttribute("data-us") === "1");
 });
+
+// ── 바스켓 백테스트 — 주식앱 쪽 (사장님 2026-09-20) ───────────────────
+const BK_HELP = "조회한 종목을 담아 가상 포트폴리오를 만들어 보십니다. 비중은 똑같이 나눕니다.";
+const BK_EMPTY = "아래 [종목 조회]에서 종목을 고른 뒤 [바스켓에 담기]를 누르십시오.";
+const BK_COL = "종목";
+// 🔴 봉은 앱이 이미 쓰는 통로로 받는다 — 국내는 허브 릴레이, 미국은 usFetch.
+async function bkBars(x) {
+  if (x.mk === "us") {
+    const k = await usFetch("kline", "code=" + encodeURIComponent(x.code) + "&type=8&num=300");
+    const rl = (k && k.data && k.data[0] && k.data[0].respList) || [];
+    if (rl.length < 5) return null;
+    return rl.slice().reverse().map(function (b) { return +b.c; });
+  }
+  const d = await krFetch("chart", "code=" + x.code + "&tf=D", 25);   // 국내는 허브를 거쳐 늦다 — 넉넉히 기다린다
+  if (!d || !d.bars || d.bars.length < 5) return null;
+  return d.bars.map(function (b) { return +b[4]; });
+}
+// 지금 보고 있는 종목을 담는다
+function bkAddCurrent() {
+  if (typeof stkCode === "undefined" || !stkCode) { bkMsg("먼저 종목을 조회해 주세요."); return; }
+  const nm = ((document.getElementById("stkq") || {}).value || stkCode).replace(/\s*\(.*\)\s*$/, "");
+  bkAdd(stkCode, nm, (typeof stkMarket !== "undefined" && stkMarket === "us") ? "us" : "kr");
+  const card = document.getElementById("bkCard");
+  if (card && card.scrollIntoView) card.scrollIntoView({behavior: "smooth", block: "start"});
+}
+setTimeout(function () { try { bkRender(); } catch (e) {} }, 900);
 
 </script>
 <script>
