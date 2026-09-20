@@ -941,7 +941,10 @@ function c21Calc(key,B,CH){
 function makeChart(cid,opt){
   opt=opt||{};const cv=E(cid);
   if(!cv)return {setData:function(){},patchLast:function(){}};   // 칸이 없으면 조용히 넘어간다const NF=opt.fmt||(v=>Math.round(v).toLocaleString());
-  const PAGES=C21_PAGES.filter(p=>!p[4]||opt.liq);
+  // 🔴 청산맵 판은 **선물일 때만** 보인다 (사장님 2026-09-20 "현물이면 청산맵을 보여주면 안 되는 거로").
+  //    현물에는 청산이 없으므로 그 판 자체를 목록에서 뺀다. setLiq() 로 오가며 바꾼다.
+  let LIQ=!!opt.liq;
+  let PAGES=C21_PAGES.filter(p=>!p[4]||LIQ);
   let CH=null,VIEW={start:0,count:80},CROSS=null,GEO=null,CALC={},OVER=0,ODIR=0,MEAS=null,rdown=false,mTimer=null;
   const CCY=()=>cid==="coinChart"?"USDT":((typeof stkMarket!=="undefined"&&stkMarket==="us")?"$":"원");
   const SK="c21_"+cid;let ST0={base:0,ovs:[],page:0};
@@ -1183,7 +1186,15 @@ function makeChart(cid,opt){
   cv.addEventListener("touchend",()=>{const w=down;down=false;pinch=null;clearTimeout(mTimer);if(w&&CH)release();});
   function patchLast(price){if(!CH||!CH.bars.length||!(price>0))return;const b=CH.bars[CH.bars.length-1];b[4]=price;if(price>b[2])b[2]=price;if(price<b[3])b[3]=price;CALC={};draw();}
   paintBar();
-  return {setData,patchLast,flip,state:()=>ST0,meas:()=>MEAS,repaint:()=>{paintBar();draw();}};
+  function setLiq(on){
+    on=!!on; if(on===LIQ)return;
+    LIQ=on; PAGES=C21_PAGES.filter(p=>!p[4]||LIQ);
+    // 켜 두었던 청산맵은 현물로 오면 내린다. 보던 판 번호도 범위 안으로 당긴다.
+    ST0.ovs=(ST0.ovs||[]).filter(k=>PAGES.some(p=>p[0]===k));
+    ST0.page=Math.max(0,Math.min(PAGES.length,ST0.page|0));
+    save(); paintBar(); draw();
+  }
+  return {setData,patchLast,flip,setLiq,state:()=>ST0,meas:()=>MEAS,repaint:()=>{paintBar();draw();}};
 }
 
 
