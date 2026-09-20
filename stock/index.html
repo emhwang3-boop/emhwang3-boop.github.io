@@ -1882,7 +1882,7 @@ function svRecoRender() {
   const heldWon = holds.reduce(function (s, h) { return s + h.won; }, 0);
   const total = heldWon + cash;
 
-  let h = '<div class="svsub">' + g.nm + '에 맞춘 자산 배분입니다. 이미 가지고 계신 종목은 그대로 두고, 모자란 갈래만 채웁니다.</div>';
+  let h = '<div class="svsub">' + g.nm + '에 맞춘 자산 배분입니다. 이미 가지고 계신 종목은 그대로 두고, 모자란 자산 종류만 채웁니다.</div>';
   // 투자 가능 현금 — 직접 넣는다(계좌를 읽지 않는다)
   h += '<div class="svcash">투자 가능 현금 '
      + '<input id="svCashIn" inputmode="numeric" placeholder="예: 5,000,000" value="' + (cash ? cash.toLocaleString() : "") + '"'
