@@ -112,6 +112,12 @@ body.light .mk img.lt{display:block}
 .svleg{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px;font-size:11px;color:var(--nm)}
 .svleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}
 .svmts{margin-top:6px}
+.svcash{font-size:12px;color:var(--sub);margin:8px 0 4px}
+.svcash input{width:130px;margin:0 4px;padding:6px 8px;border:1px solid var(--bd);border-radius:8px;
+  background:var(--bg);color:var(--nm);font:inherit;font-size:13px;text-align:right}
+.svbuy{color:#1c7ed6;font-weight:700}
+.svover{color:#e8590c;font-weight:700}
+.dplbl{color:var(--sub);font-size:10.5px;margin-left:4px}
 .discCard .discList{margin:0;padding-left:16px}
 .discCard .discList li{font-size:12.5px;color:var(--sub);line-height:1.65;margin:6px 0}
 .discNote{margin-top:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;
@@ -635,7 +641,8 @@ loadCoin();setInterval(loadCoin,3000);
 
 // ---- 종목 조회 (키움, 허브 릴레이) ----
 const KRB=HUB?HUB.replace(/\/$/,""):"";
-const E=id=>document.getElementById(id);
+const _EDUM=document.createElement('div');
+const E=id=>document.getElementById(id)||_EDUM;   // 없는 칸은 빈 쪽지로
 let stkCode=null, stkTf="D", stkTimer=null, searchTimer=null, lastResults=[];
 let stkMarket="kr", usResults=[], usDaily=null, searchSeq=0;
 async function krFetch(op,qs,tries){
@@ -908,7 +915,8 @@ function c21Calc(key,B,CH){
 }
 
 function makeChart(cid,opt){
-  opt=opt||{};const cv=E(cid);const NF=opt.fmt||(v=>Math.round(v).toLocaleString());
+  opt=opt||{};const cv=E(cid);
+  if(!cv)return {setData:function(){},patchLast:function(){}};   // 칸이 없으면 조용히 넘어간다const NF=opt.fmt||(v=>Math.round(v).toLocaleString());
   const PAGES=C21_PAGES.filter(p=>!p[4]||opt.liq);
   let CH=null,VIEW={start:0,count:80},CROSS=null,GEO=null,CALC={},OVER=0,ODIR=0,MEAS=null,rdown=false,mTimer=null;
   const CCY=()=>cid==="coinChart"?"USDT":((typeof stkMarket!=="undefined"&&stkMarket==="us")?"$":"원");
@@ -1757,19 +1765,25 @@ function svRender() {
 // ── 성향별 추천 ────────────────────────────────────────
 let SVR = null;
 async function svRecoLoad() {
+  // 🔴 추천 파일을 기다리지 말고 먼저 그린다 — 안 오면 화면이 영영 빈 채로 남는다(2026-09-20).
+  try { svRecoRender(); } catch (e) {}
   try { SVR = await fetch(RECO_URL + "?t=" + Date.now(), {cache: "no-store"}).then(function (r) { return r.json(); }); } catch (e) {}
-  svRecoRender();
+  try { svRecoRender(); } catch (e) {}
 }
 // 입체 원그래프 — 타원으로 눕히고 옆면을 겹쳐 쌓아 두께를 만든다 (사장님 2026-09-20).
 //   옆면은 조각 전체를 아래로 한 칸씩 내려 그린 뒤 겉면을 덮는다. 그러면 앞쪽 옆면만 남아 두께로 보인다.
+// 입체 원그래프 — 타원으로 눕히고 옆면을 겹쳐 쌓아 두께를 만든다 (사장님 2026-09-20).
+//   옆면은 조각 전체를 아래로 한 칸씩 내려 그린 뒤 겉면을 덮는다. 그러면 앞쪽 옆면만 남아 두께로 보인다.
+//   mix = [[이름, 값, 색(선택)], …] — 값은 %가 아니어도 된다(금액 그대로 넣으면 비율은 알아서 낸다).
 function svPie(mix) {
   const tot = mix.reduce(function (s, m) { return s + m[1]; }, 0) || 1;
   const cx = 130, cy = 92, rx = 112, ry = 64, dep = 24;
-  // 🔴 한 화면에 그래프가 둘 이상이면 id 가 겹쳐 앞 그래프 색을 따라간다 — 부를 때마다 다른 이름을 준다.
-  const uid = "sv" + (svPie.n = (svPie.n || 0) + 1) + "_";
-  const seg = mix.map(function (m, i) { return {nm: m[0], v: m[1], c: svColor(m[0], i)}; });
+  const seg = mix.map(function (m, i) { return {nm: m[0], v: m[1], c: m[2] || svColor(m[0], i)}; });
   let a = -Math.PI / 2;
   seg.forEach(function (s) { s.a0 = a; a += (s.v / tot) * 2 * Math.PI; s.a1 = a; });
+  const one = (seg.length === 1);
+  // 🔴 한 화면에 그래프가 둘 이상이면 id 가 겹쳐 앞 그래프 색을 따라간다 — 부를 때마다 다른 이름을 준다.
+  const uid = "sv" + (svPie.n = (svPie.n || 0) + 1) + "_";
 
   function wedge(a0, a1, dy) {
     const x0 = cx + rx * Math.cos(a0), y0 = cy + ry * Math.sin(a0) + dy;
@@ -1777,6 +1791,7 @@ function svPie(mix) {
     return 'M' + cx + ',' + (cy + dy) + ' L' + x0.toFixed(2) + ',' + y0.toFixed(2)
          + ' A' + rx + ',' + ry + ' 0 ' + ((a1 - a0) > Math.PI ? 1 : 0) + ',1 ' + x1.toFixed(2) + ',' + y1.toFixed(2) + ' Z';
   }
+  function disc(dy) { return '<ellipse cx="' + cx + '" cy="' + (cy + dy) + '" rx="' + rx + '" ry="' + ry + '"'; }
 
   let defs = "", sides = "", tops = "", labels = "";
   seg.forEach(function (s, i) {
@@ -1788,16 +1803,19 @@ function svPie(mix) {
   for (let d = dep; d >= 1; d--) {
     const t = 1 - d / dep;                                  // 아래로 갈수록 어둡게
     seg.forEach(function (s) {
-      sides += '<path d="' + wedge(s.a0, s.a1, d) + '" fill="' + svShade(s.c, 0.64 + 0.16 * t) + '"/>';
+      sides += one ? (disc(d) + ' fill="' + svShade(s.c, 0.64 + 0.16 * t) + '"/>')
+                   : ('<path d="' + wedge(s.a0, s.a1, d) + '" fill="' + svShade(s.c, 0.64 + 0.16 * t) + '"/>');
     });
   }
   seg.forEach(function (s, i) {
-    tops += '<path d="' + wedge(s.a0, s.a1, 0) + '" fill="url(#' + uid + i + ')" stroke="rgba(255,255,255,.5)" stroke-width="0.9"/>';
-    if (s.v / tot >= 0.05) {
-      const am = (s.a0 + s.a1) / 2;
-      labels += '<text x="' + (cx + rx * 0.64 * Math.cos(am)).toFixed(1) + '" y="' + (cy + ry * 0.64 * Math.sin(am) + 4.5).toFixed(1)
-             + '" font-size="13" font-weight="800" text-anchor="middle" fill="#fff"'
-             + ' stroke="rgba(0,0,0,.30)" stroke-width="2.6" style="paint-order:stroke">' + s.v + '%</text>';
+    tops += one ? (disc(0) + ' fill="url(#' + uid + i + ')" stroke="rgba(255,255,255,.5)" stroke-width="0.9"/>')
+                : ('<path d="' + wedge(s.a0, s.a1, 0) + '" fill="url(#' + uid + i + ')" stroke="rgba(255,255,255,.5)" stroke-width="0.9"/>');
+    const f = s.v / tot;
+    if (f >= 0.04) {
+      const am = one ? -Math.PI / 2 : (s.a0 + s.a1) / 2, k = one ? 0 : 0.64;
+      labels += '<text x="' + (cx + rx * k * Math.cos(am)).toFixed(1) + '" y="' + (cy + ry * k * Math.sin(am) + 4.5).toFixed(1)
+             + '" font-size="' + (f >= 0.06 ? 13 : 11) + '" font-weight="800" text-anchor="middle" fill="#fff"'
+             + ' stroke="rgba(0,0,0,.30)" stroke-width="2.6" style="paint-order:stroke">' + Math.round(f * 100) + '%</text>';
     }
   });
   return '<div style="text-align:center;margin:2px 0 8px">'
@@ -1809,31 +1827,147 @@ function svPie(mix) {
     + sides + tops + labels + '</svg></div>'
     + '<div class="svleg">' + seg.map(function (s) {
         return '<span><i style="background:linear-gradient(145deg,' + svShade(s.c, 1.24) + ',' + svShade(s.c, 0.8) + ')"></i>'
-             + s.nm + ' ' + s.v + '%</span>';
+             + s.nm + ' ' + (s.v / tot * 100).toFixed(1) + '%</span>';
       }).join("") + '</div>';
 }
+
+// ── 내 보유종목 읽기 ────────────────────────────────────────
+// 🔴 본앱이 폰에 저장한 것을 그대로 읽는다(brief_holds). 서버로 보내지 않는다.
+//    코인(coinS·coinF)은 주식앱에서 뺀다 — 한 앱에 섞지 않는다.
+const SV_CASH_KEY = "sv_cash_v1";
+function svCash() { try { return Math.max(0, +localStorage.getItem(SV_CASH_KEY) || 0); } catch (e) { return 0; } }
+function svCashSet(v) {
+  try { localStorage.setItem(SV_CASH_KEY, String(Math.max(0, Math.round(+String(v).replace(/[^0-9.]/g, "") || 0)))); } catch (e) {}
+  svRecoRender();
+}
+function svHolds() {
+  let a = [];
+  try { a = JSON.parse(localStorage.getItem("brief_holds") || "[]") || []; } catch (e) { a = []; }
+  // 미국주식은 원화로 환산해 견준다. 🔴 환율은 본앱이 받아 둔 값(fxKrw)을 쓴다 — 지어내지 않는다.
+  let fx = 0;
+  try { fx = (typeof fxKrw === "function") ? (fxKrw() || 0) : 0; } catch (e) { fx = 0; }
+  if (!(fx > 0)) fx = 1400;                                  // 아직 못 받았을 때만 어림값
+  return a.filter(function (h) { return h.mk === "kr" || h.mk === "us"; }).map(function (h) {
+    const px = (typeof mhPx === "object" && mhPx && mhPx[h.code]) ? mhPx[h.code] : h.buy;  // 값이 아직 없으면 매입가로
+    const won = (h.mk === "us") ? px * h.qty * fx : px * h.qty;
+    return {code: h.code, name: h.name, mk: h.mk, qty: h.qty, won: won, cls: svClassOf(h)};
+  });
+}
+// 갈래 가르기 — 이름에 ETF 브랜드가 들어가면 ETF 로 본다(우리 시장의 ETF 이름 규칙).
+const SV_ETF_RE = /KODEX|TIGER|KBSTAR|ARIRANG|HANARO|KOSEF|ACE |ACE_|PLUS |SOL |RISE |SPDR|iShares|Vanguard|Invesco|QQQ|SPY|VOO|VTI|ETF/i;
+function svClassOf(h) {
+  const etf = SV_ETF_RE.test(h.name || "") || SV_ETF_RE.test(h.code || "");
+  if (h.mk === "us") return etf ? "해외 ETF" : "해외 주식";
+  return etf ? "국내 주식 ETF" : "국내 주식";
+}
+// 표가 폰 폭을 넘지 않게 짧게 적는다 — 1억↑ 은 억, 1만↑ 은 만
+function svWon(n) {
+  n = Math.round(n);
+  if (n >= 100000000) return (n / 100000000).toFixed(2) + "억";
+  if (n >= 10000) return Math.round(n / 10000).toLocaleString() + "만";
+  return n.toLocaleString() + "원";
+}
+
+// ── 성향별 추천 — 보유종목과 합쳐 하나로 그린다 (사장님 2026-09-20) ──────
+//   총자산 = 보유 평가금액 + 투자 가능 현금
+//   갈래별 목표금액에서 **이미 가진 만큼을 빼고**, 모자란 만큼만 추천으로 채운다.
+//   이미 가진 종목은 추천 목록에 다시 올리지 않는다(중복 제거).
 function svRecoRender() {
   const box = document.getElementById("svRecoBody");
   if (!box) return;
   const p = svGet();
   if (!p) { box.innerHTML = '<div class="soonrow">성향 검사를 마치면 맞는 상품을 보여 드립니다.</div>'; return; }
   const g = SV_GRADE[p.grade];
-  let h = '<div class="svsub">' + g.nm + '에 맞춘 자산 배분 예시입니다. 금액은 고객님이 정하시고, 주문은 거래하시는 증권사 앱에서 하십니다.</div>'
-        + svPie(g.mix) + '<table class="mhtab"><tr><th>갈래</th><th>비중</th><th>상품</th></tr>';
+  const holds = svHolds(), cash = svCash();
+  const heldWon = holds.reduce(function (s, h) { return s + h.won; }, 0);
+  const total = heldWon + cash;
+
+  let h = '<div class="svsub">' + g.nm + '에 맞춘 자산 배분입니다. 이미 가지고 계신 종목은 그대로 두고, 모자란 갈래만 채웁니다.</div>';
+  // 투자 가능 현금 — 직접 넣는다(계좌를 읽지 않는다)
+  h += '<div class="svcash">투자 가능 현금 '
+     + '<input id="svCashIn" inputmode="numeric" placeholder="예: 5,000,000" value="' + (cash ? cash.toLocaleString() : "") + '"'
+     + ' onchange="svCashSet(this.value)">원</div>';
+  if (!(total > 0)) {
+    h += '<div class="soonrow">위 칸에 현금을 넣거나, 아래 <b>내 보유종목</b>에 가진 종목을 추가하시면 포트폴리오를 그려 드립니다.</div>';
+    h += DISC_TAIL();
+    box.innerHTML = h;
+    return;
+  }
+
+  // ① 갈래별 목표금액 · 이미 가진 금액
+  const want = {}, have = {};
+  g.mix.forEach(function (m) { want[m[0]] = total * m[1] / 100; have[m[0]] = 0; });
+  holds.forEach(function (x) { have[x.cls] = (have[x.cls] || 0) + x.won; });
+
+  // ② 갈래별로 모자란 만큼 추천 종목을 채운다 — 이미 가진 종목(code)은 빼고
+  const heldCodes = {};
+  holds.forEach(function (x) { heldCodes[String(x.code).replace(/\.US$/, "")] = 1; });
+  const buys = [];                                   // {name, code, won, cls}
   g.mix.forEach(function (m) {
-    let prods = (SV_PROD[m[0]] || []).map(function (x) { return x[0] + (x[1] && /^\d/.test(x[1]) ? ' <span class="dplbl">' + x[1] + '</span>' : ''); });
-    if (m[0] === "국내 주식" && SVR && SVR.kr && SVR.kr.buy12) prods = SVR.kr.buy12.slice(0, 3).map(function (r) { return r.name + ' <span class="dplbl">' + r.code + '</span>'; });
-    if (m[0] === "해외 주식" && SVR && SVR.us && SVR.us.buy12) prods = SVR.us.buy12.slice(0, 3).map(function (r) { return r.code; });
-    if (!prods.length) prods = ["-"];
-    h += '<tr><td style="text-align:left">' + m[0] + '</td><td>' + m[1] + '%</td><td style="text-align:left">' + prods.join("<br>") + '</td></tr>';
+    const cls = m[0], gap = (want[cls] || 0) - (have[cls] || 0);
+    if (gap <= total * 0.005) return;                // 0.5% 밑이면 굳이 사라고 하지 않는다
+    let cand = [];
+    if (cls === "국내 주식" && SVR && SVR.kr && SVR.kr.buy12) {
+      cand = SVR.kr.buy12.map(function (r) { return {name: r.name, code: r.code}; });
+    } else if (cls === "해외 주식" && SVR && SVR.us && SVR.us.buy12) {
+      cand = SVR.us.buy12.map(function (r) { return {name: r.code, code: r.code}; });
+    } else {
+      cand = (SV_PROD[cls] || []).map(function (x) { return {name: x[0], code: x[1]}; });
+    }
+    cand = cand.filter(function (c) { return !heldCodes[String(c.code).replace(/\.US$/, "")]; });
+    if (!cand.length) { buys.push({name: cls, code: "", won: gap, cls: cls, none: true}); return; }
+    const n = Math.min(3, cand.length), each = gap / n;
+    for (let i = 0; i < n; i++) buys.push({name: cand[i].name, code: cand[i].code, won: each, cls: cls});
+  });
+
+  // ③ 파이 — 보유 + 새로 살 것 + 남은 현금
+  const spend = buys.reduce(function (s, b) { return s + b.won; }, 0);
+  const left = Math.max(0, cash - spend);
+  const HOLD_C = "#5AA189", BUY_C = "#3D6B8E", CASH_C = "#9AA3AB";
+  const pie = [];
+  holds.slice().sort(function (a, b) { return b.won - a.won; })
+       .forEach(function (x) { pie.push([x.name + " (보유)", x.won, svShade(HOLD_C, 0.82 + 0.16 * (pie.length % 3))]); });
+  buys.forEach(function (b) { pie.push([b.name + " (추천)", b.won, svShade(BUY_C, 0.85 + 0.18 * (pie.length % 3))]); });
+  if (left > total * 0.005) pie.push(["현금", left, CASH_C]);
+  h += svPie(pie);
+  h += '<div class="svsub">총자산 ' + svWon(total) + ' · 보유 ' + svWon(heldWon) + ' · 현금 ' + svWon(cash) + '</div>';
+
+  // ④ 표 — 갈래별 목표·현재, 그리고 살 것
+  h += '<table class="mhtab"><tr><th>갈래</th><th>목표 → 지금</th><th>할 일</th></tr>';
+  g.mix.forEach(function (m) {
+    const cls = m[0], w = want[cls] || 0, v = have[cls] || 0, d = w - v;
+    h += '<tr><td style="text-align:left">' + cls + '</td>'
+       + '<td>' + m[1] + '% → ' + (total ? (v / total * 100).toFixed(1) : "0.0") + '%</td>'
+       + '<td>' + (Math.abs(d) <= total * 0.005 ? "맞음"
+           : (d > 0 ? ('<span class="svbuy">+' + svWon(d) + '</span>')
+                    : ('<span class="svover">−' + svWon(-d) + '</span>'))) + '</td></tr>';
   });
   h += '</table>';
-  if (SVR && SVR.kr && SVR.kr.regime) h += '<div class="svsub">오늘 장세 · 국내 ' + (SVR.kr.regime.good ? "좋음" : "나쁨")
-     + ' · 미국 ' + ((SVR.us && SVR.us.regime && SVR.us.regime.good) ? "좋음" : "나쁨") + ' (' + (SVR.at || "") + ' 기준)</div>';
-  h += '<div class="svsub">특정 종목의 매수·매도를 추천하는 것이 아니라 성향에 맞는 갈래를 보여 드리는 것이며, 사고파는 결정과 주문은 고객님이 증권사에서 하십니다.</div>';
+
+  if (buys.length) {
+    h += '<div class="svsub" style="margin-top:8px"><b>채울 후보</b> — 이미 가지고 계신 종목은 뺐습니다.</div>';
+    h += '<table class="mhtab"><tr><th>종목</th><th>금액</th></tr>';
+    buys.forEach(function (b) {
+      h += '<tr><td style="text-align:left">' + (b.none ? "(후보 없음)" : b.name)
+         + (b.code ? ' <span class="dplbl">' + b.code + '</span>' : '')
+         + '<div class="dplbl" style="margin:0">' + b.cls + '</div>'
+         + '</td><td>' + svWon(b.won) + '</td></tr>';
+    });
+    h += '</table>';
+  } else {
+    h += '<div class="svsub" style="margin-top:8px">지금 배분이 성향에 맞습니다. 더 사실 것이 없습니다.</div>';
+  }
+  if (SVR && SVR.kr && SVR.kr.regime) {
+    h += '<div class="svsub">오늘 장세 · 국내 ' + (SVR.kr.regime.good ? "좋음" : "나쁨")
+       + ' · 미국 ' + ((SVR.us && SVR.us.regime && SVR.us.regime.good) ? "좋음" : "나쁨") + ' (' + (SVR.at || "") + ' 기준)</div>';
+  }
+  h += DISC_TAIL();
   box.innerHTML = h;
 }
-
+function DISC_TAIL() {
+  return '<div class="svsub">특정 종목의 매수·매도를 추천하는 것이 아니라 성향에 맞는 갈래를 보여 드리는 것이며,'
+       + ' 사고파는 결정과 주문은 고객님이 증권사에서 하십니다.</div>';
+}
 // ── [주문] — 증권사 고르고 그 MTS 를 연다 (주문은 MTS 에서) ─────────────
 // 🔴 우리 앱은 주문을 만들지도, 보내지도 않는다. 앱을 여는 것으로 끝난다.
 // 🔴 패키지 이름은 2026-09-20 에 Play 스토어에서 하나씩 열어 200 을 확인한 것들이다(추측 금지).
@@ -1865,6 +1999,17 @@ function svOrderToggle() {
   if (!b) return;
   b.innerHTML = b.innerHTML ? "" : svOrderPanel();
 }
+// 보유종목을 넣거나 지우면 포트폴리오를 다시 그린다 — 본앱 mhSave 를 감싼다.
+setTimeout(function () {
+  try {
+    if (typeof mhSave === "function" && !mhSave._sv) {
+      const _o = mhSave;
+      window.mhSave = function () { const r = _o.apply(this, arguments); try { svRecoRender(); } catch (e) {} return r; };
+      window.mhSave._sv = 1;
+    }
+  } catch (e) {}
+}, 1500);
+setInterval(function () { try { svRecoRender(); } catch (e) {} }, 60000);   // 시세가 들어오면 금액도 따라 움직인다
 setTimeout(function () { try { svRender(); svRecoLoad(); } catch (e) {} }, 800);
 setInterval(function () { try { svRecoLoad(); } catch (e) {} }, 30 * 60000);
 
