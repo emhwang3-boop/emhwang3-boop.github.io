@@ -306,6 +306,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
     <li><span class="kko">과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.</span><span class="ken">Past performance does not guarantee future returns, and this service carries the possibility of loss of principal.</span></li>
     <li><span class="kko">본 서비스는 1:1 개별 투자 상담을 진행하지 않는 단방향 정보 제공 서비스입니다.</span><span class="ken">This service is a one-way information service and does not provide one-on-one individual investment consultation.</span></li>
     <li><span class="kko">이 앱은 단기 트레이딩용으로 사용하기에는 적합하지 않으며, 일봉 기준으로 중장기 포트폴리오 투자를 지원하기 위해 설계되었습니다.</span><span class="ken">This app is not suitable for short-term trading; it is designed to support medium- to long-term portfolio investing based on daily charts.</span></li>
+    <li><span class="kko">가상포트폴리오 기능은 고객님이 선택한 종목의 과거 데이터 기반 단순 시뮬레이션 결과이며, 어떠한 투자 권유나 수익 보장도 하지 않습니다.</span><span class="ken">The virtual portfolio feature is a simple simulation based on past data for the securities you selected; it is neither an investment recommendation nor a guarantee of returns.</span></li>
   </ul>
   <button class="svbtn" onclick="discShow()"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
@@ -1637,7 +1638,7 @@ function keApply() {
 // 🔴 이 앱에는 가입 절차가 없다(고객 정보를 받지 않으므로). 그래서 **첫 실행 화면**이 가입 화면 자리다.
 //    여기서 네 문구를 보여 주고 확인을 받는다. 확인 기록은 이 폰에만 남는다(서버로 보내지 않는다).
 // 🔴 문구는 사장님이 주신 그대로다. `build_apps.py` 의 DISC_A~D 와 **같은 글이어야 한다**(영어도 같이).
-var DISC_KEY = "disc_ok_v3";   // 🔴 문구가 바뀌면 올린다 — 이미 확인한 분들께 한 번 더 받는다 (사장님 2026-09-20)
+var DISC_KEY = "disc_ok_v4";   // v4: 가상포트폴리오 문구 추가(2026-09-21)   // 🔴 문구가 바뀌면 올린다 — 이미 확인한 분들께 한 번 더 받는다 (사장님 2026-09-20)
 var DISC_LINES = [
   ["본 서비스는 특정 종목의 매수·매도를 권유하지 않으며, 투자 판단의 책임은 본인에게 있습니다.",
    "This service does not recommend buying or selling any specific security; responsibility for investment decisions rests with you."],
@@ -1647,6 +1648,8 @@ var DISC_LINES = [
    "This service is a one-way information service and does not provide one-on-one individual investment consultation."],
   ["이 앱은 단기 트레이딩용으로 사용하기에는 적합하지 않으며, 일봉 기준으로 중장기 포트폴리오 투자를 지원하기 위해 설계되었습니다.",
    "This app is not suitable for short-term trading; it is designed to support medium- to long-term portfolio investing based on daily charts."],
+  ["가상포트폴리오 기능은 고객님이 선택한 종목의 과거 데이터 기반 단순 시뮬레이션 결과이며, 어떠한 투자 권유나 수익 보장도 하지 않습니다.",
+   "The virtual portfolio feature is a simple simulation based on past data for the securities you selected; it is neither an investment recommendation nor a guarantee of returns."],
 ];
 
 function discAgreed() {
