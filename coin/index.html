@@ -260,7 +260,8 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 </div>
 
 <div class="card" id="coin2">
-  <h3>코인 조회 <span class="tag live">● 바이낸스</span></h3>
+  <h3>코인 조회 <span class="tag live">● 바이낸스 현물</span></h3>
+  <div id="cvMkt" class="stktf" style="margin:4px 0 8px"><button data-mk="spot" class="on">현물</button><button data-mk="perp">선물</button></div>
   <input id="coinq" class="stkq" placeholder="코인 심볼 (예: BTC, ETH, SOL)" autocomplete="off">
   <div id="coinResults" class="stkres"></div>
   <div id="coinDetail"></div>
@@ -941,7 +942,10 @@ function c21Calc(key,B,CH){
 function makeChart(cid,opt){
   opt=opt||{};const cv=E(cid);
   if(!cv)return {setData:function(){},patchLast:function(){}};   // 칸이 없으면 조용히 넘어간다const NF=opt.fmt||(v=>Math.round(v).toLocaleString());
-  const PAGES=C21_PAGES.filter(p=>!p[4]||opt.liq);
+  // 🔴 청산맵 판은 **선물일 때만** 보인다 (사장님 2026-09-20 "현물이면 청산맵을 보여주면 안 되는 거로").
+  //    현물에는 청산이 없으므로 그 판 자체를 목록에서 뺀다. setLiq() 로 오가며 바꾼다.
+  let LIQ=!!opt.liq;
+  let PAGES=C21_PAGES.filter(p=>!p[4]||LIQ);
   let CH=null,VIEW={start:0,count:80},CROSS=null,GEO=null,CALC={},OVER=0,ODIR=0,MEAS=null,rdown=false,mTimer=null;
   const CCY=()=>cid==="coinChart"?"USDT":((typeof stkMarket!=="undefined"&&stkMarket==="us")?"$":"원");
   const SK="c21_"+cid;let ST0={base:0,ovs:[],page:0};
@@ -1183,7 +1187,15 @@ function makeChart(cid,opt){
   cv.addEventListener("touchend",()=>{const w=down;down=false;pinch=null;clearTimeout(mTimer);if(w&&CH)release();});
   function patchLast(price){if(!CH||!CH.bars.length||!(price>0))return;const b=CH.bars[CH.bars.length-1];b[4]=price;if(price>b[2])b[2]=price;if(price<b[3])b[3]=price;CALC={};draw();}
   paintBar();
-  return {setData,patchLast,flip,state:()=>ST0,meas:()=>MEAS,repaint:()=>{paintBar();draw();}};
+  function setLiq(on){
+    on=!!on; if(on===LIQ)return;
+    LIQ=on; PAGES=C21_PAGES.filter(p=>!p[4]||LIQ);
+    // 켜 두었던 청산맵은 현물로 오면 내린다. 보던 판 번호도 범위 안으로 당긴다.
+    ST0.ovs=(ST0.ovs||[]).filter(k=>PAGES.some(p=>p[0]===k));
+    ST0.page=Math.max(0,Math.min(PAGES.length,ST0.page|0));
+    save(); paintBar(); draw();
+  }
+  return {setData,patchLast,flip,setLiq,state:()=>ST0,meas:()=>MEAS,repaint:()=>{paintBar();draw();}};
 }
 
 
@@ -1236,6 +1248,23 @@ setTimeout(function () { try { c21Coach(0); } catch (e) {} }, 4000);
 const coinFmt=v=>v>=1000?Math.round(v).toLocaleString():(v>=1?v.toFixed(2):(+v.toPrecision(4)).toString());
 const stkChart=makeChart("stkChart",{walls:true,fmt:v=>Math.abs(v)>=1000?Math.round(v).toLocaleString():(+v).toLocaleString(undefined,{maximumFractionDigits:2})});
 const coinChart=makeChart("coinChart",{walls:true,liq:true,fmt:coinFmt,year:365});
+// 🔴 현물/선물 고르기 (사장님 2026-09-20). 현물이면 **청산맵 판을 감춘다** — 현물엔 청산이 없다.
+//    선물은 바이낸스 USDT 무기한(fapi). 심볼은 현물과 같다(BTCUSDT).
+let cvMkt="spot";
+function cvApi(){return cvMkt==="perp"?"https://fapi.binance.com/fapi/v1":"https://api.binance.com/api/v3";}
+function cvMktSet(m){
+  if(m===cvMkt)return; cvMkt=m;
+  try{document.querySelectorAll("#cvMkt button").forEach(function(b){b.className=(b.dataset.mk===m)?"on":"";});}catch(e){}
+  try{coinChart.setLiq(m==="perp");}catch(e){}
+  try{const t=document.querySelector("#coin2 .tag");if(t)t.textContent="● 바이낸스 "+(m==="perp"?"선물":"현물");}catch(e){}
+  try{if(coinSym){loadCoinDetail();loadCoin2Chart();}}catch(e){}
+}
+document.addEventListener("click",function(e){
+  const b=e.target.closest&&e.target.closest("#cvMkt button");
+  if(b&&b.dataset.mk)cvMktSet(b.dataset.mk);
+});
+try{coinChart.setLiq(false);}catch(e){}   // 첫 화면은 현물
+
 
 // ---- 코인 조회 (바이낸스, 클라이언트) ----
 let coinSym=null, coinTf="D", coinTimer=null, coinSearchTimer=null, coinList=null, coinLast=[];
@@ -1261,7 +1290,7 @@ function pickCoin(sym,name){
   E("coinDetail").innerHTML='<div class="soonrow">'+L("loading")+'</div>';
   loadCoinDetail();loadCoin2Chart();clearInterval(coinTimer);coinTimer=setInterval(loadCoinDetail,3000);}
 async function loadCoinDetail(){if(!coinSym)return;
-  try{const d=await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol="+coinSym).then(r=>r.json());
+  try{const d=await fetch(cvApi()+"/ticker/24hr?symbol="+coinSym).then(r=>r.json());
     const p=parseFloat(d.priceChangePercent),cls=p>0?"up":(p<0?"dn":"fl"),arw=p>0?"▲":(p<0?"▼":"");
     E("coinDetail").innerHTML='<div class="stkhd">'+coinSym.replace("USDT","")+' <span style="color:var(--sub);font-size:13px;font-weight:600">'+coinSym+'</span></div>'
      +'<table class="stktab">'
@@ -1277,7 +1306,7 @@ document.querySelectorAll("#coinTf button").forEach(b=>b.onclick=()=>{coinTf=b.d
   document.querySelectorAll("#coinTf button").forEach(x=>x.classList.toggle("on",x===b));loadCoin2Chart();});
 async function loadCoin2Chart(){if(!coinSym)return;E("coinChartLbl").textContent=L("chartLoading");
   const iv={"3":"3m","5":"5m","15":"15m","30":"30m","60":"1h","D":"1d"}[coinTf]||"1d";
-  let kl;try{kl=await fetch("https://api.binance.com/api/v3/klines?symbol="+coinSym+"&interval="+iv+"&limit=400").then(r=>r.json());}catch(e){E("coinChartLbl").textContent=L("chartNone");return;}
+  let kl;try{kl=await fetch(cvApi()+"/klines?symbol="+coinSym+"&interval="+iv+"&limit=400").then(r=>r.json());}catch(e){E("coinChartLbl").textContent=L("chartNone");return;}
   if(!Array.isArray(kl)||!kl.length){E("coinChartLbl").textContent=L("chartNone");return;}
   const bars=kl.map(c=>[coinFmtTime(c[0],coinTf),+c[1],+c[2],+c[3],+c[4],+c[5]]);
   const raw=kl.map(c=>[c[0],+c[1],+c[2],+c[3],+c[4],+c[7]]);
