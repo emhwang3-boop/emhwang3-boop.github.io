@@ -2114,8 +2114,7 @@ function cvRecoRender() {
 
   // ① 자산 배분 — 비율만 그린다
   h += '<div class="svsub"><b>자산 배분</b> — BTC 45 · ETH 45 · 알트 10, 그 안에서 '
-     + '<b>현물 ' + CV_SPOT + ' · 선물 ' + (100 - CV_SPOT) + '</b>. 선물은 청산이 있어 적게 둡니다. '
-     + '코인은 골라 드리고, 어느 코인에 얼마를 넣을지는 고객님이 정하십니다.</div>';
+     + '<b>현물 ' + CV_SPOT + ' · 선물 ' + (100 - CV_SPOT) + '</b>. 선물은 청산이 있어 적게 둡니다.</div>';
   h += svPie(CV_MIX.map(function (m) { return [m[0], m[1]]; }));
 
   // ② 지금 내 비중과 견주기
