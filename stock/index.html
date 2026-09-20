@@ -118,6 +118,13 @@ body.light .mk img.lt{display:block}
 .svbuy{color:#1c7ed6;font-weight:700}
 .svover{color:#e8590c;font-weight:700}
 .dplbl{color:var(--sub);font-size:10.5px;margin-left:4px}
+.cvwarn{margin-top:10px;padding:11px 12px;border:1px solid #e03131;border-radius:10px;background:rgba(224,49,49,.08);
+  color:#e03131;font-size:12.5px;line-height:1.65}
+.cvok{margin-top:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;font-size:11.5px;color:var(--sub);line-height:1.6}
+.cvrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.cvrow input{flex:1;min-width:92px;padding:7px 9px;border:1px solid var(--bd);border-radius:9px;
+  background:var(--bg);color:var(--nm);font:inherit;font-size:13px}
+.cvadd{padding:7px 14px;border:0;border-radius:9px;background:#f59f00;color:#fff;font-weight:800;font-size:13px;cursor:pointer}
 .discCard .discList{margin:0;padding-left:16px}
 .discCard .discList li{font-size:12.5px;color:var(--sub);line-height:1.65;margin:6px 0}
 .discNote{margin-top:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;
@@ -1635,16 +1642,11 @@ function appOpen(pkg, name) {
 
 </script>
 <script>
-const RECO_URL="https://emhwang3-boop.github.io/morning-brief/reco.json";
-// 데일리 브리프 라이브 — 주식앱 전용 (2026-09-20)
-// 🔴 고객 정보를 서버로 보내지 않는다. 성향 답·증권사 선택·보유 입력은 모두 이 폰에만 저장한다.
-// 🔴 주문은 하지 않는다. [주문]은 고객이 고른 증권사 MTS 를 여는 것으로 끝난다(로그인 화면까지).
-// 🔴 설문·배점·등급 구간은 **금융투자협회 표준투자권유준칙 별지 제1호(투자자정보 확인서)·제2호(배점 기준)** 그대로다.
-//    지어내지 않는다. 문항 7개 합 32점 → 100점 환산 → 20/40/60/80 으로 5등급.
-//    (원문 확인: 증권사 투자권유준칙에 실린 별지 제1호·제2호, 2026-09-20)
+// 공용 — 투자 성향 설문 · 등급 · 입체 원그래프 (주식앱·코인앱이 같이 쓴다, 2026-09-20)
+// 🔴 설문·배점·등급 구간은 금융투자협회 표준투자권유준칙 별지 제1호·제2호 그대로다.
+// 🔴 답은 이 폰에만 저장한다(sv_profile_v2). 서버로 보내지 않는다.
 
 const SV_KEY = "sv_profile_v2";      // {at:"YYYY-MM-DD", raw:n, score:n(100점), grade:i, ans:[...]}
-const SV_BROKER = "sv_broker_v1";    // 내 증권사 코드
 
 const SV_MAX = 32;                   // 별지 제2호 — 1~7번 합 총점 32점
 const SV_Q = [
@@ -1681,13 +1683,6 @@ const SV_GRADE = [
   {nm: "적극투자형", mix: [["정기예금", 10], ["국내 주식 ETF", 20], ["해외 ETF", 30], ["국내 주식", 20], ["해외 주식", 20]]},
   {nm: "공격투자형", mix: [["국내 주식 ETF", 10], ["해외 ETF", 30], ["국내 주식", 25], ["해외 주식", 35]]},
 ];
-// 갈래별 대표 상품 — 주식은 추천 규칙(reco.json)에서 그날 후보를 채운다
-const SV_PROD = {
-  "정기예금": [["은행 정기예금", "은행별 금리 비교 후 가입"]],
-  "국내 채권 ETF": [["KODEX 국고채30년액티브", "439870"], ["TIGER 국고채3년", "114820"]],
-  "국내 주식 ETF": [["KODEX 200", "069500"], ["TIGER 200", "102110"]],
-  "해외 ETF": [["TIGER 미국S&P500", "360750"], ["TIGER 미국나스닥100", "133690"]],
-};
 // 색은 무지개로 흩뿌리지 않는다. 배분은 안전한 쪽 → 위험한 쪽 차례라서
 // 차가운 남색에서 따뜻한 테라코타로 이어지는 한 줄기 색띠로 둔다(채도 낮춤).
 const SV_PAL = ["#3D6B8E", "#4C93A6", "#5AA189", "#C9A03F", "#C4764F", "#A85A66", "#7A6B93"];
@@ -1708,7 +1703,6 @@ function svShade(hex, f) {
 
 function svGet() { try { return JSON.parse(localStorage.getItem(SV_KEY) || "null"); } catch (e) { return null; } }
 function svSave(o) { try { localStorage.setItem(SV_KEY, JSON.stringify(o)); } catch (e) {} }
-function svBroker() { try { return localStorage.getItem(SV_BROKER) || ""; } catch (e) { return ""; } }
 function svDaysLeft(at) {
   const d = new Date(at); d.setFullYear(d.getFullYear() + 1);
   return Math.ceil((d - new Date()) / 86400000);
@@ -1734,7 +1728,7 @@ function svQ(i) {
     const g = svGradeOf(raw);
     svSave({at: new Date().toISOString().slice(0, 10), raw: raw, score: svScore100(raw), grade: g, ans: SV_ANS.slice()});
     svRender();
-    try { svRecoRender(); } catch (e) {}
+    try { if (window.svAfterProfile) svAfterProfile(); } catch (e) {}
     return;
   }
   const q = SV_Q[i];
@@ -1762,14 +1756,6 @@ function svRender() {
     + '<button class="svbtn" onclick="svStart()">다시 검사</button>';
 }
 
-// ── 성향별 추천 ────────────────────────────────────────
-let SVR = null;
-async function svRecoLoad() {
-  // 🔴 추천 파일을 기다리지 말고 먼저 그린다 — 안 오면 화면이 영영 빈 채로 남는다(2026-09-20).
-  try { svRecoRender(); } catch (e) {}
-  try { SVR = await fetch(RECO_URL + "?t=" + Date.now(), {cache: "no-store"}).then(function (r) { return r.json(); }); } catch (e) {}
-  try { svRecoRender(); } catch (e) {}
-}
 // 입체 원그래프 — 타원으로 눕히고 옆면을 겹쳐 쌓아 두께를 만든다 (사장님 2026-09-20).
 //   옆면은 조각 전체를 아래로 한 칸씩 내려 그린 뒤 겉면을 덮는다. 그러면 앞쪽 옆면만 남아 두께로 보인다.
 // 입체 원그래프 — 타원으로 눕히고 옆면을 겹쳐 쌓아 두께를 만든다 (사장님 2026-09-20).
@@ -1831,6 +1817,34 @@ function svPie(mix) {
       }).join("") + '</div>';
 }
 
+
+</script>
+<script>
+const RECO_URL="https://emhwang3-boop.github.io/morning-brief/reco.json";
+// 데일리 브리프 라이브 — 주식앱 전용 (2026-09-20)
+// 🔴 설문·등급·원그래프는 공용 profile.js 에 있다(코인앱과 같이 쓴다).
+// 🔴 고객 정보를 서버로 보내지 않는다. 성향 답·증권사 선택·보유 입력은 모두 이 폰에만 저장한다.
+// 🔴 주문은 하지 않는다. [주문]은 고객이 고른 증권사 MTS 를 여는 것으로 끝난다(로그인 화면까지).
+
+window.svAfterProfile = function () { try { svRecoRender(); } catch (e) {} };
+
+const SV_BROKER = "sv_broker_v1";    // 내 증권사 코드
+function svBroker() { try { return localStorage.getItem(SV_BROKER) || ""; } catch (e) { return ""; } }
+
+const SV_PROD = {
+  "정기예금": [["은행 정기예금", "은행별 금리 비교 후 가입"]],
+  "국내 채권 ETF": [["KODEX 국고채30년액티브", "439870"], ["TIGER 국고채3년", "114820"]],
+  "국내 주식 ETF": [["KODEX 200", "069500"], ["TIGER 200", "102110"]],
+  "해외 ETF": [["TIGER 미국S&P500", "360750"], ["TIGER 미국나스닥100", "133690"]],
+};
+// ── 성향별 추천 ────────────────────────────────────────
+let SVR = null;
+async function svRecoLoad() {
+  // 🔴 추천 파일을 기다리지 말고 먼저 그린다 — 안 오면 화면이 영영 빈 채로 남는다(2026-09-20).
+  try { svRecoRender(); } catch (e) {}
+  try { SVR = await fetch(RECO_URL + "?t=" + Date.now(), {cache: "no-store"}).then(function (r) { return r.json(); }); } catch (e) {}
+  try { svRecoRender(); } catch (e) {}
+}
 // ── 내 보유종목 읽기 ────────────────────────────────────────
 // 🔴 본앱이 폰에 저장한 것을 그대로 읽는다(brief_holds). 서버로 보내지 않는다.
 //    코인(coinS·coinF)은 주식앱에서 뺀다 — 한 앱에 섞지 않는다.
