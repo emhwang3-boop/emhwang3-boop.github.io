@@ -118,6 +118,13 @@ body.light .mk img.lt{display:block}
 .svbuy{color:#1c7ed6;font-weight:700}
 .svover{color:#e8590c;font-weight:700}
 .dplbl{color:var(--sub);font-size:10.5px;margin-left:4px}
+.cvwarn{margin-top:10px;padding:11px 12px;border:1px solid #e03131;border-radius:10px;background:rgba(224,49,49,.08);
+  color:#e03131;font-size:12.5px;line-height:1.65}
+.cvok{margin-top:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;font-size:11.5px;color:var(--sub);line-height:1.6}
+.cvrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.cvrow input{flex:1;min-width:92px;padding:7px 9px;border:1px solid var(--bd);border-radius:9px;
+  background:var(--bg);color:var(--nm);font:inherit;font-size:13px}
+.cvadd{padding:7px 14px;border:0;border-radius:9px;background:#f59f00;color:#fff;font-weight:800;font-size:13px;cursor:pointer}
 .discCard .discList{margin:0;padding-left:16px}
 .discCard .discList li{font-size:12.5px;color:var(--sub);line-height:1.65;margin:6px 0}
 .discNote{margin-top:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;
@@ -218,6 +225,22 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 
 
 
+
+<div class="card svcard" id="cvGate">
+  <h3>투자 성향</h3>
+  <div id="cvGateBody"></div>
+</div>
+
+<div class="card svcard" id="cvHold">
+  <h3>내 보유 코인</h3>
+  <div id="cvHoldBody"></div>
+</div>
+
+<div class="card svcard" id="cvReco">
+  <h3>코인 추천 — 헐 규칙</h3>
+  <div id="cvRecoBody"></div>
+  <div class="discNote">본 서비스는 특정 종목의 매수·매도를 추천하지 않으며, 투자 판단의 책임은 본인에게 있습니다.<br>과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.</div>
+</div>
 
 <div class="card" id="coin2">
   <h3>코인 조회 <span class="tag live">● 바이낸스</span></h3>
@@ -1666,6 +1689,185 @@ function appOpen(pkg, name) {
 
 </script>
 <script>
+// 공용 — 투자 성향 설문 · 등급 · 입체 원그래프 (주식앱·코인앱이 같이 쓴다, 2026-09-20)
+// 🔴 설문·배점·등급 구간은 금융투자협회 표준투자권유준칙 별지 제1호·제2호 그대로다.
+// 🔴 답은 이 폰에만 저장한다(sv_profile_v2). 서버로 보내지 않는다.
+
+const SV_KEY = "sv_profile_v2";      // {at:"YYYY-MM-DD", raw:n, score:n(100점), grade:i, ans:[...]}
+
+const SV_MAX = 32;                   // 별지 제2호 — 1~7번 합 총점 32점
+const SV_Q = [
+  {q: "고객님의 연령대는 어떻게 되십니까?",
+   a: [["19세 이하", 4], ["20세 ~ 40세", 4], ["41세 ~ 50세", 3], ["51세 ~ 60세", 2], ["61세 이상", 1]]},
+  {q: "투자가능 기간은 얼마나 되십니까?",
+   a: [["6개월 미만", 1], ["6개월 이상 ~ 1년 미만", 2], ["1년 이상 ~ 2년 미만", 3], ["2년 이상 ~ 3년 미만", 4], ["3년 이상", 5]]},
+  {q: "투자경험과 가장 가까운 금융투자상품은 어느 것입니까?", sub: "여럿에 해당하면 가장 높은 쪽을 고르십니다.",
+   a: [["안정형 상품 (은행 예·적금, 국채, 지방채, 보증채, MMF, CMA 등)", 1],
+       ["안정추구형 상품 (금융채, 신용도 높은 회사채, 채권형펀드, 원금보장형 ELS 등)", 2],
+       ["위험중립형 상품 (신용도 중간 등급 회사채, 원금 일부만 보장되는 ELS, 혼합형 펀드 등)", 3],
+       ["적극투자형 상품 (신용도 낮은 회사채, 주식, 원금비보장 ELS, 시장수익률 추구 주식형펀드 등)", 4],
+       ["공격형 상품 (ELW, 선물·옵션, 시장수익률 이상 추구 주식형펀드, 파생상품 투자펀드, 주식 신용거래 등)", 5]]},
+  {q: "금융상품 투자에 대한 본인의 지식수준이 어느 정도라고 생각하십니까?",
+   a: [["매우 낮은 수준 — 투자의사결정을 스스로 내려본 경험이 없는 정도", 1],
+       ["낮은 수준 — 주식과 채권의 차이를 구별할 수 있는 정도", 2],
+       ["높은 수준 — 투자할 수 있는 대부분의 금융상품의 차이를 구별할 수 있는 정도", 3],
+       ["매우 높은 수준 — 금융상품을 비롯하여 모든 투자대상 상품의 차이를 이해할 수 있는 정도", 4]]},
+  {q: "투자자금이 전체 금융자산(부동산 등 제외) 중 어느 정도의 비중을 차지합니까?",
+   a: [["10% 미만", 5], ["10% 이상 ~ 20% 미만", 4], ["20% 이상 ~ 30% 미만", 3], ["30% 이상 ~ 40% 미만", 2], ["40% 이상", 1]]},
+  {q: "고객님의 수입원을 가장 잘 나타내는 것은 어느 것입니까?",
+   a: [["현재 일정한 수입이 발생하고 있으며, 향후 현재 수준을 유지하거나 증가할 것으로 예상", 3],
+       ["현재 일정한 수입이 발생하고 있으나, 향후 감소하거나 불안정할 것으로 예상", 2],
+       ["현재 일정한 수입이 없으며, 연금이 주 수입원임", 1]]},
+  {q: "고객님의 손실 감내도는 어느 정도이십니까?",
+   a: [["반드시 원금 보전", -2], ["10% 미만까지는 손실 감수", 2], ["20% 미만 손실 감수", 4],
+       ["기대수익이 높다면 위험이 높아도 상관하지 않겠다", 6]]},
+];
+// 등급: 이름 · 자산 배분(%) — 안전한 쪽부터
+const SV_GRADE = [
+  {nm: "안정형", mix: [["정기예금", 70], ["국내 채권 ETF", 20], ["국내 주식 ETF", 10]]},
+  {nm: "안정추구형", mix: [["정기예금", 50], ["국내 채권 ETF", 25], ["국내 주식 ETF", 15], ["해외 ETF", 10]]},
+  {nm: "위험중립형", mix: [["정기예금", 30], ["국내 채권 ETF", 20], ["국내 주식 ETF", 20], ["해외 ETF", 20], ["국내 주식", 10]]},
+  {nm: "적극투자형", mix: [["정기예금", 10], ["국내 주식 ETF", 20], ["해외 ETF", 30], ["국내 주식", 20], ["해외 주식", 20]]},
+  {nm: "공격투자형", mix: [["국내 주식 ETF", 10], ["해외 ETF", 30], ["국내 주식", 25], ["해외 주식", 35]]},
+];
+// 색은 무지개로 흩뿌리지 않는다. 배분은 안전한 쪽 → 위험한 쪽 차례라서
+// 차가운 남색에서 따뜻한 테라코타로 이어지는 한 줄기 색띠로 둔다(채도 낮춤).
+const SV_PAL = ["#3D6B8E", "#4C93A6", "#5AA189", "#C9A03F", "#C4764F", "#A85A66", "#7A6B93"];
+// 🔴 색은 순서가 아니라 **갈래**에 붙인다 — 등급이 달라져도 정기예금은 늘 같은 남색이다.
+const SV_COLOR = {
+  "정기예금": "#3D6B8E", "국내 채권 ETF": "#4C93A6", "국내 주식 ETF": "#5AA189",
+  "해외 ETF": "#C9A03F", "국내 주식": "#C4764F", "해외 주식": "#A85A66",
+};
+function svColor(nm, i) { return SV_COLOR[nm] || SV_PAL[i % SV_PAL.length]; }
+
+// 색 밝기 조절 — 겉면 그라데이션·옆면(그늘) 만들기
+function svShade(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const m = function (v) { return Math.max(0, Math.min(255, Math.round(f < 1 ? v * f : v + (255 - v) * (f - 1)))); };
+  return "#" + ((1 << 24) + (m(r) << 16) + (m(g) << 8) + m(b)).toString(16).slice(1);
+}
+
+function svGet() { try { return JSON.parse(localStorage.getItem(SV_KEY) || "null"); } catch (e) { return null; } }
+function svSave(o) { try { localStorage.setItem(SV_KEY, JSON.stringify(o)); } catch (e) {} }
+function svDaysLeft(at) {
+  const d = new Date(at); d.setFullYear(d.getFullYear() + 1);
+  return Math.ceil((d - new Date()) / 86400000);
+}
+// 별지 제2호 — 합계(총점 32)를 100점으로 환산한 뒤 20/40/60/80 으로 가른다.
+function svScore100(raw) { return raw / SV_MAX * 100; }
+function svGradeOf(raw) {
+  const s = svScore100(raw);
+  return s <= 20 ? 0 : (s <= 40 ? 1 : (s <= 60 ? 2 : (s <= 80 ? 3 : 4)));
+}
+
+// ── 설문 ──────────────────────────────────────────────
+let SV_ANS = [];
+function svStart() {
+  SV_ANS = [];
+  svQ(0);
+}
+function svQ(i) {
+  const box = document.getElementById("svBody");
+  if (!box) return;
+  if (i >= SV_Q.length) {
+    const raw = SV_ANS.reduce(function (a, b) { return a + b; }, 0);
+    const g = svGradeOf(raw);
+    svSave({at: new Date().toISOString().slice(0, 10), raw: raw, score: svScore100(raw), grade: g, ans: SV_ANS.slice()});
+    svRender();
+    try { if (window.svAfterProfile) svAfterProfile(); } catch (e) {}
+    return;
+  }
+  const q = SV_Q[i];
+  box.innerHTML = '<div class="svq">' + (i + 1) + '/' + SV_Q.length + ' · ' + q.q + '</div>'
+    + (q.sub ? '<div class="svsub">' + q.sub + '</div>' : '')
+    + q.a.map(function (a, k) {
+        return '<button class="svbtn" onclick="SV_ANS.push(' + a[1] + ');svQ(' + (i + 1) + ')">' + a[0] + '</button>';
+      }).join("");
+}
+function svRender() {
+  const box = document.getElementById("svBody");
+  if (!box) return;
+  const p = svGet();
+  if (!p) {
+    box.innerHTML = '<div class="svq">투자 성향을 먼저 확인해 주세요. 7문항입니다.</div>'
+      + '<div class="svsub">금융투자협회 표준투자권유준칙의 투자자정보 확인서와 같은 문항·배점입니다.</div>'
+      + '<button class="svbtn svgo" onclick="svStart()">성향 검사 시작</button>';
+    return;
+  }
+  const g = SV_GRADE[p.grade], left = svDaysLeft(p.at);
+  const sc = (p.score != null ? p.score : svScore100(p.raw || 0));
+  box.innerHTML = '<div class="svres">' + g.nm + '</div>'
+    + '<div class="svsub">' + sc.toFixed(1) + '점 (100점 환산) · ' + p.at + ' 검사 · 다음 검사까지 '
+    + (left > 0 ? left + "일" : "지남") + '</div>'
+    + '<button class="svbtn" onclick="svStart()">다시 검사</button>';
+}
+
+// 입체 원그래프 — 타원으로 눕히고 옆면을 겹쳐 쌓아 두께를 만든다 (사장님 2026-09-20).
+//   옆면은 조각 전체를 아래로 한 칸씩 내려 그린 뒤 겉면을 덮는다. 그러면 앞쪽 옆면만 남아 두께로 보인다.
+// 입체 원그래프 — 타원으로 눕히고 옆면을 겹쳐 쌓아 두께를 만든다 (사장님 2026-09-20).
+//   옆면은 조각 전체를 아래로 한 칸씩 내려 그린 뒤 겉면을 덮는다. 그러면 앞쪽 옆면만 남아 두께로 보인다.
+//   mix = [[이름, 값, 색(선택)], …] — 값은 %가 아니어도 된다(금액 그대로 넣으면 비율은 알아서 낸다).
+function svPie(mix) {
+  const tot = mix.reduce(function (s, m) { return s + m[1]; }, 0) || 1;
+  const cx = 130, cy = 92, rx = 112, ry = 64, dep = 24;
+  const seg = mix.map(function (m, i) { return {nm: m[0], v: m[1], c: m[2] || svColor(m[0], i)}; });
+  let a = -Math.PI / 2;
+  seg.forEach(function (s) { s.a0 = a; a += (s.v / tot) * 2 * Math.PI; s.a1 = a; });
+  const one = (seg.length === 1);
+  // 🔴 한 화면에 그래프가 둘 이상이면 id 가 겹쳐 앞 그래프 색을 따라간다 — 부를 때마다 다른 이름을 준다.
+  const uid = "sv" + (svPie.n = (svPie.n || 0) + 1) + "_";
+
+  function wedge(a0, a1, dy) {
+    const x0 = cx + rx * Math.cos(a0), y0 = cy + ry * Math.sin(a0) + dy;
+    const x1 = cx + rx * Math.cos(a1), y1 = cy + ry * Math.sin(a1) + dy;
+    return 'M' + cx + ',' + (cy + dy) + ' L' + x0.toFixed(2) + ',' + y0.toFixed(2)
+         + ' A' + rx + ',' + ry + ' 0 ' + ((a1 - a0) > Math.PI ? 1 : 0) + ',1 ' + x1.toFixed(2) + ',' + y1.toFixed(2) + ' Z';
+  }
+  function disc(dy) { return '<ellipse cx="' + cx + '" cy="' + (cy + dy) + '" rx="' + rx + '" ry="' + ry + '"'; }
+
+  let defs = "", sides = "", tops = "", labels = "";
+  seg.forEach(function (s, i) {
+    defs += '<linearGradient id="' + uid + i + '" x1="0.1" y1="0" x2="0.5" y2="1">'
+          + '<stop offset="0" stop-color="' + svShade(s.c, 1.3) + '"/>'
+          + '<stop offset="0.5" stop-color="' + s.c + '"/>'
+          + '<stop offset="1" stop-color="' + svShade(s.c, 0.85) + '"/></linearGradient>';
+  });
+  for (let d = dep; d >= 1; d--) {
+    const t = 1 - d / dep;                                  // 아래로 갈수록 어둡게
+    seg.forEach(function (s) {
+      sides += one ? (disc(d) + ' fill="' + svShade(s.c, 0.64 + 0.16 * t) + '"/>')
+                   : ('<path d="' + wedge(s.a0, s.a1, d) + '" fill="' + svShade(s.c, 0.64 + 0.16 * t) + '"/>');
+    });
+  }
+  seg.forEach(function (s, i) {
+    tops += one ? (disc(0) + ' fill="url(#' + uid + i + ')" stroke="rgba(255,255,255,.5)" stroke-width="0.9"/>')
+                : ('<path d="' + wedge(s.a0, s.a1, 0) + '" fill="url(#' + uid + i + ')" stroke="rgba(255,255,255,.5)" stroke-width="0.9"/>');
+    const f = s.v / tot;
+    if (f >= 0.04) {
+      const am = one ? -Math.PI / 2 : (s.a0 + s.a1) / 2, k = one ? 0 : 0.64;
+      labels += '<text x="' + (cx + rx * k * Math.cos(am)).toFixed(1) + '" y="' + (cy + ry * k * Math.sin(am) + 4.5).toFixed(1)
+             + '" font-size="' + (f >= 0.06 ? 13 : 11) + '" font-weight="800" text-anchor="middle" fill="#fff"'
+             + ' stroke="rgba(0,0,0,.30)" stroke-width="2.6" style="paint-order:stroke">' + Math.round(f * 100) + '%</text>';
+    }
+  });
+  return '<div style="text-align:center;margin:2px 0 8px">'
+    + '<svg viewBox="0 0 260 186" width="100%" style="max-width:300px">'
+    + '<defs>' + defs
+    + '<radialGradient id="' + uid + 'sh"><stop offset="0.35" stop-color="rgba(0,0,0,.26)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/></radialGradient>'
+    + '</defs>'
+    + '<ellipse cx="' + cx + '" cy="' + (cy + dep + 14) + '" rx="' + (rx * 0.95) + '" ry="' + (ry * 0.28) + '" fill="url(#' + uid + 'sh)"/>'
+    + sides + tops + labels + '</svg></div>'
+    + '<div class="svleg">' + seg.map(function (s) {
+        return '<span><i style="background:linear-gradient(145deg,' + svShade(s.c, 1.24) + ',' + svShade(s.c, 0.8) + ')"></i>'
+             + s.nm + ' ' + (s.v / tot * 100).toFixed(1) + '%</span>';
+      }).join("") + '</div>';
+}
+
+
+</script>
+<script>
+const RECO_URL="https://emhwang3-boop.github.io/morning-brief/reco.json";
 // 데일리 브리프 라이브 — 코인앱 전용 (2026-09-20)
 // 🔴 정보만 준다. 보유·주문·매수·매도 없음. 거래는 거래소 앱에서.
 const CV_EX_KEY = "cv_ex_v1";
@@ -1697,6 +1899,195 @@ function cvToggle() {
   if (!b) return;
   b.innerHTML = b.innerHTML ? "" : cvPanel();
 }
+
+// ── 코인 추천 — 헐 규칙 (사장님 2026-09-20) ─────────────────────────
+// 🔴 규칙은 우리가 재서 고른 것 그대로다: 헐(HMA) 100 · SMA 120 게이트 · 리본 폭 0.3% 이상.
+//    reco.json 을 그대로 읽어 보여 줄 뿐, 이 앱은 주문을 내지 않는다.
+let CVR = null;
+async function cvRecoLoad() {
+  try { cvRecoRender(); } catch (e) {}
+  try { CVR = await fetch(RECO_URL + "?t=" + Date.now(), {cache: "no-store"}).then(function (r) { return r.json(); }); } catch (e) {}
+  try { cvRecoRender(); cvHoldRender(); } catch (e) {}
+}
+const CV_STATE = {
+  long: ["오름 신호", "#2f9e44", "헐선이 오르고 값이 120일선 위"],
+  short: ["내림 신호", "#e03131", "헐선이 내리고 값이 120일선 아래"],
+  cash: ["쉼", "#868e96", "방향이 안 잡힘 — 규칙이 들어가지 말라고 한다"],
+};
+function cvNum(n) { return (+n).toLocaleString(undefined, {maximumFractionDigits: 2}); }
+setTimeout(function () { try { cvRecoLoad(); } catch (e) {} }, 800);
+setInterval(function () { try { cvRecoLoad(); } catch (e) {} }, 30 * 60000);
+
+</script>
+<script>
+// 코인앱 — 성향 문턱 · 보유부 · 헐 규칙 추천 (사장님 2026-09-20)
+// 🔴 가상자산은 **공격투자형만** 들어갈 자리다. 그 아래 성향이면 경고를 띄우고 추천을 내지 않는다.
+// 🔴 보유는 고객이 직접 넣는다. 거래소와 연결하지 않고, 이 폰에만 저장한다(서버로 안 보낸다).
+// 🔴 추천은 우리가 재서 고른 헐 규칙 그대로다 — 헐(HMA) 100 · SMA 120 게이트 · 리본 폭 0.3% 이상.
+//    주문은 이 앱이 내지 않는다. 거래는 거래소 앱에서 하신다.
+
+const CV_HOLD_KEY = "cv_holds_v1";       // [{sym, qty, buy}]
+const CV_CASH_KEY = "cv_cash_v1";        // 투자 가능 USDT
+const CV_MIN_GRADE = 4;                  // 4 = 공격투자형
+
+window.svAfterProfile = function () { try { cvGate(); cvRecoRender(); } catch (e) {} };
+
+function cvHolds() { try { return JSON.parse(localStorage.getItem(CV_HOLD_KEY) || "[]") || []; } catch (e) { return []; } }
+function cvHoldSave(a) { try { localStorage.setItem(CV_HOLD_KEY, JSON.stringify(a)); } catch (e) {} }
+function cvCash() { try { return Math.max(0, +localStorage.getItem(CV_CASH_KEY) || 0); } catch (e) { return 0; } }
+function cvCashSet(v) {
+  try { localStorage.setItem(CV_CASH_KEY, String(Math.max(0, +String(v).replace(/[^0-9.]/g, "") || 0))); } catch (e) {}
+  cvRecoRender();
+}
+function cvPx(sym) {                       // 오늘 값 — reco.json 이 가진 것을 쓴다
+  const c = CVR && CVR.coin && CVR.coin[sym];
+  return c ? +c.price : 0;
+}
+function cvUsd(n) {
+  n = +n || 0;
+  return n.toLocaleString(undefined, {maximumFractionDigits: n >= 100 ? 0 : 2}) + " USDT";
+}
+
+// ── ① 성향 문턱 ────────────────────────────────────────────
+// 공격투자형이 아니면 빨간 경고를 띄우고, 추천은 내지 않는다.
+function cvGate() {
+  const box = document.getElementById("cvGateBody");
+  if (!box) return true;
+  const p = (typeof svGet === "function") ? svGet() : null;
+  if (!p) {
+    box.innerHTML = '<div class="svsub">가상자산은 위험이 가장 큰 자산입니다. 먼저 투자 성향을 확인해 주십시오.</div>'
+      + '<div id="svBody"></div>';
+    try { svRender(); } catch (e) {}
+    return false;
+  }
+  const g = SV_GRADE[p.grade], ok = p.grade >= CV_MIN_GRADE;
+  box.innerHTML = '<div class="svres">' + g.nm + '</div>'
+    + '<div class="svsub">' + (p.score != null ? p.score.toFixed(1) : "-") + '점 (100점 환산) · ' + p.at + ' 검사</div>'
+    + (ok
+       ? '<div class="cvok">가상자산은 공격투자형에 한해 다룰 수 있는 자산입니다. 그래도 원금 전부를 잃을 수 있습니다.</div>'
+       : '<div class="cvwarn"><b>⚠ 투자 성향이 가상자산에 맞지 않습니다.</b><br>'
+         + '고객님의 성향은 <b>' + g.nm + '</b>입니다. 가상자산은 <b>공격투자형</b>에게만 맞는 자산이며, '
+         + '하루에 값이 수십 퍼센트 움직이고 원금 전부를 잃을 수 있습니다.<br>'
+         + '이 앱은 고객님 성향에 맞지 않으므로 <b>추천을 내지 않습니다.</b> 시세와 그래프만 보십니다.</div>')
+    + '<button class="svbtn" onclick="svStart()">다시 검사</button><div id="svBody"></div>';
+  return ok;
+}
+
+// ── ② 보유부 — 직접 입력 ────────────────────────────────────
+function cvHoldRender() {
+  const box = document.getElementById("cvHoldBody");
+  if (!box) return;
+  const H = cvHolds();
+  const syms = (CVR && CVR.coin) ? Object.keys(CVR.coin) : ["BTC", "ETH"];
+  let h = '<div class="cvrow">'
+    + '<select id="cvhSym" class="c21sel">' + syms.map(function (s) { return '<option>' + s + '</option>'; }).join("") + '</select>'
+    + '<input id="cvhQty" inputmode="decimal" placeholder="수량">'
+    + '<input id="cvhBuy" inputmode="decimal" placeholder="매입가(USDT)">'
+    + '<button class="cvadd" onclick="cvHoldAdd()">추가</button></div>';
+  if (!H.length) {
+    h += '<div class="mhempty">가지고 계신 코인을 넣으십시오. 이 폰에만 저장됩니다.</div>';
+  } else {
+    h += '<table class="mhtab"><tr><th>코인</th><th>수량</th><th>매입가</th><th>평가</th><th>손익</th><th></th></tr>';
+    H.forEach(function (x, i) {
+      const px = cvPx(x.sym), val = px * x.qty, pl = px ? (px - x.buy) / x.buy * 100 : null;
+      h += '<tr><td style="text-align:left"><b>' + x.sym + '</b></td>'
+        + '<td>' + x.qty + '</td><td>' + cvUsd(x.buy) + '</td>'
+        + '<td>' + (px ? cvUsd(val) : "-") + '</td>'
+        + '<td class="' + (pl == null ? "fl" : (pl > 0 ? "up" : (pl < 0 ? "dn" : "fl"))) + '">'
+        + (pl == null ? "-" : (pl > 0 ? "▲" : (pl < 0 ? "▼" : "")) + Math.abs(pl).toFixed(2) + "%") + '</td>'
+        + '<td><span class="mhx" onclick="cvHoldDel(' + i + ')">✕</span></td></tr>';
+    });
+    h += '</table>';
+  }
+  h += '<div class="svcash">투자 가능 현금 <input id="cvCashIn" inputmode="decimal" placeholder="예: 2,000"'
+     + ' value="' + (cvCash() ? cvCash().toLocaleString() : "") + '" onchange="cvCashSet(this.value)">USDT</div>';
+  box.innerHTML = h;
+}
+function cvHoldAdd() {
+  const sym = (document.getElementById("cvhSym") || {}).value || "";
+  const q = parseFloat(String((document.getElementById("cvhQty") || {}).value || "").replace(/,/g, ""));
+  const b = parseFloat(String((document.getElementById("cvhBuy") || {}).value || "").replace(/,/g, ""));
+  if (!sym || !(q > 0) || !(b > 0)) return;
+  const H = cvHolds(), i = H.findIndex(function (x) { return x.sym === sym; });
+  if (i >= 0) { const o = H[i], t = o.qty + q; o.buy = (o.buy * o.qty + b * q) / t; o.qty = t; }
+  else H.push({sym: sym, qty: q, buy: b});
+  cvHoldSave(H); cvHoldRender(); cvRecoRender();
+}
+function cvHoldDel(i) { const H = cvHolds(); H.splice(i, 1); cvHoldSave(H); cvHoldRender(); cvRecoRender(); }
+
+// ── ③ 추천 포트폴리오 — 헐 규칙 ─────────────────────────────
+//   오름 신호인 코인에만 고르게 담고, 내림·쉼은 비운다. 보유는 그대로 두고 모자란 만큼만 채운다.
+function cvRecoRender() {
+  const box = document.getElementById("cvRecoBody");
+  if (!box) return;
+  const c = CVR && CVR.coin;
+  if (!c) { box.innerHTML = '<div class="svsub">오늘 자료를 받는 중입니다…</div>'; return; }
+
+  // 신호 표는 성향과 무관하게 늘 보여 준다(정보)
+  let h = '<div class="svsub">헐(HMA) 100 · SMA 120 게이트 · 리본 폭 0.3% 이상 — 우리가 재서 고른 규칙입니다.</div>'
+        + '<table class="mhtab"><tr><th>코인</th><th>신호</th><th>현재가</th><th>120일선</th></tr>';
+  Object.keys(c).forEach(function (k) {
+    const x = c[k], st = CV_STATE[x.state] || CV_STATE.cash;
+    h += '<tr><td style="text-align:left"><b>' + k + '</b></td>'
+       + '<td style="color:' + st[1] + ';font-weight:800">' + st[0] + '</td>'
+       + '<td>' + cvUsd(x.price) + '</td><td>' + cvUsd(x.sma120) + '</td></tr>';
+  });
+  h += '</table><div class="svsub">' + ((CVR && CVR.at) || "") + ' 기준 · 하루 한 번(UTC 일봉) 다시 잽니다.</div>';
+
+  // 🔴 성향 문턱 — 공격투자형이 아니면 여기서 끝. 배분을 내지 않는다.
+  const p = (typeof svGet === "function") ? svGet() : null;
+  if (!p || p.grade < CV_MIN_GRADE) {
+    h += '<div class="cvwarn">' + (p
+        ? '성향이 <b>' + SV_GRADE[p.grade].nm + '</b>이라 추천 배분을 내지 않습니다.'
+        : '투자 성향을 먼저 확인하셔야 추천 배분이 나옵니다.') + '</div>';
+    box.innerHTML = h; return;
+  }
+
+  const H = cvHolds(), cash = cvCash();
+  const held = {}; let heldVal = 0;
+  H.forEach(function (x) { const v = cvPx(x.sym) * x.qty; held[x.sym] = (held[x.sym] || 0) + v; heldVal += v; });
+  const total = heldVal + cash;
+  if (!(total > 0)) {
+    h += '<div class="svsub">위 보유부에 코인이나 현금을 넣으시면 배분을 그려 드립니다.</div>';
+    box.innerHTML = h; return;
+  }
+
+  const longs = Object.keys(c).filter(function (k) { return c[k].state === "long"; });
+  const pie = [], rows = [];
+  if (!longs.length) {
+    h += '<div class="cvwarn">오늘은 오름 신호가 없습니다. <b>규칙은 전부 현금(USDT)으로 쉬라고 합니다.</b></div>';
+    pie.push(["현금(USDT)", total, "#9AA3AB"]);
+  } else {
+    const each = total / longs.length;                 // 오름 신호끼리 고르게
+    longs.forEach(function (k, i) {
+      const have = held[k] || 0, gap = each - have;
+      pie.push([k, each, svShade("#C9A03F", 0.92 + 0.14 * (i % 3))]);
+      rows.push([k, each, have, gap]);
+    });
+    // 신호가 없는데 들고 계신 것 — 규칙상 비울 자리
+    Object.keys(held).forEach(function (k) {
+      if (longs.indexOf(k) < 0 && held[k] > 0) rows.push([k, 0, held[k], -held[k]]);
+    });
+  }
+  h += svPie(pie);
+  h += '<div class="svsub">총자산 ' + cvUsd(total) + ' · 보유 ' + cvUsd(heldVal) + ' · 현금 ' + cvUsd(cash) + '</div>';
+  if (rows.length) {
+    h += '<table class="mhtab"><tr><th>코인</th><th>목표</th><th>지금</th><th>할 일</th></tr>';
+    rows.forEach(function (r) {
+      const d = r[3];
+      h += '<tr><td style="text-align:left"><b>' + r[0] + '</b></td>'
+        + '<td>' + cvUsd(r[1]) + '</td><td>' + cvUsd(r[2]) + '</td>'
+        + '<td>' + (Math.abs(d) <= total * 0.02 ? "맞음"
+            : (d > 0 ? '<span class="svbuy">+' + cvUsd(d) + '</span>'
+                     : '<span class="svover">−' + cvUsd(-d) + '</span>')) + '</td></tr>';
+    });
+    h += '</table>';
+  }
+  h += '<div class="svsub">규칙이 내는 값일 뿐이며, 사고파는 결정과 주문은 고객님이 거래소에서 하십니다.</div>';
+  box.innerHTML = h;
+}
+
+setTimeout(function () { try { cvGate(); cvHoldRender(); } catch (e) {} }, 900);
 
 </script>
 </body></html>
