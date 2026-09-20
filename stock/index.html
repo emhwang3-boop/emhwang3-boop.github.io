@@ -104,6 +104,7 @@ body.light .mk img.lt{display:block}
 .mhempty{color:var(--sub);font-size:12px;padding:8px 2px}
 
 .ken{display:none} body.lang-en .kko{display:none} body.lang-en .ken{display:inline}
+.bkcnt:not(:empty){display:inline-block;min-width:18px;padding:0 6px;margin-left:8px;border-radius:9px;background:#1c7ed6;color:#fff;font-size:12px;line-height:18px;text-align:center;vertical-align:2px}
 .svcard .svq{font-size:13px;color:var(--nm);margin:6px 0 8px;font-weight:700}
 .svbtn{display:block;width:100%;text-align:left;margin:5px 0;padding:9px 12px;border:1px solid var(--bd);
   border-radius:10px;background:var(--card);color:var(--nm);font-size:13px;cursor:pointer}
@@ -276,7 +277,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 </div>
 
 <div class="card svcard" id="bkCard">
-  <h3><span class="kko">가상 바스켓</span><span class="ken">Virtual Basket</span></h3>
+  <h3><span class="kko">가상 바스켓</span><span class="ken">Virtual Basket</span><span id="bkCnt" class="bkcnt"></span></h3>
   <div id="bkBody"></div>
 </div>
 
@@ -1845,6 +1846,8 @@ function bkRender() {
   const box = document.getElementById("bkBody");
   if (!box) return;
   const a = bkGet();
+  // 제목 옆에 담긴 개수 — "담겼나?"를 바로 알 수 있게 (사장님 2026-09-21)
+  try { const c = document.getElementById("bkCnt"); if (c) c.textContent = a.length ? String(a.length) : ""; } catch (e) {}
   let h = '<div class="svsub">' + KE(BK_HELP, BK_HELP_EN) + '</div>';
   if (!a.length) {
     h += '<div class="mhempty">' + BK_EMPTY + '</div>';
