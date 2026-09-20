@@ -1914,8 +1914,7 @@ function svRecoRender() {
   const heldWon = holds.reduce(function (s, h) { return s + h.won; }, 0);
   const total = heldWon + cash;
 
-  let h = '<div class="svsub">' + g.nm + '에 맞춘 <b>자산 배분</b>입니다. 종목은 골라 드리고, '
-        + '어느 종목에 얼마를 넣을지는 고객님이 정하십니다.</div>';
+  let h = '<div class="svsub">' + g.nm + '에 맞춘 <b>자산 배분</b>입니다.</div>';
   h += '<div class="svcash">투자 가능 현금 '
      + '<input id="svCashIn" inputmode="numeric" placeholder="예: 5,000,000" value="' + (cash ? cash.toLocaleString() : "") + '"'
      + ' onchange="svCashSet(this.value)">원</div>';
