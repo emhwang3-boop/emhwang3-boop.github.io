@@ -103,6 +103,7 @@ body.light .mk img.lt{display:block}
 .mhx{color:var(--sub);cursor:pointer;font-weight:700;padding:0 2px}
 .mhempty{color:var(--sub);font-size:12px;padding:8px 2px}
 
+.ken{display:none} body.lang-en .kko{display:none} body.lang-en .ken{display:inline}
 .svcard .svq{font-size:13px;color:var(--nm);margin:6px 0 8px;font-weight:700}
 .svbtn{display:block;width:100%;text-align:left;margin:5px 0;padding:9px 12px;border:1px solid var(--bd);
   border-radius:10px;background:var(--card);color:var(--nm);font-size:13px;cursor:pointer}
@@ -226,7 +227,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   <div class="right"><span class="clock" id="clk">--:--:--</span>
    <span class="shwrap"><button class="tgl shbtn" id="shb" onclick="shToggle()" title="공유">공유</button>
    <div class="shpanel" id="shPanel" hidden></div></span>
-   <button class="tgl" id="lng" onclick="toggleLang()" hidden>EN</button>
+   <button class="tgl" id="lng" onclick="toggleLang()">EN</button>
    <button class="tgl" id="tg" onclick="toggle()">🌙</button></div>
 </div>
 <div class="asof" id="asof">불러오는 중…</div>
@@ -237,23 +238,23 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 
 
 <div class="card">
-  <a class="svlink" style="background:#f59f00" href="../coin/">코인앱 열기</a>
+  <a class="svlink" style="background:#f59f00" href="../coin/"><span class="kko">코인앱 열기</span><span class="ken">Open Coin App</span></a>
 </div>
 
 <div class="card svcard" id="svAcct">
-  <h3>가상 계좌</h3>
-  <div class="svacct"><span>원화</span><b>100,000,000원</b></div>
-  <div class="svacct"><span>미화</span><b>$100,000</b></div>
-  <div class="svsub">모든 이용자에게 똑같이 주어지는 가상 금액입니다. 실제 자산이 아니며 고칠 수 없습니다.</div>
+  <h3><span class="kko">가상 계좌</span><span class="ken">Virtual Account</span></h3>
+  <div class="svacct"><span><span class="kko">원화</span><span class="ken">KRW</span></span><b><span class="kko">100,000,000원</span><span class="ken">₩100,000,000</span></b></div>
+  <div class="svacct"><span><span class="kko">미화</span><span class="ken">USD</span></span><b>$100,000</b></div>
+  <div class="svsub"><span class="kko">모든 이용자에게 똑같이 주어지는 가상 금액입니다. 실제 자산이 아니며 고칠 수 없습니다.</span><span class="ken">A virtual amount given equally to every user. It is not real money and cannot be changed.</span></div>
 </div>
 
 <div class="card svcard" id="svProfile">
-  <h3>포트폴리오 선택</h3>
+  <h3><span class="kko">포트폴리오 선택</span><span class="ken">Choose a Portfolio</span></h3>
   <div id="svBody"></div>
 </div>
 
 <div class="card svcard" id="svReco">
-  <h3>추천 포트폴리오</h3>
+  <h3><span class="kko">추천 포트폴리오</span><span class="ken">Recommended Portfolio</span></h3>
   <div id="svRecoBody"></div>
 </div>
 
@@ -270,12 +271,12 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   <canvas id="stkChart" class="stkchart" hidden></canvas>
   <div id="stkChartLbl" class="stkcl" hidden></div>
   <div id="svOrderBox"></div>
-  <button class="svbtn" onclick="bkAddCurrent()">가상 바스켓에 담기</button>
-  <button class="svbtn svgo" onclick="svOrderToggle()">내 증권사 앱에서 주문하기</button>
+  <button class="svbtn" onclick="bkAddCurrent()"><span class="kko">가상 바스켓에 담기</span><span class="ken">Add to virtual basket</span></button>
+  <button class="svbtn svgo" onclick="svOrderToggle()"><span class="kko">내 증권사 앱에서 주문하기</span><span class="ken">Order in my brokerage app</span></button>
 </div>
 
 <div class="card svcard" id="bkCard">
-  <h3>가상 바스켓</h3>
+  <h3><span class="kko">가상 바스켓</span><span class="ken">Virtual Basket</span></h3>
   <div id="bkBody"></div>
 </div>
 
@@ -292,19 +293,19 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div class="card" id="voice"><h3 id="vcH">고객의 소리</h3>
 <textarea id="vcTxt" maxlength="200" rows="3" style="width:100%;box-sizing:border-box;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;resize:vertical" placeholder="바라는 기능, 불편한 점을 적어 주세요"></textarea>
 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px"><span id="vcMsg" style="font-size:12px;color:var(--sub)"></span>
-<button id="vcBtn" onclick="vcSend()" style="border:0;border-radius:9px;padding:7px 16px;background:#1c7ed6;color:#fff;font-weight:700;cursor:pointer">보내기</button></div><div class="discNote">본 창구는 앱 오류(버그) 제보 및 기능 건의 전용 공간입니다. 개별 종목 추천이나 투자 상담 등 금융 관련 질문에는 답변을 드리지 않으며, 접수된 문의에 대한 별도의 회신(답변) 기능은 제공되지 않습니다.</div></div>
+<button id="vcBtn" onclick="vcSend()" style="border:0;border-radius:9px;padding:7px 16px;background:#1c7ed6;color:#fff;font-weight:700;cursor:pointer">보내기</button></div><div class="discNote"><span class="kko">본 창구는 앱 오류(버그) 제보 및 기능 건의 전용 공간입니다. 개별 종목 추천이나 투자 상담 등 금융 관련 질문에는 답변을 드리지 않으며, 접수된 문의에 대한 별도의 회신(답변) 기능은 제공되지 않습니다.</span><span class="ken">This channel is only for reporting app errors (bugs) and suggesting features. We do not answer financial questions such as individual stock recommendations or investment consultation, and no reply function is provided for submitted messages.</span></div></div>
 
-<div class="card discCard"><div class="discNote"><b>앱 로직</b> — ① 자산 종류별 비중은 고객님이 고르신 포트폴리오에 따라 <b>미리 정해져</b> 있습니다. ② <b>국내·해외 주식</b>은 <b>일봉</b>을 기준으로, 추세선이 상승 중이고 가격이 기준선 위에 있으며 추세의 <b>상승 각도</b>가 일정 수준 이상인 종목 가운데, <b>최근 3거래일 안에</b> 그 조건을 새로 충족한 것만 고릅니다. ③ 그중 <b>상승 각도가 가파른 순서</b>로 보여 드립니다. ④ <b>해외 ETF(원화)</b>도 같은 방법으로 고르되, 시가총액 상위 종목 안에서 고르며 최근 3거래일 조건은 적용하지 않습니다. <b>레버리지 ETF</b>도 같은 방법으로 고르며, <b>공격투자 포트폴리오에만</b> 들어갑니다. <b>국내 ETF와 예금은 대표 상품을 미리 정해 두고 바꾸지 않습니다.</b> ⑤ 주식 추천의 대상은 국내 상장 종목과 미국 S&amp;P 500 구성 종목입니다. ⑥ 모든 이용자에게 <b>같은 규칙·같은 결과</b>가 적용되며, 개별 상담이나 맞춤 조언이 아닙니다.</div></div>
+<div class="card discCard"><div class="discNote"><span class="kko"><b>앱 로직</b> — ① 자산 종류별 비중은 고객님이 고르신 포트폴리오에 따라 <b>미리 정해져</b> 있습니다. ② <b>국내·해외 주식</b>은 <b>일봉</b>을 기준으로, 추세선이 상승 중이고 가격이 기준선 위에 있으며 추세의 <b>상승 각도</b>가 일정 수준 이상인 종목 가운데, <b>최근 3거래일 안에</b> 그 조건을 새로 충족한 것만 고릅니다. ③ 그중 <b>상승 각도가 가파른 순서</b>로 보여 드립니다. ④ <b>해외 ETF(원화)</b>도 같은 방법으로 고르되, 시가총액 상위 종목 안에서 고르며 최근 3거래일 조건은 적용하지 않습니다. <b>레버리지 ETF</b>도 같은 방법으로 고르며, <b>공격투자 포트폴리오에만</b> 들어갑니다. <b>국내 ETF와 예금은 대표 상품을 미리 정해 두고 바꾸지 않습니다.</b> ⑤ 주식 추천의 대상은 국내 상장 종목과 미국 S&amp;P 500 구성 종목입니다. ⑥ 모든 이용자에게 <b>같은 규칙·같은 결과</b>가 적용되며, 개별 상담이나 맞춤 조언이 아닙니다.</span><span class="ken"><b>App logic</b> — ① The weight of each asset class is <b>fixed in advance</b> according to the portfolio you choose. ② For <b>Korean and US stocks</b>, using <b>daily charts</b>, we select stocks whose trend line is rising, whose price is above the baseline, and whose trend has an <b>upward angle</b> above a set level — and only those that <b>newly met</b> these conditions <b>within the last 3 trading days</b>. ③ Among them, the <b>steepest upward angle</b> is shown first. ④ <b>Overseas ETFs (KRW)</b> are selected the same way from the largest ETFs by market cap, without the 3-day condition. <b>Leveraged ETFs</b> are selected the same way and appear <b>only in the Aggressive portfolio</b>. <b>Korean ETFs and deposits use fixed representative products that do not change.</b> ⑤ Stock picks are drawn from Korean-listed stocks and the constituents of the US S&amp;P 500. ⑥ The <b>same rules and the same results</b> apply to every user; this is not individual consultation or personalized advice.</span></div></div>
 
 <div class="card discCard">
-  <h3>투자 유의사항</h3>
+  <h3><span class="kko">투자 유의사항</span><span class="ken">Investment Notice</span></h3>
   <ul class="discList">
-    <li>본 서비스는 특정 종목의 매수·매도를 권유하지 않으며, 투자 판단의 책임은 본인에게 있습니다.</li>
-    <li>과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.</li>
-    <li>본 서비스는 1:1 개별 투자 상담을 진행하지 않는 단방향 정보 제공 서비스입니다.</li>
-    <li>이 앱은 단기 트레이딩용으로 사용하기에는 적합하지 않으며, 일봉 기준으로 중장기 포트폴리오 투자를 지원하기 위해 설계되었습니다.</li>
+    <li><span class="kko">본 서비스는 특정 종목의 매수·매도를 권유하지 않으며, 투자 판단의 책임은 본인에게 있습니다.</span><span class="ken">This service does not recommend buying or selling any specific security; responsibility for investment decisions rests with you.</span></li>
+    <li><span class="kko">과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.</span><span class="ken">Past performance does not guarantee future returns, and this service carries the possibility of loss of principal.</span></li>
+    <li><span class="kko">본 서비스는 1:1 개별 투자 상담을 진행하지 않는 단방향 정보 제공 서비스입니다.</span><span class="ken">This service is a one-way information service and does not provide one-on-one individual investment consultation.</span></li>
+    <li><span class="kko">이 앱은 단기 트레이딩용으로 사용하기에는 적합하지 않으며, 일봉 기준으로 중장기 포트폴리오 투자를 지원하기 위해 설계되었습니다.</span><span class="ken">This app is not suitable for short-term trading; it is designed to support medium- to long-term portfolio investing based on daily charts.</span></li>
   </ul>
-  <button class="svbtn" onclick="discShow()">다시 보기</button>
+  <button class="svbtn" onclick="discShow()"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
 
 <div class="foot" id="foot"></div>
@@ -384,7 +385,7 @@ function _showInstall(){if(_standalone())return;_il();var b=document.getElementB
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",_showInstall);else _showInstall();
 // ---- 언어(한/영) ----
 let LANG="ko"; try{var _lp=(new URLSearchParams(location.search)).get("lang");
-  LANG="ko";   // 이 앱은 한글만 — EN 단추를 감췄다(2026-09-20)
+  LANG=(_lp==="en"||_lp==="ko")?_lp:(localStorage.getItem("brief_lang")||"ko");
   localStorage.setItem("brief_lang",LANG);}catch(e){}
 const NM={"국내":"KR Indices","미국 지수":"US Indices","미국 야간선물":"US Futures (Night)","아시아":"Asia",
  "금리·채권":"Rates / Bonds","환율·달러":"FX / Dollar","원자재":"Commodities",
@@ -1502,7 +1503,7 @@ document.addEventListener("click",function(e){
 
 function applyLang(){
   var b=E("lng");if(b)b.textContent=LANG==="en"?"한":"EN";
-  var t=E("ttl");if(t)t.innerHTML=brandMark();
+  var t=E("ttl");if(t&&typeof brandMark==="function")t.innerHTML=brandMark();
   var gn=document.querySelector(".gnote");if(gn)gn.textContent=L("gnote");
   E("stkq").placeholder=L("stkPH");E("coinq").placeholder=L("coinPH");
   var sb=E("shb");if(sb)sb.textContent=LANG==="en"?"Share":"공유";
@@ -1566,6 +1567,51 @@ function vcSend(){
 })();
 </script>
 <script>
+// 한/영 — 우리가 덧붙인 카드들의 영어 문구 (사장님 2026-09-20 "신속히 EN 버튼을 만들어야 해")
+// 🔴 본앱의 LANG · toggleLang · applyLang 을 그대로 쓴다. 여기서는 그 뒤에 우리 카드만 다시 그린다.
+// 🔴 자산군·포트폴리오 이름은 **한글이 열쇠**다(색·상품표·통화 구분이 한글 이름으로 걸려 있다).
+//    화면에 낼 때만 KN() 으로 바꾼다. 열쇠를 영어로 바꾸면 안 된다.
+function KE(ko, en) { return (typeof LANG !== "undefined" && LANG === "en") ? en : ko; }
+var KE_NM = {
+  "예금": "Deposits", "국내 ETF": "Korean ETFs", "해외 ETF(원화)": "Overseas ETFs (KRW)",
+  "해외 ETF(달러)": "Overseas ETFs (USD)", "레버리지 ETF(원화)": "Leveraged ETFs (KRW)",
+  "레버리지 ETF(달러)": "Leveraged ETFs (USD)", "국내 주식": "Korean Stocks", "해외 주식": "US Stocks",
+  "알트": "Alts", "현금(USDT)": "Cash (USDT)",
+  "안정형": "Conservative", "안정추구형": "Moderately Conservative", "위험중립형": "Balanced",
+  "적극투자형": "Growth", "공격투자형": "Aggressive",
+  "은행 정기예금": "Bank time deposit", "KODEX 국고채30년액티브": "KODEX KTB 30Y Active",
+  "TIGER 미국S&P500": "TIGER US S&P500", "TIGER 미국나스닥100": "TIGER US NASDAQ100",
+  "SPY (S&P500)": "SPY (S&P500)", "QQQ (나스닥100)": "QQQ (NASDAQ100)",
+  "국내": "Korea", "미국": "US",
+};
+function KN(k) { return (typeof LANG !== "undefined" && LANG === "en") ? (KE_NM[k] || k) : k; }
+
+// 언어가 바뀌면 — 본앱 applyLang 이 끝난 뒤 우리 카드를 다시 그린다.
+function keApply() {
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  try { document.body.classList.toggle("lang-en", en); } catch (e) {}   // 정적 문구(.kko/.ken)는 CSS 가 가른다
+  try { document.documentElement.lang = en ? "en" : "ko"; } catch (e) {}
+  try { svRender(); } catch (e) {}
+  try { svRecoRender(); } catch (e) {}
+  try { cvRecoRender(); } catch (e) {}
+  try { bkRender(); } catch (e) {}
+  try { var t = document.querySelector("#coin2 .tag"); if (t && typeof cvTagTxt === "function") t.textContent = cvTagTxt(); } catch (e) {}
+  try { var ob = document.getElementById("svOrderBox"); if (ob && ob.innerHTML) ob.innerHTML = svOrderPanel(); } catch (e) {}
+  try { var cb = document.getElementById("cvExBox"); if (cb && cb.innerHTML) cb.innerHTML = cvPanel(); } catch (e) {}
+}
+(function () {
+  try {
+    var _o = window.applyLang;
+    if (typeof _o === "function" && !_o._ke) {
+      window.applyLang = function () { var r = _o.apply(this, arguments); try { keApply(); } catch (e) {} return r; };
+      window.applyLang._ke = 1;
+    }
+  } catch (e) {}
+  keApply();                      // 첫 화면 — 본앱 applyLang 은 이미 지나갔다
+})();
+
+</script>
+<script>
 // 깔려 있는 앱 열기 (사장님 2026-09-20 "이미 깔려 있는데 마켓으로 간다")
 // 🔴 전에 쓰던 `intent://#Intent;package=…` 은 **틀린 꼴**이다.
 //    주소(데이터)만 있고 '무엇을 하라'가 없어 안드로이드가 앱을 못 찾고 바로 스토어로 떨어졌다.
@@ -1574,8 +1620,10 @@ function vcSend(){
 
 // 🔴 나가기 전에 안내창을 띄운다 (사장님 2026-09-20). 문구는 주신 그대로다.
 //    증권사·거래소 어느 쪽이든 이 한 곳을 지나가므로 여기서 한 번만 막는다.
-var APPOPEN_NOTICE = "정식 증권사(거래소) 앱으로 이동합니다. 이후 발생하는 주문 및 거래 행위는 "
+var APPOPEN_NOTICE_KO = "정식 증권사(거래소) 앱으로 이동합니다. 이후 발생하는 주문 및 거래 행위는 "
   + "당사 앱과 무관하며, 해당 금융기관의 책임하에 진행됩니다.";
+var APPOPEN_NOTICE_EN = "You are being redirected to the official brokerage (exchange) app. Any orders or "
+  + "trades made afterwards are unrelated to this app and are conducted under the responsibility of that financial institution.";
 
 function appOpenGo(pkg, name) {
   var UA = navigator.userAgent || "";
@@ -1605,14 +1653,15 @@ function appOpen(pkg, name) {
   d.innerHTML =
     '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:420px;width:100%;'
     + 'padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45)">'
-    + '<div style="font-size:16px;font-weight:800;margin-bottom:10px">' + name + ' 앱으로 이동</div>'
-    + '<div style="font-size:13px;line-height:1.7;color:var(--sub)">' + APPOPEN_NOTICE + '</div>'
+    + '<div style="font-size:16px;font-weight:800;margin-bottom:10px">'
+    + KE(name + ' 앱으로 이동', 'Open ' + name) + '</div>'
+    + '<div style="font-size:13px;line-height:1.7;color:var(--sub)">' + KE(APPOPEN_NOTICE_KO, APPOPEN_NOTICE_EN) + '</div>'
     + '<button id="appOpenOk" style="display:block;width:100%;margin-top:16px;padding:13px;border:0;'
     + 'border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;'
-    + 'cursor:pointer">확인하고 이동</button>'
+    + 'cursor:pointer">' + KE("확인하고 이동", "Confirm and open") + '</button>'
     + '<button id="appOpenNo" style="display:block;width:100%;margin-top:8px;padding:11px;'
     + 'border:1px solid var(--bd);border-radius:12px;background:transparent;color:var(--sub);'
-    + 'font-size:14px;cursor:pointer">취소</button>'
+    + 'font-size:14px;cursor:pointer">' + KE("취소", "Cancel") + '</button>'
     + '</div>';
   document.body.appendChild(d);
   document.getElementById("appOpenOk").onclick = function () { appOpenClose(); appOpenGo(pkg, name); };
@@ -1677,19 +1726,21 @@ function svPick(i) {
   svRender();
   try { if (window.svAfterProfile) svAfterProfile(); } catch (e) {}
 }
-function svPortNm(i) { return SV_GRADE[i].nm.replace(/형$/, "") + " 포트폴리오"; }
+function svPortNm(i) { return KE(SV_GRADE[i].nm.replace(/형$/, "") + " 포트폴리오", KN(SV_GRADE[i].nm) + " Portfolio"); }
 function svRender() {
   const box = document.getElementById("svBody");
   if (!box) return;
   const p = svGet();
   const cur = p ? p.pick : -1;
-  let h = '<div class="svsub">아래에서 하나를 고르십시오. 고른 포트폴리오에 맞추어 자산 종류별 비중과 '
-        + '종목을 보여 드립니다. 언제든 바꾸실 수 있습니다.</div>';
+  let h = '<div class="svsub">' + KE('아래에서 하나를 고르십시오. 고른 포트폴리오에 맞추어 자산 종류별 비중과 '
+        + '종목을 보여 드립니다. 언제든 바꾸실 수 있습니다.',
+        'Choose one below. We show asset-class weights and picks that match the portfolio you choose. '
+        + 'You can change it at any time.') + '</div>';
   SV_GRADE.forEach(function (g, i) {
     const on = (i === cur);
     h += '<button class="svbtn' + (on ? ' svgo' : '') + '" onclick="svPick(' + i + ')">'
        + (on ? "✓ " : "") + svPortNm(i)
-       + ' <span class="dplbl">' + g.mix.map(function (m) { return m[0] + " " + m[1] + "%"; }).join(" · ") + '</span>'
+       + ' <span class="dplbl">' + g.mix.map(function (m) { return KN(m[0]) + " " + m[1] + "%"; }).join(" · ") + '</span>'
        + '</button>';
   });
   box.innerHTML = h;
@@ -1752,7 +1803,7 @@ function svPie(mix) {
     + sides + tops + labels + '</svg></div>'
     + '<div class="svleg">' + seg.map(function (s) {
         return '<span><i style="background:linear-gradient(145deg,' + svShade(s.c, 1.24) + ',' + svShade(s.c, 0.8) + ')"></i>'
-             + s.nm + ' ' + (s.v / tot * 100).toFixed(1) + '%</span>';
+             + KN(s.nm) + ' ' + (s.v / tot * 100).toFixed(1) + '%</span>';
       }).join("") + '</div>';
 }
 
@@ -1767,8 +1818,11 @@ window.APP_TAG="stock";
 // 🔴 주식앱과 코인앱은 **같은 도메인**이라 저장소를 공유한다 — 열쇠에 앱 이름을 박아 가른다.
 //    안 그러면 주식 바스켓이 코인앱에 그대로 보인다(사장님 2026-09-20 지적).
 const BK_KEY = "bk_basket_" + (window.APP_TAG || "x") + "_v1";
-const BK_SPANS = [[63, "3개월"], [126, "6개월"], [252, "1년"]];
-const BK_NOTE = "과거의 수익률에 근거한 것이며 고객님의 미래 수익을 보장하지 않습니다.";
+const BK_SPANS = [[63, "3개월", "3 months"], [126, "6개월", "6 months"], [252, "1년", "1 year"]];
+function bkNote() {
+  return KE("과거의 수익률에 근거한 것이며 고객님의 미래 수익을 보장하지 않습니다.",
+            "Based on past returns; this does not guarantee your future returns.");
+}
 
 function bkGet() { try { return JSON.parse(localStorage.getItem(BK_KEY) || "[]") || []; } catch (e) { return []; } }
 function bkSave(a) { try { localStorage.setItem(BK_KEY, JSON.stringify(a)); } catch (e) {} }
@@ -1776,7 +1830,7 @@ function bkAdd(code, name, mk) {
   if (!code) return;
   const a = bkGet();
   if (a.some(function (x) { return x.code === code; })) { bkRender(); return; }
-  if (a.length >= 10) { bkMsg("한 번에 열 개까지 담을 수 있습니다."); return; }
+  if (a.length >= 10) { bkMsg(KE("한 번에 열 개까지 담을 수 있습니다.", "You can add up to 10 at a time.")); return; }
   a.push({code: code, name: name || code, mk: mk || "kr"});
   bkSave(a); bkRender();
 }
@@ -1791,7 +1845,7 @@ function bkRender() {
   const box = document.getElementById("bkBody");
   if (!box) return;
   const a = bkGet();
-  let h = '<div class="svsub">' + BK_HELP + '</div>';
+  let h = '<div class="svsub">' + KE(BK_HELP, BK_HELP_EN) + '</div>';
   if (!a.length) {
     h += '<div class="mhempty">' + BK_EMPTY + '</div>';
     box.innerHTML = h;
@@ -1799,7 +1853,7 @@ function bkRender() {
   }
   const w = 100 / a.length;
   h += svPie(a.map(function (x) { return [x.name, w]; }));
-  h += '<table class="mhtab"><tr><th>' + BK_COL + '</th><th>비중</th><th></th></tr>';
+  h += '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
   a.forEach(function (x, i) {
     h += '<tr><td style="text-align:left">' + x.name + (/^\d/.test(x.code) ? ' <span class="dplbl">' + x.code + '</span>' : '')
        + '</td><td>' + w.toFixed(1) + '%</td>'
@@ -1807,11 +1861,12 @@ function bkRender() {
   });
   h += '</table>';
   h += '<div class="cvrow">' + BK_SPANS.map(function (s) {
-      return '<button class="svbtn" style="flex:1;text-align:center;margin:0" onclick="bkRun(' + s[0] + ')">' + s[1] + '</button>';
-    }).join("") + '<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="bkClear()">비우기</button></div>';
+      return '<button class="svbtn" style="flex:1;text-align:center;margin:0" onclick="bkRun(' + s[0] + ')">' + KE(s[1], s[2]) + '</button>';
+    }).join("") + '<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="bkClear()">' + KE("비우기", "Clear") + '</button></div>';
   h += '<div id="bkMsg" class="c21msg" hidden></div><div id="bkOut"></div>';
-  h += '<div class="discNote">' + BK_NOTE + '<br>'
-     + '<b>배당(분배금)·세금·거래 수수료는 감안하지 않은 값입니다.</b></div>';
+  h += '<div class="discNote">' + bkNote() + '<br>'
+     + '<b>' + KE("배당(분배금)·세금·거래 수수료는 감안하지 않은 값입니다.",
+                  "Dividends (distributions), taxes and trading fees are not included.") + '</b></div>';
   box.innerHTML = h;
 }
 
@@ -1819,7 +1874,7 @@ function bkRender() {
 async function bkRun(days) {
   const a = bkGet();
   if (!a.length) return;
-  bkMsg("받는 중… 종목마다 몇 초 걸립니다");
+  bkMsg(KE("받는 중… 종목마다 몇 초 걸립니다", "Loading… a few seconds per item"));
   document.getElementById("bkOut").innerHTML = "";
   const rows = [];
   for (let i = 0; i < a.length; i++) {
@@ -1832,7 +1887,7 @@ async function bkRun(days) {
     rows.push({nm: a[i].name, r: to / from - 1, n: n, cs: cs.slice(cs.length - 1 - n)});
   }
   const ok = rows.filter(function (x) { return !x.err; });
-  if (!ok.length) { bkMsg("자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요."); return; }
+  if (!ok.length) { bkMsg(KE("자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요.", "Could not load data. Please try again shortly.")); return; }
   bkMsg("");
 
   // 바스켓 = 균등 비중. 흔들림은 하루 수익률의 표준편차로 본다.
@@ -1861,21 +1916,22 @@ async function bkRun(days) {
 
   const pc = function (v) { return (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%"; };
   const cls = function (v) { return v > 0 ? "up" : (v < 0 ? "dn" : "fl"); };
-  let h = '<table class="mhtab"><tr><th>' + BK_COL + '</th><th>' + (L - 1) + '일 수익률</th></tr>';
-  h += '<tr class="mhsum"><td style="text-align:left"><b>바스켓(균등)</b></td>'
+  let h = '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>'
+        + KE((L - 1) + '일 수익률', (L - 1) + '-day return') + '</th></tr>';
+  h += '<tr class="mhsum"><td style="text-align:left"><b>' + KE("바스켓(균등)", "Basket (equal)") + '</b></td>'
      + '<td class="' + cls(eq - 1) + '"><b>' + pc(eq - 1) + '</b></td></tr>';
   ok.slice().sort(function (p, q) { return q.r - p.r; }).forEach(function (x) {
     h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="' + cls(x.r) + '">' + pc(x.r) + '</td></tr>';
   });
   rows.filter(function (x) { return x.err; }).forEach(function (x) {
-    h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="fl">자료 없음</td></tr>';
+    h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="fl">' + KE("자료 없음", "No data") + '</td></tr>';
   });
   h += '</table>';
-  h += '<div class="svsub">제일 좋았던 것 ' + best.nm + ' ' + pc(best.r)
-     + ' · 제일 나빴던 것 ' + worst.nm + ' ' + pc(worst.r) + '</div>';
-  h += '<div class="svsub">하루 흔들림 — 바스켓 ' + (sd * 100).toFixed(2) + '%'
-     + ' · 한 종목만 들었을 때 평균 ' + (sdOne * 100).toFixed(2) + '%'
-     + (sd < sdOne ? ' → <b>섞으니 덜 흔들렸습니다.</b>' : '') + '</div>';
+  h += '<div class="svsub">' + KE("제일 좋았던 것 ", "Best: ") + best.nm + ' ' + pc(best.r)
+     + KE(' · 제일 나빴던 것 ', ' · Worst: ') + worst.nm + ' ' + pc(worst.r) + '</div>';
+  h += '<div class="svsub">' + KE("하루 흔들림 — 바스켓 ", "Daily volatility — basket ") + (sd * 100).toFixed(2) + '%'
+     + KE(' · 한 종목만 들었을 때 평균 ', ' · single holding average ') + (sdOne * 100).toFixed(2) + '%'
+     + (sd < sdOne ? ' → <b>' + KE("섞으니 덜 흔들렸습니다.", "Mixing reduced the swings.") + '</b>' : '') + '</div>';
   document.getElementById("bkOut").innerHTML = h;
 }
 
@@ -1910,6 +1966,7 @@ const SV_PROD = {
 // 표가 폰 폭을 넘지 않게 짧게 적는다 — 1억↑ 은 억, 1만↑ 은 만
 function svWon(n) {
   n = Math.round(n);
+  if (typeof LANG !== "undefined" && LANG === "en") return "₩" + n.toLocaleString();   // 영어엔 억·만이 없다
   if (n >= 100000000) return (n / 100000000).toFixed(2) + "억";
   if (n >= 10000) return Math.round(n / 10000).toLocaleString() + "만";
   return n.toLocaleString() + "원";
@@ -1932,7 +1989,8 @@ function svRecoRender() {
   const box = document.getElementById("svRecoBody");
   if (!box) return;
   const p = svGet();
-  if (!p) { box.innerHTML = '<div class="soonrow">위에서 포트폴리오를 고르시면 자산 배분을 보여 드립니다.</div>'; return; }
+  if (!p) { box.innerHTML = '<div class="soonrow">' + KE("위에서 포트폴리오를 고르시면 자산 배분을 보여 드립니다.",
+                                   "Choose a portfolio above to see the asset allocation.") + '</div>'; return; }
   const g = SV_GRADE[p.pick];
 
   // 🔴 원화 계좌와 달러 계좌를 따로 본다 (사장님 2026-09-20 "1-가"). 환율로 섞지 않는다.
@@ -1942,17 +2000,20 @@ function svRecoRender() {
   const sum = function (a) { return a.reduce(function (t, m) { return t + m[1]; }, 0); };
   const kS = sum(krw), uS = sum(usd);
 
-  let h = '<div class="svsub"><b>' + svPortNm(p.pick) + '</b>에 맞춘 자산 배분입니다. '
-        + '아래 금액은 모든 이용자에게 똑같이 주어지는 가상 금액입니다.</div>';
+  let h = '<div class="svsub">' + KE('<b>' + svPortNm(p.pick) + '</b>에 맞춘 자산 배분입니다. '
+        + '아래 금액은 모든 이용자에게 똑같이 주어지는 가상 금액입니다.',
+        'Asset allocation for the <b>' + svPortNm(p.pick) + '</b>. '
+        + 'The amounts below are virtual amounts given equally to every user.') + '</div>';
 
   // ── 원화 계좌 ──────────────────────────────────────────
-  h += '<div class="svgrpt" style="margin-top:10px">원화 계좌 <span class="dplbl">' + svWon(SV_KRW) + '</span></div>';
+  h += '<div class="svgrpt" style="margin-top:10px">' + KE("원화 계좌", "KRW Account") + ' <span class="dplbl">' + svWon(SV_KRW) + '</span></div>';
   if (kS > 0) {
     h += svPie(krw.map(function (m) { return [m[0], m[1]]; }));
-    h += '<table class="mhtab"><tr><th>자산 종류</th><th>목표 비중</th><th>목표 금액</th></tr>';
+    h += '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("목표 비중", "Target %")
+       + '</th><th>' + KE("목표 금액", "Target amount") + '</th></tr>';
     krw.forEach(function (m) {
       const pc = m[1] / kS * 100;
-      h += '<tr><td style="text-align:left">' + m[0] + '</td>'
+      h += '<tr><td style="text-align:left">' + KN(m[0]) + '</td>'
          + '<td>' + pc.toFixed(1) + '%</td><td>' + svWon(SV_KRW * pc / 100) + '</td></tr>';
     });
     h += '</table>';
@@ -1960,24 +2021,26 @@ function svRecoRender() {
 
   // ── 달러 계좌 ──────────────────────────────────────────
   const usdFmt = function (v) { return "$" + Math.round(v).toLocaleString(); };
-  h += '<div class="svgrpt" style="margin-top:12px">달러 계좌 <span class="dplbl">' + usdFmt(SV_USD) + '</span></div>';
+  h += '<div class="svgrpt" style="margin-top:12px">' + KE("달러 계좌", "USD Account") + ' <span class="dplbl">' + usdFmt(SV_USD) + '</span></div>';
   if (uS > 0) {
     h += svPie(usd.map(function (m) { return [m[0], m[1]]; }));
-    h += '<table class="mhtab"><tr><th>자산 종류</th><th>목표 비중</th><th>목표 금액</th></tr>';
+    h += '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("목표 비중", "Target %")
+       + '</th><th>' + KE("목표 금액", "Target amount") + '</th></tr>';
     usd.forEach(function (m) {
       const pc = m[1] / uS * 100;
-      h += '<tr><td style="text-align:left">' + m[0] + '</td>'
+      h += '<tr><td style="text-align:left">' + KN(m[0]) + '</td>'
          + '<td>' + pc.toFixed(1) + '%</td><td>' + usdFmt(SV_USD * pc / 100) + '</td></tr>';
     });
     h += '</table>';
   } else {
     // 🔴 안정·안정추구 포트폴리오에는 달러 자산군이 없다. 달러는 통째로 남는다.
-    h += '<div class="svsub">이 포트폴리오에는 달러 자산이 들어가지 않습니다. '
-       + '달러 ' + usdFmt(SV_USD) + '는 예수금으로 남습니다.</div>';
+    h += '<div class="svsub">' + KE('이 포트폴리오에는 달러 자산이 들어가지 않습니다. '
+       + '달러 ' + usdFmt(SV_USD) + '는 예수금으로 남습니다.',
+       'This portfolio holds no USD assets. The ' + usdFmt(SV_USD) + ' stays as cash.') + '</div>';
   }
 
   // ③ 자산군별 종목 — **비중 없이** 이름만
-  h += '<div class="svsub" style="margin-top:10px"><b>자산 종류별 추천 종목</b></div>';
+  h += '<div class="svsub" style="margin-top:10px"><b>' + KE("자산 종류별 추천 종목", "Picks by asset class") + '</b></div>';
   g.mix.forEach(function (m) {
     const cls = m[0];
     let cand = [];
@@ -2010,9 +2073,10 @@ function svRecoRender() {
     const pcs = base > 0 ? (m[1] / base * 100).toFixed(1) : "0.0";
     // 🔴 레버리지는 성격이 달라 한 줄 알린다 (사장님 2026-09-20 "그건 넣어주면 좋지").
     const levNote = /레버리지/.test(cls)
-      ? '<div class="svsub" style="margin:2px 0 0 16px">레버리지 ETF는 지수 움직임의 2~3배로 '
-        + '오르내립니다. 손실도 그만큼 커집니다.</div>' : '';
-    h += '<div class="svgrp"><div class="svgrpt"><i style="background:' + svColor(cls, 0) + '"></i>' + cls
+      ? '<div class="svsub" style="margin:2px 0 0 16px">' + KE('레버리지 ETF는 지수 움직임의 2~3배로 '
+        + '오르내립니다. 손실도 그만큼 커집니다.',
+        'Leveraged ETFs move 2–3× the index, up and down. Losses are magnified just as much.') + '</div>' : '';
+    h += '<div class="svgrp"><div class="svgrpt"><i style="background:' + svColor(cls, 0) + '"></i>' + KN(cls)
        + ' <span class="dplbl">' + pcs + '%</span></div>' + levNote
        + (cand.length
           ? cand.map(function (c) {
@@ -2021,26 +2085,26 @@ function svRecoRender() {
               const code = c.code || (isUs ? String(c.name).split(" ")[0] : "");
               // 🔴 국내 코드에 글자가 섞인 것이 있다(0193T0 처럼) — 숫자 여섯 자리로만 보면 빠진다.
               const can = !!code && (isUs || /^[0-9A-Z]{6}$/i.test(code));
-              const lbl = c.name + (c.code && /^\d/.test(c.code) ? ' <span class="dplbl">' + c.code + '</span>' : '');
+              const lbl = KN(c.name) + (c.code && /^\d/.test(c.code) ? ' <span class="dplbl">' + c.code + '</span>' : '');
               // 🔴 onclick 안에 따옴표를 넣으면 깨진다. 값은 data- 로 싣고 누름은 아래에서 한 번에 받는다.
               return can
                 ? '<div class="svitem svgo2" data-code="' + code + '" data-us="' + (isUs ? 1 : 0)
                    + '" data-nm="' + String(c.name).replace(/"/g, "") + '">'
-                   + lbl + ' <span class="svarrow">조회 ›</span></div>'
+                   + lbl + ' <span class="svarrow">' + KE("조회", "View") + ' ›</span></div>'
                 : '<div class="svitem">' + lbl + '</div>';
             }).join("")
-          : '<div class="svitem dplbl">오늘은 추천 종목이 없음</div>')
+          : '<div class="svitem dplbl">' + KE("오늘은 추천 종목이 없음", "No picks today") + '</div>')
        + '</div>';
   });
 
   // 장세는 좋으면 초록, 나쁘면 빨강 (사장님 2026-09-20)
   if (SVR && SVR.kr && SVR.kr.regime) {
     const mk = function (nm, good) {
-      return nm + ' <b style="color:' + (good ? "#2f9e44" : "#e03131") + '">' + (good ? "좋음" : "나쁨") + '</b>';
+      return KN(nm) + ' <b style="color:' + (good ? "#2f9e44" : "#e03131") + '">' + (good ? KE("좋음", "Good") : KE("나쁨", "Bad")) + '</b>';
     };
-    h += '<div class="svsub">오늘 장세 · ' + mk("국내", !!SVR.kr.regime.good)
+    h += '<div class="svsub">' + KE("오늘 장세", "Market today") + ' · ' + mk("국내", !!SVR.kr.regime.good)
        + ' · ' + mk("미국", !!(SVR.us && SVR.us.regime && SVR.us.regime.good))
-       + ' (' + (SVR.at || "") + ' 기준)</div>';
+       + ' (' + KE((SVR.at || "") + ' 기준', 'as of ' + (SVR.at || "")) + ')</div>';
   }
   h += DISC_TAIL();
   box.innerHTML = h;
@@ -2050,36 +2114,39 @@ function svRecoRender() {
 //    다만 **숫자는 빼고 원리만** 적는다(사장님 "숫자는 빼고 원리만") — 길이·문턱은 우리 노하우다.
 //    마지막 줄이 중요하다: 모두에게 같은 규칙·같은 결과 = 개별 맞춤 자문이 아니라는 근거.
 function DISC_TAIL() {
-  return '<div class="svsub">앱 로직에 따라 선택하신 포트폴리오에 맞는 자산의 종류와 종목을 보여 드리는 것이며,'
-       + ' 사고파는 결정과 주문은 고객님이 증권사에 직접 하십니다.</div>';
+  return '<div class="svsub">' + KE('앱 로직에 따라 선택하신 포트폴리오에 맞는 자산의 종류와 종목을 보여 드리는 것이며,'
+       + ' 사고파는 결정과 주문은 고객님이 증권사에 직접 하십니다.',
+       'The app logic shows asset classes and picks that match the portfolio you chose; '
+       + 'buy/sell decisions and orders are made by you directly with your brokerage.') + '</div>';
 }
 
 // ── [주문] — 증권사 고르고 그 MTS 를 연다 (주문은 MTS 에서) ─────────────
 // 🔴 우리 앱은 주문을 만들지도, 보내지도 않는다. 앱을 여는 것으로 끝난다.
 // 🔴 패키지 이름은 2026-09-20 에 Play 스토어에서 하나씩 열어 200 을 확인한 것들이다(추측 금지).
 const SV_MTS = [
-  ["kiwoom", "키움증권 영웅문S#", "com.kiwoom.heromts"],
-  ["korea_inv", "한국투자증권", "com.truefriend.neosmartarenewal"],
-  ["samsung", "삼성증권 mPOP", "com.samsungpop.android.mpop"],
-  ["mirae", "미래에셋 M-STOCK", "com.miraeasset.trade"],
-  ["nh", "NH투자 나무증권", "com.wooriwm.txsmart"],
-  ["kb", "KB증권 M-able", "com.kbsec.mts.iplustarngm2"],
-  ["shinhan", "신한투자 SOL증권", "com.shinhaninvest.nsmts"],
-  ["toss", "토스증권", "viva.republica.toss"],
+  ["kiwoom", "키움증권 영웅문S#", "com.kiwoom.heromts", "Kiwoom Hero S#"],
+  ["korea_inv", "한국투자증권", "com.truefriend.neosmartarenewal", "Korea Investment & Securities"],
+  ["samsung", "삼성증권 mPOP", "com.samsungpop.android.mpop", "Samsung Securities mPOP"],
+  ["mirae", "미래에셋 M-STOCK", "com.miraeasset.trade", "Mirae Asset M-STOCK"],
+  ["nh", "NH투자 나무증권", "com.wooriwm.txsmart", "NH Namuh"],
+  ["kb", "KB증권 M-able", "com.kbsec.mts.iplustarngm2", "KB Securities M-able"],
+  ["shinhan", "신한투자 SOL증권", "com.shinhaninvest.nsmts", "Shinhan SOL Securities"],
+  ["toss", "토스증권", "viva.republica.toss", "Toss Securities"],
   // 🔴 카카오페이증권은 **따로 앱이 없다** — 카카오페이 앱 안에 있다(2026-09-20 Play 확인).
-  ["kakaopay", "카카오페이증권 (카카오페이 앱)", "com.kakaopay.app"],
+  ["kakaopay", "카카오페이증권 (카카오페이 앱)", "com.kakaopay.app", "Kakao Pay Securities (Kakao Pay app)"],
 ];
 function svOpenMts(code) {
   const m = SV_MTS.filter(function (x) { return x[0] === code; })[0];
   if (!m) return;
   try { localStorage.setItem(SV_BROKER, code); } catch (e) {}
-  appOpen(m[2], m[1]);
+  appOpen(m[2], KE(m[1], m[3]));
 }
 function svOrderPanel() {
   const cur = svBroker();
-  return '<div class="svmts"><div class="svsub">주문은 증권사 앱에서 하십니다. 증권사를 고르면 그 앱(로그인 화면)이 열립니다.</div>'
+  return '<div class="svmts"><div class="svsub">' + KE("주문은 증권사 앱에서 하십니다. 증권사를 고르면 그 앱(로그인 화면)이 열립니다.",
+      "Orders are placed in your brokerage app. Choose a broker to open its app (login screen).") + '</div>'
     + SV_MTS.map(function (m) {
-        return '<button class="svbtn' + (m[0] === cur ? ' svgo' : '') + '" onclick="svOpenMts(\'' + m[0] + '\')">' + m[1] + '</button>';
+        return '<button class="svbtn' + (m[0] === cur ? ' svgo' : '') + '" onclick="svOpenMts(\'' + m[0] + '\')">' + KE(m[1], m[3]) + '</button>';
       }).join("") + '</div>';
 }
 function svOrderToggle() {
@@ -2121,9 +2188,11 @@ document.addEventListener("click", function (e) {
 
 // ── 바스켓 백테스트 — 주식앱 쪽 (사장님 2026-09-20) ───────────────────
 const BK_HELP = "추천 종목을 가상 바스켓에 담으면 포트폴리오 전체의 3개월 전·6개월 전·12개월 전부터의 과거 수익률을 계산해 드립니다.";
+const BK_HELP_EN = "Add picks to a virtual basket and we calculate the whole portfolio's past return from 3, 6 and 12 months ago.";
 // 🔴 뒤에 붙던 안내는 사장님이 빼라 하셔서 지웠다(2026-09-20).
 const BK_EMPTY = "";
 const BK_COL = "종목";
+const BK_COL_EN = "Stock";
 // 🔴 봉은 앱이 이미 쓰는 통로로 받는다 — 국내는 허브 릴레이, 미국은 usFetch.
 async function bkBars(x) {
   if (x.mk === "us") {
@@ -2138,7 +2207,7 @@ async function bkBars(x) {
 }
 // 지금 보고 있는 종목을 담는다
 function bkAddCurrent() {
-  if (typeof stkCode === "undefined" || !stkCode) { bkMsg("먼저 종목을 조회해 주세요."); return; }
+  if (typeof stkCode === "undefined" || !stkCode) { bkMsg(KE("먼저 종목을 조회해 주세요.", "Look up a stock first.")); return; }
   const nm = ((document.getElementById("stkq") || {}).value || stkCode).replace(/\s*\(.*\)\s*$/, "");
   bkAdd(stkCode, nm, (typeof stkMarket !== "undefined" && stkMarket === "us") ? "us" : "kr");
   const card = document.getElementById("bkCard");
@@ -2151,13 +2220,17 @@ setTimeout(function () { try { bkRender(); } catch (e) {} }, 900);
 // 투자 유의사항 (사장님 2026-09-20) — 두 앱 공통.
 // 🔴 이 앱에는 가입 절차가 없다(고객 정보를 받지 않으므로). 그래서 **첫 실행 화면**이 가입 화면 자리다.
 //    여기서 네 문구를 보여 주고 확인을 받는다. 확인 기록은 이 폰에만 남는다(서버로 보내지 않는다).
-// 🔴 문구는 사장님이 주신 그대로다. `build_apps.py` 의 DISC_A~D 와 **같은 글이어야 한다**.
+// 🔴 문구는 사장님이 주신 그대로다. `build_apps.py` 의 DISC_A~D 와 **같은 글이어야 한다**(영어도 같이).
 var DISC_KEY = "disc_ok_v3";   // 🔴 문구가 바뀌면 올린다 — 이미 확인한 분들께 한 번 더 받는다 (사장님 2026-09-20)
 var DISC_LINES = [
-  "본 서비스는 특정 종목의 매수·매도를 권유하지 않으며, 투자 판단의 책임은 본인에게 있습니다.",
-  "과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.",
-  "본 서비스는 1:1 개별 투자 상담을 진행하지 않는 단방향 정보 제공 서비스입니다.",
-  "이 앱은 단기 트레이딩용으로 사용하기에는 적합하지 않으며, 일봉 기준으로 중장기 포트폴리오 투자를 지원하기 위해 설계되었습니다.",
+  ["본 서비스는 특정 종목의 매수·매도를 권유하지 않으며, 투자 판단의 책임은 본인에게 있습니다.",
+   "This service does not recommend buying or selling any specific security; responsibility for investment decisions rests with you."],
+  ["과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.",
+   "Past performance does not guarantee future returns, and this service carries the possibility of loss of principal."],
+  ["본 서비스는 1:1 개별 투자 상담을 진행하지 않는 단방향 정보 제공 서비스입니다.",
+   "This service is a one-way information service and does not provide one-on-one individual investment consultation."],
+  ["이 앱은 단기 트레이딩용으로 사용하기에는 적합하지 않으며, 일봉 기준으로 중장기 포트폴리오 투자를 지원하기 위해 설계되었습니다.",
+   "This app is not suitable for short-term trading; it is designed to support medium- to long-term portfolio investing based on daily charts."],
 ];
 
 function discAgreed() {
@@ -2184,18 +2257,21 @@ function discGate(force) {
     '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:420px;width:100%;'
     + 'padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.4);'
     + 'max-height:86vh;overflow:auto">'
-    + '<div style="font-size:17px;font-weight:800;margin-bottom:4px">투자 유의사항</div>'
-    + '<div style="font-size:12.5px;color:var(--sub);margin-bottom:14px">시작하기 전에 아래를 꼭 읽어 주십시오.</div>'
+    + '<div style="font-size:17px;font-weight:800;margin-bottom:4px">' + KE("투자 유의사항", "Investment Notice") + '</div>'
+    + '<div style="font-size:12.5px;color:var(--sub);margin-bottom:14px">'
+    + KE("시작하기 전에 아래를 꼭 읽어 주십시오.", "Please read the following before you start.") + '</div>'
     + DISC_LINES.map(function (t) {
         return '<div style="display:flex;gap:8px;margin:11px 0;font-size:13.5px;line-height:1.62">'
-             + '<span style="color:var(--tint,#1c7ed6);font-weight:900">·</span><span>' + t + '</span></div>';
+             + '<span style="color:var(--tint,#1c7ed6);font-weight:900">·</span><span>' + KE(t[0], t[1]) + '</span></div>';
       }).join("")
     + '<div style="font-size:12px;color:var(--sub);margin-top:14px;line-height:1.6">'
-    + '이 앱은 시세와 참고 정보를 보여 줄 뿐, 주문을 내지 않습니다. 매매는 고객님이 거래하시는 '
-    + '증권사·거래소 앱에서 직접 하십니다.</div>'
+    + KE('이 앱은 시세와 참고 정보를 보여 줄 뿐, 주문을 내지 않습니다. 매매는 고객님이 거래하시는 '
+         + '증권사·거래소 앱에서 직접 하십니다.',
+         'This app only shows quotes and reference information; it does not place orders. '
+         + 'Trades are made by you directly in your brokerage or exchange app.') + '</div>'
     + '<button onclick="discOk()" style="display:block;width:100%;margin-top:18px;padding:13px;border:0;'
     + 'border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">'
-    + '확인했습니다</button></div>';
+    + KE("확인했습니다", "I have read this") + '</button></div>';
   document.body.appendChild(d);
 }
 // 설치 안내보다 먼저 보이도록 곧바로 띄운다.
