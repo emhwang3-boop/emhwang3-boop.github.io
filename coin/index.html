@@ -251,7 +251,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 </div>
 
 <div class="card svcard" id="cvReco">
-  <h3>코인 추천 — 헐 규칙</h3>
+  <h3>코인 추천</h3>
   <div id="cvRecoBody"></div>
   <div class="discNote">본 서비스는 특정 종목의 매수·매도를 추천하지 않으며, 투자 판단의 책임은 본인에게 있습니다.<br>과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.</div>
 </div>
@@ -2002,20 +2002,22 @@ function cvToggle() {
   b.innerHTML = b.innerHTML ? "" : cvPanel();
 }
 
-// ── 코인 추천 — 헐 규칙 (사장님 2026-09-20) ─────────────────────────
-// 🔴 규칙은 우리가 재서 고른 것 그대로다: 헐(HMA) 100 · SMA 120 게이트 · 리본 폭 0.3% 이상.
-//    reco.json 을 그대로 읽어 보여 줄 뿐, 이 앱은 주문을 내지 않는다.
+// ── 코인 추천 ────────────────────────────────────────────────
+// 🔴 고르는 규칙은 여기에 적지 않는다 — 웹앱은 소스가 그대로 폰으로 내려가므로
+//    주석도 누구나 읽을 수 있다 (사장님 2026-09-20 "우리 노하우를 알려 주는 거야").
+//    규칙은 _m_reco.py 안에만 둔다. 이 앱은 reco.json 을 읽어 보여 줄 뿐이다.
 let CVR = null;
 async function cvRecoLoad() {
   try { cvRecoRender(); } catch (e) {}
   try { CVR = await fetch(RECO_URL + "?t=" + Date.now(), {cache: "no-store"}).then(function (r) { return r.json(); }); } catch (e) {}
   try { cvRecoRender(); cvHoldRender(); } catch (e) {}
 }
-// 🔴 헐 규칙이 내는 신호는 셋이다 — 롱 · 숏 · 쉼 (사장님 2026-09-20 "롱·숏으로 나눠줘")
+// 신호는 셋 — 롱 · 숏 · 쉼 (사장님 2026-09-20 "롱·숏으로 나눠줘")
+// 🔴 셋째 칸(설명)은 뺐다. 아무 데서도 쓰지 않으면서 규칙만 드러내고 있었다.
 const CV_STATE = {
-  long: ["롱 (매수)", "#2f9e44", "헐선이 오르고 값이 120일선 위 — 오름에 거는 자리"],
-  short: ["숏 (매도)", "#e03131", "헐선이 내리고 값이 120일선 아래 — 내림에 거는 자리"],
-  cash: ["쉼", "#868e96", "방향이 안 잡힘 — 규칙이 들어가지 말라고 한다"],
+  long: ["롱 (매수)", "#2f9e44"],
+  short: ["숏 (매도)", "#e03131"],
+  cash: ["쉼", "#868e96"],
 };
 function cvNum(n) { return (+n).toLocaleString(undefined, {maximumFractionDigits: 2}); }
 setTimeout(function () { try { cvRecoLoad(); } catch (e) {} }, 800);
@@ -2145,10 +2147,10 @@ async function bkRun(days) {
 
 </script>
 <script>
-// 코인앱 — 성향 문턱 · 보유부 · 헐 규칙 추천 (사장님 2026-09-20)
+// 코인앱 — 성향 문턱 · 보유부 · 추천 (사장님 2026-09-20)
 // 🔴 가상자산은 **공격투자형만** 들어갈 자리다. 그 아래 성향이면 경고를 띄우고 추천을 내지 않는다.
 // 🔴 보유는 고객이 직접 넣는다. 거래소와 연결하지 않고, 이 폰에만 저장한다(서버로 안 보낸다).
-// 🔴 추천은 우리가 재서 고른 헐 규칙 그대로다 — 헐(HMA) 100 · SMA 120 게이트 · 리본 폭 0.3% 이상.
+// 🔴 고르는 규칙은 여기에 적지 않는다 — 소스가 그대로 폰으로 내려가 누구나 읽는다. 규칙은 _m_reco.py 안에만.
 //    주문은 이 앱이 내지 않는다. 거래는 거래소 앱에서 하신다.
 
 const CV_HOLD_KEY = "cv_holds_coin_v1";  // [{sym, kind, qty, buy}] — 🔴 코인앱 전용
@@ -2171,6 +2173,16 @@ function cvPx(sym) {                       // 오늘 값 — reco.json 이 가�
 function cvUsd(n) {
   n = +n || 0;
   return n.toLocaleString(undefined, {maximumFractionDigits: n >= 100 ? 0 : 2}) + " USDT";
+}
+
+// 전일 대비 등락률 (사장님 2026-09-20).
+function cvChg(v) {
+  v = +v || 0;
+  return (v > 0 ? "+" : "") + v.toFixed(2) + "%";
+}
+function cvChgCol(v) {
+  v = +v || 0;
+  return v > 0 ? "#e03131" : (v < 0 ? "#1c7ed6" : "#868e96");
 }
 
 // ── ① 성향 문턱 ────────────────────────────────────────────
@@ -2275,14 +2287,13 @@ function cvRecoRender() {
   if (!c) { box.innerHTML = '<div class="svsub">오늘 자료를 받는 중입니다…</div>'; return; }
 
   // 신호 표는 성향과 무관하게 늘 보여 준다(정보)
-  let h = '<div class="svsub" style="color:#e03131"><b>헐(Hull) 규칙 · 일봉에 근거한 추천</b>입니다 — '
-        + '헐(HMA) 100 · SMA 120 게이트 · 리본 폭 0.3% 이상 · 바이낸스 현물 일봉(UTC).</div>'
-        + '<table class="mhtab"><tr><th>코인</th><th>신호</th><th>현재가</th><th>120일선</th></tr>';
+  let h = '<table class="mhtab"><tr><th>코인</th><th>신호</th><th>현재가</th><th>등락률</th></tr>';
   Object.keys(c).forEach(function (k) {
     const x = c[k], st = CV_STATE[x.state] || CV_STATE.cash;
     h += '<tr><td style="text-align:left"><b>' + k + '</b></td>'
        + '<td style="color:' + st[1] + ';font-weight:800">' + st[0] + '</td>'
-       + '<td>' + cvUsd(x.price) + '</td><td>' + cvUsd(x.sma120) + '</td></tr>';
+       + '<td>' + cvUsd(x.price) + '</td><td style="color:' + cvChgCol(x.chg) + '">'
+       + cvChg(x.chg) + '</td></tr>';
   });
   h += '</table><div class="svsub">' + ((CVR && CVR.at) || "") + ' 기준</div>';
 
