@@ -1909,9 +1909,10 @@ async function cvRecoLoad() {
   try { CVR = await fetch(RECO_URL + "?t=" + Date.now(), {cache: "no-store"}).then(function (r) { return r.json(); }); } catch (e) {}
   try { cvRecoRender(); cvHoldRender(); } catch (e) {}
 }
+// 🔴 헐 규칙이 내는 신호는 셋이다 — 롱 · 숏 · 쉼 (사장님 2026-09-20 "롱·숏으로 나눠줘")
 const CV_STATE = {
-  long: ["오름 신호", "#2f9e44", "헐선이 오르고 값이 120일선 위"],
-  short: ["내림 신호", "#e03131", "헐선이 내리고 값이 120일선 아래"],
+  long: ["롱 (매수)", "#2f9e44", "헐선이 오르고 값이 120일선 위 — 오름에 거는 자리"],
+  short: ["숏 (매도)", "#e03131", "헐선이 내리고 값이 120일선 아래 — 내림에 거는 자리"],
   cash: ["쉼", "#868e96", "방향이 안 잡힘 — 규칙이 들어가지 말라고 한다"],
 };
 function cvNum(n) { return (+n).toLocaleString(undefined, {maximumFractionDigits: 2}); }
@@ -2052,36 +2053,49 @@ function cvRecoRender() {
     box.innerHTML = h; return;
   }
 
+  // 🔴 롱·숏을 나눈다 (사장님 2026-09-20). 신호가 있는 자리끼리 고르게 나눈다.
   const longs = Object.keys(c).filter(function (k) { return c[k].state === "long"; });
+  const shorts = Object.keys(c).filter(function (k) { return c[k].state === "short"; });
+  const sig = longs.concat(shorts);
   const pie = [], rows = [];
-  if (!longs.length) {
-    h += '<div class="cvwarn">오늘은 오름 신호가 없습니다. <b>규칙은 전부 현금(USDT)으로 쉬라고 합니다.</b></div>';
+  if (!sig.length) {
+    h += '<div class="cvwarn">오늘은 롱도 숏도 신호가 없습니다. <b>규칙은 전부 현금(USDT)으로 쉬라고 합니다.</b></div>';
     pie.push(["현금(USDT)", total, "#9AA3AB"]);
   } else {
-    const each = total / longs.length;                 // 오름 신호끼리 고르게
+    const each = total / sig.length;
     longs.forEach(function (k, i) {
-      const have = held[k] || 0, gap = each - have;
-      pie.push([k, each, svShade("#C9A03F", 0.92 + 0.14 * (i % 3))]);
-      rows.push([k, each, have, gap]);
+      pie.push([k + " 롱", each, svShade("#2F9E44", 0.95 + 0.16 * (i % 3))]);
+      rows.push([k, "롱", each, held[k] || 0]);
     });
-    // 신호가 없는데 들고 계신 것 — 규칙상 비울 자리
+    shorts.forEach(function (k, i) {
+      pie.push([k + " 숏", each, svShade("#E03131", 0.95 + 0.16 * (i % 3))]);
+      rows.push([k, "숏", each, 0]);
+    });
+    // 신호가 롱이 아닌데 들고 계신 현물 — 규칙상 비울 자리
     Object.keys(held).forEach(function (k) {
-      if (longs.indexOf(k) < 0 && held[k] > 0) rows.push([k, 0, held[k], -held[k]]);
+      if (longs.indexOf(k) < 0 && held[k] > 0) rows.push([k, "비움", 0, held[k]]);
     });
   }
   h += svPie(pie);
   h += '<div class="svsub">총자산 ' + cvUsd(total) + ' · 보유 ' + cvUsd(heldVal) + ' · 현금 ' + cvUsd(cash) + '</div>';
   if (rows.length) {
-    h += '<table class="mhtab"><tr><th>코인</th><th>목표</th><th>지금</th><th>할 일</th></tr>';
+    h += '<table class="mhtab"><tr><th>코인</th><th>방향</th><th>목표</th><th>지금</th><th>할 일</th></tr>';
     rows.forEach(function (r) {
-      const d = r[3];
+      const dir = r[1], want = r[2], have = r[3], d = want - have;
+      const dc = dir === "롱" ? "#2f9e44" : (dir === "숏" ? "#e03131" : "#868e96");
       h += '<tr><td style="text-align:left"><b>' + r[0] + '</b></td>'
-        + '<td>' + cvUsd(r[1]) + '</td><td>' + cvUsd(r[2]) + '</td>'
-        + '<td>' + (Math.abs(d) <= total * 0.02 ? "맞음"
-            : (d > 0 ? '<span class="svbuy">+' + cvUsd(d) + '</span>'
-                     : '<span class="svover">−' + cvUsd(-d) + '</span>')) + '</td></tr>';
+        + '<td style="color:' + dc + ';font-weight:800">' + dir + '</td>'
+        + '<td>' + cvUsd(want) + '</td><td>' + cvUsd(have) + '</td>'
+        + '<td>' + (dir === "숏" ? '<span class="svover">숏 ' + cvUsd(want) + '</span>'
+            : (Math.abs(d) <= total * 0.02 ? "맞음"
+               : (d > 0 ? '<span class="svbuy">+' + cvUsd(d) + '</span>'
+                        : '<span class="svover">−' + cvUsd(-d) + '</span>'))) + '</td></tr>';
     });
     h += '</table>';
+    if (shorts.length) {
+      h += '<div class="svsub">숏은 빌려서 파는 거래라 <b>값이 오르면 손실이 끝없이 커질 수 있고</b>, '
+         + '거래소가 강제로 청산합니다. 지금 들고 계신 현물과는 다른 자리입니다.</div>';
+    }
   }
   h += '<div class="svsub">규칙이 내는 값일 뿐이며, 사고파는 결정과 주문은 고객님이 거래소에서 하십니다.</div>';
   box.innerHTML = h;
