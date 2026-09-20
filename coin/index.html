@@ -2350,7 +2350,7 @@ function cvRecoRender() {
   // ③ 자산군별 코인 — 롱·숏을 갈라 이름만 (비중 없음)
   const held = {};
   H.forEach(function (x) { held[x.sym] = 1; });
-  h += '<div class="svsub" style="margin-top:10px"><b>자산 종류별 코인</b> — 오늘 신호가 난 것만입니다.</div>';
+  h += '<div class="svsub" style="margin-top:10px"><b>자산 종류별 추천 코인</b> — 오늘 신호가 난 것만입니다.</div>';
   CV_MIX.forEach(function (m) {
     const grp = m[0];
     const keys = Object.keys(c).filter(function (k) {
