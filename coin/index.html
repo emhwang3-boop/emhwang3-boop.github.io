@@ -2016,24 +2016,34 @@ function cvGate() {
   return ok;
 }
 
-// ── ② 보유부 — 직접 입력 ────────────────────────────────────
+// ── ② 보유부 — 직접 입력 · **현물/선물을 나눈다** (사장님 2026-09-20) ────────
+//   🔴 선물은 배수를 곱해야 손익률이 맞다. 현물은 1배다.
+//   🔴 평가금액은 둘 다 '수량 × 현재가'(명목)로 본다 — 증거금이 아니다.
+function cvKindNm(k) { return k === "perp" ? "선물" : "현물"; }
 function cvHoldRender() {
   const box = document.getElementById("cvHoldBody");
   if (!box) return;
   const H = cvHolds();
   const syms = (CVR && CVR.coin) ? Object.keys(CVR.coin) : ["BTC", "ETH"];
   let h = '<div class="cvrow">'
+    + '<select id="cvhKind" class="c21sel" onchange="cvKindTgl()">'
+    + '<option value="spot">현물</option><option value="perp">선물</option></select>'
     + '<select id="cvhSym" class="c21sel">' + syms.map(function (s) { return '<option>' + s + '</option>'; }).join("") + '</select>'
     + '<input id="cvhQty" inputmode="decimal" placeholder="수량">'
     + '<input id="cvhBuy" inputmode="decimal" placeholder="매입가(USDT)">'
+    + '<input id="cvhLev" inputmode="numeric" placeholder="배수" hidden style="max-width:70px">'
     + '<button class="cvadd" onclick="cvHoldAdd()">추가</button></div>';
   if (!H.length) {
     h += '<div class="mhempty">가지고 계신 코인을 넣으십시오. 이 폰에만 저장됩니다.</div>';
   } else {
     h += '<table class="mhtab"><tr><th>코인</th><th>수량</th><th>매입가</th><th>평가</th><th>손익</th><th></th></tr>';
     H.forEach(function (x, i) {
-      const px = cvPx(x.sym), val = px * x.qty, pl = px ? (px - x.buy) / x.buy * 100 : null;
-      h += '<tr><td style="text-align:left"><b>' + x.sym + '</b></td>'
+      const px = cvPx(x.sym), val = px * x.qty;
+      const lv = (x.kind === "perp") ? Math.max(1, +x.lev || 1) : 1;
+      const pl = px ? (px - x.buy) / x.buy * 100 * lv : null;
+      const tag = (x.kind === "perp")
+        ? '<span class="mkt fu">선물 ' + lv + 'x</span>' : '<span class="mkt sp">현물</span>';
+      h += '<tr><td style="text-align:left"><b>' + x.sym + '</b> ' + tag + '</td>'
         + '<td>' + x.qty + '</td><td>' + cvUsd(x.buy) + '</td>'
         + '<td>' + (px ? cvUsd(val) : "-") + '</td>'
         + '<td class="' + (pl == null ? "fl" : (pl > 0 ? "up" : (pl < 0 ? "dn" : "fl"))) + '">'
@@ -2046,14 +2056,21 @@ function cvHoldRender() {
      + ' value="' + (cvCash() ? cvCash().toLocaleString() : "") + '" onchange="cvCashSet(this.value)">USDT</div>';
   box.innerHTML = h;
 }
+function cvKindTgl() {                       // 선물일 때만 배수 칸을 보인다
+  const k = (document.getElementById("cvhKind") || {}).value;
+  const lv = document.getElementById("cvhLev");
+  if (lv) { lv.hidden = (k !== "perp"); if (k !== "perp") lv.value = ""; }
+}
 function cvHoldAdd() {
-  const sym = (document.getElementById("cvhSym") || {}).value || "";
-  const q = parseFloat(String((document.getElementById("cvhQty") || {}).value || "").replace(/,/g, ""));
-  const b = parseFloat(String((document.getElementById("cvhBuy") || {}).value || "").replace(/,/g, ""));
+  const v = function (id) { return ((document.getElementById(id) || {}).value || ""); };
+  const kind = v("cvhKind") || "spot", sym = v("cvhSym");
+  const q = parseFloat(v("cvhQty").replace(/,/g, "")), b = parseFloat(v("cvhBuy").replace(/,/g, ""));
+  const lev = (kind === "perp") ? Math.max(1, Math.round(parseFloat(v("cvhLev")) || 1)) : 1;
   if (!sym || !(q > 0) || !(b > 0)) return;
-  const H = cvHolds(), i = H.findIndex(function (x) { return x.sym === sym; });
-  if (i >= 0) { const o = H[i], t = o.qty + q; o.buy = (o.buy * o.qty + b * q) / t; o.qty = t; }
-  else H.push({sym: sym, qty: q, buy: b});
+  const H = cvHolds();
+  const i = H.findIndex(function (x) { return x.sym === sym && (x.kind || "spot") === kind; });
+  if (i >= 0) { const o = H[i], t = o.qty + q; o.buy = (o.buy * o.qty + b * q) / t; o.qty = t; o.lev = lev; }
+  else H.push({sym: sym, kind: kind, qty: q, buy: b, lev: lev});
   cvHoldSave(H); cvHoldRender(); cvRecoRender();
 }
 function cvHoldDel(i) { const H = cvHolds(); H.splice(i, 1); cvHoldSave(H); cvHoldRender(); cvRecoRender(); }
@@ -2065,6 +2082,9 @@ function cvHoldDel(i) { const H = cvHolds(); H.splice(i, 1); cvHoldSave(H); cvHo
 //      · BTC:ETH 는 앞뒤 절반이 정반대로 나와 우열을 못 가렸다 → 반반
 //   🔴 종목별 비중은 내지 않는다. 어느 코인에 얼마를 넣을지는 고객이 정한다.
 const CV_MIX = [["BTC", 45], ["ETH", 45], ["알트", 10]];
+// 🔴 같은 자산군 안에서도 **현물을 많이** 둔다 (사장님 2026-09-20).
+//    선물은 청산이 있어 원금 전액을 잃을 수 있다. 80:20 은 잰 값이 아니라 정한 값이다.
+const CV_SPOT = 80;
 
 function cvRecoRender() {
   const box = document.getElementById("cvRecoBody");
@@ -2081,7 +2101,7 @@ function cvRecoRender() {
        + '<td style="color:' + st[1] + ';font-weight:800">' + st[0] + '</td>'
        + '<td>' + cvUsd(x.price) + '</td><td>' + cvUsd(x.sma120) + '</td></tr>';
   });
-  h += '</table><div class="svsub">' + ((CVR && CVR.at) || "") + ' 기준 · 하루 한 번(UTC 일봉) 다시 잽니다.</div>';
+  h += '</table><div class="svsub">' + ((CVR && CVR.at) || "") + ' 기준</div>';
 
   // 🔴 성향 문턱 — 공격투자형이 아니면 여기서 끝. 배분을 내지 않는다.
   const p = (typeof svGet === "function") ? svGet() : null;
@@ -2093,29 +2113,37 @@ function cvRecoRender() {
   }
 
   // ① 자산 배분 — 비율만 그린다
-  h += '<div class="svsub"><b>자산 배분</b> — BTC 45 · ETH 45 · 알트 10. 코인은 골라 드리고, '
-     + '어느 코인에 얼마를 넣을지는 고객님이 정하십니다.</div>';
+  h += '<div class="svsub"><b>자산 배분</b> — BTC 45 · ETH 45 · 알트 10, 그 안에서 '
+     + '<b>현물 ' + CV_SPOT + ' · 선물 ' + (100 - CV_SPOT) + '</b>. 선물은 청산이 있어 적게 둡니다. '
+     + '코인은 골라 드리고, 어느 코인에 얼마를 넣을지는 고객님이 정하십니다.</div>';
   h += svPie(CV_MIX.map(function (m) { return [m[0], m[1]]; }));
 
   // ② 지금 내 비중과 견주기
   const H = cvHolds(), cash = cvCash();
-  const have = {"BTC": 0, "ETH": 0, "알트": 0};
+  const have = {};                                        // "BTC|spot" 같은 열쇠
+  CV_MIX.forEach(function (m) { have[m[0] + "|spot"] = 0; have[m[0] + "|perp"] = 0; });
   let heldVal = 0;
   H.forEach(function (x) {
     const v = cvPx(x.sym) * x.qty;
-    have[(x.sym === "BTC" || x.sym === "ETH") ? x.sym : "알트"] += v;
+    const grp = (x.sym === "BTC" || x.sym === "ETH") ? x.sym : "알트";
+    const k = grp + "|" + ((x.kind === "perp") ? "perp" : "spot");
+    have[k] = (have[k] || 0) + v;
     heldVal += v;
   });
   const total = heldVal + cash;
   if (total > 0) {
     h += '<table class="mhtab"><tr><th>자산 종류</th><th>지금 → 목표</th><th>할 일</th></tr>';
     CV_MIX.forEach(function (m) {
-      const w = total * m[1] / 100, v = have[m[0]] || 0, d = w - v;
-      h += '<tr><td style="text-align:left"><b>' + m[0] + '</b></td>'
-         + '<td>' + (v / total * 100).toFixed(1) + '% → ' + m[1] + '%</td>'
-         + '<td>' + (Math.abs(d) <= total * 0.02 ? "없음"
-             : (d > 0 ? '<span class="svbuy">+' + cvUsd(d) + '</span>'
-                      : '<span class="svover">−' + cvUsd(-d) + '</span>')) + '</td></tr>';
+      [["spot", CV_SPOT], ["perp", 100 - CV_SPOT]].forEach(function (kk) {
+        const pct = m[1] * kk[1] / 100;                    // 자산군 비중 × 현물/선물 비율
+        const w = total * pct / 100, v = have[m[0] + "|" + kk[0]] || 0, d = w - v;
+        h += '<tr><td style="text-align:left"><b>' + m[0] + '</b> '
+           + '<span class="mkt ' + (kk[0] === "perp" ? "fu" : "sp") + '">' + cvKindNm(kk[0]) + '</span></td>'
+           + '<td>' + (v / total * 100).toFixed(1) + '% → ' + pct.toFixed(1) + '%</td>'
+           + '<td>' + (Math.abs(d) <= total * 0.02 ? "없음"
+               : (d > 0 ? '<span class="svbuy">+' + cvUsd(d) + '</span>'
+                        : '<span class="svover">−' + cvUsd(-d) + '</span>')) + '</td></tr>';
+      });
     });
     h += '</table><div class="svsub">총자산 ' + cvUsd(total) + ' · 보유 ' + cvUsd(heldVal)
        + ' · 현금 ' + cvUsd(cash) + '</div>';
