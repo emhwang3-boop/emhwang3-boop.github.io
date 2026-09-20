@@ -2386,7 +2386,8 @@ function cvRecoRender() {
   //    주식앱과 같은 꼴로 간다 — 자산군과 이름뿐, 방향도 매매 말도 쓰지 않는다.
   const held = {};
   H.forEach(function (x) { held[x.sym] = 1; });
-  h += '<div class="svsub" style="margin-top:10px"><b>자산 종류별 추천 코인</b> — 오늘 신호가 난 것만입니다.</div>';
+  // 🔴 "오늘 신호가 난 것만입니다"는 뺐다 (사장님 2026-09-20) — 신호라는 말을 화면에 쓰지 않는다.
+  h += '<div class="svsub" style="margin-top:10px"><b>자산 종류별 추천 코인</b></div>';
   CV_MIX.forEach(function (m) {
     const grp = m[0];
     const keys = Object.keys(c).filter(function (k) {
