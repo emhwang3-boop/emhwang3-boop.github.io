@@ -2130,7 +2130,7 @@ function svRecoRender() {
   // ③ 자산군별 종목 — **비중 없이** 이름만
   const heldCodes = {};
   holds.forEach(function (x) { heldCodes[String(x.code).replace(/\.US$/, "")] = 1; });
-  h += '<div class="svsub" style="margin-top:10px"><b>자산 종류별 종목</b> — 이미 가지고 계신 것은 뺐습니다.</div>';
+  h += '<div class="svsub" style="margin-top:10px"><b>자산 종류별 추천 종목</b> — 이미 가지고 계신 것은 뺐습니다.</div>';
   g.mix.forEach(function (m) {
     const cls = m[0];
     let cand = [];
