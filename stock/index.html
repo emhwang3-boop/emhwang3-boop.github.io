@@ -1929,11 +1929,11 @@ function svRecoRender() {
   holds.forEach(function (x) { have[x.cls] = (have[x.cls] || 0) + x.won; });
   have["예금"] = (have["예금"] || 0) + cash;                  // 현금은 예금 자리로 본다
   if (total > 0) {
-    h += '<table class="mhtab"><tr><th>자산 종류</th><th>목표 → 지금</th><th>할 일</th></tr>';
+    h += '<table class="mhtab"><tr><th>자산 종류</th><th>지금 → 목표</th><th>할 일</th></tr>';
     g.mix.forEach(function (m) {
       const cls = m[0], w = total * m[1] / 100, v = have[cls] || 0, d = w - v;
       h += '<tr><td style="text-align:left">' + cls + '</td>'
-         + '<td>' + m[1] + '% → ' + (v / total * 100).toFixed(1) + '%</td>'
+         + '<td>' + (v / total * 100).toFixed(1) + '% → ' + m[1] + '%</td>'
          + '<td>' + (Math.abs(d) <= total * 0.02 ? "맞음"
              : (d > 0 ? '<span class="svbuy">+' + svWon(d) + '</span>'
                       : '<span class="svover">−' + svWon(-d) + '</span>')) + '</td></tr>';
