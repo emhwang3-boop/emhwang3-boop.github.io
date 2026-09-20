@@ -2118,10 +2118,9 @@ function svRecoRender() {
 //    다만 **숫자는 빼고 원리만** 적는다(사장님 "숫자는 빼고 원리만") — 길이·문턱은 우리 노하우다.
 //    마지막 줄이 중요하다: 모두에게 같은 규칙·같은 결과 = 개별 맞춤 자문이 아니라는 근거.
 function DISC_TAIL() {
-  return '<div class="svsub">' + KE('앱 로직에 따라 선택하신 포트폴리오에 맞는 자산의 종류와 종목을 보여 드리는 것이며,'
-       + ' 사고파는 결정과 주문은 고객님이 증권사에 직접 하십니다.',
-       'The app logic shows asset classes and picks that match the portfolio you chose; '
-       + 'buy/sell decisions and orders are made by you directly with your brokerage.') + '</div>';
+  // 사장님 2026-09-21 문구 교체 — 코인앱과 같은 꼴로.
+  return '<div class="svsub">' + KE('앱 로직에 따른 추천이며, 투자 결정과 주문은 고객님이 거래 중이신 증권사에서 하십니다.',
+       'Picks follow the app logic; investment decisions and orders are made by you at your brokerage.') + '</div>';
 }
 
 // ── [주문] — 증권사 고르고 그 MTS 를 연다 (주문은 MTS 에서) ─────────────
