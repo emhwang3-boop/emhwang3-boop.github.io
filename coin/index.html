@@ -2184,6 +2184,14 @@ function cvChgCol(v) {
   v = +v || 0;
   return v > 0 ? "#e03131" : (v < 0 ? "#1c7ed6" : "#868e96");
 }
+// 24시간 거래대금 — 억 단위는 읽기 어려워 B(십억)·M(백만)으로 줄여 적는다.
+function cvTurn(v) {
+  v = +v || 0;
+  if (!v) return "-";
+  if (v >= 1e9) return (v / 1e9).toFixed(1) + "B";
+  if (v >= 1e6) return Math.round(v / 1e6) + "M";
+  return Math.round(v / 1e3) + "K";
+}
 
 // ── ① 성향 문턱 ────────────────────────────────────────────
 // 공격투자형이 아니면 빨간 경고를 띄우고, 추천은 내지 않는다.
@@ -2286,14 +2294,16 @@ function cvRecoRender() {
   const c = CVR && CVR.coin;
   if (!c) { box.innerHTML = '<div class="svsub">오늘 자료를 받는 중입니다…</div>'; return; }
 
-  // 신호 표는 성향과 무관하게 늘 보여 준다(정보)
-  let h = '<table class="mhtab"><tr><th>코인</th><th>신호</th><th>현재가</th><th>등락률</th></tr>';
+  // 현황 표 — 성향과 무관하게 늘 보여 준다(정보)
+  // 🔴 신호(롱·숏·쉼) 칸은 뺐다 (사장님 2026-09-20). 「현황」 자리에 매수·매도를 찍지 않는다.
+  //    거래대금은 왜 이 코인들이 목록에 있는지를 보여 준다(BTC·ETH + 거래대금 상위).
+  let h = '<table class="mhtab"><tr><th>코인</th><th>현재가</th><th>등락률</th><th>거래대금(24h)</th></tr>';
   Object.keys(c).forEach(function (k) {
-    const x = c[k], st = CV_STATE[x.state] || CV_STATE.cash;
+    const x = c[k];
     h += '<tr><td style="text-align:left"><b>' + k + '</b></td>'
-       + '<td style="color:' + st[1] + ';font-weight:800">' + st[0] + '</td>'
-       + '<td>' + cvUsd(x.price) + '</td><td style="color:' + cvChgCol(x.chg) + '">'
-       + cvChg(x.chg) + '</td></tr>';
+       + '<td>' + cvUsd(x.price) + '</td>'
+       + '<td style="color:' + cvChgCol(x.chg) + '">' + cvChg(x.chg) + '</td>'
+       + '<td>' + cvTurn(x.turn) + '</td></tr>';
   });
   h += '</table><div class="svsub">' + ((CVR && CVR.at) || "") + ' 기준</div>';
 
