@@ -449,7 +449,7 @@ function render(d){
       if(d.gauges.vix!=null)g+='<div class="stat"><div class="n" style="color:'+(d.gauges.vix<20?"#00a868":(d.gauges.vix>30?"#ff433d":"#e0a020"))+'">'+d.gauges.vix+'</div><div class="l">'+L("vixL")+'</div></div>';
       if(d.gauges.fg!=null)g+='<div class="stat"><div class="n" style="color:'+(d.gauges.fg>=75?"#ff433d":(d.gauges.fg<=25?"#00a868":"#e0a020"))+'">'+d.gauges.fg+'</div><div class="l">'+L("fgL")+'</div></div>';
     }
-    document.getElementById("gauges").innerHTML=g;
+    document.getElementById("gauges").innerHTML="";  // 게이지 없음(주식앱)
     // 카드 조각들(순서: 특이일 → 캘린더 → 주요자산막대 → 지수그룹 → 한국금리 → 장단기 → [코인] → 뉴스)
     let sGroups="";
     // 선그래프가 무엇인지 지표 시작점에 한 줄 (사장님 2026-09-18) — 서버가 일봉 30개(closes[-30:])를 보낸다
@@ -559,8 +559,8 @@ function render(d){
     }
     // 코인은 #coin-card(3초 갱신) 독립 슬롯 → #cards 는 장단기까지, #news 는 그 아래
     // 경제지표 일정은 뉴스 바로 앞으로 (사장님 2026-09-18)
-    document.getElementById("cards").innerHTML=sSpecial+sChanges+sGroups+sKrates+sSpreads;
-    document.getElementById("news").innerHTML=sCalendar+sNews;
+    document.getElementById("cards").innerHTML=sSpecial;   // 증시 현황만(주식앱)
+    document.getElementById("news").innerHTML=sNews;  // 경제일정 없음(주식앱)
   }
 }
 async function loadData(){
