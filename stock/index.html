@@ -1843,11 +1843,14 @@ function svPie(mix) {
 
 </script>
 <script>
+window.APP_TAG="stock";
 // 바스켓 백테스트 — 고객이 고른 것을 그때 샀더라면 (사장님 2026-09-20)
 // 🔴 추천이 아니다. 고객이 직접 담은 것의 **과거 성적**만 낸다.
 // 🔴 종목별 비중은 균등이 기본. 담고 빼는 것은 이 폰에만 저장한다.
 // 🔴 봉을 받아오는 함수(bkBars)는 앱마다 다르다 — 각 앱 파일에서 채워 넣는다.
-const BK_KEY = "bk_basket_v1";
+// 🔴 주식앱과 코인앱은 **같은 도메인**이라 저장소를 공유한다 — 열쇠에 앱 이름을 박아 가른다.
+//    안 그러면 주식 바스켓이 코인앱에 그대로 보인다(사장님 2026-09-20 지적).
+const BK_KEY = "bk_basket_" + (window.APP_TAG || "x") + "_v1";
 const BK_SPANS = [[63, "3개월"], [126, "6개월"], [252, "1년"]];
 const BK_NOTE = "과거의 수익률에 근거한 것이며 고객님의 미래 수익을 보장하지 않습니다.";
 
@@ -1970,7 +1973,7 @@ const RECO_URL="https://emhwang3-boop.github.io/morning-brief/reco.json";
 
 window.svAfterProfile = function () { try { svRecoRender(); } catch (e) {} };
 
-const SV_BROKER = "sv_broker_v1";    // 내 증권사 코드
+const SV_BROKER = "sv_broker_stock_v1";    // 내 증권사 코드 — 주식앱 전용
 function svBroker() { try { return localStorage.getItem(SV_BROKER) || ""; } catch (e) { return ""; } }
 
 // 자산군별 대표 상품 — 주식은 그날 추천 규칙(reco.json)이 채운다
@@ -1984,7 +1987,7 @@ const SV_PROD = {
 // ── 내 보유종목 읽기 ────────────────────────────────────────
 // 🔴 본앱이 폰에 저장한 것을 그대로 읽는다(brief_holds). 서버로 보내지 않는다.
 //    코인(coinS·coinF)은 주식앱에서 뺀다 — 한 앱에 섞지 않는다.
-const SV_CASH_KEY = "sv_cash_v1";
+const SV_CASH_KEY = "sv_cash_stock_v1";   // 🔴 주식앱 전용 — 코인앱과 섞이지 않게
 function svCash() { try { return Math.max(0, +localStorage.getItem(SV_CASH_KEY) || 0); } catch (e) { return 0; } }
 function svCashSet(v) {
   try { localStorage.setItem(SV_CASH_KEY, String(Math.max(0, Math.round(+String(v).replace(/[^0-9.]/g, "") || 0)))); } catch (e) {}
