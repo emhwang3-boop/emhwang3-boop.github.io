@@ -1606,7 +1606,7 @@ try{var _t=document.getElementById("ttl");if(_t)_t.innerHTML=brandMark();}catch(
 function vcSend(){
   var el=document.getElementById("vcTxt"), msg=document.getElementById("vcMsg"), en=(typeof LANG!=="undefined"&&LANG==="en");
   var t=(el&&el.value||"").trim(); if(!t){ if(msg)msg.textContent=en?"Please write something.":"내용을 적어 주세요."; return; }
-  var app=/\/demo\/|live-demo/.test(location.pathname)?"demo":"live";
+  var app="coin";   // 이 앱에서 온 것임을 허브에 알린다
   var vid=""; try{vid=localStorage.getItem("brief_vid")||"";}catch(e){}
   var base=(typeof HUB!=="undefined"&&HUB)?HUB.replace(/\/$/,""):"";
   if(!base){ if(msg)msg.textContent=en?"Not available here.":"여기서는 보낼 수 없습니다."; return; }
