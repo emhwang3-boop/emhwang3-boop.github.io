@@ -885,7 +885,11 @@ function c21Calc(key,B,CH){
   if(key==="ich"){const tk=c.map((_,i)=>i<8?null:(c21Rng(h,i,9,1)+c21Rng(l,i,9,0))/2),kj=c.map((_,i)=>i<25?null:(c21Rng(h,i,26,1)+c21Rng(l,i,26,0))/2),
       sb=c.map((_,i)=>i<51?null:(c21Rng(h,i,52,1)+c21Rng(l,i,52,0))/2),A=c.map((_,i)=>i>=26&&tk[i-26]!=null&&kj[i-26]!=null?(tk[i-26]+kj[i-26])/2:null),
       S=c.map((_,i)=>i>=26?sb[i-26]:null),lag=c.map((_,i)=>i+26<N?c[i+26]:null);
-    R.lines=[[tk,C21_COL.red,1.2],[kj,C21_COL.blue,1.2],[A,C21_COL.grn,1],[S,C21_COL.brn,1],[lag,C21_COL.pur,1]];R.fill=[A,S];}
+    // 🔴 선을 다섯에서 넷으로 줄이고 색을 죽였다 (사장님 2026-09-20 "선이 너무 많고 선색이 너무 자극적이야").
+    //    · 후행스팬(보라)은 뺀다 — 26칸 뒤 종가라 봉과 나란히 붙어 다녀 좁은 화면에서 제일 어지럽다.
+    //    · 봉 색(오름 초록 #00a868 · 내림 빨강 #ff433d)과 안 겹치는 색만 쓴다.
+    //    · 기준선만 또렷하게, 나머지는 뒤로 물린다.
+    R.lines=[[tk,"#8fa0b5",1],[kj,"#5b8def",1.4],[A,"#7fb3a3",0.9],[S,"#b09a7a",0.9]];R.fill=[A,S];R.hatch=1;}
   if(key==="env"){const m=c21Sma(c,20);band(m,m.map(x=>x==null?null:x*1.05),m.map(x=>x==null?null:x*0.95),C21_COL.org,C21_COL.blue);}
   if(key==="kel"){const m=c21Ema(c,20),a=c21Atr(B,10);band(m,m.map((x,i)=>x==null||a[i]==null?null:x+2*a[i]),m.map((x,i)=>x==null||a[i]==null?null:x-2*a[i]),C21_COL.org,C21_COL.pur);}
   if(key==="vwap"||key==="vwma"){const n=key==="vwap"?20:100,o=new Array(N).fill(null);
@@ -1027,7 +1031,27 @@ function makeChart(cid,opt){
     // 청산맵(코인) · 띠 채우기 · 매물대 — 봉보다 먼저(뒤에 깔린다)
     if(act.indexOf("liq")>=0&&CH.liq)for(const lv of CH.liq){const y=Y(lv[0]);if(y<y0||y>yP)continue;
       const a=0.9*Math.pow(clamp(lv[1],0,1),1.7);if(a<0.09)continue;ctx.fillStyle="rgba(255,214,0,"+a.toFixed(3)+")";for(let x=x0;x<x1;x+=7)ctx.fillRect(x,y-3,6,6);}
-    for(const k of act){const R=calc(k);if(!R.fill)continue;const A=R.fill[0],Bl=R.fill[1];ctx.fillStyle="rgba(93,180,255,.10)";ctx.beginPath();let st=false;
+    for(const k of act){const R=calc(k);if(!R.fill)continue;const A=R.fill[0],Bl=R.fill[1];
+      // 🔴 구름은 칠하지 않고 **사선**을 긋는다 (사장님 2026-09-20). 어두운 바탕에서 반투명 칠은 뿌옇게 뭉갠다.
+      //    A가 위면 ///, B가 위면 \\\ — 색을 쓰지 않고도 구름이 뒤집힌 자리가 눈에 들어온다.
+      if(R.hatch){let i=start;
+        while(i<end){
+          while(i<end&&(A[i]==null||Bl[i]==null))i++;
+          if(i>=end)break;
+          const up=A[i]>=Bl[i];let j=i;
+          while(j<end&&A[j]!=null&&Bl[j]!=null&&((A[j]>=Bl[j])===up))j++;
+          ctx.save();ctx.beginPath();
+          for(let t=i;t<j;t++)t===i?ctx.moveTo(X(t),Y(A[t])):ctx.lineTo(X(t),Y(A[t]));
+          for(let t=j-1;t>=i;t--)ctx.lineTo(X(t),Y(Bl[t]));
+          ctx.closePath();ctx.clip();
+          const H=yP-y0;
+          ctx.strokeStyle=up?"rgba(127,179,163,.5)":"rgba(176,154,122,.5)";ctx.lineWidth=1;ctx.beginPath();
+          for(let x=X(i)-H;x<=X(j-1)+H;x+=7){
+            if(up){ctx.moveTo(x,yP);ctx.lineTo(x+H,y0);}else{ctx.moveTo(x,y0);ctx.lineTo(x+H,yP);}}
+          ctx.stroke();ctx.restore();
+          i=j;}
+        continue;}
+      ctx.fillStyle="rgba(93,180,255,.10)";ctx.beginPath();let st=false;
       for(let i=start;i<end;i++){if(A[i]==null)continue;if(!st){ctx.moveTo(X(i),Y(A[i]));st=true;}else ctx.lineTo(X(i),Y(A[i]));}
       for(let i=end-1;i>=start;i--){if(Bl[i]==null)continue;ctx.lineTo(X(i),Y(Bl[i]));}if(st){ctx.closePath();ctx.fill();}}
     if(act.indexOf("vp")>=0){if(calc("vp").hasVol){const bins=26,vol=new Array(bins).fill(0),st=(hi-lo)/bins;
@@ -2161,7 +2185,7 @@ function svRecoRender() {
                    + lbl + ' <span class="svarrow">조회 ›</span></div>'
                 : '<div class="svitem">' + lbl + '</div>';
             }).join("")
-          : '<div class="svitem dplbl">오늘 조건을 채운 종목이 없습니다</div>')
+          : '<div class="svitem dplbl">오늘은 추천 종목이 없음</div>')
        + '</div>';
   });
 
