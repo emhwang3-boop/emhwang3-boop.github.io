@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>얼굴추적 튀어나오기 테스트</title>
+<style>
+  html,body{margin:0;height:100%;background:#05070c;overflow:hidden;font-family:"Segoe UI",system-ui,sans-serif;color:#fff}
+  #ui{position:fixed;left:0;right:0;top:0;padding:10px 14px;z-index:10;display:flex;gap:8px;align-items:center;flex-wrap:wrap;pointer-events:none}
+  #ui *{pointer-events:auto}
+  #start{background:#00ffcc;color:#04120f;border:0;border-radius:20px;padding:10px 18px;font-weight:800;font-size:14px;cursor:pointer}
+  .mini{background:#232a36;color:#cdd5e0;border:1px solid #38424f;border-radius:16px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer}
+  #stat{font-size:12px;color:#9aa6b4;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:12px}
+  #tip{position:fixed;left:0;right:0;bottom:14px;text-align:center;z-index:10;font-size:13px;color:#c7d0dc;pointer-events:none;text-shadow:0 1px 3px #000}
+  #cam{position:fixed;right:10px;bottom:10px;width:96px;height:72px;border-radius:8px;border:1px solid #38424f;object-fit:cover;transform:scaleX(-1);opacity:.85;z-index:9;background:#000}
+</style>
+</head>
+<body>
+  <div id="ui">
+    <button id="start">📷 얼굴추적 시작</button>
+    <button id="tilt" class="mini">기울임</button>
+    <button id="reset" class="mini">가운데</button>
+    <span id="stat">시작을 누르세요</span>
+  </div>
+  <div id="tip">고개를 좌우·위아래로 움직여 보세요 — 앞 큐브가 창밖으로 튀어나옵니다</div>
+  <video id="cam" playsinline muted></video>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.1.0/dist/blazeface.min.js"></script>
+  <script>
+  const stat = document.getElementById("stat");
+  function say(t){ stat.textContent = t; }
+
+  // ── Three 기본 ──
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x05070c);
+  scene.fog = new THREE.Fog(0x05070c, 120, 320);
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth, innerHeight);
+  document.body.appendChild(renderer.domElement);
+  renderer.domElement.style.position="fixed"; renderer.domElement.style.inset="0"; renderer.domElement.style.zIndex="1";
+
+  const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 2000);
+  scene.add(new THREE.AmbientLight(0xffffff,0.7));
+  const dl = new THREE.DirectionalLight(0xffffff,0.9); dl.position.set(40,120,80); scene.add(dl);
+
+  // 창(스크린) 크기 — 월드 단위
+  let SW = 30, SH = 30;
+  function computeScreen(){ const a = innerWidth/innerHeight; if(a>=1){ SH=26; SW=SH*a; } else { SW=26; SH=SW/a; } }
+  computeScreen();
+
+  // ── 깊이 터널(창 뒤) — 시차가 크게 보이게 ──
+  const backGrid = new THREE.GridHelper(200, 20, 0x2b3b5c, 0x162138);
+  backGrid.rotation.x = Math.PI/2; backGrid.position.z = -200; scene.add(backGrid);
+  const floor = new THREE.GridHelper(260, 26, 0x24406b, 0x14213a);
+  floor.position.set(0,-SH*1.1,-100); scene.add(floor);
+  // 뒤쪽 참고 큐브들(멀리) — 움직이면 앞 것과 어긋나 보인다
+  function refCube(x,y,z,c,s){ const m=new THREE.Mesh(new THREE.BoxGeometry(s,s,s), new THREE.MeshStandardMaterial({color:c,roughness:.5})); m.position.set(x,y,z); scene.add(m); return m; }
+  refCube(-16,6,-70,0x3aa6f0,8); refCube(18,-6,-120,0x37d67a,10); refCube(0,12,-160,0x9b7bff,12);
+
+  // 창틀(스크린 테두리) — z=0 평면
+  const barMat = new THREE.MeshStandardMaterial({color:0x0b1018, roughness:.6, metalness:.3});
+  function bar(w,h,x,y){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,2.5),barMat); m.position.set(x,y,0); scene.add(m); return m; }
+  let frameBars=[];
+  function buildFrame(){ frameBars.forEach(b=>scene.remove(b)); frameBars=[];
+    const th=2.4;
+    frameBars.push(bar(SW*2+th*2, th, 0, SH)); frameBars.push(bar(SW*2+th*2, th, 0, -SH));
+    frameBars.push(bar(th, SH*2, -SW, 0)); frameBars.push(bar(th, SH*2, SW, 0));
+  }
+  buildFrame();
+
+  // ── 주인공: 창 밖으로 튀어나오는 큐브 타워 ──
+  const hero = new THREE.Group(); scene.add(hero);
+  const COLORS=[0x2dd4bf,0x6ee06a,0xf2d024,0xf59a2e,0xcf1a3a];
+  let y=-14;
+  COLORS.forEach(function(c,i){
+    const s=11-i*0.6;
+    const cube=new THREE.Mesh(new THREE.BoxGeometry(s,s,s), new THREE.MeshStandardMaterial({color:c, roughness:.35, metalness:.15}));
+    cube.add(new THREE.LineSegments(new THREE.EdgesGeometry(cube.geometry), new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.4})));
+    cube.position.set(0, y+s/2, 22 - i*8);   // 앞(z>0)에서 뒤로 — 맨 아래가 제일 튀어나옴
+    y += s+2; hero.add(cube);
+  });
+
+  // ── 눈(카메라) 위치 = 머리 위치 ──
+  const eye = {x:0,y:0,z:64}, target={x:0,y:0,z:64};
+  const near=1, far=2000;
+  function setOffAxis(){
+    const ez = Math.max(20, eye.z);
+    const l = near*(-SW - eye.x)/ez, r = near*(SW - eye.x)/ez;
+    const b = near*(-SH - eye.y)/ez, t = near*( SH - eye.y)/ez;
+    camera.projectionMatrix.makePerspective(l, r, t, b, near, far);
+    camera.position.set(eye.x, eye.y, eye.z);
+    camera.quaternion.set(0,0,0,1);
+    camera.updateMatrixWorld();
+  }
+
+  addEventListener("resize", function(){ renderer.setSize(innerWidth,innerHeight); computeScreen(); buildFrame(); });
+
+  // ── 입력 원천 ──
+  let mode="none";  // face | tilt | touch
+  // 얼굴추적
+  const video=document.getElementById("cam");
+  let bf=null, tracking=false, refW=0;
+  async function startFace(){
+    try{
+      say("카메라 여는 중…");
+      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}, audio:false});
+      video.srcObject=stream; await video.play();
+      say("얼굴 모델 불러오는 중…");
+      bf = await blazeface.load();
+      mode="face"; tracking=true; refW=0;
+      say("얼굴추적 켜짐 — 고개를 움직여 보세요");
+      loopFace();
+    }catch(e){ say("카메라 실패: "+(e.message||e)+" · 기울임으로 시도해 보세요"); }
+  }
+  async function loopFace(){
+    if(mode!=="face"||!bf){ return; }
+    try{
+      const p = await bf.estimateFaces(video, false);
+      if(p && p.length){
+        const f=p[0]; const tl=f.topLeft, br=f.bottomRight;
+        const cx=(tl[0]+br[0])/2, cy=(tl[1]+br[1])/2, w=(br[0]-tl[0]);
+        const vw=video.videoWidth||640, vh=video.videoHeight||480;
+        // 정규화 (-1..1). 전면카메라 좌우반전 보정
+        const nx = -((cx/vw)*2-1), ny = ((cy/vh)*2-1);
+        if(!refW) refW=w;
+        target.x = nx * SW * 1.25;
+        target.y = -ny * SH * 1.1;
+        target.z = Math.min(120, Math.max(30, 64 * (refW / (w||refW))));
+      }
+    }catch(e){}
+    requestAnimationFrame(loopFace);
+  }
+  document.getElementById("start").addEventListener("click", startFace);
+
+  // 기울임(자이로)
+  function startTilt(){
+    function h(e){ if(e.gamma==null&&e.beta==null)return; mode="tilt";
+      target.x = Math.max(-1,Math.min(1,(e.gamma||0)/35)) * SW*1.2;
+      target.y = Math.max(-1,Math.min(1,((e.beta||0)-45)/35)) * SH*1.0;
+      target.z = 64;
+    }
+    try{
+      if(typeof DeviceOrientationEvent!=="undefined" && typeof DeviceOrientationEvent.requestPermission==="function"){
+        DeviceOrientationEvent.requestPermission().then(function(s){ if(s==="granted"){ addEventListener("deviceorientation",h); mode="tilt"; say("기울임 켜짐 — 폰을 기울여 보세요"); } });
+      } else { addEventListener("deviceorientation",h); mode="tilt"; say("기울임 켜짐 — 폰을 기울여 보세요"); }
+    }catch(e){ say("기울임 불가"); }
+  }
+  document.getElementById("tilt").addEventListener("click", startTilt);
+  document.getElementById("reset").addEventListener("click", function(){ target.x=0; target.y=0; target.z=64; });
+
+  // 손가락(폴백)
+  let dragging=false;
+  renderer.domElement.addEventListener("pointerdown", function(e){ dragging=true; });
+  addEventListener("pointerup", function(){ dragging=false; });
+  addEventListener("pointermove", function(e){
+    if(!dragging) return; if(mode==="face") return;
+    mode="touch";
+    target.x = ((e.clientX/innerWidth)*2-1) * SW*1.3;
+    target.y = -((e.clientY/innerHeight)*2-1) * SH*1.1;
+  });
+
+  // ── 렌더 루프 ──
+  function tick(){
+    requestAnimationFrame(tick);
+    eye.x += (target.x-eye.x)*0.15; eye.y += (target.y-eye.y)*0.15; eye.z += (target.z-eye.z)*0.12;
+    hero.children.forEach(function(c,i){ c.rotation.y += 0.004 + i*0.0006; });
+    setOffAxis();
+    renderer.render(scene, camera);
+  }
+  tick();
+  </script>
+</body>
+</html>
