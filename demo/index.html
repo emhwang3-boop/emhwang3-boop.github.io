@@ -2345,12 +2345,13 @@ async function rlLoad(auto) {
           // 🔴 예수금은 kt00001 의 entr (HTS 예수금 · 오늘 판 대금 포함). d2_entra = 인출가능(D+2).
           try {
             const cd = await rlKiwoom(tok, "/api/dostk/acnt", "kt00001", {qry_tp: "3"});
+            out.err.push("예수금진단 rc=" + (cd && cd.return_code) + " entr=" + (cd && cd.entr) + " d2=" + (cd && cd.d2_entra) + " ord=" + (cd && cd.ord_alow_amt) + " msg=" + (cd && cd.return_msg));
             if (cd && cd.return_code === 0) {
               const e2 = rlNum(cd.entr);
               if (e2) out.cash.krw = e2;
               out.cashWd = rlNum(cd.d2_entra);
             }
-          } catch (e) {}
+          } catch (e) { out.err.push("예수금진단 예외 " + e.message); }
         } catch (e) { out.err.push("국내 " + e.message); }
         // 🔴 해외 증권사가 한국투자면 그쪽으로 간다 — 키움은 건너뛴다
         if (ST.us && ST.us.broker === "korea_inv" && ST.us.key) { /* 아래에서 따로 */ }
