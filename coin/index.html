@@ -2289,19 +2289,20 @@ function bkSavedHtml() {
 
 // ── 3D 큐빅 타워 — 사이트 페이지를 전체화면 iframe 으로 (앱 스크립트와 격리) (사장님 2026-09-21) ──
 var TOWER_URL = "https://emhwang3-boop.github.io/tower/";
-async function openTower3D(list, title) {
+// pid 를 주면 같은 시세로 그 보관 PT 의 표(erows·er)도 함께 갱신한다 — 표와 큐브 숫자가 늘 같게 (사장님 2026-09-22)
+async function openTower3D(list, title, pid) {
   if (!list || !list.length) return;
   var old = document.getElementById("tower3dOv"); if (old) old.remove();
   var ov = document.createElement("div"); ov.id = "tower3dOv";
   ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:transparent;display:flex;align-items:center;justify-content:center;color:#cdd5e0;font:700 14px system-ui";
   ov.innerHTML = (typeof mpWait === "function") ? mpWait("3D 준비 중…") : '<div id="t3dmsg" style="background:rgba(0,0,0,0.72);padding:10px 16px;border-radius:12px;color:#cdd5e0">3D 준비 중…</div>';
   document.body.appendChild(ov);
-  var data = [];
+  var data = [], rows = [], rsum = 0, rok = 0;
   for (var i = 0; i < list.length; i++) {
     var it = list[i], cs = null;
     try { cs = await bkBars(it); } catch (e) { cs = null; }
     var mm = document.querySelector("#tower3dOv .mpTxt") || document.getElementById("t3dmsg"); if (mm) mm.textContent = "3D 준비 중… " + (i + 1) + "/" + list.length;
-    if (!cs || cs.length < 10) { data.push({ n: it.name, b: 100, r: 0, v: 1 }); continue; }
+    if (!cs || cs.length < 10) { data.push({ n: it.name, b: 100, r: 0, v: 1 }); rows.push({nm: it.name, err: true}); continue; }
     var n = Math.min(60, cs.length - 1), from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
     // 보관한 PT 는 표와 같은 값(보관 기준가 대비 지금). 기준가가 없을 때만 60일 수익률.  (사장님 2026-09-21)
     var r = (it.base > 0) ? (to / it.base - 1) : ((from > 0) ? (to / from - 1) : 0);
@@ -2310,7 +2311,9 @@ async function openTower3D(list, title) {
     var m = dd.reduce(function (s, x) { return s + x; }, 0) / (dd.length || 1);
     var sd = Math.sqrt(dd.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / (dd.length || 1)) * 100;
     data.push({ n: it.name, b: 100, r: +r.toFixed(4), v: +Math.max(0.05, sd).toFixed(2) });
+    if (it.base > 0 && to > 0) { rows.push({nm: it.name, r: r}); rsum += r; rok++; } else rows.push({nm: it.name, err: true});
   }
+  if (pid) { try { var sv = bkSaveGet(); sv.forEach(function (p) { if (p.id === pid) { p.erows = rows; p.er = rok ? rsum / rok : null; p.calc = Date.now(); } }); bkSavePut(sv); bkRender(); } catch (e) {} }
   if (!document.getElementById("tower3dOv")) return;
   var enc = ""; try { enc = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(data))))); } catch (e) {}
   var tt = encodeURIComponent(title || ("\ub2f4\uae34 " + data.length + "\uc885\ubaa9"));
@@ -2320,7 +2323,7 @@ async function openTower3D(list, title) {
 
 function towerFromSaved(id) {
   var p = bkSaveGet().filter(function (x) { return x.id === id; })[0];
-  if (p) { var d = new Date(p.at); openTower3D(p.items, "\ubcf4\uad00 " + (d.getMonth() + 1) + "-" + d.getDate()); }
+  if (p) { var d = new Date(p.at); openTower3D(p.items, "\ubcf4\uad00 " + (d.getMonth() + 1) + "-" + d.getDate(), p.id); }
 }
 
 function bkTowerInfo(e) { try { if (e) e.stopPropagation(); } catch (x) {} var n = document.getElementById("bkTowerNote"); if (n) n.style.display = (n.style.display === "none" ? "block" : "none"); }
