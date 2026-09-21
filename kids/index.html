@@ -55,6 +55,7 @@ body{background:linear-gradient(160deg,#fff7e6,#e9f6ff 60%,#fdeef6);color:var(--
 .cback .em{font-size:40px;line-height:1}
 .cback .cicon{width:44px;height:44px;display:flex;align-items:center;justify-content:center}
 .cback .cicon svg{width:100%;height:100%;display:block}
+.clogo img{width:100%;height:100%;object-fit:contain;border-radius:7px;display:block;background:#fff}
 .cback .nm{font-size:13px;font-weight:900;margin-top:3px;text-align:center}
 .cback .hint{font-size:10.5px;color:var(--sub);text-align:center;line-height:1.2;padding:0 3px}
 .cell.open .cfront{transform:rotateY(180deg)}
@@ -390,8 +391,15 @@ const COMPANY_ICON={
   +'</svg>',
 };
 // 카드 뒷면·화분 라벨에서 이모지 대신 쓸 그림. 없으면 이모지로 되돌아감.
-function iconOrEm(c){return COMPANY_ICON[c.nm]?'<span class="cicon">'+COMPANY_ICON[c.nm]+'</span>':'<span class="em">'+c.em+'</span>';}
-function labelIcon(c){return COMPANY_ICON[c.nm]?'<span class="pnicon">'+COMPANY_ICON[c.nm]+'</span>':(c.em+' ');}
+// 실제 회사 로고 — 파비콘 서비스에서 자동으로 불러온다(직접 그리지 않음). 실패하면 도형/이모지로 폴백.
+const LOGODOM={"삼성전자":"samsung.com","현대차":"hyundai.com","카카오":"kakaocorp.com","네이버":"naver.com",
+ "코카콜라":"coca-cola.com","맥도날드":"mcdonalds.com","나이키":"nike.com","애플":"apple.com",
+ "엔비디아":"nvidia.com","테슬라":"tesla.com","쿠팡":"coupang.com","넷플릭스":"netflix.com",
+ "팔란티어":"palantir.com","레모네이드":"lemonade.com","KODEX200":"samsungfund.com"};
+function favicon(d){return "https://www.google.com/s2/favicons?domain="+d+"&sz=128";}
+function clogoFail(img){var s=img.parentNode; s.innerHTML=COMPANY_ICON[s.getAttribute("data-nm")]||"";}
+function iconOrEm(c){return LOGODOM[c.nm]?'<span class="cicon clogo" data-nm="'+c.nm+'"><img src="'+favicon(LOGODOM[c.nm])+'" alt="" onerror="clogoFail(this)"></span>':(COMPANY_ICON[c.nm]?'<span class="cicon">'+COMPANY_ICON[c.nm]+'</span>':'<span class="em">'+c.em+'</span>');}
+function labelIcon(c){return LOGODOM[c.nm]?'<span class="pnicon clogo" data-nm="'+c.nm+'"><img src="'+favicon(LOGODOM[c.nm])+'" alt="" onerror="clogoFail(this)"></span>':(COMPANY_ICON[c.nm]?'<span class="pnicon">'+COMPANY_ICON[c.nm]+'</span>':(c.em+' '));}
 
 let grade=0, pool=[], bag=[], planted=[], period="12";
 const $=id=>document.getElementById(id);
