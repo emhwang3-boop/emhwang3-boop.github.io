@@ -1661,6 +1661,55 @@ function keApply() {
   keApply();                      // 첫 화면 — 본앱 applyLang 은 이미 지나갔다
 })();
 
+// ── 머니퍼즐 마스코트 — 대기 중 캐릭터 (사장님 2026-09-21) ──────────────────
+// 🔴 오리지널이다. 미키마우스 등 남의 캐릭터는 안 쓴다(저작권). 동전+퍼즐 조각이 시계를 보며 발을 까딱인다.
+function mpCss() {
+  if (document.getElementById("mpCss")) return;
+  var st = document.createElement("style"); st.id = "mpCss";
+  st.textContent =
+    "@keyframes mpBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}"
+    + "@keyframes mpTap{0%,72%,100%{transform:rotate(0)}82%{transform:rotate(20deg)}92%{transform:rotate(-4deg)}}"
+    + "@keyframes mpTick{0%,49%{transform:rotate(0)}50%,100%{transform:rotate(90deg)}}"
+    + "@keyframes mpWink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.15)}}"
+    + ".mpWrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0}"
+    + ".mpSvg{width:88px;height:88px;animation:mpBob 1.1s ease-in-out infinite}"
+    + ".mpFoot{transform-origin:52px 104px;animation:mpTap 1.1s ease-in-out infinite}"
+    + ".mpHand{transform-origin:92px 46px;animation:mpTick 1.1s steps(1) infinite}"
+    + ".mpEye{transform-origin:center;transform-box:fill-box;animation:mpWink 3.2s ease-in-out infinite}"
+    + ".mpTxt{font-size:12.5px;color:var(--sub);text-align:center;line-height:1.5}";
+  document.head.appendChild(st);
+}
+function mpMascot() {
+  return '<svg class="mpSvg" viewBox="0 0 120 120" role="img" aria-label="loading">'
+    + '<defs><radialGradient id="mpBody" cx="0.4" cy="0.35" r="0.8">'
+    + '<stop offset="0" stop-color="#FFE08A"/><stop offset="0.55" stop-color="#FFC93C"/><stop offset="1" stop-color="#F7A600"/>'
+    + '</radialGradient></defs>'
+    // 발(까딱)
+    + '<g class="mpFoot"><ellipse cx="52" cy="106" rx="15" ry="6" fill="#E8890B"/></g>'
+    + '<ellipse cx="80" cy="107" rx="13" ry="5.5" fill="#E8890B"/>'
+    // 몸통(동전) + 위 퍼즐 꼭지
+    + '<circle cx="60" cy="40" r="12" fill="url(#mpBody)" stroke="#E8890B" stroke-width="2"/>'
+    + '<circle cx="60" cy="62" r="36" fill="url(#mpBody)" stroke="#E8890B" stroke-width="3"/>'
+    // 퍼즐 홈(좌우)
+    + '<circle cx="24" cy="62" r="7" fill="#F7A600"/><circle cx="96" cy="62" r="7" fill="#FFD766"/>'
+    // 얼굴
+    + '<rect class="mpEye" x="47" y="56" width="6" height="9" rx="3" fill="#5A3B00"/>'
+    + '<rect class="mpEye" x="67" y="56" width="6" height="9" rx="3" fill="#5A3B00"/>'
+    + '<circle cx="46" cy="72" r="4" fill="#FF8FB0" opacity="0.7"/><circle cx="74" cy="72" r="4" fill="#FF8FB0" opacity="0.7"/>'
+    + '<path d="M50 74 Q60 84 70 74" stroke="#5A3B00" stroke-width="3" fill="none" stroke-linecap="round"/>'
+    // 팔 + 손목시계(오른손)
+    + '<path d="M88 66 Q98 58 92 48" stroke="#E8890B" stroke-width="6" fill="none" stroke-linecap="round"/>'
+    + '<circle cx="92" cy="46" r="11" fill="#fff" stroke="#5B8DEF" stroke-width="3"/>'
+    + '<g class="mpHand"><rect x="91" y="38" width="2" height="9" rx="1" fill="#5A3B00"/></g>'
+    + '<circle cx="92" cy="46" r="1.6" fill="#5A3B00"/>'
+    + '</svg>';
+}
+// 대기 표시 — 마스코트 + 문구
+function mpWait(txt) {
+  mpCss();
+  return '<div class="mpWrap">' + mpMascot() + '<div class="mpTxt">' + (txt || "") + '</div></div>';
+}
+
 </script>
 <script>
 // 투자 유의사항 (사장님 2026-09-20) — 두 앱 공통.
@@ -1841,12 +1890,14 @@ const SV_GRADE = [
 ];
 // 색은 무지개로 흩뿌리지 않는다. 배분은 안전한 쪽 → 위험한 쪽 차례라서
 // 차가운 남색에서 따뜻한 테라코타로 이어지는 한 줄기 색띠로 둔다(채도 낮춤).
-const SV_PAL = ["#3D6B8E", "#4C93A6", "#5AA189", "#C9A03F", "#C4764F", "#A85A66", "#7A6B93"];
+const SV_PAL = ["#3AA6F0", "#20C4B8", "#37D67A", "#FFC93C", "#FF8A5B", "#FF6BB3", "#9B7BFF"];
 // 🔴 색은 순서가 아니라 **갈래**에 붙인다 — 등급이 달라져도 정기예금은 늘 같은 남색이다.
+// 🔴 머니퍼즐 이미지에 맞춘 발랄·밝고 선명한 팔레트 (사장님 2026-09-21).
+//    같은 밝기·채도로 골라 서로 잘 어울리게 했다. 색은 순서가 아니라 갈래에 붙인다.
 const SV_COLOR = {
-  "예금": "#3D6B8E", "국내 ETF": "#4C93A6", "해외 ETF(원화)": "#5AA189", "해외 ETF(달러)": "#7FA83F",
-  "국내 주식": "#C9A03F", "해외 주식": "#C4764F", "레버리지 ETF(원화)": "#A85A66", "레버리지 ETF(달러)": "#7A6B93",
-  "BTC": "#C9A03F", "ETH": "#4C93A6", "알트": "#A85A66", "현금(USDT)": "#9AA3AB",
+  "예금": "#20C4B8", "국내 ETF": "#3AA6F0", "해외 ETF(원화)": "#37D67A", "해외 ETF(달러)": "#8FD14F",
+  "국내 주식": "#FFC93C", "해외 주식": "#FF8A5B", "레버리지 ETF(원화)": "#FF6BB3", "레버리지 ETF(달러)": "#9B7BFF",
+  "BTC": "#FFB020", "ETH": "#5B8DEF", "알트": "#FF6BB3", "현금(USDT)": "#A8B8C8",
 };
 function svColor(nm, i) { return SV_COLOR[nm] || SV_PAL[i % SV_PAL.length]; }
 
@@ -2031,9 +2082,9 @@ function bkAdd(code, name, mk) {
 }
 function bkDel(i) { const a = bkGet(); a.splice(i, 1); bkSave(a); bkRender(); }
 function bkClear() { bkSave([]); bkRender(); }
-function bkMsg(t) {
+function bkMsg(t, rich) {
   const m = document.getElementById("bkMsg");
-  if (m) { m.textContent = t || ""; m.hidden = !t; }
+  if (m) { if (rich) m.innerHTML = t || ""; else m.textContent = t || ""; m.hidden = !t; }
 }
 
 function bkRender() {
@@ -2071,7 +2122,7 @@ function bkRender() {
 async function bkRun(days) {
   const a = bkGet();
   if (!a.length) return;
-  bkMsg(KE("받는 중… 종목마다 몇 초 걸립니다", "Loading… a few seconds per item"));
+  bkMsg(mpWait(KE("받는 중… 종목마다 몇 초 걸립니다", "Loading… a few seconds per item")), true);
   document.getElementById("bkOut").innerHTML = "";
   const rows = [];
   for (let i = 0; i < a.length; i++) {
@@ -2196,7 +2247,7 @@ function cvRecoRender() {
   const box = document.getElementById("cvRecoBody");
   if (!box) return;
   const c = CVR && CVR.coin;
-  if (!c) { box.innerHTML = '<div class="svsub">' + KE("오늘 자료를 받는 중입니다…", "Loading today's data…") + '</div>'; return; }
+  if (!c) { box.innerHTML = mpWait(KE("오늘 자료를 받는 중입니다…", "Loading today's data…")); return; }
 
   // 현황 표 — 늘 보여 준다(정보)
   // 🔴 신호(롱·숏·쉼) 칸은 뺐다 (사장님 2026-09-20). 「현황」 자리에 매수·매도를 찍지 않는다.
