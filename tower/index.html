@@ -68,8 +68,8 @@
   grid.position.y = -18; grid.material.transparent = true; grid.material.opacity = 0.4; scene.add(grid);
 
   const towerGroup = new THREE.Group(); scene.add(towerGroup);
-  const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 300, 16),
-    new THREE.MeshStandardMaterial({ color: 0xc2cad6, roughness: 0.3, metalness: 0.7, emissive: 0x1b2740, emissiveIntensity: 0.4 }));
+  const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 300, 8),
+    new THREE.MeshStandardMaterial({ color: 0x9aa4b0, roughness: 0.85, metalness: 0.05 }));
   axis.position.y = 130; towerGroup.add(axis);
   const barMat = new THREE.MeshStandardMaterial({ color: 0x0a0d14, roughness: 0.6, metalness: 0.35 });
   const frameG = new THREE.Group(); scene.add(frameG);
