@@ -3721,15 +3721,15 @@ function recoPie(parts){
     +'<ellipse cx="'+cx+'" cy="'+(cy+dep+14)+'" rx="'+(rx*0.95)+'" ry="'+(ry*0.28)+'" fill="url(#'+uid+'sh)"/>'
     +sides+tops+labels+'</svg>';
 
-  let leg='<div style="display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px;font-size:11px">';
+  let leg='<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:6px;font-size:12px">';
   big.forEach(function(p,i){
     leg+='<span style="white-space:nowrap"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:'
       +'linear-gradient(145deg,'+sh(col(p,i),1.24)+','+sh(col(p,i),0.8)+');margin-right:5px"></span>'
-      +dpEsc(p[0])+(p[2]==="new"?(en?" (new)":" (추천)"):"")+' '+(p[1]/tot*100).toFixed(1)+'%'+((p[4]==="kr")?' <b style="color:var(--nm)">'+Math.round(p[3]).toLocaleString()+(en?" KRW":"원")+'</b>':(p[4]==="us")?' <b style="color:var(--nm)">$'+(+p[3]).toLocaleString(undefined,{maximumFractionDigits:2})+'</b>':'')+'</span>';
+      +dpEsc(p[0])+(p[2]==="new"?(en?" (new)":" (추천)"):"")+' '+(p[1]/tot*100).toFixed(1)+'%'+((p[4]==="kr"&&Number.isFinite(+p[3]))?' <b style="color:var(--nm)">'+Math.round(p[3]).toLocaleString()+(en?" KRW":"원")+'</b>':(p[4]==="us"&&Number.isFinite(+p[3]))?' <b style="color:var(--nm)">$'+(+p[3]).toLocaleString(undefined,{maximumFractionDigits:2})+'</b>':'')+'</span>';
   });
   leg+='</div>';
   return '<div style="text-align:center;margin:2px 0 8px">'+svg+'</div>'+leg
-    +'<div class="dpmsg" style="text-align:center">'+(en?"Total ":"합계 ")+Math.round(tot).toLocaleString()+(en?" KRW":"원")+'</div>';
+    +(function(){var kw=0,ud=0;parts.forEach(function(p){var v=+p[3];if(!Number.isFinite(v))return;if(p[4]==="kr")kw+=v;else if(p[4]==="us")ud+=v;});var rows=[];if(kw>0)rows.push((en?"KRW total ":"원화 합계 ")+Math.round(kw).toLocaleString()+(en?"":"원"));if(ud>0)rows.push((en?"USD total $":"달러 합계 $")+ud.toLocaleString(undefined,{maximumFractionDigits:2}));if(!rows.length)rows.push((en?"Total ":"합계 ")+Math.round(tot).toLocaleString()+(en?" KRW":"원"));return '<div class="dpmsg" style="text-align:center;line-height:1.7">'+rows.join("<br>")+'</div>';})();
 }
 function recoRender(){
   let card=E("recoCard");
