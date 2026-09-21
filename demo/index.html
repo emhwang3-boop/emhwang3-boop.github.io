@@ -3741,10 +3741,12 @@ function recoRender(){
   const en=LANG==="en", R=RECO;
   let h='<h3>'+(en?"Portfolio picks":"포트폴리오 추천")+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
   if(!R){ card.innerHTML=h+'<div class="soonrow">'+(en?"Loading…":"불러오는 중…")+'</div>'; return; }
-  const reg=function(x){ if(!(x&&x.regime))return "-"; var g=x.regime.good, t=(g?(en?"good":"좋음"):(en?"weak":"나쁨"))+" ("+(x.regime.vs_ma60>0?"+":"")+x.regime.vs_ma60+"%)"; return '<b style="color:'+(g?"#2f9e44":"#e03131")+'">'+t+'</b>'; };
+  // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률을 더해 "지금 60일선 대비"를 낸다 (사장님 2026-09-21).
+  const liveP=function(nm){ var d=window._lastD; if(d&&d.changes){ for(var i=0;i<d.changes.length;i++){ if(d.changes[i].nm===nm && typeof d.changes[i].pct==="number") return d.changes[i].pct; } } return null; };
+  const reg=function(x,nm){ if(!(x&&x.regime))return "-"; var lp=liveP(nm); var v=(+x.regime.vs_ma60||0)+(lp||0); var g=v>=0; var t=(g?(en?"good":"좋음"):(en?"weak":"나쁨"))+" ("+(v>0?"+":"")+v.toFixed(1)+"%)"; return '<b style="color:'+(g?"#2f9e44":"#e03131")+'">'+t+'</b>'; };
   const cs=function(c){ return c&&c.state?({long:(en?"LONG":"롱"),short:(en?"SHORT":"숏"),cash:(en?"CASH":"현금")}[c.state]):"-"; };
-  h+='<div class="dpmsg" style="margin:4px 0 8px">'+(en?"Regime · ":"장세 · ")+(en?"KR ":"국내 ")+reg(R.kr)+" · "+(en?"US ":"미국 ")+reg(R.us)
-    +" · BTC "+cs(R.coin&&R.coin.BTC)+" · ETH "+cs(R.coin&&R.coin.ETH)+(R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" basis":" 기준")+'</span>':'')+'</div>';
+  h+='<div class="dpmsg" style="margin:4px 0 8px">'+(en?"Regime · ":"장세 · ")+(en?"KR ":"국내 ")+reg(R.kr,"코스피")+" · "+(en?"US ":"미국 ")+reg(R.us,"S&P500")
+    +" · BTC "+cs(R.coin&&R.coin.BTC)+" · ETH "+cs(R.coin&&R.coin.ETH)+(function(){var d=window._lastD; return (d&&d.asof)?' <span class="dplbl">'+dpEsc(String(d.asof).slice(11,16)||String(d.asof))+(en?" live":" 실시간")+'</span>':'';})()+'</div>';
   // 실계좌 → 시장별 총자산 · 보유 수
   const has=(typeof RL!=="undefined")&&RL.at;
   const kr=has?RL.kr:[], us=has?RL.us:[], cash=has&&RL.cash?RL.cash:{};
