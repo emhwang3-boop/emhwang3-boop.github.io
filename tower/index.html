@@ -68,9 +68,12 @@
   grid.position.y = -18; grid.material.transparent = true; grid.material.opacity = 0.4; scene.add(grid);
 
   const towerGroup = new THREE.Group(); scene.add(towerGroup);
-  const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 300, 8),
-    new THREE.MeshStandardMaterial({ color: 0x9aa4b0, roughness: 0.85, metalness: 0.05 }));
-  axis.position.y = 130; towerGroup.add(axis);
+  // 중심축 = 큐브 중심을 정확히 꿰는 가는 실(1px). 탑 높이만큼만, 흔들림을 따라 휜다.
+  const THREAD_N = 64;
+  const threadGeo = new THREE.BufferGeometry();
+  threadGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(THREAD_N * 3), 3));
+  const thread = new THREE.Line(threadGeo, new THREE.LineBasicMaterial({ color: 0xb8c0cc, transparent: true, opacity: 0.85 }));
+  thread.renderOrder = 0; towerGroup.add(thread);
   const barMat = new THREE.MeshStandardMaterial({ color: 0x0a0d14, roughness: 0.6, metalness: 0.35 });
   const frameG = new THREE.Group(); scene.add(frameG);
   const fTop = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), barMat), fBot = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), barMat), fL = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), barMat), fR = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), barMat);
@@ -197,15 +200,16 @@
     });
     const towerTop = Math.max(y, 1);
 
-    const mid = towerTop / 2, OVER = 0.15, LOSSW = 0.10;
-    let alert = false, upperExcess = 0, foundationRisk = 0;
-    items.forEach(function (it) {
-      if (it._baseY > mid && it.cur >= OVER) { alert = true; upperExcess += it.cur - OVER; }
-      if (it._baseY < mid && it._loss >= LOSSW) foundationRisk += it._loss - LOSSW;
+    // 좌우 흔들림: (a) 중간층 크랙이 심할 때 (b) 맨 꼭대기가 가분수(위 큐브가 아래보다 클 때)
+    let midCrack = 0, topHeavy = 0;
+    const n = items.length;
+    items.forEach(function (it, i) {
+      const isMid = n >= 3 ? (i > 0 && i < n - 1) : false;   // 맨 아래·맨 위를 뺀 가운데 층
+      if (isMid && it._loss >= 0.05) midCrack += it._loss - 0.05;
     });
-    const quakeAmp = alert ? Math.min(6 + upperExcess * 40 + foundationRisk * 120, 26) : 0;
-    const quakeX = quakeAmp > 0 ? Math.sin(t * (3.2 + foundationRisk * 8)) * quakeAmp : 0;
-    axis.position.x = quakeX; axis.rotation.z = -quakeX * 0.01;
+    if (n >= 2) { const top = items[n - 1]._side, below = items[n - 2]._side; if (top > below) topHeavy = top / below - 1; }
+    const quakeAmp = Math.min(midCrack * 60 + topHeavy * 10, towerTop * 0.16);   // 상한은 탑 높이의 16% — 화면 밖으로 안 나가게
+    const quakeX = quakeAmp > 0.2 ? Math.sin(t * (2.6 + midCrack * 6 + topHeavy * 2)) * quakeAmp : 0;
 
     camR += (Math.max(150, Math.min(towerTop * 2.0, 340)) - camR) * 0.05;
     frameG.visible = true;
@@ -230,7 +234,8 @@
       const side = it._side, loss = it._loss, gain = Math.max(0, it.cur);
       it.mesh.scale.set(side, side, side);
       it.textSprite.scale.set(TW / side, TW / side, 1);
-      const shakeY = loss > 0 ? (Math.sin(t * (3 + loss * 7) + it.vol) * loss * 11 + Math.sin(t * 12) * loss * 2) : 0;
+      const vr = Math.pow(it.vol / volMax, 1.5);   // 변동성이 크면 위아래로 크게 움직인다
+      const shakeY = Math.sin(t * (1.8 + vr * 4) + it.vol) * vr * 2.4 + Math.sin(t * 9 + it.vol) * vr * 0.5;
       const swayX = quakeX * (0.35 + it._baseY / towerTop * 0.9);
       it.mesh.position.set(swayX, it._baseY + shakeY, 0);
       it.mesh.rotation.y += 0.0015 + Math.pow(it.vol / volMax, 1.3) * 0.026;
@@ -257,6 +262,20 @@
       if (fc % 6 === 0) drawText(it);
     });
 
+    { // 실: 땅 → 큐브 중심들 → 꼭대기 조금 위. 큐브 사이는 옆흔들림을 따라 부드럽게 잇는다
+      const pos = threadGeo.attributes.position.array;
+      const pts = [[0, grid.position.y]];
+      items.forEach(function (it) { pts.push([it.mesh.position.x, it.mesh.position.y]); });
+      const last = items[items.length - 1];
+      pts.push([last.mesh.position.x + quakeX * 0.25, last.mesh.position.y + last._side * 0.9]);
+      for (let k = 0; k < THREAD_N; k++) {
+        const u = k / (THREAD_N - 1) * (pts.length - 1), a = Math.min(pts.length - 2, Math.floor(u)), f = u - a;
+        pos[k * 3] = pts[a][0] + (pts[a + 1][0] - pts[a][0]) * f;
+        pos[k * 3 + 1] = pts[a][1] + (pts[a + 1][1] - pts[a][1]) * f;
+        pos[k * 3 + 2] = 0;
+      }
+      threadGeo.attributes.position.needsUpdate = true;
+    }
     renderer.render(scene, camera);
   }
   animate();
