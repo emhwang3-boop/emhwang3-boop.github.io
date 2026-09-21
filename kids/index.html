@@ -197,7 +197,7 @@ body{background:linear-gradient(160deg,#fff7e6,#e9f6ff 60%,#fdeef6);color:var(--
 <div id="bag" title="장바구니">🛒<span class="cnt" id="bagCnt" style="display:none">0</span></div>
 
 <div class="bar" id="barPlay" style="display:none">
-  <button class="reset" onclick="resetAll()">↺ 다시 처음부터</button>
+  <button class="reset" id="playBack" onclick="playBack()">↺ 다시 처음부터</button>
   <button class="plant" id="plantBtn" onclick="goGarden()" disabled>🌱 심기</button>
 </div>
 <div class="bar" id="barGarden" style="display:none">
@@ -207,6 +207,14 @@ body{background:linear-gradient(160deg,#fff7e6,#e9f6ff 60%,#fdeef6);color:var(--
 </div>
 
 <div id="ghost" style="position:fixed;z-index:100;width:74px;height:74px;border-radius:16px;border:3px solid var(--line);background:#fff;display:none;align-items:center;justify-content:center;font-size:40px;pointer-events:none;box-shadow:0 8px 16px rgba(0,0,0,.28);transform:translate(-50%,-50%)"></div>
+
+<div class="ov" id="ovSell"><div class="box">
+  <div class="bloom" id="sellEmoji">🌿</div>
+  <div class="ttl" id="sellTtl"></div>
+  <div class="sub2" id="sellSub"></div>
+  <button class="big go" id="sellGo" onclick="doSell()">팔기</button>
+  <button class="big" onclick="hide('ovSell')">🌿 더 키우기</button>
+</div></div>
 
 <!-- 꽃 선택 -->
 <div class="ov" id="ovFlower"><div class="box">
@@ -262,7 +270,7 @@ function loadWallet(){try{var w=+localStorage.getItem("kids_wallet_v2");return w
 function saveWallet(){try{localStorage.setItem("kids_wallet_v2",String(Math.round(wallet)));}catch(e){}}
 function won(n){return Math.round(n).toLocaleString();}
 function fmtCur(n){return PZSYM+won(n);}          // 기호+숫자 (innerHTML 자리에서만)
-let wallet=loadWallet(), plots=[];
+let wallet=loadWallet(), plots=[], buyMore=false, _sellK=-1;
 
 // 직접 그린 제품 그림(SVG) — 회사이름 → 만화풍 아이콘. 로고·상표 없이 '평범한 물건'만.
 // 톤: viewBox 0 0 100 100 · 테두리 #23324a · stroke 3 · 둥근 모서리 · PAL 색.
@@ -471,14 +479,15 @@ function pick(g){grade=g;const G=GRADE[g];
 
 // ── 퍼즐맵 ──
 function startPlay(){
-  bag=[]; pool=(grade<=2?SAFE:GROWTH).slice(0,9);
+  bag=[]; buyMore=false; pool=(grade<=2?SAFE:GROWTH).slice(0,9);
   $("pHd").textContent=(grade<=2?"🧺 안전한 회사 퍼즐":"🚀 성장 회사 퍼즐");
   $("grid").innerHTML=pool.map((c,i)=>{const col=PAL[i%PAL.length];
     return '<div class="cell" data-i="'+i+'">'
       +'<div class="cface cfront" style="background:linear-gradient(150deg,'+mix(col,1.16)+','+mix(col,.9)+')"><span class="qm">?</span></div>'
       +'<div class="cface cback">'+iconOrEm(c)+'<span class="nm">'+c.nm+'</span><span class="hint">'+c.hint+'</span></div>'
       +'</div>';}).join("");
-  bindCells(); $("barPlay").style.display="flex"; $("barGarden").style.display="none";
+  bindCells(); var pb0=$("playBack"); if(pb0)pb0.textContent="↺ 다시 처음부터";
+  $("barPlay").style.display="flex"; $("barGarden").style.display="none";
   $("bag").style.display="flex"; updateBag(); show("scPlay");
 }
 let drag=null;
@@ -506,17 +515,41 @@ function updateBag(){const c=$("bagCnt");c.textContent=bag.length;c.style.displa
 
 // ── 정원 ──
 function goGarden(){
-  planted=bag.slice(); period="12";
-  var budget=Math.floor(wallet/planted.length); plots=[];
-  planted.forEach(function(i){var c=pool[i],pr=PRICE[c.nm];
-    if(pr==null){plots.push({i:i,shares:null,price:null,amt:budget});}
-    else{var sh=Math.floor(budget/pr); plots.push({i:i,shares:sh,price:pr,amt:sh*pr});}});
-  var spent=plots.reduce(function(s2,q){return s2+q.amt;},0);
-  wallet-=spent; if(wallet<0)wallet=0; saveWallet();
+  var picks=bag.slice(); period="12";
+  if(!buyMore) plots=[];
+  if(picks.length){
+    var budget=Math.floor(wallet/picks.length);
+    picks.forEach(function(i){var c=pool[i],pr=PRICE[c.nm];
+      if(pr==null){plots.push({i:i,shares:null,price:null,amt:budget});}
+      else{var sh=Math.floor(budget/pr); plots.push({i:i,shares:sh,price:pr,amt:sh*pr});}});
+    var spent=picks.reduce(function(s2,i){var pr=PRICE[pool[i].nm];return s2+(pr==null?budget:Math.floor(budget/pr)*pr);},0);
+    wallet-=spent; if(wallet<0)wallet=0; saveWallet();
+  }
+  buyMore=false; bag=[];
   document.querySelectorAll("#modes button").forEach(function(bb){bb.classList.toggle("on",bb.dataset.m==="12");});
+  document.querySelectorAll("#grid .cell").forEach(function(c){c.classList.remove("open","inbag");});
   $("bag").style.display="none"; $("barPlay").style.display="none"; $("barGarden").style.display="flex";
   renderGarden(); show("scGarden");
 }
+function fertilize(){
+  buyMore=true; bag=[];
+  document.querySelectorAll("#grid .cell").forEach(function(c){c.classList.remove("open","inbag");});
+  var pb=$("playBack"); if(pb)pb.textContent="← 정원으로";
+  $("barGarden").style.display="none"; $("barPlay").style.display="flex"; $("bag").style.display="flex"; updateBag();
+  show("scPlay");
+}
+function backToGarden(){ buyMore=false; bag=[]; $("barPlay").style.display="none"; $("barGarden").style.display="flex"; renderGarden(); show("scGarden"); }
+function playBack(){ if(buyMore) backToGarden(); else resetAll(); }
+function tapPlot(k){
+  var q=plots[k], r=ret(pool[q.i]), c=pool[q.i], val=plotVal(q), gain=val-q.amt; _sellK=k;
+  var emo,ttl,sub,btn;
+  if(r<=-15){ emo="🥀"; ttl=c.nm+" 너무 시들었어요"; sub="포기하면 "+won(val)+" "+CUR+"를 지갑에 담아요 (손절 "+won(gain)+" "+CUR+")"; btn="🪓 포기하고 팔기"; }
+  else if(r>=20){ emo="🌸"; ttl=c.nm+" 꽃이 활짝 피었어요!"; sub="꽃시장에 팔면 "+won(val)+" "+CUR+" (이익 +"+won(gain)+" "+CUR+")"; btn="✂️ 꽃시장에 팔기"; }
+  else { emo="🌿"; ttl=c.nm+" 잘 자라는 중"; sub="지금 팔면 "+won(val)+" "+CUR+" ("+(gain>=0?"이익 +":"손해 ")+won(gain)+" "+CUR+")"; btn="팔기"; }
+  $("sellEmoji").textContent=emo; $("sellTtl").textContent=ttl; $("sellSub").textContent=sub; $("sellGo").textContent=btn;
+  $("ovSell").classList.add("on");
+}
+function doSell(){ hide("ovSell"); if(_sellK>=0) sellPlot(_sellK); _sellK=-1; }
 $("modes").addEventListener("click",function(e){var bb=e.target.closest("button");if(!bb)return;
   period=bb.dataset.m; document.querySelectorAll("#modes button").forEach(function(x){x.classList.remove("on");}); bb.classList.add("on");
   renderGarden(); fan();});
@@ -530,12 +563,12 @@ function renderGarden(){
   $("total").innerHTML='<div class="garden'+(plots.length<=1?" one":"")+'">'+plots.map(function(q,k){return '<div class="gplant grow" style="animation-delay:'+(k*0.05)+'s">'+plantSVG(ret(pool[q.i]))+'</div>';}).join("")+'</div>'
     +'<div class="pct" style="color:'+(avg>=0?"#16a34a":"#e5484d")+'">'+(avg>=0?"+":"")+avg.toFixed(1)+'%</div>'
     +'<div class="msg">'+gardenMsg(avg)+' · 화분을 누르면 팔아서 지갑에 담아요</div>';
-  $("keepBox").innerHTML="";
+  $("keepBox").innerHTML=plots.length?'<button class="keep" onclick="fertilize()">🌿 거름주기 · 새 모종 심기<small>지갑 돈으로 회사를 더 사서 정원을 가꿔요 (리밸런싱)</small></button>':"";
   $("pots").innerHTML=plots.map(function(q,k){
     var c=pool[q.i], r=ret(pool[q.i]), val=plotVal(q), gain=val-q.amt;
     var qty=q.shares==null?"예금":(q.shares+"주");
     var us=USSTK[c.nm]?'<div class="fx">🔁 $'+won(q.amt/FX)+'</div>':'';
-    return '<div class="pot sell" onclick="sellPlot('+k+')"><div class="peplant grow" style="animation-delay:'+(k*0.05)+'s">'+plantSVG(r)+'</div>'
+    return '<div class="pot sell" onclick="tapPlot('+k+')"><div class="peplant grow" style="animation-delay:'+(k*0.05)+'s">'+plantSVG(r)+'</div>'
       +'<div class="pn">'+labelIcon(c)+c.nm+'</div><div class="qty">'+qty+'</div>'+us
       +'<div class="pp" style="color:'+(r>=0?"#16a34a":"#e5484d")+'">'+fmtCur(val)+'</div>'
       +'<div class="gain" style="color:'+(gain>=0?"#16a34a":"#e5484d")+'">'+(gain>=0?"▲익절 +":"▼손절 ")+won(gain)+'</div></div>';
