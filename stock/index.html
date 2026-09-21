@@ -2129,7 +2129,7 @@ async function openTower3D(list, title) {
   if (!list || !list.length) return;
   var old = document.getElementById("tower3dOv"); if (old) old.remove();
   var ov = document.createElement("div"); ov.id = "tower3dOv";
-  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:#0d1017;display:flex;align-items:center;justify-content:center;color:#cdd5e0;font:700 14px system-ui";
+  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:transparent;display:flex;align-items:center;justify-content:center;color:#cdd5e0;font:700 14px system-ui";
   ov.innerHTML = (typeof mpWait === "function") ? mpWait("3D 준비 중…") : '<div id="t3dmsg" style="background:rgba(0,0,0,0.72);padding:10px 16px;border-radius:12px;color:#cdd5e0">3D 준비 중…</div>';
   document.body.appendChild(ov);
   var data = [];
