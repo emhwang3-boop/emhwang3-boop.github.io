@@ -17,9 +17,6 @@
 </style>
 </head>
 <body>
-<div id="panel">
-  <div class="disc"><span class="ic">ⓘ</span> 본 3D효과는 단순 자산 비중 변화를 나타내는 수치 표현입니다.</div>
-</div>
 <div id="controls">
   <button id="btn-play">시간 경과</button>
   <button id="btn-gyro" class="ghost">📱 기울여 보기</button>
@@ -103,7 +100,7 @@
   const SPARK = softDot("255,255,255");
   const DUST = softDot("205,180,140");
 
-  const K = 1.3, TW = 26;
+  const K = 1.3, TW = 9;
   function baseSide(v) { return Math.cbrt(Math.max(v, 1)) * K; }
   const fmtMoney = function (v) { return Math.round(v).toLocaleString() + "만"; };
   const fmtPct = function (r) { return (r >= 0 ? "+" : "") + (r * 100).toFixed(1) + "%"; };
@@ -214,8 +211,8 @@
     frameG.visible = true;
     leanX += (0.18 - leanX) * 0.06; towerGroup.rotation.x = leanX; towerGroup.position.z = 10;
     const asp = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
-    let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.40; SW2 = SH2 * asp; } else { SW2 = towerTop * 0.40; SH2 = SW2 / asp; }
-    const cyc = towerTop * 0.46;
+    let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.62; SW2 = SH2 * asp; } else { SW2 = towerTop * 0.62; SH2 = SW2 / asp; }
+    const cyc = towerTop * 0.5;
     let ex, ey;
     if (gyroOn && gyro) { ex = THREE.MathUtils.clamp((gyro.gamma || 0) / 32, -1, 1) * SW2 * 1.15; ey = THREE.MathUtils.clamp(((gyro.beta || 0) - 45) / 38, -1, 1) * SH2 * 0.95; }
     else { baseAng += 0.004; ex = Math.sin(baseAng) * SW2 * 0.55; ey = Math.sin(baseAng * 0.6) * SH2 * 0.15; }
