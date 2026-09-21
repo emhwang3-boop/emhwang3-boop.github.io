@@ -1901,6 +1901,9 @@ window.APP_TAG="stock";
 //    안 그러면 주식 바스켓이 코인앱에 그대로 보인다(사장님 2026-09-20 지적).
 const BK_KEY = "bk_basket_" + (window.APP_TAG || "x") + "_v1";
 const BK_SPANS = [[63, "3개월", "3 months"], [126, "6개월", "6 months"], [252, "1년", "1 year"]];
+const BK_SAVED_KEY = "bk_saved_" + (window.APP_TAG || "x") + "_v1";  // 보관한 PT (지울 때까지)
+let bkOpen = {};        // 펼친 PT id
+let bkSavedBusy = false;
 function bkNote() {
   return KE("과거의 수익률에 근거한 것이며 고객님의 미래 수익을 보장하지 않습니다.",
             "Based on past returns; this does not guarantee your future returns.");
@@ -1932,9 +1935,7 @@ function bkRender() {
   let h = '<div class="svsub">' + KE(BK_HELP, BK_HELP_EN) + '</div>';
   if (!a.length) {
     h += '<div class="mhempty">' + BK_EMPTY + '</div>';
-    box.innerHTML = h;
-    return;
-  }
+  } else {
   const w = 100 / a.length;
   h += svPie(a.map(function (x) { return [x.name, w]; }));
   h += '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
@@ -1951,6 +1952,8 @@ function bkRender() {
   h += '<div class="discNote">' + bkNote() + '<br>'
      + '<b>' + KE("배당(분배금)·세금·거래 수수료는 감안하지 않은 값입니다.",
                   "Dividends (distributions), taxes and trading fees are not included.") + '</b></div>';
+  }
+  h += bkSavedHtml();
   box.innerHTML = h;
 }
 
@@ -2017,6 +2020,103 @@ async function bkRun(days) {
      + KE(' · 한 종목만 들었을 때 평균 ', ' · single holding average ') + (sdOne * 100).toFixed(2) + '%'
      + (sd < sdOne ? ' → <b>' + KE("섞으니 덜 흔들렸습니다.", "Mixing reduced the swings.") + '</b>' : '') + '</div>';
   document.getElementById("bkOut").innerHTML = h;
+}
+
+
+// ── 보관한 포트폴리오 — 지울 때까지 수익률을 계속 관찰 (사장님 2026-09-21) ──
+//   수익률 = 보관한 날 종가(base) 대비 지금 종가. 균등 비중.
+function bkSaveGet() { try { return JSON.parse(localStorage.getItem(BK_SAVED_KEY) || "[]") || []; } catch (e) { return []; } }
+function bkSavePut(a) { try { localStorage.setItem(BK_SAVED_KEY, JSON.stringify(a)); } catch (e) {} }
+function bkAgo(ms) { if (!ms) return ""; var s = (Date.now() - ms) / 1000;
+  if (s < 60) return KE("방금", "just now");
+  if (s < 3600) return Math.floor(s / 60) + KE("분 전", "m ago");
+  if (s < 86400) return Math.floor(s / 3600) + KE("시간 전", "h ago");
+  return Math.floor(s / 86400) + KE("일 전", "d ago"); }
+
+// 지금 바스켓을 스냅샷으로 보관 — 각 종목의 기준가(오늘 종가)를 저장한다
+async function bkStore() {
+  const a = bkGet();
+  if (!a.length) { bkMsg(KE("먼저 바스켓에 종목을 담아 주세요.", "Add items to the basket first.")); return; }
+  const saved = bkSaveGet();
+  if (saved.length >= 20) { bkMsg(KE("보관은 스무 개까지 됩니다.", "You can keep up to 20.")); return; }
+  bkMsg(mpWait(KE("보관 중… 기준가를 받습니다", "Saving… fetching base prices")), true);
+  const items = [];
+  for (let i = 0; i < a.length; i++) {
+    let cs = null; try { cs = await bkBars(a[i]); } catch (e) { cs = null; }
+    const base = (cs && cs.length) ? cs[cs.length - 1] : 0;
+    items.push({code: a[i].code, name: a[i].name, mk: a[i].mk, base: base});
+  }
+  saved.unshift({id: "p" + Date.now(), at: Date.now(), items: items, er: null, erows: null, calc: 0});
+  bkSavePut(saved);
+  bkMsg(KE("보관했습니다. 지울 때까지 수익률을 계속 지켜봅니다.", "Saved. We'll keep tracking its return until you delete it."));
+  bkRender();
+  bkSavedRefresh();
+}
+function bkSavedDel(id) { bkSavePut(bkSaveGet().filter(function (p) { return p.id !== id; })); delete bkOpen[id]; bkRender(); }
+function bkSavedToggle(id) { bkOpen[id] = !bkOpen[id]; bkRender(); }
+
+// 보관한 모든 PT 의 '보관일 대비 지금' 수익률을 다시 계산
+async function bkSavedRefresh() {
+  if (bkSavedBusy) return;
+  const arr = bkSaveGet();
+  if (!arr.length) return;
+  bkSavedBusy = true;
+  const mb = document.getElementById("bkSavedMsg"); if (mb) { mb.textContent = KE("수익률 새로 계산 중… 종목마다 몇 초", "Refreshing… a few seconds per item"); mb.hidden = false; }
+  for (let i = 0; i < arr.length; i++) {
+    const p = arr[i]; const rows = []; let sum = 0, ok = 0;
+    for (let j = 0; j < p.items.length; j++) {
+      const it = p.items[j]; let cs = null;
+      try { cs = await bkBars(it); } catch (e) { cs = null; }
+      const cur = (cs && cs.length) ? cs[cs.length - 1] : 0;
+      if (cur > 0 && it.base > 0) { const r = cur / it.base - 1; rows.push({nm: it.name, r: r}); sum += r; ok++; }
+      else rows.push({nm: it.name, err: true});
+    }
+    p.erows = rows; p.er = ok ? sum / ok : null; p.calc = Date.now();
+  }
+  bkSavePut(arr); bkSavedBusy = false; bkRender();
+}
+
+// 보관 섹션 HTML — 바스켓 카드 안, #bkBody 끝에 붙는다
+function bkSavedHtml() {
+  const s = bkSaveGet();
+  const pc = function (v) { return (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%"; };
+  const cls = function (v) { return v > 0 ? "up" : (v < 0 ? "dn" : "fl"); };
+  let h = '<div class="svsub" style="margin-top:12px;font-weight:800;color:var(--nm)">' + KE("보관한 포트폴리오", "Saved portfolios") + '</div>';
+  const lastCalc = s.reduce(function (m, p) { return Math.max(m, p.calc || 0); }, 0);
+  h += '<div class="cvrow" style="margin:4px 0;align-items:center">'
+     + (bkGet().length ? '<button class="svbtn" style="flex:1;margin:0" onclick="bkStore()">' + KE("＋ 지금 바스켓 보관", "＋ Save current basket") + '</button>' : '')
+     + (s.length ? '<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="bkSavedRefresh()">' + KE("수익률 새로고침", "Refresh") + '</button>' : '')
+     + (lastCalc ? '<span class="dplbl" style="flex:0 0 auto">' + KE("계산 ", "") + bkAgo(lastCalc) + '</span>' : '')
+     + '</div><div id="bkSavedMsg" class="c21msg" hidden></div>';
+  if (!s.length) { h += '<div class="mhempty">' + KE("보관한 것이 없습니다. 바스켓을 만들고 [보관]을 누르세요.", "Nothing saved yet. Build a basket and tap Save.") + '</div>'; return h; }
+  h += '<div style="max-height:150px;overflow-y:auto;border:1px solid var(--bd);border-radius:10px;padding:2px 6px">';
+  s.forEach(function (p) {
+    const d = new Date(p.at), z = function (n) { return String(n).padStart(2, "0"); };
+    const lbl = (d.getMonth() + 1) + "-" + z(d.getDate()) + " " + z(d.getHours()) + ":" + z(d.getMinutes());
+    const open = !!bkOpen[p.id];
+    const rtxt = (p.er == null) ? '<span class="dplbl">' + KE("계산 전", "—") + '</span>' : ('<b class="' + cls(p.er) + '">' + pc(p.er) + '</b>');
+    h += '<div style="border-bottom:1px solid var(--bd)">';
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 2px;cursor:pointer" onclick="bkSavedToggle(\'' + p.id + '\')">'
+       + '<span style="width:12px;color:var(--sub)">' + (open ? "▾" : "▸") + '</span>'
+       + '<span style="flex:1;font-weight:700">' + lbl + ' <span class="dplbl">' + p.items.length + KE("종목", "") + '</span></span>'
+       + '<span style="white-space:nowrap">' + rtxt + '</span>'
+       + '<span class="mhx" onclick="event.stopPropagation();bkSavedDel(\'' + p.id + '\')">✕</span></div>';
+    if (open) {
+      h += '<table class="mhtab" style="margin:2px 0 6px">';
+      const er = p.erows || p.items.map(function (it) { return {nm: it.name, pending: true}; });
+      er.forEach(function (r) {
+        const val = r.err ? ('<span class="fl">' + KE("자료 없음", "No data") + '</span>')
+                          : (r.pending ? '<span class="dplbl">—</span>' : ('<span class="' + cls(r.r) + '">' + pc(r.r) + '</span>'));
+        h += '<tr><td style="text-align:left">' + r.nm + '</td><td>' + val + '</td></tr>';
+      });
+      h += '</table>';
+    }
+    h += '</div>';
+  });
+  h += '</div>';
+  h += '<div class="svsub">' + KE("보관한 날부터 지금까지의 수익률(균등 비중)입니다. 과거 성적이며 미래를 보장하지 않습니다.",
+                                  "Return since the day you saved it (equal weight). Past performance, not a guarantee.") + '</div>';
+  return h;
 }
 
 </script>
