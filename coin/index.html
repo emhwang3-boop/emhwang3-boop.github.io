@@ -2082,7 +2082,7 @@ function bkAdd(code, name, mk) {
   const a = bkGet();
   if (a.some(function (x) { return x.code === code; })) { bkRender(); return; }
   if (a.length >= 10) { bkMsg(KE("한 번에 열 개까지 담을 수 있습니다.", "You can add up to 10 at a time.")); return; }
-  a.push({code: code, name: name || code, mk: mk || "kr"});
+  a.push({code: code, name: name || code, mk: mk || "kr", cls: bkClassOf({code: code, mk: mk || "kr"})});
   bkSave(a); bkRender();
 }
 function bkDel(i) { const a = bkGet(); a.splice(i, 1); bkSave(a); bkRender(); }
@@ -2210,7 +2210,7 @@ async function bkStore() {
   for (let i = 0; i < a.length; i++) {
     let cs = null; try { cs = await bkBars(a[i]); } catch (e) { cs = null; }
     const base = (cs && cs.length) ? cs[cs.length - 1] : 0;
-    items.push({code: a[i].code, name: a[i].name, mk: a[i].mk, base: base});
+    items.push({code: a[i].code, name: a[i].name, mk: a[i].mk, base: base, cls: a[i].cls || bkClassOf(a[i])});
   }
   saved.unshift({id: "p" + Date.now(), at: Date.now(), items: items, er: null, erows: null, calc: 0});
   bkSavePut(saved);
@@ -2290,6 +2290,28 @@ function bkSavedHtml() {
 // ── 3D 큐빅 타워 — 사이트 페이지를 전체화면 iframe 으로 (앱 스크립트와 격리) (사장님 2026-09-21) ──
 var TOWER_URL = "https://emhwang3-boop.github.io/tower/";
 // pid 를 주면 같은 시세로 그 보관 PT 의 표(erows·er)도 함께 갱신한다 — 표와 큐브 숫자가 늘 같게 (사장님 2026-09-22)
+
+// ── 성향(자산군) 순위 — 안전 0 … 위험. 3D 타워가 아래→위로 쌓는 차례 (사장님: 안전할수록 아래, 위험할수록 위) ──
+//    앱 배분표(SV_GRADE)와 같은 차례. 코드가 대표상품·추천표에 있으면 그 자산군, 없으면 국내/해외 주식.
+var BK_CLS_ORDER = ["예금", "국내 ETF", "해외 ETF(원화)", "해외 ETF(달러)", "국내 주식", "해외 주식", "레버리지 ETF(원화)", "레버리지 ETF(달러)"];
+function bkClassOf(it) {
+  var code = String(it.code || "");
+  if (it.mk === "coin") { var c = code.replace(/USDT$/, ""); return c === "BTC" ? "BTC" : (c === "ETH" ? "ETH" : "알트"); }
+  try {
+    if (typeof SV_PROD !== "undefined") for (var k in SV_PROD) if ((SV_PROD[k] || []).some(function (x) { return x[1] && x[1] === code; })) return k;
+    if (typeof SVR !== "undefined" && SVR) {
+      var M = [["etfw", "해외 ETF(원화)"], ["etfu", "해외 ETF(달러)"], ["levw", "레버리지 ETF(원화)"], ["levu", "레버리지 ETF(달러)"]];
+      for (var i = 0; i < M.length; i++) { var L = SVR[M[i][0]] && SVR[M[i][0]].buy; if (L && L.some(function (r) { return String(r.code) === code; })) return M[i][1]; }
+    }
+  } catch (e) {}
+  return it.mk === "us" ? "해외 주식" : "국내 주식";
+}
+function bkClassRank(it) {
+  var c = it.cls || bkClassOf(it);
+  if (it.mk === "coin") return c === "BTC" ? 0 : (c === "ETH" ? 1 : 2);
+  var i = BK_CLS_ORDER.indexOf(c); return i < 0 ? 4 : i;
+}
+
 async function openTower3D(list, title, pid) {
   if (!list || !list.length) return;
   var old = document.getElementById("tower3dOv"); if (old) old.remove();
@@ -2302,7 +2324,7 @@ async function openTower3D(list, title, pid) {
     var it = list[i], cs = null;
     try { cs = await bkBars(it); } catch (e) { cs = null; }
     var mm = document.querySelector("#tower3dOv .mpTxt") || document.getElementById("t3dmsg"); if (mm) mm.textContent = "3D 준비 중… " + (i + 1) + "/" + list.length;
-    if (!cs || cs.length < 10) { data.push({ n: it.name, b: 100, r: 0, v: 1 }); rows.push({nm: it.name, err: true}); continue; }
+    if (!cs || cs.length < 10) { data.push({ n: it.name, b: 100, r: 0, v: 1, k: bkClassRank(it) }); rows.push({nm: it.name, err: true}); continue; }
     var n = Math.min(60, cs.length - 1), from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
     // 보관한 PT 는 표와 같은 값(보관 기준가 대비 지금). 기준가가 없을 때만 60일 수익률.  (사장님 2026-09-21)
     var r = (it.base > 0) ? (to / it.base - 1) : ((from > 0) ? (to / from - 1) : 0);
@@ -2310,7 +2332,7 @@ async function openTower3D(list, title, pid) {
     for (var k = 1; k < seg.length; k++) dd.push(seg[k] / seg[k - 1] - 1);
     var m = dd.reduce(function (s, x) { return s + x; }, 0) / (dd.length || 1);
     var sd = Math.sqrt(dd.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / (dd.length || 1)) * 100;
-    data.push({ n: it.name, b: 100, r: +r.toFixed(4), v: +Math.max(0.05, sd).toFixed(2) });
+    data.push({ n: it.name, b: 100, r: +r.toFixed(4), v: +Math.max(0.05, sd).toFixed(2), k: bkClassRank(it) });
     if (it.base > 0 && to > 0) { rows.push({nm: it.name, r: r}); rsum += r; rok++; } else rows.push({nm: it.name, err: true});
   }
   if (pid) { try { var sv = bkSaveGet(); sv.forEach(function (p) { if (p.id === pid) { p.erows = rows; p.er = rok ? rsum / rok : null; p.calc = Date.now(); } }); bkSavePut(sv); bkRender(); } catch (e) {} }
