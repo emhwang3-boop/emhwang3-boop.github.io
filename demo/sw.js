@@ -1,6 +1,6 @@
 /* 일일브리핑 LIVE 서비스워커 — 셸도 자산도 네트워크 우선(항상 최신), 끊기면 캐시.
    시세/허브/외부 API 는 캐시하지 않고 그대로 네트워크로 보낸다. */
-const C = "brief-demo2-v12";
+const C = "brief-demo2-v1";
 const ASSETS = ["./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
 
 self.addEventListener("install", function (e) {
