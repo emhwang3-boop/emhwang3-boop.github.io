@@ -3741,10 +3741,10 @@ function recoRender(){
   const en=LANG==="en", R=RECO;
   let h='<h3>'+(en?"Portfolio picks":"포트폴리오 추천")+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
   if(!R){ card.innerHTML=h+'<div class="soonrow">'+(en?"Loading…":"불러오는 중…")+'</div>'; return; }
-  const reg=function(x){ return x&&x.regime?((x.regime.good?(en?"good":"좋음"):(en?"weak":"나쁨"))+" ("+(x.regime.vs_ma60>0?"+":"")+x.regime.vs_ma60+"%)"):"-"; };
+  const reg=function(x){ if(!(x&&x.regime))return "-"; var g=x.regime.good, t=(g?(en?"good":"좋음"):(en?"weak":"나쁨"))+" ("+(x.regime.vs_ma60>0?"+":"")+x.regime.vs_ma60+"%)"; return '<b style="color:'+(g?"#2f9e44":"#e03131")+'">'+t+'</b>'; };
   const cs=function(c){ return c&&c.state?({long:(en?"LONG":"롱"),short:(en?"SHORT":"숏"),cash:(en?"CASH":"현금")}[c.state]):"-"; };
   h+='<div class="dpmsg" style="margin:4px 0 8px">'+(en?"Regime · ":"장세 · ")+(en?"KR ":"국내 ")+reg(R.kr)+" · "+(en?"US ":"미국 ")+reg(R.us)
-    +" · BTC "+cs(R.coin&&R.coin.BTC)+" · ETH "+cs(R.coin&&R.coin.ETH)+'</div>';
+    +" · BTC "+cs(R.coin&&R.coin.BTC)+" · ETH "+cs(R.coin&&R.coin.ETH)+(R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" basis":" 기준")+'</span>':'')+'</div>';
   // 실계좌 → 시장별 총자산 · 보유 수
   const has=(typeof RL!=="undefined")&&RL.at;
   const kr=has?RL.kr:[], us=has?RL.us:[], cash=has&&RL.cash?RL.cash:{};
