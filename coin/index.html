@@ -2427,7 +2427,7 @@ function cvRecoRender() {
   // ① 자산 배분 — 가상 계좌 10만 USDT 기준. 코인은 포트폴리오가 하나뿐이다(사장님 2026-09-20).
   // 🔴 제목은 주식앱과 같이 "추천 포트폴리오", 계좌 머리줄은 주식앱과 같은 크기 (사장님 2026-09-22)
   h += '<div class="svgrpt svacct2" style="margin-top:12px">' + KE("추천 포트폴리오", "Recommended Portfolio") + '</div>';
-  h += '<div class="svgrpt svacct2" style="margin-top:8px">' + KE("USDT 계좌", "USDT Account") + ' <b>' + CV_USDT.toLocaleString() + ' USDT</b></div>';
+  h += '<div class="svgrpt svacct2" style="margin-top:8px">' + KE("USDT 계좌", "USDT Account") + ' <b>' + CV_USDT.toLocaleString() + '</b></div>';   // 앞에 USDT 계좌라 적혀 있어 뒤엔 안 붙인다 (사장님 2026-09-22)
   h += '<div class="svsub">' + KE('BTC 45 · ETH 45 · 알트 10, 그 안에서 <b>현물 ' + CV_SPOT + ' · 선물 '
      + (100 - CV_SPOT) + '</b>. 선물은 청산이 있어 적게 둡니다. 아래 금액은 모든 이용자에게 '
      + '똑같이 주어지는 가상 금액입니다.',
