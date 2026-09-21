@@ -64,8 +64,7 @@
   const dir = new THREE.DirectionalLight(0xffffff, 0.85); dir.position.set(60, 240, 120); scene.add(dir);
   const dir2 = new THREE.DirectionalLight(0x88aaff, 0.25); dir2.position.set(-80, 40, -60); scene.add(dir2);
 
-  const grid = new THREE.GridHelper(420, 22, 0x2b3752, 0x171d2a);
-  grid.position.y = -18; grid.material.transparent = true; grid.material.opacity = 0.4; scene.add(grid);
+  const GROUND_Y = -18;   // 바닥 바둑판은 뺐다(사장님 2026-09-22). 실의 아랫점만 이 높이.
 
   const towerGroup = new THREE.Group(); scene.add(towerGroup);
   // 중심축 = 큐브 중심을 정확히 꿰는 가는 실(1px). 탑 높이만큼만, 흔들림을 따라 휜다.
@@ -264,7 +263,7 @@
 
     { // 실: 땅 → 큐브 중심들 → 꼭대기 조금 위. 큐브 사이는 옆흔들림을 따라 부드럽게 잇는다
       const pos = threadGeo.attributes.position.array;
-      const pts = [[0, grid.position.y]];
+      const pts = [[0, GROUND_Y]];
       items.forEach(function (it) { pts.push([it.mesh.position.x, it.mesh.position.y]); });
       const last = items[items.length - 1];
       pts.push([last.mesh.position.x + quakeX * 0.25, last.mesh.position.y + last._side * 0.9]);
