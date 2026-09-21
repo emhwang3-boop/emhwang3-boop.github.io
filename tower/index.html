@@ -7,30 +7,16 @@
 <style>
   html, body { height: 100%; }
   body { margin: 0; overflow: hidden; background: transparent; color: #fff; font-family: "Segoe UI", system-ui, sans-serif; }
-  #panel { position: absolute; top: 16px; left: 16px; background: rgba(0,0,0,0.6); padding: 12px 14px; border-radius: 10px; max-width: min(300px, calc(100vw - 32px)); border: 1px solid #2a2f3a; z-index: 5; backdrop-filter: blur(4px); }
-  #panel h3 { margin: 0 0 6px; color: #00ffcc; font-size: 16px; }
-  #panel p { margin: 4px 0; font-size: 11.5px; color: #9aa3af; line-height: 1.5; }
-  #panel .legend b { color: #fff; }
-  #panel .disc { margin-top: 8px; font-size: 10.5px; color: #8b95a3; line-height: 1.45; }
+  #panel { position: absolute; top: calc(env(safe-area-inset-top,0px) + 8px); left: 0; right: 0; text-align: center; z-index: 5; pointer-events: none; padding: 0 16px; }
+  #panel .disc { font-size: 10px; color: #b3bdc9; line-height: 1.35; text-shadow: 0 1px 3px rgba(0,0,0,.9); }
   #panel .ic { color: #7fd8ff; font-weight: 800; }
-  #controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); padding: 12px 18px; border-radius: 24px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; border: 1px solid #3a4150; z-index: 5; max-width: calc(100vw - 24px); box-sizing: border-box; }
-  button { background: #00ffcc; color: #04120f; border: none; padding: 9px 15px; border-radius: 18px; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.15s; }
-  button:hover { background: #fff; box-shadow: 0 0 10px rgba(0,255,204,0.6); }
-  button.ghost { background: #3a4150; color: #fff; }
-  #tstate { font-size: 13px; font-weight: 700; min-width: 78px; text-align: center; color: #c7ced8; }
+  #controls { position: absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 12px); left: 50%; transform: translateX(-50%); display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: center; z-index: 5; max-width: calc(100vw - 20px); }
+  button { background: rgba(0,255,204,0.9); color: #04120f; border: none; padding: 7px 12px; border-radius: 15px; font-weight: 700; font-size: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
+  button.ghost { background: rgba(42,50,62,0.9); color: #fff; }
+  #tstate { display: none; }
 </style>
 </head>
 <body>
-<div id="panel">
-  <h3>🍢 종목 큐빅 타워 <span class="ic" style="font-size:13px">ⓘ</span></h3>
-  <p id="subt">예시 데이터</p>
-  <p class="legend">
-    아래 = <b>안정</b>(밝은 청록·느린 회전) · 위 = <b>위험</b>(노랑→주황→진홍·빠른 회전)<br>
-    부피 = 평가금액 · 이익 = <b style="color:#2bff86">밝은 초록</b> · 손실 = <b style="color:#ff4d4d">밝은 빨강</b>
-  </p>
-  <div class="disc"><span class="ic">ⓘ</span> 본 3D효과는 단순 자산 비중 변화를 나타내는 수치 표현입니다.</div>
-</div>
-
 <div id="controls">
   <button id="btn-play">시간 경과</button>
   <button id="btn-gyro" class="ghost">📱 기울여 보기</button>
@@ -56,7 +42,7 @@
       const arr = JSON.parse(decodeURIComponent(escape(atob(d))));
       if (arr && arr.length) {
         RAW = arr.map(function (x) { return { name: String(x.n || x.name || "?"), base: +(x.b || x.base || 100) || 100, ret: +(x.r || x.ret || 0) || 0, vol: Math.max(0.05, +(x.v || x.vol || 1) || 1) }; });
-        document.getElementById("subt").textContent = p.get("t") ? decodeURIComponent(p.get("t")) : ("담긴 " + RAW.length + "종목");
+        var _st = document.getElementById("subt"); if (_st) _st.textContent = p.get("t") ? decodeURIComponent(p.get("t")) : ("담긴 " + RAW.length + "종목");
       }
     }
   } catch (e) {}
