@@ -1671,8 +1671,8 @@ function mpCss() {
     + "@keyframes mpTap{0%,72%,100%{transform:rotate(0)}82%{transform:rotate(20deg)}92%{transform:rotate(-4deg)}}"
     + "@keyframes mpTick{0%,49%{transform:rotate(0)}50%,100%{transform:rotate(90deg)}}"
     + "@keyframes mpWink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.15)}}"
-    + ".mpWrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0}"
-    + ".mpSvg{width:88px;height:88px;animation:mpBob 1.1s ease-in-out infinite}"
+    + ".mpWrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0;transform:perspective(620px) translateZ(26px) rotateY(var(--mpry,0deg)) rotateX(var(--mprx,0deg));transition:transform .1s ease-out;will-change:transform}"
+    + ".mpSvg{width:88px;height:88px;animation:mpBob 1.1s ease-in-out infinite;filter:drop-shadow(0 16px 13px rgba(0,0,0,.45))}"
     + ".mpFoot{transform-origin:52px 104px;animation:mpTap 1.1s ease-in-out infinite}"
     + ".mpHand{transform-origin:92px 46px;animation:mpTick 1.1s steps(1) infinite}"
     + ".mpEye{transform-origin:center;transform-box:fill-box;animation:mpWink 3.2s ease-in-out infinite}"
@@ -1709,6 +1709,26 @@ function mpWait(txt) {
   mpCss();
   return '<div class="mpWrap">' + mpMascot() + '<div class="mpTxt">' + (txt || "") + '</div></div>';
 }
+
+// 마스코트 3D — 마우스/기울임으로 앞으로 튀어나온다(배경 없이 캐릭터만). (사장님 2026-09-21)
+function mpTiltInit() {}
+(function () {
+  var rx = 0, ry = 0, uX = 0, uY = 0, tt = 0;
+  function tick() {
+    tt += 0.016; uX *= 0.94; uY *= 0.94;
+    var goalY = uY + Math.sin(tt * 0.7) * 7, goalX = uX + Math.sin(tt * 0.5) * 2.5;
+    ry += (goalY - ry) * 0.1; rx += (goalX - rx) * 0.1;
+    var list = document.getElementsByClassName("mpWrap");
+    for (var i = 0; i < list.length; i++) { list[i].style.setProperty("--mpry", ry.toFixed(2) + "deg"); list[i].style.setProperty("--mprx", rx.toFixed(2) + "deg"); }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  try {
+    addEventListener("mousemove", function (e) { uY = ((e.clientX / innerWidth) * 2 - 1) * 16; uX = -((e.clientY / innerHeight) * 2 - 1) * 10; }, { passive: true });
+    addEventListener("deviceorientation", function (e) { if (e.gamma != null) uY = Math.max(-18, Math.min(18, e.gamma / 2)); if (e.beta != null) uX = Math.max(-12, Math.min(12, -(e.beta - 45) / 2.5)); }, true);
+  } catch (e) {}
+})();
+
 
 </script>
 <script>
