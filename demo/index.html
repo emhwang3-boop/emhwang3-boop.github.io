@@ -1789,6 +1789,16 @@ function stRender(){
    + '<div class="stmsg">' + (en
      ? "If set, Kiwoom, Korea Investment and OKX account calls go through your PC (needed for IP-restricted keys on mobile data)."
      : "넣으면 키움·한국투자·OKX 계좌가 내 컴퓨터를 거칩니다. 허용 IP가 걸린 키를 LTE로 쓸 때 넣습니다.") + '</div></div>'
+   + '<div class="strow"><div class="sthd">' + (en ? "Sync across devices" : "기기끼리 맞추기") + '</div>'
+   + '<div style="display:flex;gap:6px"><input class="stin" id="syPass" type="password" autocomplete="off" style="flex:1" placeholder="'
+   + (en ? "Sync passphrase" : "연동 암호") + '" value="' + String(syPass()).replace(/"/g, "&quot;") + '">'
+   + '<button class="dpb" style="background:#1c7ed6;flex:0 0 auto" onclick="sySave()">' + (en ? "Sync" : "연동") + '</button></div>'
+   + '<div id="syMsg" class="c21msg" hidden></div>'
+   + '<div class="stnote">' + (en
+     ? "Same passphrase on both devices shares the virtual basket and saved portfolios. Keys are never synced."
+     : "두 기기에 같은 암호를 넣으면 가상 바스켓과 보관한 포트폴리오를 같이 봅니다. 열쇠는 올리지 않습니다.")
+   + (syAt() ? ('<br>' + (en ? "Last sync " : "마지막 맞춤 ")
+       + new Date(syAt()).toLocaleString(en ? "en-US" : "ko-KR")) : '') + '</div></div>'
    + '<div class="stnote">' + (en
      ? "Keys are kept on this device only and are never sent anywhere. This demo places no real orders."
      : "키는 이 기기에만 저장되고 어디로도 보내지 않습니다. 이 앱은 모의 주문이라 키를 쓰지 않습니다.")
@@ -4049,8 +4059,87 @@ function KE(ko,en){ return LANG==="en"?en:ko; }
 const BK_KEY="bk_basket_demo_v1";
 let BK_OUT="";   /* 마지막 과거수익률 표 — 카드가 다시 그려져도 살아남게 (2026-09-22) */
 const BK_SPANS=[[63,"3개월","3 months"],[126,"6개월","6 months"],[252,"1년","1 year"]];
+
+// ── 두 기기 맞추기 (사장님 2026-09-23 "웹앱과 폰앱 연동") ────────────────────────────
+//   맞추는 것: 가상 바스켓(bk_basket_demo_v1) · 보관한 포트폴리오(bk_saved_demo_v1) 둘뿐.
+//   🔴 증권사·거래소 열쇠는 절대 올리지 않는다. 암호도 안 올라간다(뒤섞은 값만).
+const SY_PASS_KEY = "sync_pass_v1", SY_AT_KEY = "sync_at_v1";
+let SY_HASH = "", SY_BUSY = false, SY_T = null;
+function syPass() { try { return localStorage.getItem(SY_PASS_KEY) || ""; } catch (e) { return ""; } }
+function syAt() { try { return +(localStorage.getItem(SY_AT_KEY) || 0) || 0; } catch (e) { return 0; } }
+function sySetAt(v) { try { localStorage.setItem(SY_AT_KEY, String(v || 0)); } catch (e) {} }
+async function syKey() {
+  const p = syPass(); if (!p) return "";
+  if (SY_HASH && SY_HASH.p === p) return SY_HASH.h;
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("brief-sync:" + p));
+  const h = Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  SY_HASH = { p: p, h: h };
+  return h;
+}
+function syMsg(t) { const e = E("syMsg"); if (e) { e.textContent = t || ""; e.hidden = !t; } }
+function syLocal() {
+  let bk = [], sv = [];
+  try { bk = JSON.parse(localStorage.getItem(BK_KEY) || "[]") || []; } catch (e) {}
+  try { sv = JSON.parse(localStorage.getItem(BK_SAVED_KEY) || "[]") || []; } catch (e) {}
+  return { bk: bk, saved: sv };
+}
+function syApply(d) {
+  if (!d) return false;
+  try {
+    localStorage.setItem(BK_KEY, JSON.stringify(d.bk || []));
+    localStorage.setItem(BK_SAVED_KEY, JSON.stringify(d.saved || []));
+  } catch (e) { return false; }
+  try { bkRender(); } catch (e) {}
+  return true;
+}
+async function syPush(quiet) {
+  const k = await syKey(); if (!k || SY_BUSY) return;
+  SY_BUSY = true;
+  try {
+    const r = await fetch(HUB + "/sync?k=" + k, { method: "POST", cache: "no-store",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: JSON.stringify(syLocal()) });
+    const j = await r.json();
+    if (j && j.ok) { sySetAt(j.at); if (!quiet) syMsg(KE("올렸습니다.", "Uploaded.")); }
+    else if (!quiet) syMsg(KE("올리지 못했습니다.", "Upload failed."));
+  } catch (e) { if (!quiet) syMsg(KE("올리지 못했습니다.", "Upload failed.")); }
+  SY_BUSY = false;
+}
+async function syPull(quiet) {
+  const k = await syKey(); if (!k) return false;
+  try {
+    const j = await (await fetch(HUB + "/sync?k=" + k, { cache: "no-store" })).json();
+    if (j && j.ok && j.at > syAt() && j.data) {
+      syApply(j.data); sySetAt(j.at);
+      if (!quiet) syMsg(KE("다른 기기 것을 받아왔습니다.", "Pulled from the other device."));
+      return true;
+    }
+  } catch (e) { if (!quiet) syMsg(KE("받아오지 못했습니다.", "Download failed.")); }
+  return false;
+}
+// 바뀌면 조용히 올린다 — 여러 번 바뀌어도 한 번만
+function sySoon() {
+  if (!syPass()) return;
+  if (SY_T) clearTimeout(SY_T);
+  SY_T = setTimeout(function () { SY_T = null; syPush(true); }, 1500);
+}
+// [연동] — 서버 것이 새로우면 받아오고, 아니면 이 기기 것을 올린다
+async function syNow() {
+  if (!syPass()) { syMsg(KE("먼저 암호를 넣으세요.", "Enter a passphrase first.")); return; }
+  syMsg(KE("맞추는 중\u2026", "Syncing\u2026"));
+  const got = await syPull(false);
+  if (!got) await syPush(false);
+  try { stRender(); } catch (e) {}
+}
+function sySave() {
+  const el = E("syPass"); if (!el) return;
+  try { localStorage.setItem(SY_PASS_KEY, (el.value || "").trim()); } catch (e) {}
+  SY_HASH = "";
+  syNow();
+}
+setTimeout(function () { if (syPass()) syPull(true); }, 2500);      // 앱을 열면 받아온다
+
 function bkGet(){ try{ return JSON.parse(localStorage.getItem(BK_KEY)||"[]")||[]; }catch(e){ return []; } }
-function bkSave(a){ try{ localStorage.setItem(BK_KEY,JSON.stringify(a)); }catch(e){} }
+function bkSave(a){ try{ localStorage.setItem(BK_KEY,JSON.stringify(a)); }catch(e){} try{ sySoon(); }catch(e){} }
 function bkMsg(t){ var m=E("bkMsg"); if(m){ m.textContent=t||""; m.hidden=!t; } }
 function bkAdd(code,name,mk){
   if(!code)return;
@@ -4187,7 +4276,7 @@ async function openTower3D(list, title) {
 const BK_SAVED_KEY = "bk_saved_demo_v1";
 var bkOpenS = {}, bkSavedBusy = false;
 function bkSaveGet(){ try{ return JSON.parse(localStorage.getItem(BK_SAVED_KEY)||"[]")||[]; }catch(e){ return []; } }
-function bkSavePut(a){ try{ localStorage.setItem(BK_SAVED_KEY, JSON.stringify(a)); }catch(e){} }
+function bkSavePut(a){ try{ localStorage.setItem(BK_SAVED_KEY, JSON.stringify(a)); }catch(e){} try{ sySoon(); }catch(e){} }
 function bkAgo(ms){ if(!ms)return""; var t=(Date.now()-ms)/1000;
   if(t<60)return KE("방금","just now");
   if(t<3600)return Math.floor(t/60)+KE("분 전","m ago");
