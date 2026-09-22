@@ -181,13 +181,9 @@ function build() {
     const goal = mode === "goal";
     const col = goal ? 0x39ff14 : 0xff1744;                         // 형광 초록 · 화려한 빨강
     const curve = new THREE.CatmullRomCurve3(tips, true, "catmullrom", 0.4);
-    const tube = new THREE.TubeGeometry(curve, 160, S * (goal ? 0.14 : 0.16), 10, true);
+    const tube = new THREE.TubeGeometry(curve, 160, S * (goal ? 0.17 : 0.19), 10, true);
     ring = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({color: col, transparent: true, opacity: 0.95}));
     root.add(ring);
-    const tube2 = new THREE.TubeGeometry(curve, 160, S * (goal ? 0.3 : 0.34), 10, true);
-    ringGlow = new THREE.Mesh(tube2, new THREE.MeshBasicMaterial({color: col, transparent: true,
-      opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false}));
-    root.add(ringGlow);
     banner = label(goal ? ("목표 +" + Math.round(PT_GOAL * 100) + "% 달성")
                         : ("손절 " + Math.round(PT_STOP * 100) + "% 도달"), 4.4);
     banner.position.set(0, towerTop + S * 0.9, 0); root.add(banner);
@@ -246,8 +242,6 @@ function frame() {
     const sp = mode === "stop" ? 6.5 : 3.2;
     const k = 0.5 + 0.5 * Math.sin(t * sp);
     ring.material.opacity = 0.6 + 0.4 * k;
-    ringGlow.material.opacity = (mode === "stop" ? 0.2 : 0.14) + 0.4 * k;
-    ringGlow.scale.set(1 + 0.06 * k, 1, 1 + 0.06 * k);
     if (banner) { banner.material.opacity = 0.6 + 0.4 * k; banner.position.y = towerTop + 6.3 + Math.sin(t * 2) * 0.6; }
   }
   // 손절이면 탑 전체가 심하게 흔들린다
