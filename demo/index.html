@@ -2300,7 +2300,8 @@ async function rlParseCoin(j) {
               side: (ct >= 0 ? "L" : "S"),
               avg: rlNum(p.avgPx), cur: rlNum(p.markPx),
               evl: rlNum(p.margin) || rlNum(p.imr), pl: rlNum(p.upl),
-              rt: rlNum(p.uplRatio) * 100});
+              rt: rlNum(p.uplRatio) * 100,
+              since: rlNum(p.cTime) || 0});          // 자리 연 시각(ms) — 보유일수 (사장님 2026-09-22)
   }
   return out;
 }
@@ -2327,6 +2328,27 @@ function rlParseSpot(det) {
               rt: (avg && qty) ? (pl / (avg * qty) * 100) : 0});
   }
   return out;
+}
+
+// ── 코인 현물 산 날 — OKX 체결내역을 거슬러 (사장님 2026-09-22 "미국주식과 코인은 보유일수가 안 나온다") ──
+const RL_CO_SINCE = {};                                   // code(BTC-USDT) → 산 시각(ms)
+async function rlCoinSpotSince() {
+  const list = (RL.co || []).filter(function (p) { return p.spot && p.qty > 0; });
+  for (let i = 0; i < list.length; i++) {
+    const p = list[i];
+    try {
+      const j = await rlOkx("/api/v5/trade/fills-history?instType=SPOT&instId=" + encodeURIComponent(p.code) + "&limit=100");
+      const rows = (j && j.data) || [];                     // 최신이 먼저
+      let net = 0, got = 0;
+      for (let k = 0; k < rows.length; k++) {
+        const r = rows[k], sz = rlNum(r.fillSz);
+        if (r.side === "buy") { net += sz; if (net >= p.qty * 0.999) { got = rlNum(r.ts); break; } }
+        else if (r.side === "sell") net -= sz;
+      }
+      if (got) RL_CO_SINCE[p.code] = got;
+    } catch (e) {}
+  }
+  if (list.length) { try { dpHoldRender(); } catch (e) {} }
 }
 
 // ── 한 번에 불러오기 ──
@@ -2457,6 +2479,7 @@ async function rlLoad(auto) {
     }
   } finally {
     RL.kr = out.kr; RL.us = out.us; RL.co = out.co;
+    try { rlCoinSpotSince(); } catch (e) {}                 // 현물 산 날 (뒤에서 채워 다시 그린다)
     // 🔴 체결 감지 — 보유 수량 묶음이 바뀌면 체결된 것 → 딩동 (첫 로드는 소리 안 냄) (사장님 2026-09-21)
     try {
       var _qsig = RL.kr.concat(RL.us).concat(RL.co).map(function (p) { return p.code + ":" + p.qty; }).sort().join("|");
@@ -2672,7 +2695,16 @@ async function rlHoldSince() {
 }
 // 산 날부터 오늘까지 영업일 수(주말 뺌) — 못 찾았으면 null
 function rlHeldDays(code) {
-  const h = rlHsGet()[code]; if (!h || !h.d) return null;
+  const h = rlHsGet()[code];
+  if (!h || !h.d) {
+    // 코인 — 선물은 자리 연 시각, 현물은 체결내역에서 찾은 시각. 달력일로 센다(주말에도 거래).
+    let ms = RL_CO_SINCE[code] || 0;
+    if (!ms) { const p = (RL.co || []).filter(function (x) { return x.code === code && x.since; })[0]; if (p) ms = p.since; }
+    if (!ms) return null;
+    const a = new Date(ms); a.setHours(0, 0, 0, 0);
+    return {since: a.getFullYear() + String(a.getMonth() + 1).padStart(2, "0") + String(a.getDate()).padStart(2, "0"),
+            days: Math.floor((Date.now() - a.getTime()) / 864e5) + 1};
+  }
   const s = h.d, a = new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8)), b = new Date();
   let n = 0;
   for (let d = new Date(a); d < b; d.setDate(d.getDate() + 1)) { const w = d.getDay(); if (w !== 0 && w !== 6) n++; }
@@ -3320,7 +3352,7 @@ function dpHoldRender(){
     const tagc=(p.mk==="coin")?(p.spot?" sp":" fu"):"";
     h+='<tr><td>'+dpEsc(p.name||p.code)+' <span class="mkt'+tagc+'">'+tag+'</span>'
      +'<span class="rlb">'+(en?"REAL":"실계좌")+'</span>'
-     +((p.mk==="kr"&&typeof rlHeldDays==="function"&&rlHeldDays(p.code))
+     +(((p.mk==="kr"||p.mk==="coin")&&typeof rlHeldDays==="function"&&rlHeldDays(p.code))
         ?'<br><span class="dplbl">'+(en?"day ":"")+rlHeldDays(p.code).days+(en?"":"일째")+'</span>':'')+'</td>'
      +'<td>'+qtx+'</td><td>'+mny(p.avg)+'</td><td>'+mny(cur)+'</td>'
      +'<td>'+mny(evl)+'</td>'
