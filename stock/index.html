@@ -303,8 +303,21 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 
 
 <div class="card">
-  <a class="svlink" style="background:#f59f00" href="../coin/" target="_blank" rel="noopener"><span class="kko">코인앱 열기</span><span class="ken">Open Coin App</span></a>
-</div>
+  <a class="svlink" style="background:#f59f00" href="../coin/" target="_blank" rel="noopener" onclick="return svOpenApp(this)"><span class="kko">코인앱 열기</span><span class="ken">Open Coin App</span></a>
+</div><script>
+function svOpenApp(a){
+  try{
+    var ua=navigator.userAgent||"", sa=false;
+    try{ sa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||!!navigator.standalone; }catch(e){}
+    if(/Android/i.test(ua)&&sa){
+      var u=a.href;
+      location.href="intent://"+u.replace("https://","")+"#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url="+encodeURIComponent(u)+";end";
+      return false;
+    }
+  }catch(e){}
+  return true;
+}
+</script>
 <div class="card discCard"><div class="discNote"><span class="kko"><b>앱 로직</b> — ① 자산 종류별 비중은 고객님이 고르신 포트폴리오에 따라 <b>미리 정해져</b> 있습니다. ② <b>국내·해외 주식</b>은 <b>일봉</b>을 기준으로, 추세선이 상승 중이고 가격이 기준선 위에 있으며 추세의 <b>상승 각도</b>가 일정 수준 이상인 종목 가운데, <b>최근 3거래일 안에</b> 그 조건을 새로 충족한 것만 고릅니다. ③ 그중 <b>상승 각도가 가파른 순서</b>로 보여 드립니다. ④ <b>해외 ETF(원화)</b>도 같은 방법으로 고르되, 시가총액 상위 종목 안에서 고르며 최근 3거래일 조건은 적용하지 않습니다. <b>레버리지 ETF</b>도 같은 방법으로 고르며, <b>공격투자 포트폴리오에만</b> 들어갑니다. <b>국내 ETF와 예금은 대표 상품을 미리 정해 두고 바꾸지 않습니다.</b> ⑤ 주식 추천의 대상은 국내 상장 종목과 미국 S&amp;P 500 구성 종목입니다. ⑥ 모든 이용자에게 <b>같은 규칙·같은 결과</b>가 적용되며, 개별 상담이나 맞춤 조언이 아닙니다.</span><span class="ken"><b>App logic</b> — ① The weight of each asset class is <b>fixed in advance</b> according to the portfolio you choose. ② For <b>Korean and US stocks</b>, using <b>daily charts</b>, we select stocks whose trend line is rising, whose price is above the baseline, and whose trend has an <b>upward angle</b> above a set level — and only those that <b>newly met</b> these conditions <b>within the last 3 trading days</b>. ③ Among them, the <b>steepest upward angle</b> is shown first. ④ <b>Overseas ETFs (KRW)</b> are selected the same way from the largest ETFs by market cap, without the 3-day condition. <b>Leveraged ETFs</b> are selected the same way and appear <b>only in the Aggressive portfolio</b>. <b>Korean ETFs and deposits use fixed representative products that do not change.</b> ⑤ Stock picks are drawn from Korean-listed stocks and the constituents of the US S&amp;P 500. ⑥ The <b>same rules and the same results</b> apply to every user; this is not individual consultation or personalized advice.</span></div></div>
 
 <div class="card discCard">
