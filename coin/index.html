@@ -335,7 +335,7 @@ function svOpenApp(a){
   <button class="svbtn" onclick="discShow()"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
 
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-23 06:31</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-23 06:54</div>
 <div class="foot" id="foot"></div>
 
 <script>
@@ -2298,10 +2298,12 @@ function bkSavedHtml() {
     if (open) {
       h += '<table class="mhtab" style="margin:2px 0 6px">';
       const er = p.erows || p.items.map(function (it) { return {nm: bkNm(it), pending: true}; });
-      er.forEach(function (r) {
+      er.forEach(function (r, ix) {
+        const it = p.items[ix] || {};
         const val = r.err ? ('<span class="fl">' + KE("자료 없음", "No data") + '</span>')
                           : (r.pending ? '<span class="dplbl">—</span>' : ('<span class="' + cls(r.r) + '">' + pc(r.r) + '</span>'));
-        h += '<tr><td style="text-align:left">' + r.nm + '</td><td>' + val + '</td></tr>';
+        h += '<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="' + (it.code || "") + '" data-mk="' + (it.mk || "")
+           + '" data-nm="' + String(it.name || r.nm).replace(/"/g, "") + '">' + r.nm + '</td><td>' + val + '</td></tr>';
       });
       h += '</table>';
     }
