@@ -21,8 +21,11 @@ self.addEventListener("fetch", function (e) {
   if (u.origin !== location.origin) return;               // 허브·데이터·바이낸스 등 외부는 그냥 통과
   // HTML 문서: 네트워크 우선(최신 유지) + 실패 시 캐시로 오프라인 표시
   if (req.mode === "navigate" || u.pathname.endsWith(".html")) {
+    // 🔴 주소 뒤에 시각을 붙여 받는다 — 사이트(깃허브 CDN)가 10분 붙들고 내주는 옛 판을 건너뛴다(사장님 2026-09-22 "바로바로")
+    u.searchParams.set("_t", String(Date.now()));
+    var fresh = new Request(u.toString(), { mode: "same-origin", credentials: "same-origin", cache: "no-store" });
     e.respondWith(
-      fetch(req, { cache: "no-cache" }).then(function (res) {
+      fetch(fresh).then(function (res) {
         var cc = res.clone(); caches.open(C).then(function (c) { c.put(req, cc); }); return res;
       }).catch(function () { return caches.match(req).then(function (r) { return r || caches.match("./live.html"); }); })
     );
