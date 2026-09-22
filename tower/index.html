@@ -57,7 +57,22 @@
     }
   } catch (e) {}
 
-  const items = RAW.slice().sort(function (a, b) { return ((a.k || 0) - (b.k || 0)) || (a.vol - b.vol); });   // 아래 = 안전한 자산군(k 작음), 같은 자산군 안에서만 변동성 낮은 것이 아래
+  const items = RAW.slice().sort(function (a, b) { return ((a.k || 0) - (b.k || 0)) || (a.vol - b.vol); });
+
+  // ── 앱에서 고른 모양·목표·손절 (2026-09-23) — 화면에 바꾸는 단추는 없다 ──
+  let SHAPE = "tower", GOAL = 0.25, STOP = -0.10;
+  try {
+    const q = new URLSearchParams((location.hash || "").slice(1));
+    if (q.get("shape") === "tree") SHAPE = "tree";
+    const g = parseFloat(q.get("goal")), st = parseFloat(q.get("stop"));
+    if (isFinite(g)) GOAL = g;
+    if (isFinite(st)) STOP = st;
+  } catch (e) {}
+  const CLS_N = items.reduce(function (m, it) { return Math.max(m, (it.k || 0) + 1); }, 1);
+  function ptRet() {                                  // 포트폴리오 수익률 — 균등 비중
+    if (!items.length) return 0;
+    return items.reduce(function (a, it) { return a + it.cur; }, 0) / items.length;
+  }   // 아래 = 안전한 자산군(k 작음), 같은 자산군 안에서만 변동성 낮은 것이 아래
   const volMax = Math.max.apply(null, items.map(function (x) { return x.vol; })) || 1;
   const RAMP = [0x2dd4bf, 0x6ee06a, 0xf2d024, 0xf59a2e, 0xf0562e, 0xcf1a3a];
 
@@ -84,6 +99,12 @@
   threadGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(THREAD_N * 3), 3));
   const thread = new THREE.Line(threadGeo, new THREE.LineBasicMaterial({ color: 0xb8c0cc, transparent: true, opacity: 0.85 }));
   thread.renderOrder = 0; towerGroup.add(thread);
+  // 트리형 — 가지(가는 선)와 달성 고리
+  const branchGeo = new THREE.BufferGeometry();
+  branchGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(items.length * 2 * 3 + 64 * 3), 3));
+  const branches = new THREE.LineSegments(branchGeo, new THREE.LineBasicMaterial({ color: 0x9aa4b2, transparent: true, opacity: 0.8 }));
+  branches.visible = false; towerGroup.add(branches);
+  let ring = null, ringMode = "", ringTick = 0;
   const barMat = new THREE.MeshStandardMaterial({ color: 0x0a0d14, roughness: 0.6, metalness: 0.35 });
   const frameG = new THREE.Group(); scene.add(frameG);
   const fTop = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), barMat), fBot = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), barMat), fL = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), barMat), fR = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), barMat);
@@ -247,12 +268,33 @@
 
     if (playing && prog < 1) { prog = Math.min(1, prog + 0.009); items.forEach(function (it) { it.cur = it.ret * prog; }); if (prog >= 1) document.getElementById("tstate").innerText = "지금 상태"; }
 
-    let y = 0;
+    let y = 0, maxR = 0;
     items.forEach(function (it) {
       const side = baseSide(it.base) * (1 + it.cur * 2.2);
       it._side = Math.max(side, 1.5); it._val = it.base * (1 + it.cur); it._loss = Math.max(0, -it.cur);
-      it._baseY = y + it._side / 2; y += it._side + 3;
+      it._ang = 0; it._rad = 0;
+      if (SHAPE !== "tree") { it._baseY = y + it._side / 2; y += it._side + 3; }
     });
+    if (SHAPE === "tree") {                    // ── 트리: 자산군마다 가지 하나 ──
+      const byK = {};
+      items.forEach(function (it) { (byK[it.k || 0] = byK[it.k || 0] || []).push(it); });
+      const ks = Object.keys(byK).map(Number).sort(function (a, b) { return a - b; });
+      ks.forEach(function (k, bi) {
+        const arr = byK[k], ang = bi * (2 * Math.PI / Math.max(ks.length, 1)) + 0.35;
+        const big = arr.reduce(function (m, it) { return Math.max(m, it._side); }, 1);
+        const yy = y + big / 2;
+        let rad = big * 1.05;
+        arr.forEach(function (it) {
+          rad += it._side * 0.62;
+          it._ang = ang; it._rad = rad; it._baseY = yy;
+          rad += it._side * 0.62;
+          if (rad > maxR) maxR = rad;
+        });
+        arr._tip = rad; arr._y = yy; arr._ang = ang;
+        y = yy + big / 2 + big * 0.85;
+      });
+      window._BRANCH = ks.map(function (k) { return byK[k]; });
+    }
     const towerTop = Math.max(y, 1);
 
     // 좌우 흔들림: (a) 중간층 크랙이 심할 때 (b) 맨 꼭대기가 가분수(위 큐브가 아래보다 클 때)
@@ -264,7 +306,9 @@
     });
     if (n >= 2) { const top = items[n - 1]._side, below = items[n - 2]._side; if (top > below) topHeavy = top / below - 1; }
     const quakeAmp = Math.min(midCrack * 60 + topHeavy * 10, towerTop * 0.16, 2.6);   // 상한: 탑 높이 16%, 그리고 절대 2.6 — 종목이 적어도 화면 밖으로 안 나가게(2026-09-22)
-    const quakeX = quakeAmp > 0.2 ? Math.sin(t * (2.6 + midCrack * 6 + topHeavy * 2)) * quakeAmp : 0;
+    let quakeX = quakeAmp > 0.2 ? Math.sin(t * (2.6 + midCrack * 6 + topHeavy * 2)) * quakeAmp : 0;
+    if (SHAPE === "tree" && ptRet() <= STOP)   // 손절 도달이면 탑 전체가 심하게 흔들린다
+      quakeX += Math.sin(t * 12.5) * towerTop * 0.02 + Math.sin(t * 7.1) * towerTop * 0.012;
 
     if (arOn) {
       if (frame && xrHitSource) {
@@ -292,6 +336,11 @@
     if (!arOn) { leanX += (0.18 - leanX) * 0.06; towerGroup.rotation.x = leanX; towerGroup.position.z = 10; }
     const asp = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
     let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.62; SW2 = SH2 * asp; } else { SH2 = Math.max(towerTop * 0.56, 10.5 / asp); SW2 = SH2 * asp; }   // 세로 화면: 종목이 몇이든 탑이 화면 높이를 거의 다 채운다(사장님 2026-09-22). 폭은 최소 9.5 로 큐브가 잘리지 않게
+    if (SHAPE === "tree") {                  // 가지가 옆으로 뻗은 만큼 화면을 넓힌다
+      const needW = maxR * 1.35;
+      if (SW2 < needW) { SW2 = needW; SH2 = SW2 / asp; }
+      if (SH2 < towerTop * 0.58) { SH2 = towerTop * 0.58; SW2 = SH2 * asp; }
+    }
     const cyc = (asp >= 1) ? towerTop * 0.5 : towerTop * 0.5;   // 단추가 옆으로 갔으니 탑은 가운데 (2026-09-22)
     let ex, ey;
     if (gyroOn && gyro) { ex = THREE.MathUtils.clamp((gyro.gamma || 0) / 32, -1, 1) * SW2 * 1.15; ey = THREE.MathUtils.clamp(((gyro.beta || 0) - 45) / 38, -1, 1) * SH2 * 0.95; }
@@ -317,7 +366,12 @@
       const bob = Math.abs(Math.sin(t * (2.5 + Math.abs(it.cur) * 9) + it.vol)) + Math.abs(Math.sin(t * 13 + it.vol)) * 0.2;
       const shakeY = gain > 0.002 ? bob * gain * 7 : (loss > 0.002 ? -bob * loss * 11 : 0);
       const swayX = quakeX * (0.35 + it._baseY / towerTop * 0.9) + volX;
-      it.mesh.position.set(swayX, it._baseY + shakeY, 0);
+      if (SHAPE === "tree") {
+        const rr = it._rad, ca = Math.cos(it._ang), sa = Math.sin(it._ang);
+        it.mesh.position.set(ca * rr + swayX, it._baseY + shakeY, -sa * rr);
+      } else {
+        it.mesh.position.set(swayX, it._baseY + shakeY, 0);
+      }
       it.mesh.rotation.y += 0.0015 + Math.pow(it.vol / volMax, 1.3) * 0.026;
       it.mesh.rotation.x = loss > 0 ? Math.sin(t * (2.5 + loss * 5)) * loss * 0.32 : 0;
       it.mesh.rotation.z = loss > 0 ? Math.sin(t * (3 + loss * 6) + 1) * loss * 0.26 : 0;
@@ -342,7 +396,40 @@
       if (fc % 6 === 0) drawText(it);
     });
 
-    { // 실: 땅 → 큐브 중심들 → 꼭대기 조금 위. 큐브 사이는 옆흔들림을 따라 부드럽게 잇는다
+    if (SHAPE === "tree") {                  // ── 트리: 줄기 + 가지 + 달성 고리 ──
+      branches.visible = true;
+      const pos = threadGeo.attributes.position.array;
+      for (let k = 0; k < THREAD_N; k++) {   // 줄기 — 땅에서 꼭대기까지 곧게
+        const u = k / (THREAD_N - 1);
+        pos[k * 3] = quakeX * u * 0.6; pos[k * 3 + 1] = GROUND_Y + (towerTop + 4 - GROUND_Y) * u; pos[k * 3 + 2] = 0;
+      }
+      threadGeo.attributes.position.needsUpdate = true;
+      const bp = branchGeo.attributes.position.array; let bi2 = 0;
+      const tips = [];
+      (window._BRANCH || []).forEach(function (arr) {
+        const ca = Math.cos(arr._ang), sa = Math.sin(arr._ang);
+        const last = arr[arr.length - 1], tipR = last._rad + last._side * 0.65;
+        bp[bi2++] = 0; bp[bi2++] = arr._y; bp[bi2++] = 0;                          // 줄기에서
+        bp[bi2++] = ca * tipR; bp[bi2++] = arr._y; bp[bi2++] = -sa * tipR;         // 가지 끝으로
+        tips.push(new THREE.Vector3(ca * tipR, arr._y, -sa * tipR));
+      });
+      for (let k = bi2; k < bp.length; k++) bp[k] = 0;
+      branchGeo.attributes.position.needsUpdate = true;
+      // 목표 달성 · 손절 도달 — 가지 끝끼리 굵게 잇는다
+      const pr = ptRet(), want = pr >= GOAL ? "goal" : (pr <= STOP ? "stop" : "");
+      if (want !== ringMode || (want && ++ringTick % 20 === 0)) {
+        if (ring) { towerGroup.remove(ring); ring.geometry.dispose(); ring = null; }
+        if (want && tips.length >= 2) {
+          const curve = new THREE.CatmullRomCurve3(tips, true, "catmullrom", 0.4);
+          const col = want === "goal" ? 0x39ff14 : 0xff1744;
+          ring = new THREE.Mesh(new THREE.TubeGeometry(curve, 140, Math.max(0.6, towerTop * 0.012), 8, true),
+            new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.95, depthWrite: false }));
+          ring.renderOrder = 3; towerGroup.add(ring);
+        }
+        ringMode = want;
+      }
+      if (ring) ring.material.opacity = 0.6 + 0.4 * (0.5 + 0.5 * Math.sin(t * (ringMode === "stop" ? 6.5 : 3.2)));
+    } else { // 실: 땅 → 큐브 중심들 → 꼭대기 조금 위. 큐브 사이는 옆흔들림을 따라 부드럽게 잇는다
       const pos = threadGeo.attributes.position.array;
       const pts = [[0, GROUND_Y]];
       items.forEach(function (it) { pts.push([it.mesh.position.x, it.mesh.position.y]); });
