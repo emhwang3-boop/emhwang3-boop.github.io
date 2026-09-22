@@ -2136,7 +2136,8 @@ function bkClassOf(it) {
 }
 function bkClassRank(it) {
   var c = it.cls || bkClassOf(it);
-  if (it.mk === "coin") return c === "BTC" ? 0 : (c === "ETH" ? 1 : 2);
+  // 코인은 주식 자산군 전부보다 위 (사장님 2026-09-22 "비트코인이 젤로 위험한 자산"). 코인끼리는 BTC < ETH < 알트.
+  if (it.mk === "coin") return 8 + (c === "BTC" ? 0 : (c === "ETH" ? 1 : 2));
   var i = BK_CLS_ORDER.indexOf(c); return i < 0 ? 4 : i;
 }
 
