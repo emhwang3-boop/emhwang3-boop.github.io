@@ -4170,13 +4170,114 @@ async function openTower3D(list, title) {
   ov.innerHTML = '<iframe src="' + TOWER_URL + '?v=' + Date.now() + '#items=' + enc + '&t=' + tt + '" style="position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent" allow="gyroscope;accelerometer;magnetometer;xr-spatial-tracking;camera"></iframe>'
     + '<button onclick="var o=document.getElementById(\'tower3dOv\');if(o)o.remove()" style="position:absolute;top:14px;right:14px;z-index:2;background:rgba(0,0,0,0.6);color:#fff;border:1px solid #666;border-radius:20px;width:42px;height:42px;font-size:20px;font-weight:800;cursor:pointer">\u2715</button>';
 }
+
+// ── 보관한 포트폴리오 — 보관한 날 값 대비 지금 값. 지울 때까지 지켜본다 (사장님 2026-09-22, 주식앱과 같은 꼴) ──
+const BK_SAVED_KEY = "bk_saved_demo_v1";
+var bkOpenS = {}, bkSavedBusy = false;
+function bkSaveGet(){ try{ return JSON.parse(localStorage.getItem(BK_SAVED_KEY)||"[]")||[]; }catch(e){ return []; } }
+function bkSavePut(a){ try{ localStorage.setItem(BK_SAVED_KEY, JSON.stringify(a)); }catch(e){} }
+function bkAgo(ms){ if(!ms)return""; var t=(Date.now()-ms)/1000;
+  if(t<60)return KE("방금","just now");
+  if(t<3600)return Math.floor(t/60)+KE("분 전","m ago");
+  if(t<86400)return Math.floor(t/3600)+KE("시간 전","h ago");
+  return Math.floor(t/86400)+KE("일 전","d ago"); }
+function bkSavedMsg(t){ var m=E("bkSavedMsg"); if(m){ m.textContent=t||""; m.hidden=!t; } }
+
+// 지금 바스켓을 보관 — 종목마다 오늘 값을 기준가로 적어 둔다
+async function bkStore(){
+  var a=bkGet();
+  if(!a.length){ bkMsg(KE("먼저 바스켓에 종목을 담아 주세요.","Add items to the basket first.")); return; }
+  var saved=bkSaveGet();
+  if(saved.length>=20){ bkSavedMsg(KE("보관은 스무 개까지 됩니다.","You can keep up to 20.")); return; }
+  bkSavedMsg(KE("보관 중\u2026 기준가를 받습니다","Saving\u2026 fetching base prices"));
+  var items=[];
+  for(var i=0;i<a.length;i++){
+    var cs=null; try{ cs=await bkBars(a[i]); }catch(e){ cs=null; }
+    var base=(cs&&cs.length)?cs[cs.length-1]:0;
+    items.push({code:a[i].code, name:a[i].name, mk:a[i].mk, spot:a[i].spot, base:base, cls:a[i].cls||bkClassOf(a[i])});
+  }
+  saved.unshift({id:"p"+Date.now(), at:Date.now(), items:items, er:null, erows:null, calc:0});
+  bkSavePut(saved);
+  bkRender();
+  bkSavedMsg(KE("보관했습니다. 지울 때까지 수익률을 지켜봅니다.","Saved. We'll keep tracking its return until you delete it."));
+  bkSavedRefresh();
+}
+function bkSavedDel(id){ bkSavePut(bkSaveGet().filter(function(p){ return p.id!==id; })); delete bkOpenS[id]; bkRender(); }
+function bkSavedToggle(id){ bkOpenS[id]=!bkOpenS[id]; bkRender(); }
+function towerFromSaved(id){
+  var p=bkSaveGet().filter(function(x){ return x.id===id; })[0]; if(!p)return;
+  var d=new Date(p.at), z=function(v){ return String(v).padStart(2,"0"); };
+  openTower3D(p.items, KE("보관 ","Saved ")+(d.getMonth()+1)+"-"+z(d.getDate()));
+}
+// 보관한 것들의 '보관일 대비 지금' 수익률을 다시 센다
+async function bkSavedRefresh(){
+  if(bkSavedBusy)return;
+  var arr=bkSaveGet(); if(!arr.length)return;
+  bkSavedBusy=true;
+  bkSavedMsg(KE("수익률 새로 계산 중\u2026 종목마다 몇 초","Refreshing\u2026 a few seconds per item"));
+  for(var i=0;i<arr.length;i++){
+    var p=arr[i], rows=[], sum=0, ok=0;
+    for(var j=0;j<p.items.length;j++){
+      var it=p.items[j], cs=null;
+      try{ cs=await bkBars(it); }catch(e){ cs=null; }
+      var cur=(cs&&cs.length)?cs[cs.length-1]:0;
+      if(cur>0&&it.base>0){ var r=cur/it.base-1; rows.push({nm:it.name, r:r}); sum+=r; ok++; }
+      else rows.push({nm:it.name, err:true});
+    }
+    p.erows=rows; p.er=ok?sum/ok:null; p.calc=Date.now();
+  }
+  bkSavePut(arr); bkSavedBusy=false; bkRender(); bkSavedMsg("");
+}
+// 보관 구역 HTML — 바스켓 카드 맨 아래에 붙는다
+function bkSavedHtml(){
+  var sv=bkSaveGet();
+  var pc=function(v){ return (v>=0?"+":"")+(v*100).toFixed(1)+"%"; };
+  var cls=function(v){ return v>0?"up":(v<0?"dn":"fl"); };
+  var h='<div class="svsub" style="margin-top:12px;font-weight:800;color:var(--nm)">'+KE("보관한 포트폴리오","Saved portfolios")+'</div>';
+  var last=sv.reduce(function(m,p){ return Math.max(m,p.calc||0); },0);
+  h+='<div style="display:flex;gap:6px;align-items:center;margin:4px 0">'
+    +(bkGet().length?'<button class="dppct" style="flex:1" onclick="bkStore()">'+KE("\uff0b 지금 바스켓 보관","\uff0b Save current basket")+'</button>':'')
+    +(sv.length?'<button class="dppct" style="flex:0 0 auto" onclick="bkSavedRefresh()">'+KE("수익률 새로고침","Refresh")+'</button>':'')
+    +(last?'<span class="dplbl" style="flex:0 0 auto">'+KE("계산 ","")+bkAgo(last)+'</span>':'')
+    +'</div><div id="bkSavedMsg" class="c21msg" hidden></div>';
+  if(!sv.length){ h+='<div class="mhempty">'+KE("보관한 것이 없습니다. 바스켓을 만들고 [보관]을 누르세요.","Nothing saved yet. Build a basket and tap Save.")+'</div>'; return h; }
+  h+='<div style="max-height:170px;overflow-y:auto;border:1px solid var(--bd);border-radius:10px;padding:2px 6px">';
+  sv.forEach(function(p){
+    var d=new Date(p.at), z=function(v){ return String(v).padStart(2,"0"); };
+    var lbl=(d.getMonth()+1)+"-"+z(d.getDate())+" "+z(d.getHours())+":"+z(d.getMinutes());
+    var open=!!bkOpenS[p.id];
+    var rtxt=(p.er==null)?'<span class="dplbl">'+KE("계산 전","\u2014")+'</span>':('<b class="'+cls(p.er)+'">'+pc(p.er)+'</b>');
+    h+='<div style="border-bottom:1px solid var(--bd)">';
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 2px;cursor:pointer" onclick="bkSavedToggle(\''+p.id+'\')">'
+      +'<span style="width:12px;color:var(--sub)">'+(open?"\u25be":"\u25b8")+'</span>'
+      +'<span style="flex:1;font-weight:700">'+lbl+' <span class="dplbl">'+p.items.length+KE("종목","")+'</span></span>'
+      +'<span style="white-space:nowrap">'+rtxt+'</span>'
+      +'<span onclick="event.stopPropagation();towerFromSaved(\''+p.id+'\')" style="cursor:pointer;color:#2bd4c0;font-weight:800;font-size:11px;border:1px solid #2bd4c0;border-radius:6px;padding:1px 5px;margin-right:5px">3D</span>'
+      +'<span class="mhx" onclick="event.stopPropagation();bkSavedDel(\''+p.id+'\')">\u2715</span></div>';
+    if(open){
+      h+='<table class="mhtab" style="margin:2px 0 6px">';
+      var er=p.erows||p.items.map(function(it){ return {nm:it.name, pending:true}; });
+      er.forEach(function(r){
+        var val=r.err?('<span class="fl">'+KE("자료 없음","No data")+'</span>')
+                     :(r.pending?'<span class="dplbl">\u2014</span>':('<span class="'+cls(r.r)+'">'+pc(r.r)+'</span>'));
+        h+='<tr><td style="text-align:left">'+dpEsc(r.nm)+'</td><td>'+val+'</td></tr>';
+      });
+      h+='</table>';
+    }
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<div class="svsub">'+KE("보관한 날부터 지금까지의 수익률(균등 비중)입니다.","Return since the day you saved it (equal weight).")+'</div>';
+  return h;
+}
+
 function bkRender(){
   var card=E("bkCard");
   if(!card){ var rc=E("recoCard"); if(!rc)return; card=document.createElement("div"); card.className="card"; card.id="bkCard"; rc.parentNode.insertBefore(card,rc.nextSibling); }
   var a=bkGet();
   var h='<h3>'+KE("가상 바스켓","Virtual basket")+(a.length?' <span style="color:var(--nm);font-weight:800">'+a.length+'</span>':'')+'</h3>';
   h+='<div class="dpmsg">'+KE("추천 종목을 [조회]한 뒤 [＋ 가상 바스켓에 담기]를 누르면, 담긴 종목 전체의 3·6·12개월 과거 수익률을 함께 계산합니다.","Look up a pick, tap Add to virtual basket, then we compute the whole basket's past 3/6/12-month return.")+'</div>';
-  if(!a.length){ h+='<div class="mhempty">'+KE("아직 담긴 종목이 없습니다.","No items yet.")+'</div>'; card.innerHTML=h; return; }
+  if(!a.length){ h+='<div class="mhempty">'+KE("아직 담긴 종목이 없습니다.","No items yet.")+'</div>'+bkSavedHtml(); card.innerHTML=h; return; }
   var w=100/a.length;
   h+='<table class="mhtab"><tr><th>'+KE("종목","Item")+'</th><th>'+KE("비중","Weight")+'</th><th></th></tr>';
   a.forEach(function(x,i){
@@ -4186,6 +4287,7 @@ function bkRender(){
   h+='</table>';
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+BK_SPANS.map(function(s){ return '<button class="dppct" style="flex:1" onclick="bkRun('+s[0]+')">'+KE(s[1],s[2])+'</button>'; }).join("")+'<button class="dppct" style="border-color:#2bd4c0;color:#2bd4c0" onclick="openTower3D(bkGet(),\'가상 바스켓\')">3D</button>'+'<button class="dppct" onclick="bkClear()">'+KE("비우기","Clear")+'</button></div>';
   h+='<div id="bkMsg" class="c21msg" hidden></div><div id="bkOut">'+BK_OUT+'</div>';
+  h+=bkSavedHtml();
   h+='<div class="dpmsg" style="margin-top:6px">'+KE("과거 수익률이며 미래 수익을 보장하지 않습니다. 배당·세금·수수료는 뺀 값입니다.","Past returns; no guarantee of future returns. Excludes dividends, taxes and fees.")+'</div>';
   card.innerHTML=h;
 }
