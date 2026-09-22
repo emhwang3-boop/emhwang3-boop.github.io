@@ -311,7 +311,7 @@ function svOpenApp(a){
     var ua=navigator.userAgent||"", sa=false, pkg=a.getAttribute("data-pkg")||"";
     try{ sa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||!!navigator.standalone; }catch(e){}
     if(/Android/i.test(ua)&&sa&&pkg){
-      location.href="intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package="+pkg+";S.browser_fallback_url="+encodeURIComponent(a.href)+";end";
+      location.href="intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package="+pkg+";S.browser_fallback_url="+encodeURIComponent(a.href+"?via=app")+";end";
       return false;
     }
   }catch(e){}
@@ -332,6 +332,7 @@ function svOpenApp(a){
   <button class="svbtn" onclick="discShow()"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
 
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-22 20:07</div>
 <div class="foot" id="foot"></div>
 
 <script>
