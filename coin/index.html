@@ -2470,6 +2470,13 @@ function cvRecoRender() {
        + '<td class="' + cvChgCls(x.chg) + '">' + cvChg(x.chg) + '</td>'
        + '<td>' + cvTurn(x.turn) + '</td></tr>';
   });
+  // 장세 줄 — 아침 판정(롱·숏·현금)을 보여 준다 (사장님 2026-09-22)
+  (function () {
+    var st = function (k) { var x = c[k]; if (!x || !x.state) return "-"; return { long: KE("롱", "LONG"), short: KE("숏", "SHORT"), cash: KE("현금", "CASH") }[x.state] || x.state; };
+    h += '<div class="svsub">' + KE("장세", "Regime") + ' · BTC <b>' + st("BTC") + '</b> · ETH <b>' + st("ETH") + '</b> <span class="dplbl">' + ((CVR && CVR.at) || "") + KE(" 계산", " calc") + '</span>' + svInfoMark("cvRegInfo") + '</div>'
+       + '<div id="cvRegInfo" class="svsub" style="display:none;font-size:11px">' + KE("일봉 기준입니다. 가격이 기준선 위이고 이평선이 오르면 롱, 아래이고 내리면 숏, 그 밖은 현금. 하루 한 번 아침에 계산합니다.",
+             "Daily bars. Above the baseline with a rising moving average is LONG, below with a falling one is SHORT, otherwise CASH. Computed once each morning.") + '</div>';
+  })();
   if (!CV_LIVE_AT && !window._cvLiveKick) { window._cvLiveKick = 1; setTimeout(cvLiveRefresh, 300); }
   h += '</table><div class="svsub">' + (CV_LIVE_AT ? (CV_LIVE_AT + KE(" 실시간 (바이낸스)", " live (Binance)")) : KE(((CVR && CVR.at) || "") + ' 기준', 'as of ' + ((CVR && CVR.at) || ""))) + '</div>';
 
@@ -2581,6 +2588,10 @@ function cvLiveRefresh() {
   });
 }
 setInterval(cvLiveRefresh, 60000);
+
+// ⓘ 짧은 안내 펼치기 (사장님 2026-09-22: 자세한 규칙 대신 기준선·이평선 정도로만)
+if (typeof svInfoToggle !== "function") window.svInfoToggle = function svInfoToggle(id) { var n = document.getElementById(id); if (n) n.style.display = (n.style.display === "none" ? "block" : "none"); }
+if (typeof svInfoMark !== "function") window.svInfoMark = function svInfoMark(id) { return ' <span onclick="svInfoToggle(&quot;' + id + '&quot;)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle">i</span>'; }
 
 </script>
 </body></html>
