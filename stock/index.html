@@ -310,7 +310,10 @@ function svOpenApp(a){
     var ua=navigator.userAgent||"", sa=false, pkg=a.getAttribute("data-pkg")||"";
     try{ sa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||!!navigator.standalone; }catch(e){}
     if(/Android/i.test(ua)&&sa&&pkg){
-      location.href="intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package="+pkg+";S.browser_fallback_url="+encodeURIComponent(a.href+"?via=app")+";end";
+      // ★ 크롬 소스(ExternalNavigationHandler) 실측: 웹앱은 "그 앱 범위의 https 주소 + package" 로만 띄워진다.
+      //   MAIN/LAUNCHER 꼴은 크롬이 BROWSABLE 을 덧붙여 찾기 때문에 웹앱이 안 잡혀 fallback 으로 떨어졌다(2026-09-22 via=app 확인).
+      var u=a.href;
+      location.href="intent://"+u.replace("https://","")+"?src=pwa#Intent;scheme=https;package="+pkg+";S.browser_fallback_url="+encodeURIComponent(u+"?via=app")+";end";
       return false;
     }
   }catch(e){}
@@ -338,7 +341,7 @@ window.addEventListener("load", function(){   // 판 시각 옆에 지금 상태
   <button class="svbtn" onclick="discShow()"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
 
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-22 20:25</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-22 20:32</div>
 <div class="foot" id="foot"></div>
 
 <script>
