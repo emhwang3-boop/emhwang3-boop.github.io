@@ -335,7 +335,7 @@ function svOpenApp(a){
   <button class="svbtn" onclick="discShow()"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
 
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-23 08:29</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-23 08:35</div>
 <div class="foot" id="foot"></div>
 
 <script>
@@ -2323,8 +2323,9 @@ var TOWER_URL = "https://emhwang3-boop.github.io/tower/";
 //    앱 배분표(SV_GRADE)와 같은 차례. 코드가 대표상품·추천표에 있으면 그 자산군, 없으면 국내/해외 주식.
 var BK_CLS_ORDER = ["예금", "국내 ETF", "해외 ETF(원화)", "해외 ETF(달러)", "국내 주식", "해외 주식", "레버리지 ETF(원화)", "레버리지 ETF(달러)"];
 function bkClassOf(it) {
-  var code = String(it.code || "");
-  if (it.mk === "coin") { var c = code.replace(/USDT$/, ""); return c === "BTC" ? "BTC" : (c === "ETH" ? "ETH" : "알트"); }
+  var code = String(it.code || ""), nm = String(it.name || "");
+  if (it.mk === "coin") { var c = code.replace(/-?USDT$/i, "").replace(/-.*$/, "").toUpperCase(); return c === "BTC" ? "BTC" : (c === "ETH" ? "ETH" : "알트"); }
+  // 1) 대표상품·오늘 추천 목록에 있으면 그 자산군 (가장 정확하다)
   try {
     if (typeof SV_PROD !== "undefined") for (var k in SV_PROD) if ((SV_PROD[k] || []).some(function (x) { return x[1] && x[1] === code; })) return k;
     if (typeof SVR !== "undefined" && SVR) {
@@ -2332,7 +2333,23 @@ function bkClassOf(it) {
       for (var i = 0; i < M.length; i++) { var L = SVR[M[i][0]] && SVR[M[i][0]].buy; if (L && L.some(function (r) { return String(r.code) === code; })) return M[i][1]; }
     }
   } catch (e) {}
-  return it.mk === "us" ? "해외 주식" : "국내 주식";
+  // 2) 이름으로 가른다 — 국내 상장 ETF 는 운용사 이름이 앞에 붙는다
+  if (/예금|정기예금|MMF|파킹/.test(nm)) return "예금";
+  var us = (it.mk === "us") || /\.US$/i.test(code) || /^[A-Z.]{1,6}$/.test(code) && it.mk !== "kr";
+  var KETF = /^(KODEX|TIGER|ACE|PLUS|RISE|SOL|KoAct|KOACT|HANARO|TIME|KBSTAR|ARIRANG|KIWOOM|TREX|FOCUS|HK|마이다스|히어로즈|파워|한투|삼성|미래에셋)\b/i;
+  var OVERSEA = /미국|나스닥|S&P|s&p|필라델피아|다우|러셀|글로벌|해외|차이나|중국|홍콩|일본|인도|베트남|유럽|선진|신흥|월드|AI|반도체TOP|빅테크/;
+  if (!us) {
+    if (/레버리지|2X|3X|2배|3배/i.test(nm)) return "레버리지 ETF(원화)";
+    if (KETF.test(nm) || /\bETF\b|\bETN\b/i.test(nm)) return OVERSEA.test(nm) ? "해외 ETF(원화)" : "국내 ETF";
+    return "국내 주식";
+  }
+  // 3) 미국 상장 — 널리 알려진 지수·업종 ETF 와 배수 ETF 만 ETF 로 본다. 나머지는 주식.
+  var tk = code.replace(/\.US$/i, "").toUpperCase() || nm.split(" ")[0].toUpperCase();
+  var USLEV = ["TQQQ", "SQQQ", "SOXL", "SOXS", "UPRO", "SPXL", "QLD", "SSO", "UDOW", "TNA", "FNGU", "BULZ", "LABU", "FAS", "TECL", "NAIL", "DFEN", "NUGT", "JNUG", "YINN", "INDL", "EDC", "BRZU", "KORU", "MEXX", "EURL", "DPST", "CURE", "RETL", "WANT", "DRN", "UTSL", "MIDU", "HIBL", "UWM", "DDM", "ROM", "USD", "UYG", "RXL", "ERX", "GUSH", "DIG", "URE", "UPW", "UCC", "UGE", "UXI", "UYM", "TPOR", "EFO", "EET"];
+  var USETF = ["SPY", "VOO", "IVV", "VTI", "QQQ", "DIA", "IWM", "RSP", "VUG", "VTV", "MGK", "SCHG", "SCHD", "VIG", "VYM", "DGRO", "XLK", "XLF", "XLV", "XLE", "XLI", "XLY", "XLP", "XLU", "XLB", "SOXX", "SMH", "VGT", "IGV", "VEA", "IEFA", "VWO", "IEMG", "EFA", "ARKK", "BOTZ", "ICLN", "GLD", "SLV", "TLT", "IEF", "HYG", "LQD", "AGG", "BND", "VNQ", "JEPI", "JEPQ", "SCHF", "VXUS"];
+  if (USLEV.indexOf(tk) >= 0 || /\b(2X|3X)\b/i.test(nm)) return "레버리지 ETF(달러)";
+  if (USETF.indexOf(tk) >= 0) return "해외 ETF(달러)";
+  return "해외 주식";
 }
 function bkClassRank(it) {
   var c = it.cls || bkClassOf(it);
