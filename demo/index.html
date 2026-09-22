@@ -4035,6 +4035,7 @@ setInterval(function(){ try{ recoRender(); }catch(e){} },15000);   // 실계좌�
 //   추천이 아니다. 사장님이 [담기]로 고른 것의 과거 성적만 낸다. 이 폰에만 저장한다.
 function KE(ko,en){ return LANG==="en"?en:ko; }
 const BK_KEY="bk_basket_demo_v1";
+let BK_OUT="";   /* 마지막 과거수익률 표 — 카드가 다시 그려져도 살아남게 (2026-09-22) */
 const BK_SPANS=[[63,"3개월","3 months"],[126,"6개월","6 months"],[252,"1년","1 year"]];
 function bkGet(){ try{ return JSON.parse(localStorage.getItem(BK_KEY)||"[]")||[]; }catch(e){ return []; } }
 function bkSave(a){ try{ localStorage.setItem(BK_KEY,JSON.stringify(a)); }catch(e){} }
@@ -4045,10 +4046,10 @@ function bkAdd(code,name,mk){
   if(a.some(function(x){return x.code===code;})){ bkRender(); bkMsg(KE("이미 담겨 있습니다.","Already added.")); return; }
   if(a.length>=10){ bkMsg(KE("한 번에 열 개까지 담을 수 있습니다.","You can add up to 10 at a time.")); return; }
   a.push({code:code,name:name||code,mk:mk||"kr"});
-  bkSave(a); bkRender();
+  BK_OUT=""; bkSave(a); bkRender();
 }
-function bkDel(i){ var a=bkGet(); a.splice(i,1); bkSave(a); bkRender(); }
-function bkClear(){ bkSave([]); bkRender(); }
+function bkDel(i){ var a=bkGet(); a.splice(i,1); BK_OUT=""; bkSave(a); bkRender(); }
+function bkClear(){ BK_OUT=""; bkSave([]); bkRender(); }
 function bkAddCurrent(){
   if(typeof stkCode==="undefined"||!stkCode){ bkMsg(KE("먼저 종목을 [조회]해 주세요.","Look up a stock first.")); return; }
   var nm=((E("stkq")||{}).value||stkCode).replace(/\s*\(.*\)\s*$/,"");
@@ -4184,7 +4185,7 @@ function bkRender(){
   });
   h+='</table>';
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+BK_SPANS.map(function(s){ return '<button class="dppct" style="flex:1" onclick="bkRun('+s[0]+')">'+KE(s[1],s[2])+'</button>'; }).join("")+'<button class="dppct" style="border-color:#2bd4c0;color:#2bd4c0" onclick="openTower3D(bkGet(),\'가상 바스켓\')">3D</button>'+'<button class="dppct" onclick="bkClear()">'+KE("비우기","Clear")+'</button></div>';
-  h+='<div id="bkMsg" class="c21msg" hidden></div><div id="bkOut"></div>';
+  h+='<div id="bkMsg" class="c21msg" hidden></div><div id="bkOut">'+BK_OUT+'</div>';
   h+='<div class="dpmsg" style="margin-top:6px">'+KE("과거 수익률이며 미래 수익을 보장하지 않습니다. 배당·세금·수수료는 뺀 값입니다.","Past returns; no guarantee of future returns. Excludes dividends, taxes and fees.")+'</div>';
   card.innerHTML=h;
 }
@@ -4218,6 +4219,7 @@ async function bkRun(days){
   rows.filter(function(x){ return x.err; }).forEach(function(x){ h+='<tr><td style="text-align:left">'+dpEsc(x.nm)+'</td><td class="fl">'+KE("자료 없음","No data")+'</td></tr>'; });
   h+='</table>';
   h+='<div class="dpmsg">'+KE("제일 좋았던 것 ","Best: ")+dpEsc(best.nm)+' '+pc(best.r)+KE(' \u00b7 제일 나빴던 것 '," \u00b7 Worst: ")+dpEsc(worst.nm)+' '+pc(worst.r)+'</div>';
+  BK_OUT=h;
   E("bkOut").innerHTML=h;
 }
 
