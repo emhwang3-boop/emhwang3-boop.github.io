@@ -107,7 +107,7 @@
   const root = new THREE.Group(); root.add(tiger); root.add(ground); scene.add(root);
 
   // ── 진짜 모델(glTF) — 파일이 있으면 도형 호랑이 대신 쓴다. 주소 뒤 ?rot=90 으로 머리 방향, ?clip=이름 으로 동작 고름 ──
-  let mixer = null, realOn = false;
+  let mixer = null, realOn = false; const DEFAULT_ROT = 0;   // 모델의 머리 방향 보정(도). 모델마다 다르다
   const q = new URLSearchParams(location.search);
   const MODEL_URLS = ["model/scene.gltf", "model/tiger.glb", "tiger.glb"];
   (function loadReal(i) {
@@ -117,7 +117,7 @@
     loader.load(MODEL_URLS[i], function (g) {
       const obj = g.scene; obj.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
       const holder = new THREE.Group(); holder.add(obj);
-      obj.rotation.y = (parseFloat(q.get("rot") || "0") || 0) * Math.PI / 180;        // 머리가 +z 를 보게 맞춘다
+      obj.rotation.y = (parseFloat(q.get("rot") || String(DEFAULT_ROT)) || 0) * Math.PI / 180;        // 머리가 +z 를 보게 맞춘다
       holder.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(holder); const size = box.getSize(new THREE.Vector3());
       const len = Math.max(size.x, size.z, 0.001); const sc = 1.6 / len; holder.scale.set(sc, sc, sc);
@@ -138,7 +138,7 @@
   let speed = 1.0, R = 1.6, ang = 0;
   const clock = new THREE.Clock();
   function runStep(dt, t) {
-    ang += dt * speed * 1.1 / R;
+    ang += dt * speed * 1.1 / R; if (PROBE) { tiger.position.set(0, 0, 0); tiger.rotation.y = 0; if (mixer) return; }
     tiger.position.set(Math.cos(ang) * R, 0, Math.sin(ang) * R);
     tiger.rotation.y = -ang + Math.PI;                  // 원의 접선 방향(머리가 앞)
     const f = t * 9 * speed, gait = Math.sin(f);
@@ -157,8 +157,10 @@
   });
 
   // ── 일반 보기: 카메라가 천천히 돈다 ──
-  let orbit = 0;
+  let orbit = 0; const PROBE = q.get("probe") === "1";
+  if (PROBE) { speed = 0; tiger.add(new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1.2, 0), 1.4, 0x00ff00, 0.3, 0.2)); }
   function normalView(dt) {
+    if (PROBE) { camera.position.set(0, 7, 0.01); camera.lookAt(0, 0, 0); return; }
     orbit += dt * 0.25;
     camera.position.set(Math.cos(orbit) * 4.2, 2.1, Math.sin(orbit) * 4.2); camera.lookAt(0, 0.4, 0);
   }
