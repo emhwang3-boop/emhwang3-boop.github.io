@@ -304,15 +304,14 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 
 
 <div class="card">
-  <a class="svlink" style="background:#2f9e44" href="../stock/" target="_blank" rel="noopener" onclick="return svOpenApp(this)"><span class="kko">주식앱 열기</span><span class="ken">Open Stock App</span></a>
+  <a class="svlink" style="background:#2f9e44" href="../stock/" target="_blank" rel="noopener" data-pkg="org.chromium.webapk.adca9386646c16d2c_v2" onclick="return svOpenApp(this)"><span class="kko">주식앱 열기</span><span class="ken">Open Stock App</span></a>
 </div><script>
 function svOpenApp(a){
   try{
-    var ua=navigator.userAgent||"", sa=false;
+    var ua=navigator.userAgent||"", sa=false, pkg=a.getAttribute("data-pkg")||"";
     try{ sa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||!!navigator.standalone; }catch(e){}
-    if(/Android/i.test(ua)&&sa){
-      var u=a.href;
-      location.href="intent://"+u.replace("https://","")+"#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url="+encodeURIComponent(u)+";end";
+    if(/Android/i.test(ua)&&sa&&pkg){
+      location.href="intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package="+pkg+";S.browser_fallback_url="+encodeURIComponent(a.href)+";end";
       return false;
     }
   }catch(e){}
