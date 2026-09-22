@@ -23,7 +23,8 @@
   <button id="b16">16개</button>
   <button id="bmode">한 줄 탑으로</button>
   <button id="bspin">자동 회전 끄기</button>
-  <button id="bpt">수익률 +25%로</button>
+  <button id="bpt">목표 달성</button>
+  <button id="bst">손절 도달</button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -71,8 +72,9 @@ const dl = new THREE.DirectionalLight(0xffffff, 0.75); dl.position.set(40, 80, 6
 const root = new THREE.Group(); scene.add(root);
 
 let items = SAMPLE.slice(0, 10), branchMode = true, spin = true, cubes = [], towerTop = 40;
-let ptBoost = 0, tips = [], ring = null, ringGlow = null, banner = null;   // 달성 신호 (2026-09-23)
-const PT_GOAL = 0.25;
+let ptBoost = 0, tips = [], ring = null, ringGlow = null, banner = null, dust = [];   // 달성·손절 신호 (2026-09-23)
+let PT_GOAL = 0.25, PT_STOP = -0.10;        // 🔴 고객이 설정하는 값 (여기선 시범값)
+let mode = "";                               // "" · "goal" · "stop"
 function ptReturn() {                       // 포트폴리오 수익률 — 균등 비중
   if (!items.length) return 0;
   return items.reduce(function (s2, it) { return s2 + it.r; }, 0) / items.length + ptBoost;
@@ -110,6 +112,21 @@ function cube(it, s) {
   return g;
 }
 function clear(o) { while (o.children.length) { const c = o.children.pop(); o.remove(c); } }
+// 부스러기 — 손절일 때 큐브에서 떨어진다
+function makeDust() {
+  dust = [];
+  if (mode !== "stop") return;
+  const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+  cubes.forEach(function (c) {
+    if (c.it.r >= 0) return;
+    for (let i = 0; i < 6; i++) {
+      const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({color: 0x8b3a3a}));
+      c.g.parent.add(m);
+      dust.push({m: m, c: c, t: Math.random() * 2, sp: 4 + Math.random() * 7,
+                 dx: (Math.random() - 0.5) * 3, dz: (Math.random() - 0.5) * 3});
+    }
+  });
+}
 
 function build() {
   clear(root); cubes = []; tips = []; ring = null; ringGlow = null; banner = null;
@@ -158,19 +175,30 @@ function build() {
       new THREE.LineBasicMaterial({color: 0x46506a})));
   }
   // ── 포트폴리오 목표 달성 — 가지 끝과 끝을 잇고 반짝인다 (사장님 2026-09-23) ──
-  if (useBranch && tips.length >= 2 && ptReturn() >= PT_GOAL) {
-    const geo = new THREE.BufferGeometry().setFromPoints(tips);
-    ring = new THREE.LineLoop(geo, new THREE.LineBasicMaterial({color: 0x2bd4c0, transparent: true, opacity: 0.95}));
+  const pr0 = ptReturn();
+  mode = (pr0 >= PT_GOAL) ? "goal" : (pr0 <= PT_STOP ? "stop" : "");
+  if (useBranch && tips.length >= 2 && mode) {
+    const goal = mode === "goal";
+    const col = goal ? 0x39ff14 : 0xff1744;                         // 형광 초록 · 화려한 빨강
+    const curve = new THREE.CatmullRomCurve3(tips, true, "catmullrom", 0.4);
+    const tube = new THREE.TubeGeometry(curve, 160, S * (goal ? 0.14 : 0.16), 10, true);
+    ring = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({color: col, transparent: true, opacity: 0.95}));
     root.add(ring);
-    ringGlow = new THREE.LineLoop(geo, new THREE.LineBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.35}));
-    ringGlow.scale.set(1.03, 1, 1.03); root.add(ringGlow);
-    banner = label("포트폴리오 +25% 달성", 4.2);
+    const tube2 = new THREE.TubeGeometry(curve, 160, S * (goal ? 0.3 : 0.34), 10, true);
+    ringGlow = new THREE.Mesh(tube2, new THREE.MeshBasicMaterial({color: col, transparent: true,
+      opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false}));
+    root.add(ringGlow);
+    banner = label(goal ? ("목표 +" + Math.round(PT_GOAL * 100) + "% 달성")
+                        : ("손절 " + Math.round(PT_STOP * 100) + "% 도달"), 4.4);
     banner.position.set(0, towerTop + S * 0.9, 0); root.add(banner);
+    banner.material.color.setHex(col);
   }
+  makeDust();
   const pr = ptReturn();
   document.getElementById("top").innerHTML = '<b>가지 타워 시범</b> · 포트폴리오 '
     + (pr >= 0 ? "+" : "") + (pr * 100).toFixed(1) + "%"
-    + (pr >= PT_GOAL ? ' <span style="color:#2bd4c0">달성</span>' : "");
+    + (mode === "goal" ? ' <span style="color:#39ff14">목표 달성</span>'
+       : mode === "stop" ? ' <span style="color:#ff1744">손절 도달</span>' : "");
   document.getElementById("bmode").textContent = useBranch ? "한 줄 탑으로" : "가지 모양으로";
 }
 
@@ -189,9 +217,13 @@ document.getElementById("b10").onclick = function () { items = SAMPLE.slice(0, 1
 document.getElementById("b16").onclick = function () { items = SAMPLE.slice(0, 16); mark("b16"); build(); };
 document.getElementById("bmode").onclick = function () { branchMode = !branchMode; build(); };
 document.getElementById("bspin").onclick = function () { spin = !spin; this.textContent = spin ? "자동 회전 끄기" : "자동 회전 켜기"; };
+function avgR() { return items.reduce(function (s2, it) { return s2 + it.r; }, 0) / items.length; }
 document.getElementById("bpt").onclick = function () {
-  ptBoost = ptBoost ? 0 : (PT_GOAL + 0.02 - (items.reduce(function (s2, it) { return s2 + it.r; }, 0) / items.length));
-  this.textContent = ptBoost ? "수익률 원래대로" : "수익률 +25%로";
+  ptBoost = (mode === "goal") ? 0 : (PT_GOAL + 0.02 - avgR());
+  build();
+};
+document.getElementById("bst").onclick = function () {
+  ptBoost = (mode === "stop") ? 0 : (PT_STOP - 0.03 - avgR());
   build();
 };
 function mark(id) { ["b5", "b10", "b16"].forEach(function (x) { document.getElementById(x).className = (x === id ? "on" : ""); }); }
@@ -210,13 +242,26 @@ function frame() {
     c.g.position.y = c.base + (it.r >= 0 ? bob : -bob);             // 위아래 = 수익률
     c.lb.position.y = c.base - 5.7 + (it.r >= 0 ? bob : -bob) * 0.5;
   });
-  if (ring) {                                  // 숨 쉬듯 밝아졌다 어두워진다
-    const k = 0.55 + 0.45 * Math.sin(t * 3.2);
-    ring.material.opacity = 0.55 + 0.45 * k;
-    ringGlow.material.opacity = 0.12 + 0.33 * k;
-    ringGlow.scale.set(1 + 0.05 * k, 1, 1 + 0.05 * k);
-    if (banner) { banner.material.opacity = 0.65 + 0.35 * k; banner.position.y = towerTop + 6.3 + Math.sin(t * 2) * 0.6; }
+  if (ring) {                                  // 숨 쉬듯 밝아졌다 어두워진다 — 손절이면 더 빠르게
+    const sp = mode === "stop" ? 6.5 : 3.2;
+    const k = 0.5 + 0.5 * Math.sin(t * sp);
+    ring.material.opacity = 0.6 + 0.4 * k;
+    ringGlow.material.opacity = (mode === "stop" ? 0.2 : 0.14) + 0.4 * k;
+    ringGlow.scale.set(1 + 0.06 * k, 1, 1 + 0.06 * k);
+    if (banner) { banner.material.opacity = 0.6 + 0.4 * k; banner.position.y = towerTop + 6.3 + Math.sin(t * 2) * 0.6; }
   }
+  // 손절이면 탑 전체가 심하게 흔들린다
+  root.position.x = mode === "stop" ? Math.sin(t * 13) * 1.5 + Math.sin(t * 7.3) * 0.9 : 0;
+  root.rotation.z = mode === "stop" ? Math.sin(t * 9.5) * 0.035 : 0;
+  // 부스러기 — 떨어졌다 다시 처음부터
+  dust.forEach(function (d) {
+    d.t += 0.016;
+    if (d.t > 2.2) { d.t = 0; }
+    const p = d.c.g.position;
+    d.m.position.set(p.x + d.dx * d.t, p.y - d.sp * d.t * d.t, p.z + d.dz * d.t);
+    d.m.rotation.x += 0.12; d.m.rotation.y += 0.09;
+    d.m.material.opacity = 1; d.m.visible = d.t > 0.05;
+  });
   const d = Math.max(60, towerTop * 2.1);
   camera.position.set(0, towerTop * 0.55, d);
   camera.lookAt(0, towerTop * 0.45, 0);
