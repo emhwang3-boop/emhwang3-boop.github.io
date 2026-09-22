@@ -2511,7 +2511,10 @@ async function rlLoad(auto) {
     try { dpHoldRender(); } catch (e) {}
     try { dpRender(); } catch (e) {}
     setTimeout(function () { try { rlOsoLoad(); } catch (e) {} }, 300);   // 미체결도 같이 (2026-09-19)
-    setTimeout(function () { try { rlHoldSince(); rlHoldSinceUS(); } catch (e) {} }, 2500); // 산 날 (매매일지, 하루 한 번)
+    setTimeout(function () {                                   // 산 날 — 국내를 끝까지 받은 뒤 미국 (요청이 겹치지 않게, 2026-09-22)
+      Promise.resolve().then(function () { return rlHoldSince(); }).catch(function () {})
+        .then(function () { return rlHoldSinceUS(); }).catch(function () {});
+    }, 2500);
   }
 }
 function rlHas() { return (RL.kr.length + RL.us.length + RL.co.length) > 0; }
