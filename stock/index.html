@@ -2385,13 +2385,16 @@ function svRecoRender() {
   });
 
   // 장세는 좋으면 초록, 나쁘면 빨강 (사장님 2026-09-20)
+  // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률(허브 changes)을 더해 "지금 60일선 대비"를 낸다. 데모앱과 같은 셈 (사장님 2026-09-22)
   if (SVR && SVR.kr && SVR.kr.regime) {
-    const mk = function (nm, good) {
-      return KN(nm) + ' <b style="color:' + (good ? "#2f9e44" : "#e03131") + '">' + (good ? KE("좋음", "Good") : KE("나쁨", "Bad")) + '</b>';
+    const liveP = function (nm) { var d = window._lastD; if (d && d.changes) { for (var i = 0; i < d.changes.length; i++) { if (d.changes[i].nm === nm && typeof d.changes[i].pct === "number") return d.changes[i].pct; } } return null; };
+    const mk = function (nm, x, idx) {
+      var v = (+(x && x.regime && x.regime.vs_ma60) || 0) + (liveP(idx) || 0); var good = v >= 0;
+      return KN(nm) + ' <b style="color:' + (good ? "#2f9e44" : "#e03131") + '">' + (good ? KE("좋음", "Good") : KE("나쁨", "Bad")) + ' (' + (v > 0 ? "+" : "") + v.toFixed(1) + '%)</b>';
     };
-    h += '<div class="svsub">' + KE("오늘 장세", "Market today") + ' · ' + mk("국내", !!SVR.kr.regime.good)
-       + ' · ' + mk("미국", !!(SVR.us && SVR.us.regime && SVR.us.regime.good))
-       + ' (' + KE((SVR.at || "") + ' 기준', 'as of ' + (SVR.at || "")) + ')</div>';
+    var _ld = window._lastD, live = (_ld && _ld.asof) ? String(_ld.asof).slice(11, 16) : "";
+    h += '<div class="svsub">' + KE("지금 장세", "Market now") + ' · ' + mk("국내", SVR.kr, "코스피") + ' · ' + mk("미국", SVR.us, "S&P500")
+       + (live ? ' <span class="dplbl">' + live + KE(" 실시간", " live") + '</span>' : ' <span class="dplbl">' + (SVR.at || "") + '</span>') + '</div>';
   }
   h += DISC_TAIL();
   box.innerHTML = h;
@@ -2500,6 +2503,7 @@ function bkAddCurrent() {
   if (card && card.scrollIntoView) card.scrollIntoView({behavior: "smooth", block: "start"});
 }
 setTimeout(function () { try { bkRender(); } catch (e) {} }, 900);
+setInterval(function () { try { if (document.getElementById("svRecoBody")) svRecoRender(); } catch (e) {} }, 60000);   // 장세 실시간 갱신 (2026-09-22)
 
 </script>
 <script>
