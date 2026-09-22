@@ -334,6 +334,7 @@
     frameG.visible = !arOn;
     if (!arOn) arRoot.visible = true;
     if (!arOn) { leanX += (0.18 - leanX) * 0.06; towerGroup.rotation.x = leanX; towerGroup.position.z = 10; }
+    if (SHAPE === "tree") towerGroup.rotation.y += 0.0042;   // 트리는 중심축을 기준으로 빙빙 돈다 (2026-09-23)
     const asp = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
     let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.62; SW2 = SH2 * asp; } else { SH2 = Math.max(towerTop * 0.56, 10.5 / asp); SW2 = SH2 * asp; }   // 세로 화면: 종목이 몇이든 탑이 화면 높이를 거의 다 채운다(사장님 2026-09-22). 폭은 최소 9.5 로 큐브가 잘리지 않게
     if (SHAPE === "tree") {                  // 가지가 옆으로 뻗은 만큼 화면을 넓힌다
