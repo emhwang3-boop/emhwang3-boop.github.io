@@ -126,7 +126,7 @@ body.light .mk img.lt{display:block}
 .mhnote{color:var(--sub);font-size:10.5px;margin:5px 2px 0}
 .mhtab td:first-child{white-space:normal}
 @media(max-width:520px){
-  .mhtab td,.mhtab th{white-space:normal;font-size:10.5px;padding:5px 3px}
+  .mhtab td,.mhtab th{white-space:normal;font-size:12px;padding:5px 3px}
   .mhtab .dpsm{padding:5px 6px;font-size:10.5px;min-width:0}
   .mkb{font-size:9px}
   .rlb{font-size:8.5px;padding:0 3px}
@@ -3703,7 +3703,7 @@ setTimeout(function(){ dpRender(); dpTick(); }, 1200); setInterval(dpTick,10000)
 // 보유표 — 숫자 칸은 줄바꿈 금지("260,000원"의 원이 아래로 떨어졌다), 좁으면 종목 이름 칸이 줄어 줄바꿈 (사장님 2026-09-19)
 (function(){ const st=document.createElement("style"); st.textContent=
   "#mhBody .mhtab td:nth-child(3),#mhBody .mhtab td:nth-child(4),#mhBody .mhtab td:nth-child(6){white-space:nowrap}"
- +"#mhBody .mhtab td,#mhBody .mhtab th{padding-left:2px;padding-right:2px;font-size:10px}"
+ +"#mhBody .mhtab td,#mhBody .mhtab th{padding-left:2px;padding-right:2px;font-size:12px}"
  +"#mhBody .mhtab .dpsm{white-space:nowrap;padding:5px 5px}"
  +"#mhBody .mhtab td:first-child{width:22%}";
   document.head.appendChild(st); })();
