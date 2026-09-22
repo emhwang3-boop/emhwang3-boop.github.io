@@ -10,8 +10,11 @@
   #panel { position: absolute; top: calc(env(safe-area-inset-top,0px) + 8px); left: 0; right: 0; text-align: center; z-index: 5; pointer-events: none; padding: 0 16px; }
   #panel .disc { font-size: 10px; color: #b3bdc9; line-height: 1.35; text-shadow: 0 1px 3px rgba(0,0,0,.9); }
   #panel .ic { color: #7fd8ff; font-weight: 800; }
-  #controls { position: absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 12px); left: 50%; transform: translateX(-50%); display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: center; z-index: 5; max-width: calc(100vw - 20px); }
-  button { background: rgba(0,255,204,0.9); color: #04120f; border: none; padding: 7px 12px; border-radius: 15px; font-weight: 700; font-size: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
+  /* 단추는 오른쪽 세로 한 줄, AR 전용은 왼쪽 세로 줄 — 탑 아래를 안 가리게 (사장님 2026-09-22) */
+  #controls, #controlsL { position: absolute; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 5; }
+  #controls { right: 10px; align-items: flex-end; }
+  #controlsL { left: 10px; align-items: flex-start; }
+  button { background: rgba(0,255,204,0.9); color: #04120f; border: none; padding: 7px 11px; border-radius: 15px; font-weight: 700; font-size: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.45); white-space: nowrap; }
   button.ghost { background: rgba(42,50,62,0.9); color: #fff; }
   #tstate { display: none; }
 </style>
@@ -21,9 +24,11 @@
   <button id="btn-play">시간 경과</button>
   <button id="btn-gyro" class="ghost">📱 기울여 보기</button>
   <div id="tstate">지금 상태</div>
-  <div id="arHint" style="display:none;position:absolute;bottom:56px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:700;padding:6px 12px;border-radius:12px;white-space:nowrap">바닥이나 책상을 천천히 비추세요</div>
+  <div id="arHint" style="display:none;position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:700;padding:6px 12px;border-radius:12px;white-space:nowrap">바닥이나 책상을 천천히 비추세요</div>
   <button id="btn-reset" class="ghost">처음</button>
   <button id="btn-ar" class="ghost" style="display:none">AR로 보기</button>
+</div>
+<div id="controlsL">
   <button id="btn-arp" class="ghost" style="display:none">크게</button>
   <button id="btn-arm" class="ghost" style="display:none">작게</button>
   <button id="btn-arf" style="display:none">앞에 세우기</button>
