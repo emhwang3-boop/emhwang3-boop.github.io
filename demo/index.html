@@ -56,7 +56,7 @@ body.light .mk img.lt{display:block}
 .stat .n{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
 .stat .l{font-size:12px;color:var(--sub);font-weight:600;margin-top:2px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px 14px;margin:12px 0}
-.card h3{font-size:13px;color:var(--sub);font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.card h3{font-size:15px;color:var(--nm);font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
 .tag{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px}
 .tag.live{background:#0b2b16;color:#00e619}
 .tag.soon{background:#2a2410;color:#e0a020}
@@ -211,7 +211,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
  .gauges{gap:6px}.stat{padding:9px 4px}.stat .n{font-size:18px}.stat .l{font-size:9.5px}
  .gnote{font-size:9.5px}
  .nm{font-size:13px}.val{font-size:13px}.pc{font-size:11px;min-width:42px}.rt{gap:5px}
- .card{padding:9px 11px}.card h3{font-size:11px}
+ .card{padding:9px 11px}.card h3{font-size:13px}
  .brow{grid-template-columns:60px 1fr 50px}.bn{font-size:11px}.bp{font-size:11px}
  .stktab{font-size:11.5px}.stkhd{font-size:14px}
  .stkq{font-size:13px}.stkres a{font-size:12px}
@@ -4237,7 +4237,7 @@ function bkSavedHtml(){
   var last=sv.reduce(function(m,p){ return Math.max(m,p.calc||0); },0);
   h+='<div style="display:flex;gap:6px;align-items:center;margin:4px 0">'
     +(bkGet().length?'<button class="dppct" style="flex:1" onclick="bkStore()">'+KE("\uff0b 지금 바스켓 보관","\uff0b Save current basket")+'</button>':'')
-    +(sv.length?'<button class="dppct" style="flex:0 0 auto;font-weight:800" onclick="bkSavedRefresh()">'+KE("수익률 새로고침","Refresh")+'</button>':'')
+    +(sv.length?'<button class="dppct" style="flex:0 0 auto" onclick="bkSavedRefresh()">'+KE("수익률 새로고침","Refresh")+'</button>':'')
     +(last?'<span class="dplbl" style="flex:0 0 auto">'+KE("계산 ","")+bkAgo(last)+'</span>':'')
     +'</div><div id="bkSavedMsg" class="c21msg" hidden></div>';
   if(!sv.length){ h+='<div class="mhempty">'+KE("보관한 것이 없습니다. 바스켓을 만들고 [보관]을 누르세요.","Nothing saved yet. Build a basket and tap Save.")+'</div>'; return h; }
