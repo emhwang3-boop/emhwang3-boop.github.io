@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>달리는 호랑이 AR</title>
 <meta property="og:title" content="달리는 호랑이 AR">
-<meta property="og:description" content="폰 카메라로 바닥을 비추면 호랑이가 달립니다 (안드로이드 크롬)">
+<meta property="og:description" content="폰 카메라로 바닥을 비추면 눈앞에서 달립니다 — 안드로이드 크롬·아이폰 사파리">
 <style>
   html, body { height: 100%; }
   body { margin: 0; overflow: hidden; background: #0e1420; color: #fff; font-family: "Segoe UI", system-ui, sans-serif; }
@@ -18,7 +18,7 @@
 </style>
 </head>
 <body>
-<div id="hint">호랑이가 달립니다 · 안드로이드 크롬이면 [AR로 보기]</div>
+<div id="hint">[AR로 보기]로 바닥에 세워 보세요 — 안드로이드 크롬 · 아이폰 사파리</div>
 <div id="controls">
   <button id="btn-ar" class="ghost" style="display:none">AR로 보기</button>
   <a id="btn-ios" rel="ar" href="model/tiger.usdz" style="display:none;background:rgba(42,50,62,0.9);border-radius:15px;padding:8px 12px;box-shadow:0 2px 8px rgba(0,0,0,.45)"><img alt="AR로 보기 (아이폰)" src="data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27118%27 height=%2716%27><text x=%2759%27 y=%2712%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-weight=%27800%27 font-size=%2712%27 fill=%27white%27>AR로 보기 (아이폰)</text></svg>" style="display:block;height:16px"></a>
@@ -153,7 +153,7 @@
   document.getElementById("btn-speed").addEventListener("click", function () { speed = speed >= 2 ? 0.6 : speed + 0.7; this.textContent = speed >= 2 ? "천천히" : "빠르게"; });
   document.getElementById("btn-share").addEventListener("click", async function () {
     const url = location.origin + location.pathname;
-    try { if (navigator.share) await navigator.share({ title: "달리는 호랑이 AR", text: "폰으로 바닥을 비추면 호랑이가 달립니다", url: url });
+    try { if (navigator.share) await navigator.share({ title: "달리는 호랑이 AR", text: "폰으로 바닥을 비추면 눈앞에서 달립니다 (안드로이드 크롬·아이폰 사파리)", url: url });
       else { await navigator.clipboard.writeText(url); alert("주소를 복사했습니다\n" + url); } } catch (e) {}
   });
 
@@ -176,7 +176,7 @@
   try { const ia = document.getElementById("btn-ios"); if (ia.relList && ia.relList.supports && ia.relList.supports("ar")) ia.style.display = ""; } catch (e) {}   // 아이폰 사파리: AR 퀵룩(USDZ)
   function setArUI(on) { [bBig, bSmall, bFront].forEach(function (b) { b.style.display = on ? "" : "none"; }); arBtn.textContent = on ? "AR 끝" : "AR로 보기"; }
   function arEnd() { arOn = false; arPlaced = false; xrHitSource = null; xrSession = null; reticle.visible = false; renderer.xr.enabled = false;
-    root.position.set(0, 0, 0); root.scale.set(1, 1, 1); setArUI(false); hint.textContent = "호랑이가 달립니다 · 안드로이드 크롬이면 [AR로 보기]"; renderer.setSize(innerWidth, innerHeight); }
+    root.position.set(0, 0, 0); root.scale.set(1, 1, 1); setArUI(false); hint.textContent = "[AR로 보기]로 바닥에 세워 보세요 — 안드로이드 크롬 · 아이폰 사파리"; renderer.setSize(innerWidth, innerHeight); }
   arBtn.addEventListener("click", async function () {
     if (xrSession) { try { await xrSession.end(); } catch (e) {} return; }
     try {
