@@ -3365,9 +3365,57 @@ function dpHoldRender(){
   const note=hasCoin?('<div class="mhnote">'+(en
     ? "In crypto, $ means USDT."
     : "암호화폐에서 $는 USDT를 의미함")+'</div>'):"";
-  box.innerHTML=h+'</table>'+note+'<div id="dpClose"></div>';
+  box.innerHTML=h+'</table>'+dpHoldSumHtml()+note+'<div id="dpClose"></div>';
 }
 function mhRender(){ try{ dpHoldRender(); }catch(e){} }   // 계좌가 준비되기 전에 불릴 수 있다
+
+// ── 보유 전체 한 줄 — 실계좌·모의 줄을 하나의 목록으로 (2026-09-22) ──
+//    cost=산 돈(선물은 증거금) · val=cost+손익 · ret=손익/cost — 표의 손익률과 같은 셈.
+//    ccy: "KRW" | "USD"(USDT 도 $ 로 적으니 같은 통에). 시세 없는 줄은 합계에서 뺀다.
+function dpHoldItems(){
+  const out=[];
+  const real=(typeof rlRows==="function")?rlRows():[];
+  real.forEach(function(p){
+    const live=dpPx[rlPxKey(p)]||0, dx=(live&&p.px0)?((live-p.px0)*p.qty):0;
+    const pl=p.pl+dx, cost=(p.mk==="coin"&&!p.spot)?p.evl:(p.avg*p.qty);
+    const ret=cost?(pl/cost):((p.rt||0)/100);
+    const code=(p.mk==="coin")?rlBn(p.code):p.code;
+    out.push({code:code,name:p.name||code,mk:p.mk,spot:!!p.spot,base:p.avg,ret:ret,
+              cost:cost,val:cost?(cost+pl):0,ccy:(p.mk==="kr")?"KRW":"USD"});
+  });
+  Object.keys(DP.pos).forEach(function(k){
+    const p=DP.pos[k], cur=dpPx[k]||0;
+    if(p.mk==="coin"){
+      const pnl=cur?((p.side==="L"?1:-1)*(cur/p.entry-1)*p.lev*p.margin):0;
+      out.push({code:p.code,name:p.code,mk:"coin",spot:false,base:p.entry,ret:p.margin?(pnl/p.margin):0,
+                cost:cur?p.margin:0,val:cur?(p.margin+pnl):0,ccy:"USD"});
+    }else if(p.mk==="coinS"){
+      out.push({code:p.code,name:p.code,mk:"coin",spot:true,base:p.avg,ret:(cur&&p.avg)?(cur/p.avg-1):0,
+                cost:cur?(p.avg*p.qty):0,val:cur?(cur*p.qty):0,ccy:"USD"});
+    }else{
+      out.push({code:p.code,name:p.name||p.code,mk:p.mk,spot:false,base:p.avg,ret:(cur&&p.avg)?(cur/p.avg-1):0,
+                cost:cur?(p.avg*p.qty):0,val:cur?(cur*p.qty):0,ccy:(p.mk==="kr")?"KRW":"USD"});
+    }
+  });
+  return out;
+}
+// 합계 수익률 = Σ평가 ÷ Σ산 돈 − 1. 달러 통은 원/달러(fxKrw)로 원화 환산 — 환율이 없으면 1:1(통화별 값 그대로 합침).
+function dpHoldSumHtml(){
+  const en=LANG==="en", a=dpHoldItems(); if(!a.length)return "";
+  const fx=(typeof fxKrw==="function"&&fxKrw()>0)?fxKrw():1;
+  let c=0,v=0;
+  a.forEach(function(x){ if(!(x.cost>0))return; const m=(x.ccy==="KRW")?1:fx; c+=x.cost*m; v+=x.val*m; });
+  if(!(c>0))return "";
+  const r=(v/c-1)*100, cls=r>0?"up":(r<0?"dn":"fl");
+  return '<div class="mhsum" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px">'
+    +'<span>'+(en?"Portfolio return ":"포트폴리오 수익률 ")+'<b class="'+cls+'">'+(r>0?"+":"")+r.toFixed(2)+'%</b></span>'
+    +'<button class="dppct" style="border-color:#2bd4c0;color:#2bd4c0" onclick="holdTower3D()">3D</button></div>';
+}
+function holdTower3D(){
+  const a=dpHoldItems(); if(!a.length)return;
+  openTower3D(a.map(function(x){ return {code:x.code,name:x.name,mk:x.mk,spot:x.spot,base:x.base,ret:x.ret}; }),
+              LANG==="en"?"My Holdings":"내 보유종목");
+}
 
 // 모의 계좌 카드 — 계좌 셋 + 주문 내역만
 function dpRender(){
@@ -3927,6 +3975,11 @@ function bkAddCurrent(){
   var c=E("bkCard"); if(c&&c.scrollIntoView)c.scrollIntoView({behavior:"smooth",block:"start"});
 }
 async function bkBars(x){
+  if(x.mk==="coin"){      // 보유 코인 — OKX 일봉(현물/선물 갈래) (2026-09-22)
+    var ks=await okxKlines(x.code,x.spot?"S":"F","1d",120);
+    if(!ks||ks.length<5)return null;
+    return ks.map(function(b){ return +b[4]; });
+  }
   if(x.mk==="us"){
     var k=await usFetch("kline","code="+encodeURIComponent(x.code)+"&type=8&num=300");
     var rl=(k&&k.data&&k.data[0]&&k.data[0].respList)||[];
@@ -3974,9 +4027,10 @@ async function openTower3D(list, title) {
     var it = list[i], cs = null;
     try { cs = await bkBars(it); } catch (e) { cs = null; }
     var mm = document.querySelector("#tower3dOv .mpTxt") || document.getElementById("t3dmsg"); if (mm) mm.textContent = "3D 준비 중… " + (i + 1) + "/" + list.length;
-    if (!cs || cs.length < 10) { data.push({ n: it.name, b: 100, r: 0, v: 1, k: bkClassRank(it) }); continue; }
+    var rr = (typeof it.ret === "number" && isFinite(it.ret)) ? it.ret : null;   // 보유 수익률(매입 뒤) — 있으면 그대로 (2026-09-22)
+    if (!cs || cs.length < 10) { data.push({ n: it.name, b: 100, r: (rr === null ? 0 : +rr.toFixed(4)), v: 1, k: bkClassRank(it) }); continue; }
     var n = Math.min(60, cs.length - 1), from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
-    var r = (from > 0) ? (to / from - 1) : 0;
+    var r = (rr !== null) ? rr : (it.base > 0) ? (to / it.base - 1) : (from > 0) ? (to / from - 1) : 0;
     var seg = cs.slice(cs.length - 1 - n), dd = [];
     for (var k = 1; k < seg.length; k++) dd.push(seg[k] / seg[k - 1] - 1);
     var m = dd.reduce(function (s, x) { return s + x; }, 0) / (dd.length || 1);
