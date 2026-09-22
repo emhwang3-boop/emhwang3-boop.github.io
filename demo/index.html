@@ -4283,6 +4283,25 @@ function bkSavedHtml(){
   return h;
 }
 
+// 바스켓 줄을 누르면 그 종목·코인 차트로 (사장님 2026-09-23 "한번누르기로")
+function bkGoChart(i) {
+  var x = bkGet()[i]; if (!x) return;
+  try {
+    if (x.mk === "coin" || /USDT$/i.test(x.code)) {
+      var sym = String(x.code).replace(/-?USDT$/i, "").replace(/-.*$/, "").toUpperCase();
+      pickCoin(sym + "USDT", sym, x.spot ? "S" : "F");
+      var cc = E("coin2"); if (cc && cc.scrollIntoView) cc.scrollIntoView({behavior: "smooth", block: "start"});
+      return;
+    }
+    if (x.mk === "us") pickStockUS(/\.US$/.test(x.code) ? x.code : x.code + ".US", x.name);
+    else pickStock(x.code, x.name);
+    var sc = E("stock"); if (sc && sc.scrollIntoView) sc.scrollIntoView({behavior: "smooth", block: "start"});
+  } catch (e) {}
+}
+document.addEventListener("click", function (e) {
+  var el = (e.target && e.target.closest) ? e.target.closest(".bkgo") : null;
+  if (el) bkGoChart(+el.getAttribute("data-i"));
+});
 function bkRender(){
   var card=E("bkCard");
   if(!card){ var rc=E("recoCard"); if(!rc)return; card=document.createElement("div"); card.className="card"; card.id="bkCard"; rc.parentNode.insertBefore(card,rc.nextSibling); }
@@ -4293,7 +4312,7 @@ function bkRender(){
   var w=100/a.length;
   h+='<table class="mhtab"><tr><th>'+KE("종목","Item")+'</th><th>'+KE("비중","Weight")+'</th><th></th></tr>';
   a.forEach(function(x,i){
-    h+='<tr><td style="text-align:left">'+dpEsc(x.name)+(/^\d/.test(x.code)?' <span class="dplbl">'+x.code+'</span>':'')+(x.mk==="us"?' <span class="dplbl">US</span>':'')
+    h+='<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-i="'+i+'">'+dpEsc(x.name)+(/^\d/.test(x.code)?' <span class="dplbl">'+x.code+'</span>':'')+(x.mk==="us"?' <span class="dplbl">US</span>':'')
       +'</td><td>'+w.toFixed(1)+'%</td><td><span class="mhx" onclick="bkDel('+i+')">\u2715</span></td></tr>';
   });
   h+='</table>';
