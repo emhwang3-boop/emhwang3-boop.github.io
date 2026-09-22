@@ -2655,13 +2655,13 @@ function rlHsSave(o) { try { localStorage.setItem(RL_HS_KEY, JSON.stringify(o));
 let RL_HS_BUSY = false;
 async function rlHoldSince() {
   if (RL_HS_BUSY || !(ST.kr && ST.kr.key && ST.kr.sec)) return;
-  const hs = rlHsGet(), today = new Date().toISOString().slice(0, 10), want = {};
-  hs._t = hs._t || {};
+  const hs = rlHsGet(), now = Date.now(), want = {};
+  delete hs._t; hs._t2 = hs._t2 || {};          // _t2 = 못 찾은 시각 — 10분 뒤 다시 (2026-09-22)
   const codes = (RL.kr || []).map(function (p) { return p.code; });
-  Object.keys(hs).forEach(function (c) { if (c !== "_t" && c.indexOf("US:") !== 0 && codes.indexOf(c) < 0) delete hs[c]; });   // US: 는 미국 쪽이 관리
+  Object.keys(hs).forEach(function (c) { if (c !== "_t2" && c.indexOf("US:") !== 0 && codes.indexOf(c) < 0) delete hs[c]; });   // US: 는 미국 쪽이 관리
   (RL.kr || []).forEach(function (p) {
     const h = hs[p.code];
-    if ((!h || h.q !== p.qty) && hs._t[p.code] !== today) want[p.code] = p.qty;
+    if ((!h || h.q !== p.qty) && now - (hs._t2[p.code] || 0) > 600000) want[p.code] = p.qty;
   });
   if (!Object.keys(want).length) { rlHsSave(hs); return; }
   RL_HS_BUSY = true;
@@ -2689,7 +2689,8 @@ async function rlHoldSince() {
         });
       }
     }
-    Object.keys(want).forEach(function (c) { if (got[c]) hs[c] = {d: got[c], q: want[c]}; hs._t[c] = today; });
+    Object.keys(want).forEach(function (c) {
+      if (got[c]) { hs[c] = {d: got[c], q: want[c]}; delete hs._t2[c]; } else hs._t2[c] = Date.now(); });
     rlHsSave(hs);
   } finally {
     RL_HS_BUSY = false;
@@ -2699,18 +2700,18 @@ async function rlHoldSince() {
 }
 // ── 미국 주식 산 날 — ust21180 기간별 주문내역(체결수량·매수/매도)을 거슬러, 국내(ka10170)와 같은 셈 (사장님 2026-09-22 "1번으로") ──
 //   2026-09-22 21:4x 실측: result_list 줄에 ord_dt·ord_time·stk_cd·cntr_qty·slby_tp_nm(매수/매도) 가 온다. 100일치 한 번에.
-let RL_HS_US_BUSY = false, RL_HS_US_TRY = 0;
+let RL_HS_US_BUSY = false;
 async function rlHoldSinceUS() {
   if (RL_HS_US_BUSY || !(ST.kr && ST.kr.key && ST.kr.sec)) return;
-  const hs = rlHsGet(), today = new Date().toISOString().slice(0, 10), want = {};
-  hs._t = hs._t || {};
+  const hs = rlHsGet(), now = Date.now(), want = {};
+  delete hs._t; hs._t2 = hs._t2 || {};
   const codes = (RL.us || []).map(function (p) { return "US:" + String(p.code).replace(/\.US$/, "").toUpperCase(); });
   Object.keys(hs).forEach(function (c) { if (c.indexOf("US:") === 0 && codes.indexOf(c) < 0) delete hs[c]; });
   (RL.us || []).forEach(function (p) {
     const c = String(p.code).replace(/\.US$/, "").toUpperCase(), h = hs["US:" + c];
-    if ((!h || h.q !== p.qty) && hs._t["US:" + c] !== today) want[c] = p.qty;
+    if ((!h || h.q !== p.qty) && now - (hs._t2["US:" + c] || 0) > 600000) want[c] = p.qty;
   });
-  if (!Object.keys(want).length) { rlHsSave(hs); try { rlSay("US 산날 이미 있음/없음: " + JSON.stringify(hs).slice(0, 80)); } catch (e) {} return; }  /* 확인용 */
+  if (!Object.keys(want).length) { rlHsSave(hs); return; }
   RL_HS_US_BUSY = true;
   try {
     const tok = await rlToken();
@@ -2727,16 +2728,11 @@ async function rlHoldSinceUS() {
       net[c] = (net[c] || 0) + (buy ? q : -q);
       if (buy && net[c] >= want[c] - 0.001) got[c] = String(r.ord_dt);
     });
-    RL_HS_US_TRY++;
     Object.keys(want).forEach(function (c) {
-      if (got[c]) { hs["US:" + c] = {d: got[c], q: want[c]}; hs._t["US:" + c] = today; }
-      else if (RL_HS_US_TRY >= 3) hs._t["US:" + c] = today;      /* 세 번 못 찾으면 오늘은 그만 */
-    });
+      if (got[c]) { hs["US:" + c] = {d: got[c], q: want[c]}; delete hs._t2["US:" + c]; } else hs._t2["US:" + c] = Date.now(); });
     rlHsSave(hs);
-    try { rlSay("US " + Object.keys(want).join(",") + " rc=" + (j && j.return_code) + " rows=" + ((j && j.result_list) || []).length
-                + " got=" + JSON.stringify(got) + " " + ((j && j.return_msg) || "").slice(0, 40)); } catch (e2) {}   /* 확인용 */
   } catch (e) {
-    try { rlSay("US 산날 오류: " + (e && e.message)); } catch (e2) {}                                                /* 확인용 */
+    Object.keys(want).forEach(function (c) { hs._t2["US:" + c] = Date.now(); }); rlHsSave(hs);
   } finally {
     RL_HS_US_BUSY = false;
     try { dpHoldRender(); } catch (e) {}
