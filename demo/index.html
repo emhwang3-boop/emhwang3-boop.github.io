@@ -2699,7 +2699,7 @@ async function rlHoldSince() {
 }
 // ── 미국 주식 산 날 — ust21180 기간별 주문내역(체결수량·매수/매도)을 거슬러, 국내(ka10170)와 같은 셈 (사장님 2026-09-22 "1번으로") ──
 //   2026-09-22 21:4x 실측: result_list 줄에 ord_dt·ord_time·stk_cd·cntr_qty·slby_tp_nm(매수/매도) 가 온다. 100일치 한 번에.
-let RL_HS_US_BUSY = false;
+let RL_HS_US_BUSY = false, RL_HS_US_TRY = 0;
 async function rlHoldSinceUS() {
   if (RL_HS_US_BUSY || !(ST.kr && ST.kr.key && ST.kr.sec)) return;
   const hs = rlHsGet(), today = new Date().toISOString().slice(0, 10), want = {};
@@ -2727,7 +2727,11 @@ async function rlHoldSinceUS() {
       net[c] = (net[c] || 0) + (buy ? q : -q);
       if (buy && net[c] >= want[c] - 0.001) got[c] = String(r.ord_dt);
     });
-    Object.keys(want).forEach(function (c) { if (got[c]) hs["US:" + c] = {d: got[c], q: want[c]}; hs._t["US:" + c] = today; });
+    RL_HS_US_TRY++;
+    Object.keys(want).forEach(function (c) {
+      if (got[c]) { hs["US:" + c] = {d: got[c], q: want[c]}; hs._t["US:" + c] = today; }
+      else if (RL_HS_US_TRY >= 3) hs._t["US:" + c] = today;      /* 세 번 못 찾으면 오늘은 그만 */
+    });
     rlHsSave(hs);
     try { rlSay("US " + Object.keys(want).join(",") + " rc=" + (j && j.return_code) + " rows=" + ((j && j.result_list) || []).length
                 + " got=" + JSON.stringify(got) + " " + ((j && j.return_msg) || "").slice(0, 40)); } catch (e2) {}   /* 확인용 */
