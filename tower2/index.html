@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>가지 타워 시범</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1420;color:#e8ecf2;font:600 13px system-ui,-apple-system,"Malgun Gothic",sans-serif;overflow:hidden}
+  #wrap{position:fixed;inset:0}
+  #ui{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;gap:6px;justify-content:center;flex-wrap:wrap;z-index:5}
+  button{background:rgba(23,29,43,.92);color:#e8ecf2;border:1px solid #2b3446;border-radius:9px;padding:7px 11px;font:700 12px system-ui;cursor:pointer}
+  button.on{border-color:#2bd4c0;color:#2bd4c0}
+  #top{position:fixed;left:0;right:0;top:calc(8px + env(safe-area-inset-top));text-align:center;font-size:12px;color:#9aa4b2;z-index:5}
+  #top b{color:#e8ecf2}
+</style>
+</head>
+<body>
+<div id="wrap"></div>
+<div id="top"><b>가지 타워 시범</b> · 손가락으로 돌려 보세요</div>
+<div id="ui">
+  <button id="b5">5개</button>
+  <button id="b10" class="on">10개</button>
+  <button id="b16">16개</button>
+  <button id="bmode">한 줄 탑으로</button>
+  <button id="bspin">자동 회전 끄기</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// 가지 타워 시범 — 큐브가 열 개 이상이면 자산군별 가지로 뻗는다 (사장님 2026-09-23)
+//   줄기: 안전한 갈래 아래 → 위험한 갈래 위 (쌓는 차례는 지금 규칙 그대로)
+//   가지: 갈래마다 하나, 층마다 조금씩 돌려 나선으로 — 앞뒤로 겹치지 않게
+//   큐브: 좌우 흔들림 = 변동성 · 위아래 움직임 = 수익률(이익 위로만·손실 아래로만) · 크랙 = 손실
+const CLS = [
+  {nm:"예금",            c:0x20C4B8},
+  {nm:"국내 ETF",        c:0x3AA6F0},
+  {nm:"해외 ETF(원화)",  c:0x37D67A},
+  {nm:"해외 ETF(달러)",  c:0x8FD14F},
+  {nm:"국내 주식",       c:0xFFC93C},
+  {nm:"해외 주식",       c:0xFF8A5B},
+  {nm:"코인",            c:0xFFB020}
+];
+const SAMPLE = [
+  {n:"은행 정기예금", k:0, r: 0.01, v:0.2},
+  {n:"KODEX 200",     k:1, r: 0.06, v:0.9},
+  {n:"TIGER 반도체",  k:1, r: 0.14, v:1.6},
+  {n:"TIGER S&P500",  k:2, r: 0.09, v:1.0},
+  {n:"ARKK",          k:3, r:-0.07, v:2.4},
+  {n:"한섬",          k:4, r: 0.27, v:2.1},
+  {n:"케이씨텍",      k:4, r: 0.13, v:2.6},
+  {n:"SK하이닉스",    k:4, r:-0.04, v:1.9},
+  {n:"INTC",          k:5, r:-0.12, v:2.2},
+  {n:"TSLA",          k:5, r: 0.31, v:3.4},
+  {n:"NVDA",          k:5, r: 0.18, v:2.8},
+  {n:"MRVL",          k:5, r:-0.09, v:2.5},
+  {n:"BTC",           k:6, r: 0.07, v:3.0},
+  {n:"ETH",           k:6, r:-0.15, v:3.6},
+  {n:"SOL",           k:6, r: 0.22, v:4.2},
+  {n:"한양디지텍",    k:4, r: 0.29, v:3.1}
+];
+
+const wrap = document.getElementById("wrap");
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 4000);
+const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+wrap.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+const dl = new THREE.DirectionalLight(0xffffff, 0.75); dl.position.set(40, 80, 60); scene.add(dl);
+const root = new THREE.Group(); scene.add(root);
+
+let items = SAMPLE.slice(0, 10), branchMode = true, spin = true, cubes = [], towerTop = 40;
+
+function label(text, size) {
+  const c = document.createElement("canvas"), g = c.getContext("2d");
+  const f = 44; c.width = 512; c.height = 96;
+  g.font = "700 " + f + "px system-ui, Malgun Gothic, sans-serif";
+  g.fillStyle = "#e8ecf2"; g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(text, 256, 48);
+  const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: t, transparent: true, depthWrite: false}));
+  sp.scale.set(size * 5.3, size, 1);
+  return sp;
+}
+function cube(it, s) {
+  const g = new THREE.Group();
+  const col = CLS[it.k].c;
+  const m = new THREE.Mesh(new THREE.BoxGeometry(s, s, s),
+    new THREE.MeshLambertMaterial({color: col}));
+  g.add(m);
+  // 테두리 — 이익은 초록, 손실은 빨강
+  const eg = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(s * 1.005, s * 1.005, s * 1.005)),
+    new THREE.LineBasicMaterial({color: it.r >= 0 ? 0x37d67a : 0xff6b6b}));
+  g.add(eg);
+  // 크랙 — 손실이 클수록 많이
+  const nCrack = it.r < 0 ? Math.min(5, Math.round(-it.r * 22)) : 0;
+  for (let i = 0; i < nCrack; i++) {
+    const pts = [], x0 = (Math.random() - 0.5) * s * 0.7, y0 = (Math.random() - 0.5) * s * 0.7;
+    let x = x0, y = y0;
+    for (let k = 0; k < 4; k++) { pts.push(new THREE.Vector3(x, y, s / 2 + 0.02)); x += (Math.random() - 0.5) * s * 0.35; y -= Math.random() * s * 0.3; }
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color: 0x20242e})));
+  }
+  return g;
+}
+function clear(o) { while (o.children.length) { const c = o.children.pop(); o.remove(c); } }
+
+function build() {
+  clear(root); cubes = [];
+  const byCls = {};
+  items.forEach(function (it) { (byCls[it.k] = byCls[it.k] || []).push(it); });
+  const keys = Object.keys(byCls).map(Number).sort(function (a, b) { return a - b; });
+  const useBranch = branchMode && items.length >= 10;
+  const S = 7;                         // 큐브 한 변
+  let y = 0;
+
+  if (!useBranch) {                    // ── 한 줄 탑 (지금 모양) ──
+    items.slice().sort(function (a, b) { return a.k - b.k; }).forEach(function (it) {
+      const g = cube(it, S); g.position.y = y + S / 2; root.add(g);
+      const lb = label(it.n, 2.6); lb.position.set(S * 0.95, y + S / 2, 0); root.add(lb);
+      cubes.push({g: g, it: it, base: y + S / 2, lb: lb});
+      y += S * 1.12;
+    });
+    towerTop = y;
+  } else {                             // ── 가지 타워 ──
+    const gap = S * 1.5;
+    keys.forEach(function (k, bi) {
+      const arr = byCls[k], ang = bi * 2.399;            // 황금각 — 앞뒤로 안 겹친다
+      const yy = y + S / 2;
+      // 가지 — 줄기에서 뻗는 가는 팔
+      const len = S * (0.9 + arr.length * 0.92);
+      const bg = new THREE.Group(); bg.rotation.y = ang; root.add(bg);
+      const pts = [new THREE.Vector3(0, yy, 0), new THREE.Vector3(len, yy + S * 0.22, 0)];
+      bg.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({color: 0x46506a})));
+      // 갈래 이름
+      const cl = label(CLS[k].nm, 2.4); cl.position.set(len * 0.5, yy + S * 0.75, 0); bg.add(cl);
+      arr.forEach(function (it, i) {
+        const x = S * 1.15 + i * S * 0.92, yb = yy + S * 0.22 * (x / len);
+        const g = cube(it, S * 0.82); g.position.set(x, yb, 0); bg.add(g);
+        const lb = label(it.n, 2.2); lb.position.set(x, yb - S * 0.72, 0); bg.add(lb);
+        cubes.push({g: g, it: it, base: yb, lb: lb});
+      });
+      y += gap;
+    });
+    towerTop = y + S;
+    // 줄기 — 가는 실
+    root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+      [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, towerTop, 0)]),
+      new THREE.LineBasicMaterial({color: 0x46506a})));
+  }
+  document.getElementById("bmode").textContent = useBranch ? "한 줄 탑으로" : "가지 모양으로";
+}
+
+// ── 돌려 보기 ──
+let rotY = 0.5, rotX = 0.12, drag = null;
+renderer.domElement.addEventListener("pointerdown", function (e) { drag = {x: e.clientX, y: e.clientY}; spin = false; document.getElementById("bspin").textContent = "자동 회전 켜기"; });
+addEventListener("pointermove", function (e) {
+  if (!drag) return;
+  rotY += (e.clientX - drag.x) * 0.008; rotX += (e.clientY - drag.y) * 0.005;
+  rotX = Math.max(-0.5, Math.min(0.9, rotX)); drag = {x: e.clientX, y: e.clientY};
+});
+addEventListener("pointerup", function () { drag = null; });
+
+document.getElementById("b5").onclick = function () { items = SAMPLE.slice(0, 5); mark("b5"); build(); };
+document.getElementById("b10").onclick = function () { items = SAMPLE.slice(0, 10); mark("b10"); build(); };
+document.getElementById("b16").onclick = function () { items = SAMPLE.slice(0, 16); mark("b16"); build(); };
+document.getElementById("bmode").onclick = function () { branchMode = !branchMode; build(); };
+document.getElementById("bspin").onclick = function () { spin = !spin; this.textContent = spin ? "자동 회전 끄기" : "자동 회전 켜기"; };
+function mark(id) { ["b5", "b10", "b16"].forEach(function (x) { document.getElementById(x).className = (x === id ? "on" : ""); }); }
+
+const clock = new THREE.Clock();
+function frame() {
+  requestAnimationFrame(frame);
+  const t = clock.getElapsedTime();
+  if (spin) rotY += 0.0035;
+  root.rotation.y = rotY; root.rotation.x = rotX * 0.35;
+  cubes.forEach(function (c, i) {
+    const it = c.it;
+    c.g.position.x = (c.g.userData.x0 === undefined ? (c.g.userData.x0 = c.g.position.x) : c.g.userData.x0)
+      + Math.sin(t * (1.1 + it.v * 0.35) + i) * it.v * 0.35;        // 좌우 = 변동성
+    const bob = Math.abs(Math.sin(t * (0.8 + Math.abs(it.r) * 3) + i * 0.7)) * Math.min(2.4, Math.abs(it.r) * 9);
+    c.g.position.y = c.base + (it.r >= 0 ? bob : -bob);             // 위아래 = 수익률
+    c.lb.position.y = c.base - 5.7 + (it.r >= 0 ? bob : -bob) * 0.5;
+  });
+  const d = Math.max(60, towerTop * 2.1);
+  camera.position.set(0, towerTop * 0.55, d);
+  camera.lookAt(0, towerTop * 0.45, 0);
+  renderer.render(scene, camera);
+}
+addEventListener("resize", function () {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+build(); frame();
+</script>
+</body>
+</html>
