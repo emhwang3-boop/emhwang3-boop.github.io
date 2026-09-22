@@ -4269,10 +4269,12 @@ function bkSavedHtml(){
     if(open){
       h+='<table class="mhtab" style="margin:2px 0 6px">';
       var er=p.erows||p.items.map(function(it){ return {nm:it.name, pending:true}; });
-      er.forEach(function(r){
+      er.forEach(function(r,ix){
+        var it=p.items[ix]||{};
         var val=r.err?('<span class="fl">'+KE("자료 없음","No data")+'</span>')
                      :(r.pending?'<span class="dplbl">\u2014</span>':('<span class="'+cls(r.r)+'">'+pc(r.r)+'</span>'));
-        h+='<tr><td style="text-align:left">'+dpEsc(r.nm)+'</td><td>'+val+'</td></tr>';
+        h+='<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="'+dpEsc(it.code||"")+'" data-mk="'+dpEsc(it.mk||"")
+          +'" data-nm="'+dpEsc(it.name||r.nm)+'" data-spot="'+(it.spot?1:0)+'">'+dpEsc(r.nm)+'</td><td>'+val+'</td></tr>';
       });
       h+='</table>';
     }
@@ -4284,8 +4286,9 @@ function bkSavedHtml(){
 }
 
 // 바스켓 줄을 누르면 그 종목·코인 차트로 (사장님 2026-09-23 "한번누르기로")
-function bkGoChart(i) {
-  var x = bkGet()[i]; if (!x) return;
+function bkGoChart(x) {
+  if (typeof x === "number") x = bkGet()[x];
+  if (!x || !x.code) return;
   try {
     if (x.mk === "coin" || /USDT$/i.test(x.code)) {
       var sym = String(x.code).replace(/-?USDT$/i, "").replace(/-.*$/, "").toUpperCase();
@@ -4300,7 +4303,11 @@ function bkGoChart(i) {
 }
 document.addEventListener("click", function (e) {
   var el = (e.target && e.target.closest) ? e.target.closest(".bkgo") : null;
-  if (el) bkGoChart(+el.getAttribute("data-i"));
+  if (!el) return;
+  var di = el.getAttribute("data-i");
+  if (di !== null) bkGoChart(+di);
+  else bkGoChart({code: el.getAttribute("data-code"), name: el.getAttribute("data-nm") || "",
+                  mk: el.getAttribute("data-mk") || "", spot: el.getAttribute("data-spot") === "1"});
 });
 function bkRender(){
   var card=E("bkCard");
