@@ -2474,8 +2474,8 @@ function cvRecoRender() {
   (function () {
     var st = function (k) { var x = c[k]; if (!x || !x.state) return "-"; return { long: KE("롱", "LONG"), short: KE("숏", "SHORT"), cash: KE("현금", "CASH") }[x.state] || x.state; };
     h += '<div class="svsub">' + KE("장세", "Regime") + ' · BTC <b>' + st("BTC") + '</b> · ETH <b>' + st("ETH") + '</b> <span class="dplbl">' + ((CVR && CVR.at) || "") + KE(" 계산", " calc") + '</span>' + svInfoMark("cvRegInfo") + '</div>'
-       + '<div id="cvRegInfo" class="svsub" style="display:none;font-size:11px">' + KE("일봉 기준입니다. 가격이 기준선 위이고 헐선이 오르면 롱, 기준선 아래이고 헐선이 내리면 숏, 그 밖은 현금. 하루 한 번 아침에 계산합니다.",
-             "Daily bars. Above the baseline with a rising Hull line is LONG, below with a falling Hull line is SHORT, otherwise CASH. Computed once each morning.") + '</div>';
+       + '<div id="cvRegInfo" class="svsub" style="display:none;font-size:11px">' + KE("일봉 기준입니다. 가격이 기준선 위이고 특정 이평선이 오르면 롱, 기준선 아래이고 특정 이평선이 내리면 숏, 그 밖은 현금. 하루 한 번 아침에 계산합니다.",
+             "Daily bars. Above the baseline with a rising moving average is LONG, below with a falling one is SHORT, otherwise CASH. Computed once each morning.") + '</div>';
   })();
   if (!CV_LIVE_AT && !window._cvLiveKick) { window._cvLiveKick = 1; setTimeout(cvLiveRefresh, 300); }
   h += '</table><div class="svsub">' + (CV_LIVE_AT ? (CV_LIVE_AT + KE(" 실시간 (바이낸스)", " live (Binance)")) : KE(((CVR && CVR.at) || "") + ' 기준', 'as of ' + ((CVR && CVR.at) || ""))) + '</div>';
