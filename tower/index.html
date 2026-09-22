@@ -240,7 +240,7 @@
       if (isMid && it._loss >= 0.05) midCrack += it._loss - 0.05;
     });
     if (n >= 2) { const top = items[n - 1]._side, below = items[n - 2]._side; if (top > below) topHeavy = top / below - 1; }
-    const quakeAmp = Math.min(midCrack * 60 + topHeavy * 10, towerTop * 0.16);   // 상한은 탑 높이의 16% — 화면 밖으로 안 나가게
+    const quakeAmp = Math.min(midCrack * 60 + topHeavy * 10, towerTop * 0.16, 2.6);   // 상한: 탑 높이 16%, 그리고 절대 2.6 — 종목이 적어도 화면 밖으로 안 나가게(2026-09-22)
     const quakeX = quakeAmp > 0.2 ? Math.sin(t * (2.6 + midCrack * 6 + topHeavy * 2)) * quakeAmp : 0;
 
     if (arOn) {
@@ -260,7 +260,7 @@
     if (!arOn) arRoot.visible = true;
     if (!arOn) { leanX += (0.18 - leanX) * 0.06; towerGroup.rotation.x = leanX; towerGroup.position.z = 10; }
     const asp = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
-    let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.62; SW2 = SH2 * asp; } else { SH2 = Math.max(towerTop * 0.60, 9.5 / asp); SW2 = SH2 * asp; }   // 세로 화면: 종목이 몇이든 탑이 화면 높이를 거의 다 채운다(사장님 2026-09-22). 폭은 최소 9.5 로 큐브가 잘리지 않게
+    let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.62; SW2 = SH2 * asp; } else { SH2 = Math.max(towerTop * 0.60, 10.5 / asp); SW2 = SH2 * asp; }   // 세로 화면: 종목이 몇이든 탑이 화면 높이를 거의 다 채운다(사장님 2026-09-22). 폭은 최소 9.5 로 큐브가 잘리지 않게
     const cyc = (asp >= 1) ? towerTop * 0.5 : towerTop * 0.5 - SH2 * 0.10;   // 세로 화면: 카메라 중심을 내려 탑이 위로 올라가게 — 아래 단추 띠에 안 가리게
     let ex, ey;
     if (gyroOn && gyro) { ex = THREE.MathUtils.clamp((gyro.gamma || 0) / 32, -1, 1) * SW2 * 1.15; ey = THREE.MathUtils.clamp(((gyro.beta || 0) - 45) / 38, -1, 1) * SH2 * 0.95; }
@@ -281,7 +281,7 @@
       it.mesh.scale.set(side, side, side);
       it.textSprite.scale.set(TW / side, TW / side, 1);
       const vr = Math.pow(it.vol / volMax, 1.5);   // 변동성 = 그 큐브의 좌우 흔들림 (사장님 2026-09-22)
-      const volX = Math.sin(t * (1.6 + vr * 4) + it.vol) * vr * it._side * 0.35 + Math.sin(t * 8 + it.vol) * vr * it._side * 0.06;
+      const volX = Math.sin(t * (1.6 + vr * 4) + it.vol) * vr * Math.min(it._side * 0.22, 1.6) + Math.sin(t * 8 + it.vol) * vr * it._side * 0.05;
       // 위아래 = 수익률. 이익 큐브는 제자리에서 **위로만**, 손실 큐브는 **아래로만** 움직인다(사장님 2026-09-22). 손실이 클수록 잦고 크다. 부스러기는 손실 때만
       const bob = Math.abs(Math.sin(t * (2.5 + Math.abs(it.cur) * 9) + it.vol)) + Math.abs(Math.sin(t * 13 + it.vol)) * 0.2;
       const shakeY = gain > 0.002 ? bob * gain * 7 : (loss > 0.002 ? -bob * loss * 11 : 0);
