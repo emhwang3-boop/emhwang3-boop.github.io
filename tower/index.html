@@ -215,7 +215,7 @@
     leanX += (0.18 - leanX) * 0.06; towerGroup.rotation.x = leanX; towerGroup.position.z = 10;
     const asp = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
     let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.62; SW2 = SH2 * asp; } else { SH2 = Math.max(towerTop * 0.60, 9.5 / asp); SW2 = SH2 * asp; }   // 세로 화면: 종목이 몇이든 탑이 화면 높이를 거의 다 채운다(사장님 2026-09-22). 폭은 최소 9.5 로 큐브가 잘리지 않게
-    const cyc = (asp >= 1) ? towerTop * 0.5 : towerTop * 0.5 + SH2 * 0.09;   // 세로 화면: 아래 단추 띠에 안 가리게 조금 위로
+    const cyc = (asp >= 1) ? towerTop * 0.5 : towerTop * 0.5 - SH2 * 0.10;   // 세로 화면: 카메라 중심을 내려 탑이 위로 올라가게 — 아래 단추 띠에 안 가리게
     let ex, ey;
     if (gyroOn && gyro) { ex = THREE.MathUtils.clamp((gyro.gamma || 0) / 32, -1, 1) * SW2 * 1.15; ey = THREE.MathUtils.clamp(((gyro.beta || 0) - 45) / 38, -1, 1) * SH2 * 0.95; }
     else { baseAng += 0.004; ex = Math.sin(baseAng) * SW2 * 0.55; ey = Math.sin(baseAng * 0.6) * SH2 * 0.15; }
