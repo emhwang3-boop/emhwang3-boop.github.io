@@ -26,6 +26,7 @@
   <button id="btn-ar" class="ghost" style="display:none">AR로 보기</button>
   <button id="btn-arp" class="ghost" style="display:none">크게</button>
   <button id="btn-arm" class="ghost" style="display:none">작게</button>
+  <button id="btn-arf" style="display:none">앞에 세우기</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -191,7 +192,14 @@
 
   // ── AR (WebXR) — 안드로이드 크롬. 폰 카메라가 찍는 바닥·책상 위에 탑을 세운다 (사장님 2026-09-22 실측용) ──
   let xrSession = null, xrHitSource = null, arPlaced = false, arOn = false, arHeight = 0.9;   // 탑 높이(m) — 사장님 "너무 작다"(35cm) → 90cm
-  const arBtnP = document.getElementById("btn-arp"), arBtnM = document.getElementById("btn-arm");
+  const arBtnP = document.getElementById("btn-arp"), arBtnM = document.getElementById("btn-arm"), arBtnF = document.getElementById("btn-arf");
+  const _camPos = new THREE.Vector3(), _camDir = new THREE.Vector3();
+  let arHits = 0;
+  // 바닥을 못 찾아도 폰 앞 0.8m, 눈높이 40cm 아래에 세운다
+  arBtnF.addEventListener("click", function () {
+    try { const cam = renderer.xr.getCamera(camera); cam.getWorldPosition(_camPos); cam.getWorldDirection(_camDir); _camDir.y = 0; _camDir.normalize();
+      arRoot.position.copy(_camPos).addScaledVector(_camDir, 0.8); arRoot.position.y = _camPos.y - 0.4; arPlaced = true; } catch (e) {}
+  });
   arBtnP.addEventListener("click", function () { arHeight = Math.min(arHeight * 1.35, 4); });
   arBtnM.addEventListener("click", function () { arHeight = Math.max(arHeight / 1.35, 0.1); });
   const reticle = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.08, 32).rotateX(-Math.PI / 2),
@@ -207,7 +215,7 @@
     camera.near = 1; camera.far = 3000; camera.updateProjectionMatrix();
     document.getElementById("arHint").style.display = "none";
     renderer.xr.enabled = false; arRoot.position.set(0, 0, 0); arRoot.scale.set(1, 1, 1); arRoot.quaternion.set(0, 0, 0, 1);
-    frameG.visible = true; arBtn.textContent = "AR로 보기"; arBtnP.style.display = "none"; arBtnM.style.display = "none";
+    frameG.visible = true; arBtn.textContent = "AR로 보기"; arBtnP.style.display = "none"; arBtnM.style.display = "none"; arBtnF.style.display = "none";
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
   arBtn.addEventListener("click", async function () {
@@ -220,7 +228,7 @@
       const viewer = await ses.requestReferenceSpace("viewer");
       xrHitSource = await ses.requestHitTestSource({ space: viewer });
       xrSession = ses; arOn = true; arPlaced = false; frameG.visible = false; arBtn.textContent = "AR 끝";
-      document.getElementById("arHint").style.display = ""; arBtnP.style.display = ""; arBtnM.style.display = "";
+      document.getElementById("arHint").style.display = ""; arBtnP.style.display = ""; arBtnM.style.display = ""; arBtnF.style.display = "";
       ses.addEventListener("end", arEnd);
       ses.addEventListener("select", function () {   // 화면을 두드리면 그 자리에 세운다 (다시 두드리면 옮긴다)
         arRoot.position.setFromMatrixPosition(reticle.matrix); arPlaced = true;   // 두드린 순간의 바닥 자리로
@@ -256,7 +264,7 @@
     if (arOn) {
       if (frame && xrHitSource) {
         const ref = renderer.xr.getReferenceSpace();
-        const hits = frame.getHitTestResults(xrHitSource);
+        const hits = frame.getHitTestResults(xrHitSource); arHits = hits.length;
         if (hits.length && ref) {
           const pose = hits[0].getPose(ref); reticle.matrix.fromArray(pose.transform.matrix); reticle.visible = !arPlaced;
           if (!arPlaced) { arRoot.position.setFromMatrixPosition(reticle.matrix); arPlaced = true;   // 처음 바닥을 찾으면 바로 세운다
@@ -265,6 +273,10 @@
       }
       const sAR = arHeight / Math.max(towerTop, 1);         // 탑 높이 arHeight m ([크게][작게]로 조절)
       arRoot.scale.set(sAR, sAR, sAR);
+      if (fc % 15 === 0) { try { const cam = renderer.xr.getCamera(camera); cam.getWorldPosition(_camPos);
+        const dist = arPlaced ? _camPos.distanceTo(arRoot.position) : 0;
+        document.getElementById("arHint").textContent = (arPlaced ? ("탑 거리 " + dist.toFixed(1) + "m · 높이 " + arHeight.toFixed(1) + "m · ") : "탑 아직 안 세움 · ")
+          + (arHits ? "바닥 인식됨" : "바닥 못 찾음 — 천천히 비추거나 [앞에 세우기]"); } catch (e) {} }
       arRoot.visible = arPlaced;
       towerGroup.rotation.x = 0; towerGroup.position.z = 0;
     }
