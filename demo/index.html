@@ -4243,7 +4243,59 @@ function bkTowerInfo(e) {
   document.body.appendChild(d);
 }
 
-async function openTower3D(list, title) {
+
+// ── [3D] 모양 고르기 — 타워형 · 트리형 (사장님 2026-09-23) ──────────────────────
+//    고른 모양으로 바로 연다. 열린 화면 안에는 바꾸는 단추를 두지 않는다.
+var PT_GOAL_KEY = "pt_goal_v1", PT_STOP_KEY = "pt_stop_v1", PT_SHAPE_KEY = "pt_shape_v1";
+function ptGoal() { var v = 0; try { v = parseFloat(localStorage.getItem(PT_GOAL_KEY)); } catch (e) {} return isFinite(v) ? v : 25; }
+function ptStop() { var v = 0; try { v = parseFloat(localStorage.getItem(PT_STOP_KEY)); } catch (e) {} return isFinite(v) ? v : -10; }
+function ptShape() { try { return localStorage.getItem(PT_SHAPE_KEY) || "tower"; } catch (e) { return "tower"; } }
+function towerPick(list, title, pid) {
+  if (!list || !list.length) return;
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  var old = document.getElementById("t3dPick"); if (old) old.remove();
+  var ov = document.createElement("div"); ov.id = "t3dPick";
+  ov.style.cssText = "position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center";
+  var card = '<div style="background:#171d2b;border:1px solid #2b3446;border-radius:16px;padding:16px;width:min(330px,88vw);color:#e8ecf2;font:600 13px system-ui">'
+    + '<div style="font-weight:800;font-size:15px;margin-bottom:10px">' + (en ? "How do you want to see it?" : "어떻게 보시겠습니까?") + '</div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:12px">'
+    + '<button id="t3dTower" style="flex:1;background:#1c7ed6;color:#fff;border:0;border-radius:11px;padding:13px 0;font:800 14px system-ui;cursor:pointer">' + (en ? "Tower" : "타워형") + '</button>'
+    + '<button id="t3dTree" style="flex:1;background:#2bd4c0;color:#08312c;border:0;border-radius:11px;padding:13px 0;font:800 14px system-ui;cursor:pointer">' + (en ? "Tree" : "트리형") + '</button>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'
+    + '<span style="flex:1;color:#9aa4b2">' + (en ? "Target return" : "목표 수익률") + '</span>'
+    + '<input id="t3dGoal" type="number" step="1" value="' + ptGoal() + '" style="width:74px;background:#0f1420;color:#e8ecf2;border:1px solid #2b3446;border-radius:8px;padding:6px 8px;text-align:right;font:700 13px system-ui">%'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;align-items:center">'
+    + '<span style="flex:1;color:#9aa4b2">' + (en ? "Stop loss" : "손절선") + '</span>'
+    + '<input id="t3dStop" type="number" step="1" value="' + ptStop() + '" style="width:74px;background:#0f1420;color:#e8ecf2;border:1px solid #2b3446;border-radius:8px;padding:6px 8px;text-align:right;font:700 13px system-ui">%'
+    + '</div>'
+    + '<div style="color:#6b7688;font-size:11.5px;margin-top:8px">' + (en
+        ? "Reaching the target links the branch tips in bright green; hitting the stop turns them red."
+        : "목표에 닿으면 가지 끝이 형광 초록으로 이어지고, 손절에 닿으면 빨강이 됩니다.") + '</div>'
+    + '<button id="t3dNo" style="width:100%;margin-top:12px;background:transparent;color:#9aa4b2;border:1px solid #2b3446;border-radius:10px;padding:9px 0;font:700 13px system-ui;cursor:pointer">' + (en ? "Cancel" : "닫기") + '</button>'
+    + '</div>';
+  ov.innerHTML = card;
+  document.body.appendChild(ov);
+  function go(shape) {
+    var g = parseFloat(document.getElementById("t3dGoal").value), st = parseFloat(document.getElementById("t3dStop").value);
+    try {
+      if (isFinite(g)) localStorage.setItem(PT_GOAL_KEY, String(g));
+      if (isFinite(st)) localStorage.setItem(PT_STOP_KEY, String(st));
+      localStorage.setItem(PT_SHAPE_KEY, shape);
+    } catch (e) {}
+    ov.remove();
+    openTower3DGo(list, title, pid, shape);
+  }
+  document.getElementById("t3dTower").onclick = function () { go("tower"); };
+  document.getElementById("t3dTree").onclick = function () { go("tree"); };
+  document.getElementById("t3dNo").onclick = function () { ov.remove(); };
+  ov.addEventListener("click", function (e) { if (e.target === ov) ov.remove(); });
+}
+
+function openTower3D(list, title, pid) { towerPick(list, title, pid); }
+
+async function openTower3DGo(list, title, pid, shape) {
   if (!list || !list.length) return;
   var old = document.getElementById("tower3dOv"); if (old) old.remove();
   var ov = document.createElement("div"); ov.id = "tower3dOv";
@@ -4268,7 +4320,8 @@ async function openTower3D(list, title) {
   if (!document.getElementById("tower3dOv")) return;
   var enc = ""; try { enc = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(data))))); } catch (e) {}
   var tt = encodeURIComponent(title || ("\ub2f4\uae34 " + data.length + "\uc885\ubaa9"));
-  ov.innerHTML = '<iframe src="' + TOWER_URL + '?v=' + Date.now() + '#items=' + enc + '&t=' + tt + '" style="position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent" allow="gyroscope;accelerometer;magnetometer;xr-spatial-tracking;camera"></iframe>'
+  var _sh = "&shape=" + (shape === "tree" ? "tree" : "tower") + "&goal=" + (ptGoal() / 100) + "&stop=" + (ptStop() / 100);
+  ov.innerHTML = '<iframe src="' + TOWER_URL + '?v=' + Date.now() + '#items=' + enc + _sh + '&t=' + tt + '" style="position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent" allow="gyroscope;accelerometer;magnetometer;xr-spatial-tracking;camera"></iframe>'
     + '<button onclick="var o=document.getElementById(\'tower3dOv\');if(o)o.remove()" style="position:absolute;top:14px;right:14px;z-index:2;background:rgba(0,0,0,0.6);color:#fff;border:1px solid #666;border-radius:20px;width:42px;height:42px;font-size:20px;font-weight:800;cursor:pointer">\u2715</button>';
 }
 
