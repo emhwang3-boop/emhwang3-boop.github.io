@@ -334,7 +334,7 @@ function svOpenApp(a){
   <button class="svbtn" onclick="discShow()"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
 
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-22 20:50</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-23 06:31</div>
 <div class="foot" id="foot"></div>
 
 <script>
@@ -1961,7 +1961,8 @@ function bkRender() {
   h += svPie(a.map(function (x) { return [x.name, w]; }));
   h += '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
   a.forEach(function (x, i) {
-    h += '<tr><td style="text-align:left">' + x.name + (/^\d/.test(x.code) ? ' <span class="dplbl">' + x.code + '</span>' : '')
+    h += '<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="' + x.code + '" data-mk="' + (x.mk || "")
+       + '" data-nm="' + String(x.name).replace(/"/g, "") + '">' + x.name + (/^\d/.test(x.code) ? ' <span class="dplbl">' + x.code + '</span>' : '')
        + '</td><td>' + w.toFixed(1) + '%</td>'
        + '<td><span class="mhx" onclick="bkDel(' + i + ')">✕</span></td></tr>';
   });
@@ -2246,6 +2247,24 @@ function bkTowerInfo(e) {
     + (en ? "Got it" : "알겠습니다") + '</button></div>';
   document.body.appendChild(d);
 }
+
+// ── 바스켓 줄을 누르면 그 종목·코인 차트로 (사장님 2026-09-23 "한번누르기로") ──
+//    여는 함수는 앱마다 이미 있다 — 주식앱 svGoStock · 코인앱 cvGoCoin.
+function bkGoChart(el) {
+  const code = el.getAttribute("data-code") || "", mk = el.getAttribute("data-mk") || "";
+  const nm = el.getAttribute("data-nm") || code;
+  const coin = /coin/i.test(mk) || /USDT$/i.test(code);
+  if (coin) {
+    const sym = String(code).replace(/-?USDT$/i, "").replace(/-.*$/, "").toUpperCase();
+    if (typeof cvGoCoin === "function") cvGoCoin(sym);
+    return;
+  }
+  if (typeof svGoStock === "function") svGoStock(code, nm, mk === "us");
+}
+document.addEventListener("click", function (e) {
+  const el = (e.target && e.target.closest) ? e.target.closest(".bkgo") : null;
+  if (el) bkGoChart(el);
+});
 
 </script>
 <script>
