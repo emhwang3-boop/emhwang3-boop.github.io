@@ -334,7 +334,7 @@ function svOpenApp(a){
   <button class="svbtn" onclick="discShow()"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
 
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-22 20:39</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-22 20:50</div>
 <div class="foot" id="foot"></div>
 
 <script>
@@ -1937,6 +1937,16 @@ function bkMsg(t, rich) {
   if (m) { if (rich) m.innerHTML = t || ""; else m.textContent = t || ""; m.hidden = !t; }
 }
 
+// 바스켓 줄 이름 — 영어 화면이면 영문명(항목의 en → 추천표 SV_EN[code]), 없으면 한글 그대로 (2026-09-22)
+function bkNm(it) {
+  try {
+    if (typeof LANG !== "undefined" && LANG === "en" && it) {
+      if (it.en) return it.en;
+      if (window.SV_EN && it.code && window.SV_EN[it.code]) return window.SV_EN[it.code];
+    }
+  } catch (e) {}
+  return it.name;
+}
 function bkRender() {
   const box = document.getElementById("bkBody");
   if (!box) return;
@@ -1978,11 +1988,11 @@ async function bkRun(days) {
   for (let i = 0; i < a.length; i++) {
     let cs = null;
     try { cs = await bkBars(a[i]); } catch (e) { cs = null; }
-    if (!cs || cs.length < 5) { rows.push({nm: a[i].name, err: true}); continue; }
+    if (!cs || cs.length < 5) { rows.push({nm: bkNm(a[i]), err: true}); continue; }
     const n = Math.min(days, cs.length - 1);
     const from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
-    if (!(from > 0)) { rows.push({nm: a[i].name, err: true}); continue; }
-    rows.push({nm: a[i].name, r: to / from - 1, n: n, cs: cs.slice(cs.length - 1 - n)});
+    if (!(from > 0)) { rows.push({nm: bkNm(a[i]), err: true}); continue; }
+    rows.push({nm: bkNm(a[i]), r: to / from - 1, n: n, cs: cs.slice(cs.length - 1 - n)});
   }
   const ok = rows.filter(function (x) { return !x.err; });
   if (!ok.length) { bkMsg(KE("자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요.", "Could not load data. Please try again shortly.")); return; }
@@ -2079,8 +2089,8 @@ async function bkSavedRefresh() {
       const it = p.items[j]; let cs = null;
       try { cs = await bkBars(it); } catch (e) { cs = null; }
       const cur = (cs && cs.length) ? cs[cs.length - 1] : 0;
-      if (cur > 0 && it.base > 0) { const r = cur / it.base - 1; rows.push({nm: it.name, r: r}); sum += r; ok++; }
-      else rows.push({nm: it.name, err: true});
+      if (cur > 0 && it.base > 0) { const r = cur / it.base - 1; rows.push({nm: bkNm(it), r: r}); sum += r; ok++; }
+      else rows.push({nm: bkNm(it), err: true});
     }
     p.erows = rows; p.er = ok ? sum / ok : null; p.calc = Date.now();
   }
@@ -2115,7 +2125,7 @@ function bkSavedHtml() {
        + '<span class="mhx" onclick="event.stopPropagation();bkSavedDel(\'' + p.id + '\')">✕</span></div>';
     if (open) {
       h += '<table class="mhtab" style="margin:2px 0 6px">';
-      const er = p.erows || p.items.map(function (it) { return {nm: it.name, pending: true}; });
+      const er = p.erows || p.items.map(function (it) { return {nm: bkNm(it), pending: true}; });
       er.forEach(function (r) {
         const val = r.err ? ('<span class="fl">' + KE("자료 없음", "No data") + '</span>')
                           : (r.pending ? '<span class="dplbl">—</span>' : ('<span class="' + cls(r.r) + '">' + pc(r.r) + '</span>'));
@@ -2169,7 +2179,7 @@ async function openTower3D(list, title, pid) {
     var it = list[i], cs = null;
     try { cs = await bkBars(it); } catch (e) { cs = null; }
     var mm = document.querySelector("#tower3dOv .mpTxt") || document.getElementById("t3dmsg"); if (mm) mm.textContent = "3D 준비 중… " + (i + 1) + "/" + list.length;
-    if (!cs || cs.length < 10) { data.push({ n: it.name, b: 100, r: 0, v: 1, k: bkClassRank(it) }); rows.push({nm: it.name, err: true}); continue; }
+    if (!cs || cs.length < 10) { data.push({ n: bkNm(it), b: 100, r: 0, v: 1, k: bkClassRank(it) }); rows.push({nm: bkNm(it), err: true}); continue; }
     var n = Math.min(60, cs.length - 1), from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
     // 보관한 PT 는 표와 같은 값(보관 기준가 대비 지금). 기준가가 없을 때만 60일 수익률.  (사장님 2026-09-21)
     var r = (it.base > 0) ? (to / it.base - 1) : ((from > 0) ? (to / from - 1) : 0);
@@ -2177,8 +2187,8 @@ async function openTower3D(list, title, pid) {
     for (var k = 1; k < seg.length; k++) dd.push(seg[k] / seg[k - 1] - 1);
     var m = dd.reduce(function (s, x) { return s + x; }, 0) / (dd.length || 1);
     var sd = Math.sqrt(dd.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / (dd.length || 1)) * 100;
-    data.push({ n: it.name, b: 100, r: +r.toFixed(4), v: +Math.max(0.05, sd).toFixed(2), k: bkClassRank(it) });
-    if (it.base > 0 && to > 0) { rows.push({nm: it.name, r: r}); rsum += r; rok++; } else rows.push({nm: it.name, err: true});
+    data.push({ n: bkNm(it), b: 100, r: +r.toFixed(4), v: +Math.max(0.05, sd).toFixed(2), k: bkClassRank(it) });
+    if (it.base > 0 && to > 0) { rows.push({nm: bkNm(it), r: r}); rsum += r; rok++; } else rows.push({nm: bkNm(it), err: true});
   }
   if (pid) { try { var sv = bkSaveGet(); sv.forEach(function (p) { if (p.id === pid) { p.erows = rows; p.er = rok ? rsum / rok : null; p.calc = Date.now(); } }); bkSavePut(sv); bkRender(); } catch (e) {} }
   if (!document.getElementById("tower3dOv")) return;
@@ -2287,7 +2297,23 @@ async function svRecoLoad() {
 //   🔴 우리는 **자산군 비중**과 **그 자산군에 들 만한 종목**까지만 내놓는다.
 //      어느 종목에 얼마를 넣을지는 **고객이 정한다** — 종목별 비중·수량은 내지 않는다.
 //   🔴 이미 가지고 계신 종목은 추천 목록에서 뺀다.
+// 영어 화면 이름 — reco.json 의 "en"(국내 종목·ETF 는 야후 영문명, 미국 ETF 는 꼬리표 번역). 없으면 KN()(사전) → 한글.
+//   한글 이름은 그대로 열쇠다(색·통화 구분·바스켓 저장). 보이는 글자만 바꾼다. (사장님 2026-09-22 "완전한 영문판")
+function svNm(c) {
+  try { if (typeof LANG !== "undefined" && LANG === "en" && c && c.en) return c.en; } catch (e) {}
+  return KN(c.name);
+}
+function svEnIndex() {   // code → en 표 (바스켓·저장 포트폴리오·3D 타워가 같이 쓴다)
+  const m = window.SV_EN || (window.SV_EN = {});
+  try {
+    const R = SVR || {};
+    (R.kr && R.kr.buy12 || []).concat(R.etfw && R.etfw.buy || [], R.levw && R.levw.buy || [],
+                                      R.etfu && R.etfu.buy || [], R.levu && R.levu.buy || [])
+      .forEach(function (r) { if (r && r.code && r.en) m[r.code] = r.en; });
+  } catch (e) {}
+}
 function svRecoRender() {
+  try { svEnIndex(); } catch (e) {}
   const box = document.getElementById("svRecoBody");
   if (!box) return;
   const p = svGet();
@@ -2348,21 +2374,21 @@ function svRecoRender() {
     const cls = m[0];
     let cand = [];
     if (cls === "국내 주식" && SVR && SVR.kr && SVR.kr.buy12) {
-      cand = SVR.kr.buy12.map(function (r) { return {name: r.name, code: r.code}; });
+      cand = SVR.kr.buy12.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
     } else if (cls === "해외 주식" && SVR && SVR.us && SVR.us.buy12) {
       cand = SVR.us.buy12.map(function (r) { return {name: r.code, code: ""}; });
     } else if (cls === "레버리지 ETF(원화)" && SVR && SVR.levw && SVR.levw.buy) {
-      cand = SVR.levw.buy.map(function (r) { return {name: r.name, code: r.code}; });
+      cand = SVR.levw.buy.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
     } else if (cls === "레버리지 ETF(달러)" && SVR && SVR.levu && SVR.levu.buy) {
-      cand = SVR.levu.buy.map(function (r) { return {name: r.name, code: r.code}; });
+      cand = SVR.levu.buy.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
     } else if (cls === "해외 ETF(달러)" && SVR && SVR.etfu && SVR.etfu.buy && SVR.etfu.buy.length) {
       // 🔴 규칙 통과가 하나도 없는 날엔 아래 else 로 떨어져 **고정 목록**을 보여 준다
       //    (사장님 2026-09-20 "달러만 그렇게 해"). 지수 추종이라 비는 것보다 낫다.
-      cand = SVR.etfu.buy.map(function (r) { return {name: r.name, code: r.code}; });
+      cand = SVR.etfu.buy.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
     } else if (cls === "해외 ETF(원화)" && SVR && SVR.etfw && SVR.etfw.buy && SVR.etfw.buy.length) {
       // 🔴 해외 ETF(원화)도 날마다 고른다 (사장님 2026-09-20). 시총 상위 30 안에서 같은 규칙.
       //    개별 주식과 달리 3일 거르개는 안 건다 — 후보가 30개뿐이라 칸이 너무 자주 빈다(실측).
-      cand = SVR.etfw.buy.map(function (r) { return {name: r.name, code: r.code}; });
+      cand = SVR.etfw.buy.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
     } else {
       cand = (SV_PROD[cls] || []).map(function (x) { return {name: x[0], code: x[1]}; });
     }
@@ -2388,7 +2414,7 @@ function svRecoRender() {
               const code = c.code || (isUs ? String(c.name).split(" ")[0] : "");
               // 🔴 국내 코드에 글자가 섞인 것이 있다(0193T0 처럼) — 숫자 여섯 자리로만 보면 빠진다.
               const can = !!code && (isUs || /^[0-9A-Z]{6}$/i.test(code));
-              const lbl = KN(c.name) + (c.code && /^\d/.test(c.code) ? ' <span class="dplbl">' + c.code + '</span>' : '');
+              const lbl = svNm(c) + (c.code && /^\d/.test(c.code) ? ' <span class="dplbl">' + c.code + '</span>' : '');
               // 🔴 onclick 안에 따옴표를 넣으면 깨진다. 값은 data- 로 싣고 누름은 아래에서 한 번에 받는다.
               return can
                 ? '<div class="svitem svgo2" data-code="' + code + '" data-us="' + (isUs ? 1 : 0)
