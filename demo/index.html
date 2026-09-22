@@ -737,7 +737,7 @@ function lastPick(kind){
 }
 function pickStock(code,name){
   rememberPick("kr",code,name);
-  stkCode=code; stkMarket="kr"; E("stkResults").innerHTML=""; E("stkq").value=name+" ("+code+")";
+  stkCode=code; stkMarket="kr"; try{updStkTag();}catch(e){} E("stkResults").innerHTML=""; E("stkq").value=name+" ("+code+")";
   E("stkTf").hidden=false; E("stkChart").hidden=false; E("stkChartLbl").hidden=false; var _bb=E("bkAddBtn"); if(_bb)_bb.hidden=false;
   E("stkDetail").innerHTML='<div class="soonrow">'+L("loading")+'</div>';
   loadStock(); loadChart();
@@ -745,7 +745,7 @@ function pickStock(code,name){
 }
 function pickStockUS(code,name){
   rememberPick("us",code,name);
-  stkCode=code; stkMarket="us"; usDaily=null; E("stkResults").innerHTML=""; E("stkq").value=name+" ("+code.replace(/\.US$/,"")+")";
+  stkCode=code; stkMarket="us"; try{updStkTag();}catch(e){} usDaily=null; E("stkResults").innerHTML=""; E("stkq").value=name+" ("+code.replace(/\.US$/,"")+")";
   E("stkTf").hidden=false; E("stkChart").hidden=false; E("stkChartLbl").hidden=false; var _bb=E("bkAddBtn"); if(_bb)_bb.hidden=false;
   E("stkDetail").innerHTML='<div class="soonrow">'+L("loading")+'</div>';
   loadChartUS(); loadStockUS();
@@ -1325,8 +1325,12 @@ function usFutLive(){var e=_etnow();                                            
 function usFxLive(){var e=_etnow();                                                 // FX 24h(일 17시~금 17시 ET)
   if(e.d===6)return false; if(e.d===0&&e.m<1020)return false; if(e.d===5&&e.m>=1020)return false;
   return true;}
-function updStkTag(){const live=krLiveNow();
-  const el=E("stkTag");if(el){el.className="tag "+(live?"live":"delay");el.textContent=live?L("live"):L("delayed2");}}
+function updStkTag(){
+  const us=(typeof stkMarket!=="undefined"&&stkMarket==="us");
+  const live=us?usIndexLive():krLiveNow(), en=LANG==="en";
+  const el=E("stkTag");
+  if(el){ el.className="tag "+(live?"live":"delay");
+    el.textContent=(en?(us?"US ":"KR "):(us?"미국 ":"국내 "))+(live?(en?"live":"실시간"):(en?"closed":"장마감")); }}
 updStkTag();setInterval(updStkTag,20000);
 // ── 내 보유종목 (사장님 2026-09-16) — 국내·미국 한 표 · 추가/지움 · 이 폰에만 저장 ──
 let MH=[], mhSel=null, mhPx={}, mhSeq=0, mhT=null;
