@@ -98,6 +98,7 @@ body.light .mk img.lt{display:block}
 .mhtab th{color:var(--sub);font-weight:600;font-size:11px;text-align:right;padding:3px 2px;border-bottom:1px solid var(--bd)}
 .mhtab th:first-child{text-align:left}
 .mhtab td{padding:5px 2px;border-bottom:1px solid var(--bd);text-align:right;font-variant-numeric:tabular-nums;color:var(--nm)}
+.mhtab td.up{color:#00a868}.mhtab td.dn{color:#ff433d}.mhtab td.fl{color:var(--sub)}   /* 오른 건 초록·내린 건 빨강 (2026-09-23) */
 .mhtab td:first-child{text-align:left;word-break:keep-all}
 .mhsum td{font-weight:700;border-top:2px solid var(--bd)}
 .mhx{color:var(--sub);cursor:pointer;font-weight:700;padding:0 2px}
@@ -2732,7 +2733,7 @@ async function rlHoldSinceUS() {
   try {
     const tok = await rlToken();
     const f = function (d) { return d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0"); };
-    const e = new Date(), st = new Date(); st.setDate(st.getDate() - 100);
+    const e = new Date(), st = new Date(); st.setDate(st.getDate() - 85);   // 🔴 키움 미국 주문내역은 3개월까지만 (100일이면 rc 20 거절, 2026-09-23 실측)
     const j = await rlKiwoom(tok, "/api/us/acnt", "ust21180", {strt_dt: f(st), end_dt: f(e), slby_tp: "", stex_tp: "", stk_cd: "", oppo_trde_tp: ""});
     const rows = ((j && j.result_list) || []).slice().sort(function (a, b) {
       return String(b.ord_dt + b.ord_time).localeCompare(String(a.ord_dt + a.ord_time)); });   // 최신이 먼저
