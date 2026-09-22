@@ -2507,7 +2507,7 @@ async function rlLoad(auto) {
     try { dpHoldRender(); } catch (e) {}
     try { dpRender(); } catch (e) {}
     setTimeout(function () { try { rlOsoLoad(); } catch (e) {} }, 300);   // 미체결도 같이 (2026-09-19)
-    setTimeout(function () { try { rlHoldSince(); } catch (e) {} }, 2500); // 산 날 (매매일지, 하루 한 번)
+    setTimeout(function () { try { rlHoldSince(); rlHoldSinceUS(); } catch (e) {} }, 2500); // 산 날 (매매일지, 하루 한 번)
   }
 }
 function rlHas() { return (RL.kr.length + RL.us.length + RL.co.length) > 0; }
@@ -2654,7 +2654,7 @@ async function rlHoldSince() {
   const hs = rlHsGet(), today = new Date().toISOString().slice(0, 10), want = {};
   hs._t = hs._t || {};
   const codes = (RL.kr || []).map(function (p) { return p.code; });
-  Object.keys(hs).forEach(function (c) { if (c !== "_t" && codes.indexOf(c) < 0) delete hs[c]; });
+  Object.keys(hs).forEach(function (c) { if (c !== "_t" && c.indexOf("US:") !== 0 && codes.indexOf(c) < 0) delete hs[c]; });   // US: 는 미국 쪽이 관리
   (RL.kr || []).forEach(function (p) {
     const h = hs[p.code];
     if ((!h || h.q !== p.qty) && hs._t[p.code] !== today) want[p.code] = p.qty;
@@ -2693,9 +2693,48 @@ async function rlHoldSince() {
     try { recoRender(); } catch (e) {}
   }
 }
+// ── 미국 주식 산 날 — ust21180 기간별 주문내역(체결수량·매수/매도)을 거슬러, 국내(ka10170)와 같은 셈 (사장님 2026-09-22 "1번으로") ──
+//   2026-09-22 21:4x 실측: result_list 줄에 ord_dt·ord_time·stk_cd·cntr_qty·slby_tp_nm(매수/매도) 가 온다. 100일치 한 번에.
+let RL_HS_US_BUSY = false;
+async function rlHoldSinceUS() {
+  if (RL_HS_US_BUSY || !(ST.kr && ST.kr.key && ST.kr.sec)) return;
+  const hs = rlHsGet(), today = new Date().toISOString().slice(0, 10), want = {};
+  hs._t = hs._t || {};
+  const codes = (RL.us || []).map(function (p) { return "US:" + String(p.code).replace(/\.US$/, "").toUpperCase(); });
+  Object.keys(hs).forEach(function (c) { if (c.indexOf("US:") === 0 && codes.indexOf(c) < 0) delete hs[c]; });
+  (RL.us || []).forEach(function (p) {
+    const c = String(p.code).replace(/\.US$/, "").toUpperCase(), h = hs["US:" + c];
+    if ((!h || h.q !== p.qty) && hs._t["US:" + c] !== today) want[c] = p.qty;
+  });
+  if (!Object.keys(want).length) { rlHsSave(hs); return; }
+  RL_HS_US_BUSY = true;
+  try {
+    const tok = await rlToken();
+    const f = function (d) { return d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0"); };
+    const e = new Date(), st = new Date(); st.setDate(st.getDate() - 100);
+    const j = await rlKiwoom(tok, "/api/us/acnt", "ust21180", {strt_dt: f(st), end_dt: f(e), slby_tp: "", stex_tp: "", stk_cd: "", oppo_trde_tp: ""});
+    const rows = ((j && j.result_list) || []).slice().sort(function (a, b) {
+      return String(b.ord_dt + b.ord_time).localeCompare(String(a.ord_dt + a.ord_time)); });   // 최신이 먼저
+    const net = {}, got = {};
+    rows.forEach(function (r) {
+      const c = String(r.stk_cd || "").toUpperCase(); if (!(c in want) || got[c]) return;
+      const q = rlNum(r.cntr_qty); if (!q) return;
+      const buy = /매수/.test(r.slby_tp_nm || "");
+      net[c] = (net[c] || 0) + (buy ? q : -q);
+      if (buy && net[c] >= want[c] - 0.001) got[c] = String(r.ord_dt);
+    });
+    Object.keys(want).forEach(function (c) { if (got[c]) hs["US:" + c] = {d: got[c], q: want[c]}; hs._t["US:" + c] = today; });
+    rlHsSave(hs);
+  } catch (e) {
+  } finally {
+    RL_HS_US_BUSY = false;
+    try { dpHoldRender(); } catch (e) {}
+  }
+}
 // 산 날부터 오늘까지 영업일 수(주말 뺌) — 못 찾았으면 null
 function rlHeldDays(code) {
-  const h = rlHsGet()[code];
+  const _hs = rlHsGet();
+  const h = _hs[code] || _hs["US:" + String(code).replace(/\.US$/, "").toUpperCase()];
   if (!h || !h.d) {
     // 코인 — 선물은 자리 연 시각, 현물은 체결내역에서 찾은 시각. 달력일로 센다(주말에도 거래).
     let ms = RL_CO_SINCE[code] || 0;
@@ -3352,7 +3391,7 @@ function dpHoldRender(){
     const tagc=(p.mk==="coin")?(p.spot?" sp":" fu"):"";
     h+='<tr><td>'+dpEsc(p.name||p.code)+' <span class="mkt'+tagc+'">'+tag+'</span>'
      +'<span class="rlb">'+(en?"REAL":"실계좌")+'</span>'
-     +(((p.mk==="kr"||p.mk==="coin")&&typeof rlHeldDays==="function"&&rlHeldDays(p.code))
+     +(((p.mk==="kr"||p.mk==="coin"||p.mk==="us")&&typeof rlHeldDays==="function"&&rlHeldDays(p.code))
         ?'<br><span class="dplbl">'+(en?"day ":"")+rlHeldDays(p.code).days+(en?"":"일째")+'</span>':'')+'</td>'
      +'<td>'+qtx+'</td><td>'+mny(p.avg)+'</td><td>'+mny(cur)+'</td>'
      +'<td>'+mny(evl)+'</td>'
@@ -3969,13 +4008,15 @@ function recoRender(){
   h+=body;
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
   const co=(has?RL.co:[]).filter(function(p){return !p.spot;});
-  let c='<div class="dphd" style="margin-top:8px">'+(en?"Crypto":"코인")+'</div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Now":"지금")+'</th><th></th></tr>';
+  let c='<div class="dphd" style="margin-top:8px">'+(en?"Crypto":"코인")+'</div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Now":"지금")+'</th><th></th><th></th></tr>';
   ["BTC","ETH"].forEach(function(k){
     const z=(R.coin||{})[k]||{}, pos=co.filter(function(p){return String(p.code).indexOf(k+"-")===0;})[0];
     const now=pos?(pos.side==="L"?(en?"LONG":"롱"):(en?"SHORT":"숏")):(en?"none":"없음");
     const want=cs(z), ok=(!pos&&z.state==="cash")||(pos&&((pos.side==="L"&&z.state==="long")||(pos.side==="S"&&z.state==="short")));
     c+='<tr><td style="text-align:left">'+k+'</td><td>'+(z.price?(+z.price).toLocaleString(undefined,{maximumFractionDigits:2}):"-")+'</td><td>'+want+'<br><span class="dplbl">'+(z.width!==undefined?(en?"width ":"폭 ")+z.width+"%":"")+'</span></td>'
-      +'<td>'+now+'</td><td class="'+(ok?"up":"dn")+'">'+(ok?(en?"OK":"맞음"):(en?"Change":"바꿀 것"))+'</td></tr>';
+      +'<td>'+now+'</td><td class="'+(ok?"up":"dn")+'">'+(ok?(en?"OK":"맞음"):(en?"Change":"바꿀 것"))+'</td>'
+      +'<td style="white-space:nowrap"><button class="dpb dpsm" style="background:#2f9e44;border-color:#2b8a3e;margin-right:4px" onclick="bkAdd(\''+k+'\',\''+k+'\',\'coin\')">'+(en?"+Cart":"담기")+'</button>'
+      +'<button class="dpb buy dpsm" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'F\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})">'+(en?"View":"조회")+'</button></td></tr>';
   });
   h+=c+'</table>';
   h+='<div class="dpmsg" style="margin-top:6px">'+(en?"Measured rules only. Tap View to open the stock and order.":"잰 규칙만 씁니다. [조회]를 누르면 종목이 열리고 바로 주문할 수 있습니다.")+'</div>';
