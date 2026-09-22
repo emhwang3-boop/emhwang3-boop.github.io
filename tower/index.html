@@ -280,6 +280,7 @@
       arRoot.scale.set(sAR, sAR, sAR);
       if (fc % 15 === 0) { try { const cam = renderer.xr.getCamera(camera); cam.getWorldPosition(_camPos);
         const dist = arPlaced ? _camPos.distanceTo(arRoot.position) : 0;
+        if (arPlaced && dist < 0.15) { arPlaced = false; }   // 카메라 자리에 세워졌으면(0.0m) 다시 바닥을 찾아 세운다
         document.getElementById("arHint").textContent = (arPlaced ? ("탑 거리 " + dist.toFixed(1) + "m · 높이 " + arHeight.toFixed(1) + "m · ") : "탑 아직 안 세움 · ")
           + (arHits ? "바닥 인식됨" : "바닥 못 찾음 — 천천히 비추거나 [앞에 세우기]"); } catch (e) {} }
       arRoot.visible = arPlaced;
