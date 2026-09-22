@@ -2706,7 +2706,7 @@ async function rlHoldSinceUS() {
     const c = String(p.code).replace(/\.US$/, "").toUpperCase(), h = hs["US:" + c];
     if ((!h || h.q !== p.qty) && hs._t["US:" + c] !== today) want[c] = p.qty;
   });
-  if (!Object.keys(want).length) { rlHsSave(hs); return; }
+  if (!Object.keys(want).length) { rlHsSave(hs); try { rlSay("US 산날 이미 있음/없음: " + JSON.stringify(hs).slice(0, 80)); } catch (e) {} return; }  /* 확인용 */
   RL_HS_US_BUSY = true;
   try {
     const tok = await rlToken();
@@ -2725,7 +2725,10 @@ async function rlHoldSinceUS() {
     });
     Object.keys(want).forEach(function (c) { if (got[c]) hs["US:" + c] = {d: got[c], q: want[c]}; hs._t["US:" + c] = today; });
     rlHsSave(hs);
+    try { rlSay("US " + Object.keys(want).join(",") + " rc=" + (j && j.return_code) + " rows=" + ((j && j.result_list) || []).length
+                + " got=" + JSON.stringify(got) + " " + ((j && j.return_msg) || "").slice(0, 40)); } catch (e2) {}   /* 확인용 */
   } catch (e) {
+    try { rlSay("US 산날 오류: " + (e && e.message)); } catch (e2) {}                                                /* 확인용 */
   } finally {
     RL_HS_US_BUSY = false;
     try { dpHoldRender(); } catch (e) {}
