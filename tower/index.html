@@ -235,8 +235,9 @@
       it.textSprite.scale.set(TW / side, TW / side, 1);
       const vr = Math.pow(it.vol / volMax, 1.5);   // 변동성 = 그 큐브의 좌우 흔들림 (사장님 2026-09-22)
       const volX = Math.sin(t * (1.6 + vr * 4) + it.vol) * vr * it._side * 0.35 + Math.sin(t * 8 + it.vol) * vr * it._side * 0.06;
-      // 위아래 = 하락률. 하락이 클수록(크랙이 많을수록) 등락이 잦고 크다. 부스러기(dust)도 하락 때만 떨어진다 (사장님 2026-09-22)
-      const shakeY = loss > 0 ? (Math.sin(t * (3 + loss * 9) + it.vol) * loss * 11 + Math.sin(t * 13 + it.vol) * loss * 2.5) : 0;
+      // 위아래 = 수익률. 이익 큐브는 제자리에서 **위로만**, 손실 큐브는 **아래로만** 움직인다(사장님 2026-09-22). 손실이 클수록 잦고 크다. 부스러기는 손실 때만
+      const bob = Math.abs(Math.sin(t * (2.5 + Math.abs(it.cur) * 9) + it.vol)) + Math.abs(Math.sin(t * 13 + it.vol)) * 0.2;
+      const shakeY = gain > 0.002 ? bob * gain * 7 : (loss > 0.002 ? -bob * loss * 11 : 0);
       const swayX = quakeX * (0.35 + it._baseY / towerTop * 0.9) + volX;
       it.mesh.position.set(swayX, it._baseY + shakeY, 0);
       it.mesh.rotation.y += 0.0015 + Math.pow(it.vol / volMax, 1.3) * 0.026;
