@@ -214,7 +214,7 @@
     frameG.visible = true;
     leanX += (0.18 - leanX) * 0.06; towerGroup.rotation.x = leanX; towerGroup.position.z = 10;
     const asp = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
-    let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.62; SW2 = SH2 * asp; } else { SW2 = towerTop * 0.62; SH2 = SW2 / asp; }
+    let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.62; SW2 = SH2 * asp; } else { SH2 = Math.max(towerTop * 0.56, 9.5 / asp); SW2 = SH2 * asp; }   // 세로 화면: 종목이 몇이든 탑이 화면 높이를 거의 다 채운다(사장님 2026-09-22). 폭은 최소 9.5 로 큐브가 잘리지 않게
     const cyc = towerTop * 0.5;
     let ex, ey;
     if (gyroOn && gyro) { ex = THREE.MathUtils.clamp((gyro.gamma || 0) / 32, -1, 1) * SW2 * 1.15; ey = THREE.MathUtils.clamp(((gyro.beta || 0) - 45) / 38, -1, 1) * SH2 * 0.95; }
