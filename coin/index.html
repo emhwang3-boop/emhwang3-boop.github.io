@@ -1732,6 +1732,13 @@ function discOk() {
   try { localStorage.setItem(DISC_KEY, new Date().toISOString().slice(0, 10)); } catch (e) {}
   var g = document.getElementById("discGate");
   if (g) g.remove();
+  // 🔴 유의사항 창이 설치 띠를 덮고 있어 "설치 단추가 없다"는 말이 나왔다(2026-09-22). 닫자마자 맨 위로 올리고 띠를 깜빡인다.
+  try {
+    if (typeof _showInstall === "function") _showInstall();
+    window.scrollTo(0, 0);
+    var ib = document.getElementById("installBar");
+    if (ib && !ib.hidden) { var k = 0; var tm = setInterval(function () { ib.style.outline = (k % 2 === 0) ? "3px solid #ffb703" : ""; if (++k > 6) { clearInterval(tm); ib.style.outline = ""; } }, 350); }
+  } catch (e) {}
 }
 function discShow() {                                   // 다시 보기 — 유의사항 카드에서 부른다
   var g = document.getElementById("discGate");
