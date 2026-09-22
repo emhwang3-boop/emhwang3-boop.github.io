@@ -107,7 +107,7 @@
   const root = new THREE.Group(); root.add(tiger); root.add(ground); scene.add(root);
 
   // ── 진짜 모델(glTF) — 파일이 있으면 도형 호랑이 대신 쓴다. 주소 뒤 ?rot=90 으로 머리 방향, ?clip=이름 으로 동작 고름 ──
-  let mixer = null, realOn = false; const DEFAULT_ROT = 0;   // 모델의 머리 방향 보정(도). 모델마다 다르다
+  let mixer = null, realOn = false; const DEFAULT_ROT = 180;   // 모델의 머리 방향 보정(도). 여우는 180 (사장님 실측: 0 이면 뒤로 달림)
   const q = new URLSearchParams(location.search);
   const MODEL_URLS = ["model/scene.gltf", "model/tiger.glb", "tiger.glb"];
   (function loadReal(i) {
