@@ -2394,7 +2394,9 @@ function svRecoRender() {
     };
     var _ld = window._lastD, live = (_ld && _ld.asof) ? String(_ld.asof).slice(11, 16) : "";
     h += '<div class="svsub">' + KE("지금 장세", "Market now") + ' · ' + mk("국내", SVR.kr, "코스피") + ' · ' + mk("미국", SVR.us, "S&P500")
-       + (live ? ' <span class="dplbl">' + live + KE(" 실시간", " live") + '</span>' : ' <span class="dplbl">' + (SVR.at || "") + '</span>') + '</div>';
+       + (live ? ' <span class="dplbl">' + live + KE(" 실시간", " live") + '</span>' : ' <span class="dplbl">' + (SVR.at || "") + '</span>') + svInfoMark("svRegInfo") + '</div>'
+       + '<div id="svRegInfo" class="svsub" style="display:none;font-size:11px">' + KE("어제 종가가 기준선(이평선)보다 위인지 아래인지에 오늘 지수 등락을 더해 봅니다. 기준선 위면 좋음, 아래면 나쁨.",
+             "Yesterday's close above or below the baseline (moving average), plus today's index move. Above is Good, below is Bad.") + '</div>';
   }
   h += DISC_TAIL();
   box.innerHTML = h;
@@ -2514,6 +2516,10 @@ function svRegimeTick() {
   } catch (e) {}
 }
 setInterval(svRegimeTick, 15000);
+
+// ⓘ 짧은 안내 펼치기 (사장님 2026-09-22: 자세한 규칙 대신 기준선·이평선 정도로만)
+function svInfoToggle(id) { var n = document.getElementById(id); if (n) n.style.display = (n.style.display === "none" ? "block" : "none"); }
+function svInfoMark(id) { return ' <span onclick="svInfoToggle(&quot;' + id + '&quot;)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle">i</span>'; }
 
 </script>
 <script>
