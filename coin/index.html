@@ -335,7 +335,7 @@ function svOpenApp(a){
   <button class="svbtn" onclick="discShow()"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
 
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-22 20:39</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-22 20:50</div>
 <div class="foot" id="foot"></div>
 
 <script>
@@ -2108,6 +2108,16 @@ function bkMsg(t, rich) {
   if (m) { if (rich) m.innerHTML = t || ""; else m.textContent = t || ""; m.hidden = !t; }
 }
 
+// 바스켓 줄 이름 — 영어 화면이면 영문명(항목의 en → 추천표 SV_EN[code]), 없으면 한글 그대로 (2026-09-22)
+function bkNm(it) {
+  try {
+    if (typeof LANG !== "undefined" && LANG === "en" && it) {
+      if (it.en) return it.en;
+      if (window.SV_EN && it.code && window.SV_EN[it.code]) return window.SV_EN[it.code];
+    }
+  } catch (e) {}
+  return it.name;
+}
 function bkRender() {
   const box = document.getElementById("bkBody");
   if (!box) return;
@@ -2149,11 +2159,11 @@ async function bkRun(days) {
   for (let i = 0; i < a.length; i++) {
     let cs = null;
     try { cs = await bkBars(a[i]); } catch (e) { cs = null; }
-    if (!cs || cs.length < 5) { rows.push({nm: a[i].name, err: true}); continue; }
+    if (!cs || cs.length < 5) { rows.push({nm: bkNm(a[i]), err: true}); continue; }
     const n = Math.min(days, cs.length - 1);
     const from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
-    if (!(from > 0)) { rows.push({nm: a[i].name, err: true}); continue; }
-    rows.push({nm: a[i].name, r: to / from - 1, n: n, cs: cs.slice(cs.length - 1 - n)});
+    if (!(from > 0)) { rows.push({nm: bkNm(a[i]), err: true}); continue; }
+    rows.push({nm: bkNm(a[i]), r: to / from - 1, n: n, cs: cs.slice(cs.length - 1 - n)});
   }
   const ok = rows.filter(function (x) { return !x.err; });
   if (!ok.length) { bkMsg(KE("자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요.", "Could not load data. Please try again shortly.")); return; }
@@ -2250,8 +2260,8 @@ async function bkSavedRefresh() {
       const it = p.items[j]; let cs = null;
       try { cs = await bkBars(it); } catch (e) { cs = null; }
       const cur = (cs && cs.length) ? cs[cs.length - 1] : 0;
-      if (cur > 0 && it.base > 0) { const r = cur / it.base - 1; rows.push({nm: it.name, r: r}); sum += r; ok++; }
-      else rows.push({nm: it.name, err: true});
+      if (cur > 0 && it.base > 0) { const r = cur / it.base - 1; rows.push({nm: bkNm(it), r: r}); sum += r; ok++; }
+      else rows.push({nm: bkNm(it), err: true});
     }
     p.erows = rows; p.er = ok ? sum / ok : null; p.calc = Date.now();
   }
@@ -2286,7 +2296,7 @@ function bkSavedHtml() {
        + '<span class="mhx" onclick="event.stopPropagation();bkSavedDel(\'' + p.id + '\')">✕</span></div>';
     if (open) {
       h += '<table class="mhtab" style="margin:2px 0 6px">';
-      const er = p.erows || p.items.map(function (it) { return {nm: it.name, pending: true}; });
+      const er = p.erows || p.items.map(function (it) { return {nm: bkNm(it), pending: true}; });
       er.forEach(function (r) {
         const val = r.err ? ('<span class="fl">' + KE("자료 없음", "No data") + '</span>')
                           : (r.pending ? '<span class="dplbl">—</span>' : ('<span class="' + cls(r.r) + '">' + pc(r.r) + '</span>'));
@@ -2340,7 +2350,7 @@ async function openTower3D(list, title, pid) {
     var it = list[i], cs = null;
     try { cs = await bkBars(it); } catch (e) { cs = null; }
     var mm = document.querySelector("#tower3dOv .mpTxt") || document.getElementById("t3dmsg"); if (mm) mm.textContent = "3D 준비 중… " + (i + 1) + "/" + list.length;
-    if (!cs || cs.length < 10) { data.push({ n: it.name, b: 100, r: 0, v: 1, k: bkClassRank(it) }); rows.push({nm: it.name, err: true}); continue; }
+    if (!cs || cs.length < 10) { data.push({ n: bkNm(it), b: 100, r: 0, v: 1, k: bkClassRank(it) }); rows.push({nm: bkNm(it), err: true}); continue; }
     var n = Math.min(60, cs.length - 1), from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
     // 보관한 PT 는 표와 같은 값(보관 기준가 대비 지금). 기준가가 없을 때만 60일 수익률.  (사장님 2026-09-21)
     var r = (it.base > 0) ? (to / it.base - 1) : ((from > 0) ? (to / from - 1) : 0);
@@ -2348,8 +2358,8 @@ async function openTower3D(list, title, pid) {
     for (var k = 1; k < seg.length; k++) dd.push(seg[k] / seg[k - 1] - 1);
     var m = dd.reduce(function (s, x) { return s + x; }, 0) / (dd.length || 1);
     var sd = Math.sqrt(dd.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / (dd.length || 1)) * 100;
-    data.push({ n: it.name, b: 100, r: +r.toFixed(4), v: +Math.max(0.05, sd).toFixed(2), k: bkClassRank(it) });
-    if (it.base > 0 && to > 0) { rows.push({nm: it.name, r: r}); rsum += r; rok++; } else rows.push({nm: it.name, err: true});
+    data.push({ n: bkNm(it), b: 100, r: +r.toFixed(4), v: +Math.max(0.05, sd).toFixed(2), k: bkClassRank(it) });
+    if (it.base > 0 && to > 0) { rows.push({nm: bkNm(it), r: r}); rsum += r; rok++; } else rows.push({nm: bkNm(it), err: true});
   }
   if (pid) { try { var sv = bkSaveGet(); sv.forEach(function (p) { if (p.id === pid) { p.erows = rows; p.er = rok ? rsum / rok : null; p.calc = Date.now(); } }); bkSavePut(sv); bkRender(); } catch (e) {} }
   if (!document.getElementById("tower3dOv")) return;
