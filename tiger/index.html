@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>달리는 호랑이 AR</title>
+<meta property="og:title" content="달리는 호랑이 AR">
+<meta property="og:description" content="폰 카메라로 바닥을 비추면 호랑이가 달립니다 (안드로이드 크롬)">
+<style>
+  html, body { height: 100%; }
+  body { margin: 0; overflow: hidden; background: #0e1420; color: #fff; font-family: "Segoe UI", system-ui, sans-serif; }
+  #hint { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.6); color: #fff; font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 12px; white-space: nowrap; z-index: 5; }
+  #controls, #controlsL { position: absolute; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 5; }
+  #controls { right: 10px; align-items: flex-end; }
+  #controlsL { left: 10px; align-items: flex-start; }
+  button { background: rgba(255,170,40,0.95); color: #1a0f00; border: none; padding: 8px 12px; border-radius: 15px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.45); white-space: nowrap; }
+  button.ghost { background: rgba(42,50,62,0.9); color: #fff; }
+</style>
+</head>
+<body>
+<div id="hint">호랑이가 달립니다 · 안드로이드 크롬이면 [AR로 보기]</div>
+<div id="controls">
+  <button id="btn-ar" class="ghost" style="display:none">AR로 보기</button>
+  <button id="btn-share" class="ghost">공유</button>
+  <button id="btn-speed" class="ghost">빠르게</button>
+</div>
+<div id="controlsL">
+  <button id="btn-big" class="ghost" style="display:none">크게</button>
+  <button id="btn-small" class="ghost" style="display:none">작게</button>
+  <button id="btn-front" style="display:none">앞에 놓기</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+<script>
+  // ── 달리는 호랑이 (사장님 2026-09-22) — 외부 모델 없이 도형과 줄무늬 질감으로 만든 입체 호랑이 ──
+  const hint = document.getElementById("hint");
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.01, 100);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true; document.body.appendChild(renderer.domElement);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x556677, 0.9));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(2, 4, 2); sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024); sun.shadow.camera.near = 0.1; sun.shadow.camera.far = 20;
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -3; sun.shadow.camera.right = sun.shadow.camera.top = 3; scene.add(sun);
+
+  // 줄무늬 질감 — 주황 바탕에 검은 줄, 아래는 흰 배
+  function stripeTex(w, h, belly) {
+    const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d");
+    const grad = g.createLinearGradient(0, 0, 0, h); grad.addColorStop(0, "#f39a2b"); grad.addColorStop(0.62, "#e8892a"); grad.addColorStop(belly ? 0.72 : 1, belly ? "#fff3dc" : "#e8892a"); grad.addColorStop(1, belly ? "#fff8ea" : "#e8892a");
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+    g.strokeStyle = "#1a1208"; g.lineCap = "round";
+    for (let i = 0; i < 14; i++) {
+      const x = (i + 0.5) * w / 14 + (Math.random() - 0.5) * 12; g.lineWidth = 7 + Math.random() * 8;
+      g.beginPath(); g.moveTo(x, h * 0.02);
+      g.bezierCurveTo(x + 14, h * 0.25, x - 12, h * 0.45, x + (Math.random() - 0.5) * 24, h * (belly ? 0.6 : 0.85)); g.stroke();
+    }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+  }
+  const furBody = new THREE.MeshStandardMaterial({ map: stripeTex(512, 256, true), roughness: 0.9 });
+  const furLeg = new THREE.MeshStandardMaterial({ map: stripeTex(256, 256, false), roughness: 0.9 });
+  const white = new THREE.MeshStandardMaterial({ color: 0xfff3dc, roughness: 0.9 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.6 });
+  const pink = new THREE.MeshStandardMaterial({ color: 0xd98a8a, roughness: 0.8 });
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0xffcc33, roughness: 0.3, emissive: 0x442200 });
+
+  const tiger = new THREE.Group();            // 호랑이 본체 (길이 약 1.6 단위, 머리가 +z 쪽)
+  const prim = new THREE.Group(); tiger.add(prim);   // 도형 호랑이 (모델이 없을 때)
+  function mesh(geo, mat, x, y, z, parent) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; (parent || prim).add(m); return m; }
+  // 몸통
+  const body = mesh(new THREE.SphereGeometry(0.36, 24, 16), furBody, 0, 0.62, 0); body.scale.set(1, 0.9, 1.9); body.rotation.y = Math.PI / 2;
+  // 가슴·엉덩이 둥글게
+  mesh(new THREE.SphereGeometry(0.33, 20, 14), furBody, 0, 0.64, 0.55).scale.set(1, 0.95, 1);
+  mesh(new THREE.SphereGeometry(0.34, 20, 14), furBody, 0, 0.64, -0.55).scale.set(1, 0.95, 1);
+  // 머리
+  const head = new THREE.Group(); head.position.set(0, 0.86, 0.95); prim.add(head);
+  mesh(new THREE.SphereGeometry(0.27, 24, 18), furLeg, 0, 0, 0, head);
+  const snout = mesh(new THREE.SphereGeometry(0.17, 20, 14), white, 0, -0.07, 0.2, head); snout.scale.set(1.15, 0.8, 1);
+  mesh(new THREE.SphereGeometry(0.06, 12, 10), black, 0, -0.03, 0.36, head);                    // 코
+  mesh(new THREE.SphereGeometry(0.045, 12, 10), eyeMat, -0.11, 0.07, 0.22, head);
+  mesh(new THREE.SphereGeometry(0.045, 12, 10), eyeMat, 0.11, 0.07, 0.22, head);
+  mesh(new THREE.SphereGeometry(0.022, 8, 8), black, -0.11, 0.07, 0.26, head);
+  mesh(new THREE.SphereGeometry(0.022, 8, 8), black, 0.11, 0.07, 0.26, head);
+  for (const sx of [-1, 1]) {                                                                   // 귀
+    const ear = mesh(new THREE.SphereGeometry(0.085, 12, 10), furLeg, sx * 0.17, 0.22, -0.04, head); ear.scale.set(1, 1, 0.5);
+    mesh(new THREE.SphereGeometry(0.045, 10, 8), pink, sx * 0.17, 0.22, 0.0, head).scale.set(1, 1, 0.4);
+  }
+  // 다리 (엉덩이·어깨 관절에서 흔들린다)
+  const legs = [];
+  for (const [x, z, front] of [[-0.2, 0.55, true], [0.2, 0.55, true], [-0.2, -0.55, false], [0.2, -0.55, false]]) {
+    const hip = new THREE.Group(); hip.position.set(x, 0.55, z); prim.add(hip);
+    const upper = mesh(new THREE.CylinderGeometry(0.09, 0.075, 0.34, 12), furLeg, 0, -0.17, 0, hip);
+    const knee = new THREE.Group(); knee.position.set(0, -0.34, 0); hip.add(knee);
+    mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.3, 12), furLeg, 0, -0.15, 0, knee);
+    mesh(new THREE.SphereGeometry(0.085, 12, 10), white, 0, -0.3, 0.02, knee).scale.set(1, 0.7, 1.2);   // 발
+    legs.push({ hip, knee, front, phase: (x < 0) === front ? 0 : Math.PI });
+  }
+  // 꼬리 (마디 5개)
+  const tailSegs = []; let tp = new THREE.Group(); tp.position.set(0, 0.78, -0.95); prim.add(tp);
+  for (let i = 0; i < 5; i++) { const seg = new THREE.Group(); mesh(new THREE.CylinderGeometry(0.05 - i * 0.006, 0.045 - i * 0.006, 0.22, 10), i === 4 ? black : furLeg, 0, 0, -0.11, seg).rotation.x = Math.PI / 2; seg.position.set(0, 0, -0.2 * (i > 0 ? 1 : 0)); tp.add(seg); tailSegs.push(seg); tp = seg; }
+  // 바닥 그림자 받침(투명)
+  const shadowMat = new THREE.ShadowMaterial({ opacity: 0.35 });
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(3, 48), shadowMat); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
+
+  const root = new THREE.Group(); root.add(tiger); root.add(ground); scene.add(root);
+
+  // ── 진짜 모델(glTF) — 파일이 있으면 도형 호랑이 대신 쓴다. 주소 뒤 ?rot=90 으로 머리 방향, ?clip=이름 으로 동작 고름 ──
+  let mixer = null, realOn = false;
+  const q = new URLSearchParams(location.search);
+  const MODEL_URLS = ["model/scene.gltf", "model/tiger.glb", "tiger.glb"];
+  (function loadReal(i) {
+    if (i >= MODEL_URLS.length || typeof THREE.GLTFLoader === "undefined") return;
+    const loader = new THREE.GLTFLoader();
+    try { const dr = new THREE.DRACOLoader(); dr.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/"); loader.setDRACOLoader(dr); } catch (e) {}
+    loader.load(MODEL_URLS[i], function (g) {
+      const obj = g.scene; obj.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+      const holder = new THREE.Group(); holder.add(obj);
+      obj.rotation.y = (parseFloat(q.get("rot") || "0") || 0) * Math.PI / 180;        // 머리가 +z 를 보게 맞춘다
+      holder.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(holder); const size = box.getSize(new THREE.Vector3());
+      const len = Math.max(size.x, size.z, 0.001); const sc = 1.6 / len; holder.scale.set(sc, sc, sc);
+      holder.updateMatrixWorld(true); const box2 = new THREE.Box3().setFromObject(holder); const c = box2.getCenter(new THREE.Vector3());
+      holder.position.set(-c.x, -box2.min.y, -c.z);                                      // 바닥에 발이 닿고 가운데에
+      tiger.add(holder); prim.visible = false; realOn = true;
+      if (g.animations && g.animations.length) {
+        mixer = new THREE.AnimationMixer(obj);
+        const want = (q.get("clip") || "run").toLowerCase();
+        let clip = g.animations.find(function (a) { return a.name.toLowerCase().indexOf(want) >= 0; }) || g.animations[0];
+        mixer.clipAction(clip).play();
+        hint.textContent = "동작: " + g.animations.map(function (a) { return a.name; }).join(" · ");
+      }
+    }, undefined, function () { loadReal(i + 1); });
+  })(0);
+
+  // ── 달리기 동작: 원을 그리며 뛴다 ──
+  let speed = 1.0, R = 1.6, ang = 0;
+  const clock = new THREE.Clock();
+  function runStep(dt, t) {
+    ang += dt * speed * 1.1 / R;
+    tiger.position.set(Math.cos(ang) * R, 0, Math.sin(ang) * R);
+    tiger.rotation.y = -ang + Math.PI;                  // 원의 접선 방향(머리가 앞)
+    const f = t * 9 * speed, gait = Math.sin(f);
+    tiger.position.y = Math.abs(Math.sin(f)) * 0.07;    // 뛰며 오르내림
+    if (realOn) return;
+    body.rotation.x = Math.PI / 2 + gait * 0.03;
+    head.rotation.x = -0.15 + Math.sin(f) * 0.08;
+    legs.forEach(function (L) { const s = Math.sin(f + L.phase); L.hip.rotation.x = s * 0.75 * (L.front ? 1 : 0.9); L.knee.rotation.x = Math.max(0, -Math.sin(f + L.phase + 0.9)) * 1.1; });
+    tailSegs.forEach(function (seg, i) { seg.rotation.y = Math.sin(t * 6 + i * 0.6) * 0.25; seg.rotation.x = 0.35 - i * 0.05 + Math.sin(t * 3 + i) * 0.1; });
+  }
+  document.getElementById("btn-speed").addEventListener("click", function () { speed = speed >= 2 ? 0.6 : speed + 0.7; this.textContent = speed >= 2 ? "천천히" : "빠르게"; });
+  document.getElementById("btn-share").addEventListener("click", async function () {
+    const url = location.origin + location.pathname;
+    try { if (navigator.share) await navigator.share({ title: "달리는 호랑이 AR", text: "폰으로 바닥을 비추면 호랑이가 달립니다", url: url });
+      else { await navigator.clipboard.writeText(url); alert("주소를 복사했습니다\n" + url); } } catch (e) {}
+  });
+
+  // ── 일반 보기: 카메라가 천천히 돈다 ──
+  let orbit = 0;
+  function normalView(dt) {
+    orbit += dt * 0.25;
+    camera.position.set(Math.cos(orbit) * 4.2, 2.1, Math.sin(orbit) * 4.2); camera.lookAt(0, 0.4, 0);
+  }
+
+  // ── AR (WebXR, 안드로이드 크롬) ──
+  let xrSession = null, xrHitSource = null, arOn = false, arPlaced = false, arSize = 0.6, arHits = 0;
+  const reticle = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.08, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffaa28, transparent: true, opacity: 0.9 }));
+  reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
+  const arBtn = document.getElementById("btn-ar"), bBig = document.getElementById("btn-big"), bSmall = document.getElementById("btn-small"), bFront = document.getElementById("btn-front");
+  const _p = new THREE.Vector3(), _d = new THREE.Vector3();
+  try { if (navigator.xr && navigator.xr.isSessionSupported) navigator.xr.isSessionSupported("immersive-ar").then(function (ok) { if (ok) arBtn.style.display = ""; }).catch(function () {}); } catch (e) {}
+  function setArUI(on) { [bBig, bSmall, bFront].forEach(function (b) { b.style.display = on ? "" : "none"; }); arBtn.textContent = on ? "AR 끝" : "AR로 보기"; }
+  function arEnd() { arOn = false; arPlaced = false; xrHitSource = null; xrSession = null; reticle.visible = false; renderer.xr.enabled = false;
+    root.position.set(0, 0, 0); root.scale.set(1, 1, 1); setArUI(false); hint.textContent = "호랑이가 달립니다 · 안드로이드 크롬이면 [AR로 보기]"; renderer.setSize(innerWidth, innerHeight); }
+  arBtn.addEventListener("click", async function () {
+    if (xrSession) { try { await xrSession.end(); } catch (e) {} return; }
+    try {
+      const ses = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ["hit-test"], optionalFeatures: ["dom-overlay"], domOverlay: { root: document.body } });
+      renderer.xr.enabled = true; renderer.xr.setReferenceSpaceType("local"); await renderer.xr.setSession(ses);
+      const viewer = await ses.requestReferenceSpace("viewer"); xrHitSource = await ses.requestHitTestSource({ space: viewer });
+      xrSession = ses; arOn = true; arPlaced = false; setArUI(true); hint.textContent = "바닥이나 책상을 천천히 비추세요";
+      ses.addEventListener("end", arEnd);
+      ses.addEventListener("select", function () { root.position.setFromMatrixPosition(reticle.matrix); arPlaced = true; });
+    } catch (e) { arEnd(); alert("AR을 열 수 없습니다: " + (e && e.message ? e.message : e)); }
+  });
+  bBig.addEventListener("click", function () { arSize = Math.min(arSize * 1.35, 5); });
+  bSmall.addEventListener("click", function () { arSize = Math.max(arSize / 1.35, 0.1); });
+  bFront.addEventListener("click", function () { try { const cam = renderer.xr.getCamera(camera); cam.getWorldPosition(_p); cam.getWorldDirection(_d); _d.y = 0; _d.normalize();
+    root.position.copy(_p).addScaledVector(_d, 1.2); root.position.y = _p.y - 0.5; arPlaced = true; } catch (e) {} });
+
+  let fc = 0;
+  renderer.setAnimationLoop(function (_ts, frame) {
+    const dt = Math.min(clock.getDelta(), 0.05), t = clock.getElapsedTime(); fc++;
+    runStep(dt, t); if (mixer) mixer.update(dt * Math.max(speed, 0.3));
+    if (arOn) {
+      if (frame && xrHitSource) { const ref = renderer.xr.getReferenceSpace(); const hits = frame.getHitTestResults(xrHitSource); arHits = hits.length;
+        if (hits.length && ref) { reticle.matrix.fromArray(hits[0].getPose(ref).transform.matrix); reticle.visible = !arPlaced;
+          if (!arPlaced) { root.position.setFromMatrixPosition(reticle.matrix); arPlaced = true; } }
+        else if (!arPlaced) reticle.visible = false; }
+      const s = arSize / 1.6;                      // 호랑이 길이 = arSize m
+      root.scale.set(s, s, s); root.visible = arPlaced;
+      if (fc % 15 === 0) { try { const cam = renderer.xr.getCamera(camera); cam.getWorldPosition(_p);
+        hint.textContent = (arPlaced ? ("호랑이 거리 " + _p.distanceTo(root.position).toFixed(1) + "m · 길이 " + arSize.toFixed(1) + "m · ") : "아직 안 놓음 · ") + (arHits ? "바닥 인식됨 · 두드리면 옮김" : "바닥 못 찾음 — [앞에 놓기]"); } catch (e) {} }
+    } else { root.visible = true; normalView(dt); }
+    renderer.render(scene, camera);
+  });
+  addEventListener("resize", function () { if (!arOn) { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); } });
+</script>
+</body>
+</html>
