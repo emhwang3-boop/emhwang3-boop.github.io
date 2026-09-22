@@ -22,6 +22,7 @@
   <button id="btn-gyro" class="ghost">📱 기울여 보기</button>
   <div id="tstate">지금 상태</div>
   <button id="btn-reset" class="ghost">처음</button>
+  <button id="btn-ar" class="ghost" style="display:none">AR로 보기</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -66,7 +67,8 @@
 
   const GROUND_Y = -18;   // 바닥 바둑판은 뺐다(사장님 2026-09-22). 실의 아랫점만 이 높이.
 
-  const towerGroup = new THREE.Group(); scene.add(towerGroup);
+  const arRoot = new THREE.Group(); scene.add(arRoot);
+  const towerGroup = new THREE.Group(); arRoot.add(towerGroup);
   // 중심축 = 큐브 중심을 정확히 꿰는 가는 실(1px). 탑 높이만큼만, 흔들림을 따라 휜다.
   const THREAD_N = 64;
   const threadGeo = new THREE.BufferGeometry();
@@ -184,9 +186,40 @@
   }
   document.getElementById("btn-gyro").addEventListener("click", enableGyro);
 
+  // ── AR (WebXR) — 안드로이드 크롬. 폰 카메라가 찍는 바닥·책상 위에 탑을 세운다 (사장님 2026-09-22 실측용) ──
+  let xrSession = null, xrHitSource = null, arPlaced = false, arOn = false;
+  const reticle = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.08, 32).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ color: 0x2bd4c0, transparent: true, opacity: 0.9 }));
+  reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
+  const arBtn = document.getElementById("btn-ar");
+  try {
+    if (navigator.xr && navigator.xr.isSessionSupported)
+      navigator.xr.isSessionSupported("immersive-ar").then(function (ok) { if (ok) arBtn.style.display = ""; }).catch(function () {});
+  } catch (e) {}
+  function arEnd() {
+    arOn = false; arPlaced = false; xrHitSource = null; xrSession = null; reticle.visible = false;
+    renderer.xr.enabled = false; arRoot.position.set(0, 0, 0); arRoot.scale.set(1, 1, 1); arRoot.quaternion.set(0, 0, 0, 1);
+    frameG.visible = true; arBtn.textContent = "AR로 보기";
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+  arBtn.addEventListener("click", async function () {
+    if (xrSession) { try { await xrSession.end(); } catch (e) {} return; }
+    try {
+      const ses = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ["hit-test"], optionalFeatures: ["dom-overlay"], domOverlay: { root: document.body } });
+      renderer.xr.enabled = true; renderer.xr.setReferenceSpaceType("local");
+      await renderer.xr.setSession(ses);
+      const viewer = await ses.requestReferenceSpace("viewer");
+      xrHitSource = await ses.requestHitTestSource({ space: viewer });
+      xrSession = ses; arOn = true; arPlaced = false; frameG.visible = false; arBtn.textContent = "AR 끝";
+      ses.addEventListener("end", arEnd);
+      ses.addEventListener("select", function () {   // 화면을 두드리면 그 자리에 세운다 (다시 두드리면 옮긴다)
+        if (reticle.visible) { arRoot.position.setFromMatrixPosition(reticle.matrix); arPlaced = true; }
+      });
+    } catch (e) { arEnd(); alert("AR을 열 수 없습니다: " + (e && e.message ? e.message : e)); }
+  });
+
   const clock = new THREE.Clock();
-  function animate() {
-    requestAnimationFrame(animate);
+  function animate(_ts, frame) {
     const t = clock.getElapsedTime(); fc++;
 
     if (playing && prog < 1) { prog = Math.min(1, prog + 0.009); items.forEach(function (it) { it.cur = it.ret * prog; }); if (prog >= 1) document.getElementById("tstate").innerText = "지금 상태"; }
@@ -210,9 +243,22 @@
     const quakeAmp = Math.min(midCrack * 60 + topHeavy * 10, towerTop * 0.16);   // 상한은 탑 높이의 16% — 화면 밖으로 안 나가게
     const quakeX = quakeAmp > 0.2 ? Math.sin(t * (2.6 + midCrack * 6 + topHeavy * 2)) * quakeAmp : 0;
 
+    if (arOn) {
+      if (frame && xrHitSource && !arPlaced) {
+        const ref = renderer.xr.getReferenceSpace();
+        const hits = frame.getHitTestResults(xrHitSource);
+        if (hits.length && ref) { const pose = hits[0].getPose(ref); reticle.visible = true; reticle.matrix.fromArray(pose.transform.matrix); }
+        else reticle.visible = false;
+      } else if (arPlaced) reticle.visible = false;
+      const sAR = 0.35 / Math.max(towerTop, 1);            // 탑 높이 35cm
+      arRoot.scale.set(sAR, sAR, sAR);
+      arRoot.visible = arPlaced;
+      towerGroup.rotation.x = 0; towerGroup.position.z = 0;
+    }
     camR += (Math.max(150, Math.min(towerTop * 2.0, 340)) - camR) * 0.05;
-    frameG.visible = true;
-    leanX += (0.18 - leanX) * 0.06; towerGroup.rotation.x = leanX; towerGroup.position.z = 10;
+    frameG.visible = !arOn;
+    if (!arOn) arRoot.visible = true;
+    if (!arOn) { leanX += (0.18 - leanX) * 0.06; towerGroup.rotation.x = leanX; towerGroup.position.z = 10; }
     const asp = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
     let SW2, SH2; if (asp >= 1) { SH2 = towerTop * 0.62; SW2 = SH2 * asp; } else { SH2 = Math.max(towerTop * 0.60, 9.5 / asp); SW2 = SH2 * asp; }   // 세로 화면: 종목이 몇이든 탑이 화면 높이를 거의 다 채운다(사장님 2026-09-22). 폭은 최소 9.5 로 큐브가 잘리지 않게
     const cyc = (asp >= 1) ? towerTop * 0.5 : towerTop * 0.5 - SH2 * 0.10;   // 세로 화면: 카메라 중심을 내려 탑이 위로 올라가게 — 아래 단추 띠에 안 가리게
@@ -221,8 +267,9 @@
     else { baseAng += 0.004; ex = Math.sin(baseAng) * SW2 * 0.55; ey = Math.sin(baseAng * 0.6) * SH2 * 0.15; }
     eyeX += (ex - eyeX) * 0.12; eyeY += (ey - eyeY) * 0.12;
     const EZ = camR * 1.15, nr = 1, fr = 3000;
+    if (!arOn) {
     camera.projectionMatrix.makePerspective(nr * (-SW2 - eyeX) / EZ, nr * (SW2 - eyeX) / EZ, nr * (SH2 - eyeY) / EZ, nr * (-SH2 - eyeY) / EZ, nr, fr);
-    camera.position.set(eyeX, cyc + eyeY, EZ); camera.quaternion.set(0, 0, 0, 1); camera.updateMatrixWorld();
+    camera.position.set(eyeX, cyc + eyeY, EZ); camera.quaternion.set(0, 0, 0, 1); camera.updateMatrixWorld(); }
     { const fw = SW2, fbot = cyc - SH2, ftop = cyc + SH2, th = Math.max(2, towerTop * 0.025), w = 2 * fw + 2 * th;
       fTop.position.set(0, ftop, 0); fTop.scale.set(w, th, th);
       fBot.position.set(0, fbot, 0); fBot.scale.set(w, th, th);
@@ -280,7 +327,7 @@
     }
     renderer.render(scene, camera);
   }
-  animate();
+  renderer.setAnimationLoop(animate);
 
   window.addEventListener("resize", function () {
     camera.aspect = window.innerWidth / window.innerHeight;
