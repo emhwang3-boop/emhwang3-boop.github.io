@@ -2663,7 +2663,8 @@ async function rlHoldSince() {
     const h = hs[p.code];
     if ((!h || h.q !== p.qty) && now - (hs._t2[p.code] || 0) > 600000) want[p.code] = p.qty;
   });
-  if (!Object.keys(want).length) { rlHsSave(hs); return; }
+  rlHsSave(hs);                                   // 정리분은 기다리기 전에 저장 (2026-09-22)
+  if (!Object.keys(want).length) return;
   RL_HS_BUSY = true;
   try {
     const tok = await rlToken(), net = {}, got = {};
@@ -2689,9 +2690,10 @@ async function rlHoldSince() {
         });
       }
     }
+    const cur = rlHsGet(); cur._t2 = cur._t2 || {};           // 🔴 새로 읽어 자기 몫만 — 미국 날짜를 덮어 지우지 않게
     Object.keys(want).forEach(function (c) {
-      if (got[c]) { hs[c] = {d: got[c], q: want[c]}; delete hs._t2[c]; } else hs._t2[c] = Date.now(); });
-    rlHsSave(hs);
+      if (got[c]) { cur[c] = {d: got[c], q: want[c]}; delete cur._t2[c]; } else cur._t2[c] = Date.now(); });
+    rlHsSave(cur);
   } finally {
     RL_HS_BUSY = false;
     try { dpHoldRender(); } catch (e) {}
@@ -2711,7 +2713,8 @@ async function rlHoldSinceUS() {
     const c = String(p.code).replace(/\.US$/, "").toUpperCase(), h = hs["US:" + c];
     if ((!h || h.q !== p.qty) && now - (hs._t2["US:" + c] || 0) > 600000) want[c] = p.qty;
   });
-  if (!Object.keys(want).length) { rlHsSave(hs); return; }
+  rlHsSave(hs);                                   // 정리분은 기다리기 전에 저장 (2026-09-22)
+  if (!Object.keys(want).length) return;
   RL_HS_US_BUSY = true;
   try {
     const tok = await rlToken();
@@ -2728,11 +2731,13 @@ async function rlHoldSinceUS() {
       net[c] = (net[c] || 0) + (buy ? q : -q);
       if (buy && net[c] >= want[c] - 0.001) got[c] = String(r.ord_dt);
     });
+    const cur = rlHsGet(); cur._t2 = cur._t2 || {};           // 🔴 새로 읽어 자기 몫만
     Object.keys(want).forEach(function (c) {
-      if (got[c]) { hs["US:" + c] = {d: got[c], q: want[c]}; delete hs._t2["US:" + c]; } else hs._t2["US:" + c] = Date.now(); });
-    rlHsSave(hs);
+      if (got[c]) { cur["US:" + c] = {d: got[c], q: want[c]}; delete cur._t2["US:" + c]; } else cur._t2["US:" + c] = Date.now(); });
+    rlHsSave(cur);
   } catch (e) {
-    Object.keys(want).forEach(function (c) { hs._t2["US:" + c] = Date.now(); }); rlHsSave(hs);
+    const cur = rlHsGet(); cur._t2 = cur._t2 || {};
+    Object.keys(want).forEach(function (c) { cur._t2["US:" + c] = Date.now(); }); rlHsSave(cur);
   } finally {
     RL_HS_US_BUSY = false;
     try { dpHoldRender(); } catch (e) {}
