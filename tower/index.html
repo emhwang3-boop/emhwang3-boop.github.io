@@ -10,10 +10,11 @@
   #panel { position: absolute; top: calc(env(safe-area-inset-top,0px) + 8px); left: 0; right: 0; text-align: center; z-index: 5; pointer-events: none; padding: 0 16px; }
   #panel .disc { font-size: 10px; color: #b3bdc9; line-height: 1.35; text-shadow: 0 1px 3px rgba(0,0,0,.9); }
   #panel .ic { color: #7fd8ff; font-weight: 800; }
-  /* 단추는 오른쪽 세로 한 줄, AR 전용은 왼쪽 세로 줄 — 탑 아래를 안 가리게 (사장님 2026-09-22) */
-  #controls, #controlsL { position: absolute; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 5; }
-  #controls { right: 10px; align-items: flex-end; }
-  #controlsL { left: 10px; align-items: flex-start; }
+  /* 단추는 화면 아래쪽에 가로로 깐다 (사장님 2026-09-23) */
+  #controls, #controlsL { position: absolute; left: 0; right: 0; display: flex; flex-direction: row; flex-wrap: wrap;
+                          justify-content: center; align-items: center; gap: 8px; z-index: 5; padding: 0 10px; }
+  #controls  { bottom: calc(env(safe-area-inset-bottom,0px) + 10px); }
+  #controlsL { bottom: calc(env(safe-area-inset-bottom,0px) + 52px); }
   button { background: rgba(0,255,204,0.9); color: #04120f; border: none; padding: 7px 11px; border-radius: 15px; font-weight: 700; font-size: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.45); white-space: nowrap; }
   button.ghost { background: rgba(42,50,62,0.9); color: #fff; }
   #tstate { display: none; }
