@@ -2470,7 +2470,8 @@ function cvRecoRender() {
        + '<td class="' + cvChgCls(x.chg) + '">' + cvChg(x.chg) + '</td>'
        + '<td>' + cvTurn(x.turn) + '</td></tr>';
   });
-  h += '</table><div class="svsub">' + KE(((CVR && CVR.at) || "") + ' 기준', 'as of ' + ((CVR && CVR.at) || "")) + '</div>';
+  if (!CV_LIVE_AT && !window._cvLiveKick) { window._cvLiveKick = 1; setTimeout(cvLiveRefresh, 300); }
+  h += '</table><div class="svsub">' + (CV_LIVE_AT ? (CV_LIVE_AT + KE(" 실시간 (바이낸스)", " live (Binance)")) : KE(((CVR && CVR.at) || "") + ' 기준', 'as of ' + ((CVR && CVR.at) || ""))) + '</div>';
 
   // 🔴 누구에게나 같은 내용을 낸다 (사장님 2026-09-20).
   // ① 자산 배분 — 가상 계좌 10만 USDT 기준. 코인은 포트폴리오가 하나뿐이다(사장님 2026-09-20).
@@ -2565,6 +2566,21 @@ function bkAddCurrent() {
   if (card && card.scrollIntoView) card.scrollIntoView({behavior: "smooth", block: "start"});
 }
 setTimeout(function () { try { bkRender(); } catch (e) {} }, 900);
+
+// 🔴 현황 표는 실시간 — reco.json 의 아침 값 대신 바이낸스 24h 티커로 가격·등락·거래대금을 덮고 1분마다 다시 그린다 (사장님 2026-09-22)
+var CV_LIVE_AT = "";
+function cvLiveRefresh() {
+  const c = CVR && CVR.coin; if (!c) return;
+  const syms = Object.keys(c);
+  Promise.all(syms.map(function (k) {
+    return fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=" + k + "USDT", { cache: "no-store" }).then(function (r) { return r.json(); }).catch(function () { return null; });
+  })).then(function (rs) {
+    var got = 0;
+    rs.forEach(function (t, i) { if (t && t.lastPrice) { var x = c[syms[i]]; x.price = +t.lastPrice; x.chg = +t.priceChangePercent; x.turn = +t.quoteVolume; got++; } });
+    if (got) { var d = new Date(); CV_LIVE_AT = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); try { cvRecoRender(); } catch (e) {} }
+  });
+}
+setInterval(cvLiveRefresh, 60000);
 
 </script>
 </body></html>
