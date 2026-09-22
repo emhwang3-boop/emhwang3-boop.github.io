@@ -452,7 +452,7 @@ function grpDelay(gr){
   return false;
 }
 function render(d){
-  window._lastD=d;
+  window._lastD=d; try{ if(typeof dpRegimeTick==="function") dpRegimeTick(); }catch(e){}
   {
     document.getElementById("asof").textContent=d.asof+L("asof")+(d.__snap?L("snap"):"");
     // 게이지 (+ 시장온도)
@@ -4238,5 +4238,17 @@ function vcSend(){
   setTimeout(vcCount, 1200);
 })();
 
+
+// 장세 실시간 갱신 — 허브 자료가 올 때마다 코스피·S&P500 등락이 바뀌었으면 추천 카드를 다시 그린다 (사장님 2026-09-22)
+var _dpRegKey="";
+function dpRegimeTick(){
+  try{
+    var d=window._lastD; if(!d||!d.changes||!RECO) return;
+    var k=d.changes.filter(function(c){return c.nm==="코스피"||c.nm==="S&P500";}).map(function(c){return c.nm+":"+c.pct;}).join("|")+"|"+(d.asof||"");
+    if(k===_dpRegKey) return; _dpRegKey=k;
+    if(document.getElementById("recoCard")) recoRender();
+  }catch(e){}
+}
+setInterval(dpRegimeTick,15000);
 </script>
 </body></html>
