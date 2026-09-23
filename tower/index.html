@@ -52,7 +52,8 @@
     if (d) {
       const arr = JSON.parse(decodeURIComponent(escape(atob(d))));
       if (arr && arr.length) {
-        RAW = arr.map(function (x) { return { name: String(x.n || x.name || "?"), base: +(x.b || x.base || 100) || 100, ret: +(x.r || x.ret || 0) || 0, vol: Math.max(0.05, +(x.v || x.vol || 1) || 1), k: +(x.k || 0) || 0 }; });
+        RAW = arr.map(function (x) { return { name: String(x.n || x.name || "?"), base: +(x.b || x.base || 100) || 100, ret: +(x.r || x.ret || 0) || 0, vol: Math.max(0.05, +(x.v || x.vol || 1) || 1), k: +(x.k || 0) || 0,
+                 m: +(x.m || 0) || 0, c: String(x.c || "KRW") }; });   // 금액·통화도 옮긴다 (2026-09-23)
         var _st = document.getElementById("subt"); if (_st) _st.textContent = p.get("t") ? decodeURIComponent(p.get("t")) : ("담긴 " + RAW.length + "종목");
       }
     }
@@ -149,7 +150,7 @@
     return v.toLocaleString() + "만";
   };
   const cubeMoney = function (it) {
-    return (typeof it.m === "number" && it.m > 0) ? fmtMoney(it.m, it.c) : fmtMoney(it.b, "KRW");
+    return (it.m > 0) ? fmtMoney(it.m, it.c) : fmtMoney(it.base || 0, "KRW");
   };
   const fmtPct = function (r) { return (r >= 0 ? "+" : "") + (r * 100).toFixed(1) + "%"; };
 
