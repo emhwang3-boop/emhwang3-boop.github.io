@@ -2427,7 +2427,12 @@ var TOWER_URL = "https://emhwang3-boop.github.io/tower/";
 var BK_CLS_ORDER = ["예금", "국내 ETF", "해외 ETF(원화)", "해외 ETF(달러)", "국내 주식", "해외 주식", "레버리지 ETF(원화)", "레버리지 ETF(달러)"];
 function bkClassOf(it) {
   var code = String(it.code || ""), nm = String(it.name || "");
-  if (it.mk === "coin") { var c = code.replace(/-?USDT$/i, "").replace(/-.*$/, "").toUpperCase(); return c === "BTC" ? "BTC" : (c === "ETH" ? "ETH" : "알트"); }
+  if (it.mk === "coin") {
+    var perp = /\|F$/i.test(code) || /선물|Perp/i.test(nm);
+    var c = code.replace(/\|[FS]$/i, "").replace(/-?USDT$/i, "").replace(/-.*$/, "").toUpperCase();
+    var head = (c === "BTC") ? "BTC" : (c === "ETH" ? "ETH" : "알트");
+    return head + (perp ? " 선물" : " 현물");
+  }
   // 1) 대표상품·오늘 추천 목록에 있으면 그 자산군 (가장 정확하다)
   try {
     if (typeof SV_PROD !== "undefined") for (var k in SV_PROD) if ((SV_PROD[k] || []).some(function (x) { return x[1] && x[1] === code; })) return k;
@@ -2631,9 +2636,10 @@ function bkTowerInfo(e) {
 function bkGoChart(el) {
   const code = el.getAttribute("data-code") || "", mk = el.getAttribute("data-mk") || "";
   const nm = el.getAttribute("data-nm") || code;
-  const coin = /coin/i.test(mk) || /USDT$/i.test(code);
+  const bare = String(code).replace(/\|[FS]$/i, "");
+  const coin = /coin/i.test(mk) || /USDT$/i.test(bare);
   if (coin) {
-    const sym = String(code).replace(/-?USDT$/i, "").replace(/-.*$/, "").toUpperCase();
+    const sym = bare.replace(/-?USDT$/i, "").replace(/-.*$/, "").toUpperCase();
     if (typeof cvGoCoin === "function") cvGoCoin(sym);
     return;
   }
@@ -2813,14 +2819,18 @@ const BK_COL = "코인";
 const BK_COL_EN = "Coin";
 // 🔴 바이낸스 현물 일봉 — 화면 그래프와 같은 자료다.
 async function bkBars(x) {
-  const u = "https://api.binance.com/api/v3/klines?symbol=" + x.code + "&interval=1d&limit=300";
+  // 꼬리표(|S 현물 · |F 선물)는 떼고 시세를 부른다 (2026-09-23)
+  const u = "https://api.binance.com/api/v3/klines?symbol=" + String(x.code || "").replace(/\|[FS]$/i, "") + "&interval=1d&limit=300";
   const k = await fetch(u).then(function (r) { return r.json(); });
   if (!Array.isArray(k) || k.length < 5) return null;
   return k.map(function (c) { return +c[4]; });
 }
 function bkAddCurrent() {
   if (typeof coinSym === "undefined" || !coinSym) { bkMsg(KE("먼저 코인을 조회해 주세요.", "Look up a coin first.")); return; }
-  bkAdd(coinSym, String(coinSym).replace(/USDT$/, ""), "coin");
+  // 현물·선물을 갈라 담는다 (사장님 2026-09-23) — 같은 코인이라도 딴 칸이다
+  var _perp = (typeof cvMkt !== "undefined" && cvMkt === "perp");
+  bkAdd(coinSym + (_perp ? "|F" : "|S"),
+        String(coinSym).replace(/USDT$/, "") + KE(_perp ? " 선물" : " 현물", _perp ? " Perp" : " Spot"), "coin");
   const card = document.getElementById("bkCard");
   if (card && card.scrollIntoView) card.scrollIntoView({behavior: "smooth", block: "start"});
 }
