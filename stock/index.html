@@ -68,9 +68,9 @@ body.light .mk img.lt{display:block}
 .rt{display:flex;align-items:center;gap:8px;white-space:nowrap;flex:0 0 auto}
 .val{font-size:16px;font-weight:500;font-variant-numeric:tabular-nums}
 .pc{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;min-width:58px;text-align:right}
-.up{color:#00a868}.dn{color:#ff433d}.fl{color:var(--sub)}
+.up{color:#00c805}.dn{color:#ff433d}.fl{color:var(--sub)}
 /* 표 안에서도 오른 건 초록·내린 건 빨강 — td 규칙이 덮고 있었다 (사장님 2026-09-23) */
-.mhtab td.up{color:#00a868}.mhtab td.dn{color:#ff433d}.mhtab td.fl{color:var(--sub)}
+.mhtab td.up{color:#00c805}.mhtab td.dn{color:#ff433d}.mhtab td.fl{color:var(--sub)}
 .soonrow{color:var(--soon);font-size:14px;padding:8px 2px}
 .foot{color:var(--soon);font-size:11.5px;margin-top:14px;text-align:center;line-height:1.5}
 .brow{display:grid;grid-template-columns:78px 1fr 62px;align-items:center;gap:6px;padding:5px 2px}
@@ -216,7 +216,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 .mkt.us{color:#5db4ff;border-color:#2a5580}
 .bdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--bd);
  margin-right:4px;vertical-align:middle;flex:0 0 auto}
-.bdot.on{background:#00a868}
+.bdot.on{background:#00c805}
 .bdot.dl{background:#e0a020}
 .bleg{font-size:10px;font-weight:400;color:var(--sub);margin-left:6px;white-space:nowrap}
 .mkt.sp{color:#51cf66;border-color:#2b8a3e}
@@ -365,7 +365,7 @@ function svOpenApp(a){
 function spark(a){
   if(!a||a.length<2)return"";
   const w=(window.innerWidth<520?38:54),h=18,lo=Math.min(...a),hi=Math.max(...a),rg=(hi-lo)||1,n=a.length;
-  const up=a[a.length-1]>=a[0],c=up?"#00a868":"#ff433d";
+  const up=a[a.length-1]>=a[0],c=up?"#00c805":"#ff433d";
   let p="";for(let i=0;i<n;i++){p+=(i?" ":"")+(2+(w-4)*i/(n-1)).toFixed(1)+","+(h-2-(h-4)*(a[i]-lo)/rg).toFixed(1);}
   return'<svg width="'+w+'" height="'+h+'" style="vertical-align:middle"><polyline points="'+p+'" fill="none" stroke="'+c+'" stroke-width="1.4"/></svg>';
 }
@@ -503,8 +503,8 @@ function render(d){
       col=t>=70?"#ff433d":(t<=30?"#3b82f6":"#e0a020");
       g+='<div class="stat"><div class="n" style="color:'+col+'">'+t+'°</div><div class="l">'+L("mtemp")+' · '+lab+'</div></div>';}
     if(d.gauges){
-      if(d.gauges.vix!=null)g+='<div class="stat"><div class="n" style="color:'+(d.gauges.vix<20?"#00a868":(d.gauges.vix>30?"#ff433d":"#e0a020"))+'">'+d.gauges.vix+'</div><div class="l">'+L("vixL")+'</div></div>';
-      if(d.gauges.fg!=null)g+='<div class="stat"><div class="n" style="color:'+(d.gauges.fg>=75?"#ff433d":(d.gauges.fg<=25?"#00a868":"#e0a020"))+'">'+d.gauges.fg+'</div><div class="l">'+L("fgL")+'</div></div>';
+      if(d.gauges.vix!=null)g+='<div class="stat"><div class="n" style="color:'+(d.gauges.vix<20?"#00c805":(d.gauges.vix>30?"#ff433d":"#e0a020"))+'">'+d.gauges.vix+'</div><div class="l">'+L("vixL")+'</div></div>';
+      if(d.gauges.fg!=null)g+='<div class="stat"><div class="n" style="color:'+(d.gauges.fg>=75?"#ff433d":(d.gauges.fg<=25?"#00c805":"#e0a020"))+'">'+d.gauges.fg+'</div><div class="l">'+L("fgL")+'</div></div>';
     }
     document.getElementById("gauges").innerHTML="";  // 게이지 없음(주식앱)
     // 카드 조각들(순서: 특이일 → 캘린더 → 주요자산막대 → 지수그룹 → 한국금리 → 장단기 → [코인] → 뉴스)
@@ -554,7 +554,7 @@ function render(d){
         const dot='<span class="bdot'+(_lv?" on":(_dl?" dl":""))+'" title="'
           +(_lv?(LANG==="en"?"live":"실시간"):(_dl?(LANG==="en"?"delayed":"지연")
             :(LANG==="en"?"closed":"장마감")))+'"></span>';
-        const up=c.pct>=0,half=Math.abs(c.pct)/mx*50,col=up?"#00a868":"#ff433d";
+        const up=c.pct>=0,half=Math.abs(c.pct)/mx*50,col=up?"#00c805":"#ff433d";
         const bar=up?'<span style="position:absolute;left:50%;top:0;height:11px;width:'+half+'%;background:'+col+';border-radius:0 3px 3px 0"></span>'
                     :'<span style="position:absolute;right:50%;top:0;height:11px;width:'+half+'%;background:'+col+';border-radius:3px 0 0 3px"></span>';
         return '<div class="brow"><span class="bn">'+dot+tr(c.nm)+'</span><span class="bbar">'+bar+'</span>'
@@ -566,7 +566,7 @@ function render(d){
       const icon=wk?"🔴":(openNow?"🟢":"🌙");
       const stx=en?(wk?st.en:(openNow?"Open (trading hours)":"Closed (after hours)"))
                   :(wk?st.ko:(openNow?"개장 중":"장 마감 (오늘 거래일)"));
-      const col=wk?"#ff433d":(openNow?"#00a868":"var(--sub)");
+      const col=wk?"#ff433d":(openNow?"#00c805":"var(--sub)");
       let h='<div class="card injh"><h3>'+(en?"Korea Market Status":"국내 증시 현황")+'</h3>';
       h+='<div class="srow" style="font-weight:700;color:'+col+'">'+icon+' '+stx+'</div>';
       h+='<div class="srow" style="font-size:11px;color:var(--soon)">'+(en?"Business hours 08:00 – 20:00 (KST)":"운영시간 08:00 – 20:00 (KST)")+'</div>';
@@ -909,7 +909,7 @@ const C21_PAGES=[
   ["nz","N자 모양 찾기","N-Pattern","ov"],["ew","엘리어트 파동","Elliott Wave","ov"],["wy","와이코프 패턴","Wyckoff","ov"],
   ["hm","하모닉 패턴","Harmonic Pattern","ov"],["liq","청산맵","Liquidation Map","ov",1]];
 const C21_MAX=4, C21_VOLK={vwap:1,vwma:1,vol:1,obv:1,vp:1};
-const C21_COL={up:"#00a868",dn:"#ff433d",blue:"#5db4ff",org:"#f59f00",pur:"#9775fa",grn:"#26c281",red:"#ff6b6b",brn:"#e8590c",gry:"#8a93a3"};
+const C21_COL={up:"#00c805",dn:"#ff433d",blue:"#5db4ff",org:"#f59f00",pur:"#9775fa",grn:"#26c281",red:"#ff6b6b",brn:"#e8590c",gry:"#8a93a3"};
 
 // ── 계산 도구 ──
 function c21Ema(v,n){const o=new Array(v.length).fill(null),k=2/(n+1);let e=null,c=0;
@@ -941,7 +941,7 @@ function c21Calc(key,B,CH){
       S=c.map((_,i)=>i>=26?sb[i-26]:null),lag=c.map((_,i)=>i+26<N?c[i+26]:null);
     // 🔴 선을 다섯에서 넷으로 줄이고 색을 죽였다 (사장님 2026-09-20 "선이 너무 많고 선색이 너무 자극적이야").
     //    · 후행스팬(보라)은 뺀다 — 26칸 뒤 종가라 봉과 나란히 붙어 다녀 좁은 화면에서 제일 어지럽다.
-    //    · 봉 색(오름 초록 #00a868 · 내림 빨강 #ff433d)과 안 겹치는 색만 쓴다.
+    //    · 봉 색(오름 초록 #00c805 · 내림 빨강 #ff433d)과 안 겹치는 색만 쓴다.
     //    · 기준선만 또렷하게, 나머지는 뒤로 물린다.
     R.lines=[[tk,"#8fa0b5",1],[kj,"#5b8def",1.4],[A,"#7fb3a3",0.9],[S,"#b09a7a",0.9]];R.fill=[A,S];R.hatch=1;}
   if(key==="env"){const m=c21Sma(c,20);band(m,m.map(x=>x==null?null:x*1.05),m.map(x=>x==null?null:x*0.95),C21_COL.org,C21_COL.blue);}
