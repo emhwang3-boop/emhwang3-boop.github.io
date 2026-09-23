@@ -3948,6 +3948,24 @@ function puzTip(ev,txt){
   d.style.top=Math.max(6,ev.clientY-r.height-12)+"px";
   clearTimeout(puzTip.t); puzTip.t=setTimeout(function(){ d.style.display="none"; },3000);
 }
+// 현금 조각을 누르면 뒤집혀 추천 종목을 보여 준다 (사장님 2026-09-23) — 다시 누르면 돌아온다
+var PZFLIP = {};
+function puzFlip(ev, mk){
+  ev.stopPropagation();
+  PZFLIP[mk] = !PZFLIP[mk];
+  try{ recoRender(); }catch(e){}
+}
+function puzPicks(mk){
+  try{
+    if(mk==="coin"){                       // 왕관 판정이 '롱'인 코인만 (사장님 2026-09-23)
+      var R=(typeof window._RECO!=="undefined")?window._RECO:null, out=[];
+      try{ ["BTC","ETH"].forEach(function(k){ var z=(R&&R.coin&&R.coin[k])||null;
+        if(!z||z.state==="long")out.push(k); }); }catch(e){ out=["BTC","ETH"]; }
+      return out;
+    }
+    return (window._PZBUY && window._PZBUY[mk]) ? window._PZBUY[mk] : [];
+  }catch(e){ return []; }
+}
 function recoPuz(parts){
   const en=LANG==="en";
   parts=parts.filter(function(p){return p[1]>0;}).sort(function(a,b){return b[1]-a[1];});
@@ -4042,7 +4060,7 @@ function recoPuz(parts){
     const dpth=piece(x,y,w,hh);
     g+='<path d="'+dpth+'" fill="'+mix(c,"#000000",0.55)+'" transform="translate(0.8,1.4)" opacity=".85"/>';
     g+='<path d="'+dpth+'" fill="url(#'+gid(c)+')" filter="url(#'+uid+'sh)" stroke="rgba(255,255,255,.22)" stroke-width="0.9" style="cursor:pointer"'
-      +' onclick="puzTip(event,\''+dpEsc(String(full).replace(/\\/g,"").replace(/'/g,""))+'\')"><title>'
+      +' onclick="'+(isCash?('puzFlip(event,&quot;'+pmk+'&quot;)'):('puzTip(event,&quot;'+dpEsc(String(full).split("'").join("").split('"').join(""))+'&quot;)'))+'"><title>'
       +dpEsc(full)+'</title></path>';
     if(w>34&&hh>24){
       // 글자는 조각 크기를 따라간다 — 커도 12.5 를 넘지 않는다(크면 촌스럽다, 사장님 2026-09-23)
@@ -4076,6 +4094,7 @@ function recoRender(){
   }
   const en=LANG==="en", R=RECO;
   let h='<h3>'+(en?"Portfolio picks":"포트폴리오 추천")+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
+  try{ window._RECO=R; }catch(e){}
   if(!R){ card.innerHTML=h+'<div class="soonrow">'+(en?"Loading…":"불러오는 중…")+'</div>'; return; }
   // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률을 더해 "지금 60일선 대비"를 낸다 (사장님 2026-09-21).
   const liveP=function(nm){ var d=window._lastD; if(d&&d.changes){ for(var i=0;i<d.changes.length;i++){ if(d.changes[i].nm===nm && typeof d.changes[i].pct==="number") return d.changes[i].pct; } } return null; };
@@ -4124,6 +4143,7 @@ function recoRender(){
     // 살 것 — 12칸 후보(20일 상승 순). 빈 칸이 있을 때 1순위부터. 이미 든 종목은 뺀다.
     const heldCodes=held.map(function(p){return String(p.code).replace(/\.US$/,"");});
     const buys=(x.buy12||[]).filter(function(r){return heldCodes.indexOf(r.code)<0;});
+    try{ window._PZBUY=window._PZBUY||{}; window._PZBUY[mk]=buys.slice(0,8).map(function(r){return r.name;}); }catch(e){}
     const cashM=(mk==="kr")?(cash.krw||0):(cash.usd||0);
     const blk=function(title,list,mode){          // mode: "today"=오늘 살 것(수량 = 1칸과 현금 중 작은 쪽) · "next"=다음 후보(흐리게)
       if(!list.length)return "";
@@ -4179,7 +4199,7 @@ function recoRender(){
     if(fx>0){
       (RL.co||[]).filter(function(p){return !p.spot;}).forEach(function(p){ PIEP.push([String(p.code).split("-")[0]+(en?" perp":" 선물"),(p.evl||0)*fx,"held",(p.evl||0),"us",(p.evl||0),(typeof p.rt==="number"?p.rt:null)]); });
       (RL.co||[]).filter(function(p){return p.spot;}).forEach(function(p){ PIEP.push([String(p.code).split("-")[0]+(en?" spot":" 현물"),(p.qty||0)*(p.cur||0)*fx,"held",(p.qty||0)*(p.cur||0),"us",(p.qty||0)*(p.cur||0),(typeof p.rt==="number"?p.rt:null)]); });
-      if(cash.usdt>0)PIEP.push(["USDT",cash.usdt*fx,"cash",cash.usdt,"us",cash.usdt]);
+      if(cash.usdt>0)PIEP.push(["USDT",cash.usdt*fx,"cash",cash.usdt,"coin",cash.usdt]);
     }
     h+='<div class="dphd" style="margin-top:4px">'+(en?"Holdings + picks filled in":"보유 + 추천으로 채운 포트폴리오")+'</div>'+recoPuz(PIEP)
       +(fx>0?"":'<div class="dpmsg">'+(en?"USD rate not loaded yet — KR only.":"환율을 아직 못 받아 국내만 그렸습니다.")+'</div>');
