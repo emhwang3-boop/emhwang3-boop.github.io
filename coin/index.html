@@ -2982,15 +2982,30 @@ function svPuz(parts){
         if(!items.length)g+=T((en?"none":"없음"),fs*0.9,"#fff",".85",fy);
         items.forEach(function(it2,ix2){
           const on=pzHas(it2.code);
-          const txt=(on?"✓ ":"")+fit1(String(it2.name),w,fs*0.92);
+          const nm2=String(it2.name), kd=it2.kind;
+          const txt=(on?"✓ ":"")+fit1(nm2,w,fs*0.92);
           const rh=fs*1.12, ry=fy-fs*0.82;
           // 글자 획만 누르면 잘 안 눌린다 — 줄 전체를 누르는 자리로 깐다 (사장님 2026-09-23)
           g+='<rect x="'+(x+3).toFixed(1)+'" y="'+ry.toFixed(1)+'" width="'+(w-6).toFixed(1)+'" height="'+rh.toFixed(1)
             +'" rx="4" fill="'+(on?"rgba(43,255,134,.18)":"rgba(255,255,255,.06)")+'" style="cursor:pointer"'
             +' onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')"></rect>';
-          g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="middle" font-size="'+(fs*0.92).toFixed(1)
-            +'" font-weight="800" fill="'+(on?"#2bff86":"#fff")+'" stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke"'
-            +' style="cursor:pointer;pointer-events:none">'+dpEsc(txt)+'</text>';
+          if(kd){                                   // 현물·선물 딱지 (사장님 2026-09-23)
+            const f2=fs*0.92, tw=fs*2.0, gap=fs*0.35;
+            let nw=0; for(let q=0;q<txt.length;q++)nw+=wide(txt[q])*f2;
+            const tot2=nw+gap+tw, sx=x+w/2-tot2/2;
+            g+='<text x="'+sx.toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="start" font-size="'+f2.toFixed(1)
+              +'" font-weight="800" fill="'+(on?"#2bff86":"#fff")+'" stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke"'
+              +' style="pointer-events:none">'+dpEsc(txt)+'</text>';
+            const kc=(kd==="F")?"#9B7BFF":"#2bd4c0";
+            g+='<rect x="'+(sx+nw+gap).toFixed(1)+'" y="'+(fy-f2*0.78).toFixed(1)+'" width="'+tw.toFixed(1)
+              +'" height="'+(f2*1.05).toFixed(1)+'" rx="'+(f2*0.3).toFixed(1)+'" fill="none" stroke="'+kc+'" stroke-width="0.8" style="pointer-events:none"></rect>';
+            g+='<text x="'+(sx+nw+gap+tw/2).toFixed(1)+'" y="'+(fy-f2*0.05).toFixed(1)+'" text-anchor="middle" font-size="'+(f2*0.72).toFixed(1)
+              +'" font-weight="800" fill="'+kc+'" style="pointer-events:none">'+(kd==="F"?KE("선물","Perp"):KE("현물","Spot"))+'</text>';
+          } else {
+            g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="middle" font-size="'+(fs*0.92).toFixed(1)
+              +'" font-weight="800" fill="'+(on?"#2bff86":"#fff")+'" stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke"'
+              +' style="pointer-events:none">'+dpEsc(txt)+'</text>';
+          }
           fy+=fs*1.28; });
       } else {
       if(tag){ g+=T(tag,tagS,"#FFD43B",0,ty-lh*0.18); ty+=tagS*1.25; }
@@ -3062,8 +3077,8 @@ function cvRecoRender() {
     // 자산군마다 현물·선물 두 줄 (사장님 2026-09-23)
     const rows = [];
     L.forEach(function (k) {
-      rows.push({name: k + KE(" 현물", " Spot"), code: k + "USDT|S", mk: "coin"});
-      rows.push({name: k + KE(" 선물", " Perp"), code: k + "USDT|F", mk: "coin"});
+      rows.push({name: k, kind: "S", code: k + "USDT|S", mk: "coin"});
+      rows.push({name: k, kind: "F", code: k + "USDT|F", mk: "coin"});
     });
     window._SVPICK[grp] = rows;
     if (m[1] > 0) PZP.push([KN(grp), m[1], "cls", 0, grp, 0, null]);
