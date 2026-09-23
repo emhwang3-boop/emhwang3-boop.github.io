@@ -783,7 +783,7 @@ async function loadStockUS(){
   const cls=x=>x>0?"up":(x<0?"dn":"fl"),arw=x=>x>0?"▲":(x<0?"▼":"");
   const en=LANG==="en", tick=stkCode.replace(/\.US$/,"");
   E("stkDetail").innerHTML=
-    '<div class="stkhd">'+tick+' <span style="color:var(--sub);font-size:13px;font-weight:600">US</span></div>'
+    '<div class="stkhd">'+((typeof stkLogo==="function")?stkLogo(tick,"us",22):"")+tick+' <span style="color:var(--sub);font-size:13px;font-weight:600">US</span></div>'
    +'<table class="stktab">'
    +'<tr><td class="k">'+L("price")+'</td><td class="v">'+usPrice(price)+'</td></tr>'
    +'<tr><td class="k">'+L("vsOpen")+'</td><td class="v '+cls(co)+'">'+arw(co)+Math.abs(co).toFixed(2)+'%</td></tr>'
@@ -817,7 +817,7 @@ async function loadStock(){
   const co=d.chg_open, cp=d.chg_prev;
   const nm=(LANG==="en"&&d.en)?d.en:d.name;
   E("stkDetail").innerHTML=
-    '<div class="stkhd">'+nm+' <span style="color:var(--sub);font-size:13px;font-weight:600">'+d.code+'</span></div>'
+    '<div class="stkhd">'+((typeof stkLogo==="function")?stkLogo(d.code,"kr",22):"")+nm+' <span style="color:var(--sub);font-size:13px;font-weight:600">'+d.code+'</span></div>'
    +'<table class="stktab">'
    +'<tr><td class="k">'+L("price")+'</td><td class="v">'+won(d.cur)+'</td></tr>'
    +'<tr><td class="k">'+L("vsOpen")+'</td><td class="v '+cls(co)+'">'+arw(co)+Math.abs(co).toFixed(2)+'%</td></tr>'
@@ -1311,7 +1311,7 @@ function pickCoin(sym,name){
 async function loadCoinDetail(){if(!coinSym)return;
   try{const d=await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol="+coinSym).then(r=>r.json());
     const p=parseFloat(d.priceChangePercent),cls=p>0?"up":(p<0?"dn":"fl"),arw=p>0?"▲":(p<0?"▼":"");
-    E("coinDetail").innerHTML='<div class="stkhd">'+coinSym.replace("USDT","")+' <span style="color:var(--sub);font-size:13px;font-weight:600">'+coinSym+'</span></div>'
+    E("coinDetail").innerHTML='<div class="stkhd">'+((typeof cvIcon==="function")?cvIcon(coinSym,22):"")+coinSym.replace("USDT","")+' <span style="color:var(--sub);font-size:13px;font-weight:600">'+coinSym+'</span></div>'
      +'<table class="stktab">'
      +'<tr><td class="k">'+L("price")+'</td><td class="v">$'+coinFmt(+d.lastPrice)+'</td></tr>'
      +'<tr><td class="k">'+L("chg24")+'</td><td class="v '+cls+'">'+arw+Math.abs(p).toFixed(2)+'%</td></tr>'
@@ -2039,7 +2039,7 @@ function bkRender() {
     const base = ccy === "KRW" ? tKR : tUS;
     const w = base > 0 ? (amt / base * 100) : 0;
     h += '<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="' + x.code + '" data-mk="' + (x.mk || "")
-       + '" data-nm="' + String(x.name).replace(/"/g, "") + '">' + x.name + (/^\d/.test(x.code) ? ' <span class="dplbl">' + x.code + '</span>' : '')
+       + '" data-nm="' + String(x.name).replace(/"/g, "") + '">' + stkLogo(x.code, x.mk) + x.name + (/^\d/.test(x.code) ? ' <span class="dplbl">' + x.code + '</span>' : '')
        + '</td><td><input class="bkamt" type="text" inputmode="decimal" value="' + bkNum(amt, ccy)
        + '" oninput="bkAmtLive(this)" onchange="bkSetAmt(' + i + ',this.value)" style="width:92px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 6px;font-size:12px">'
        + ' <span class="dplbl">' + (ccy === "USD" ? "$" : KE("원", "KRW")) + '</span></td>'
@@ -2232,7 +2232,7 @@ function bkSavedHtml() {
                     : ('<span class="' + cls(r.pl) + '">' + (r.pl >= 0 ? "+" : "-") + bkMoney(Math.abs(r.pl), ccy) + '</span>');
         if (!r.err && !r.pending) { sumPl[ccy] = sumPl[ccy] || {c: 0, p: 0}; sumPl[ccy].c += amt; sumPl[ccy].p += (r.pl || 0); }
         h += '<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="' + (it.code || "") + '" data-mk="' + (it.mk || "")
-           + '" data-nm="' + String(it.name || r.nm).replace(/"/g, "") + '">' + r.nm + '</td>'
+           + '" data-nm="' + String(it.name || r.nm).replace(/"/g, "") + '">' + stkLogo(it.code, it.mk) + r.nm + '</td>'
            + '<td>' + (amt > 0 ? bkMoney(amt, ccy) : '<span class="dplbl">—</span>') + '</td>'
            + '<td>' + plTxt + '</td><td>' + val + '</td></tr>';
       });
@@ -2775,6 +2775,19 @@ function svPuz(parts){
     +'<defs>'+defs+'</defs>'+g+'</svg>';
 }
 
+// 종목 로고 (사장님 2026-09-23) — 국내는 토스, 미국은 FMP. 없으면 조용히 빈칸.
+function stkLogo(code, mk, px){
+  try{
+    var c = String(code||"").replace(/\.US$/i,"").replace(/^A/,"").trim();
+    if(!c) return "";
+    var us = (mk==="us") || !/^[0-9]{6}$/.test(c);
+    var u = us ? ("https://financialmodelingprep.com/image-stock/" + c.toUpperCase() + ".png")
+               : ("https://static.toss.im/png-icons/securities/icn-sec-fill-" + c + ".png");
+    var d = px || 16;
+    return '<img src="'+u+'" alt="" loading="lazy" onerror="this.style.display=&quot;none&quot;"'
+      + ' style="width:'+d+'px;height:'+d+'px;border-radius:50%;object-fit:contain;background:#fff;vertical-align:-3px;margin-right:5px">';
+  }catch(e){ return ""; }
+}
 function svRecoRender() {
   try { svEnIndex(); } catch (e) {}
   const box = document.getElementById("svRecoBody");
