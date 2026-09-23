@@ -4059,6 +4059,9 @@ function recoPuz(parts){
         +'<stop offset="1" stop-color="'+mix(c,"#000000",0.30)+'"/></linearGradient>'; }
     return grad[c]; };
 
+  const fit1=function(t,w,fs){ let u=0,o=""; const lim=(w-7)/fs;
+    for(let i=0;i<t.length;i++){ const d=wide(t[i]); if(u+d>lim)return o.length>1?o.slice(0,-1)+"…":o; u+=d; o+=t[i]; }
+    return o; };
   let g="";
   box.forEach(function(b){
     const p=b.p, c=col(p), pad=1.6;
@@ -4088,9 +4091,18 @@ function recoPuz(parts){
       const T=function(s,size,fill,op,yy){ return '<text x="'+(x+w/2).toFixed(1)+'" y="'+yy.toFixed(1)+'" text-anchor="middle" '
         +'font-size="'+size.toFixed(1)+'" font-weight="800" fill="'+fill+'"'+(op?' opacity="'+op+'"':'')
         +' stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke">'+dpEsc(s)+'</text>'; };
+      if(flipped){                       // 뒤집힌 현금 조각 — 그 돈으로 살 추천 종목 (사장님 2026-09-23)
+        const room=Math.max(1,Math.floor((hh-10)/(fs*1.18))-1);
+        const items=picks.slice(0,room);
+        let fy=y+hh/2-(items.length+1)*fs*1.18/2+fs*0.9;
+        g+=T((en?"Picks":"추천 종목"),fs*0.8,"#FFD43B",0,fy); fy+=fs*1.18;
+        if(!items.length)g+=T((en?"none":"없음"),fs*0.9,"#fff",".85",fy);
+        items.forEach(function(nm){ g+=T(fit1(String(nm),w,fs*0.92),fs*0.92,"#fff",0,fy); fy+=fs*1.18; });
+      } else {
       if(tag){ g+=T(tag,tagS,"#FFD43B",0,ty-lh*0.18); ty+=tagS*1.25; }
       L.forEach(function(s){ g+=T(s,fs,"#fff",0,ty); ty+=lh; });
       if(showPct)g+=T(pct.toFixed(1)+'%',pctS,"#fff",".92",ty-lh*0.08);   // 조각 안 숫자는 모두 '비중' (사장님 2026-09-23)
+      }
     }
   });
   return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;margin:2px 0 6px">'
