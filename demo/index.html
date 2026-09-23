@@ -4050,7 +4050,7 @@ function recoPuz(parts){
         +' stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke">'+dpEsc(s)+'</text>'; };
       if(tag){ g+=T(tag,tagS,"#FFD43B",0,ty-lh*0.18); ty+=tagS*1.25; }
       L.forEach(function(s){ g+=T(s,fs,"#fff",0,ty); ty+=lh; });
-      if(showPct)g+=T((rt===null?pct.toFixed(1)+'%':((rt>0?"+":"")+rt.toFixed(1)+'%')),pctS,"#fff",".92",ty-lh*0.08);
+      if(showPct)g+=T(pct.toFixed(1)+'%',pctS,"#fff",".92",ty-lh*0.08);   // 조각 안 숫자는 모두 '비중' (사장님 2026-09-23)
     }
   });
   return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;margin:2px 0 6px">'
