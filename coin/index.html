@@ -2115,6 +2115,43 @@ function bkNote() {
 
 function bkGet() { try { return JSON.parse(localStorage.getItem(BK_KEY) || "[]") || []; } catch (e) { return []; } }
 function bkSave(a) { try { localStorage.setItem(BK_KEY, JSON.stringify(a)); } catch (e) {} }
+// ── 가상 바스켓 투자금액 (사장님 2026-09-23) ──────────────────────────────
+//   기본값 = 고른 성향의 자산군 배분율 × 가상 계좌. 같은 자산군에 여럿이면 똑같이 나눈다.
+//   고객이 고치면 그 값이 남는다(amt). 통화는 국내=원 · 미국=달러.
+function bkCcy(it) { return "USDT"; }
+function bkMoney(v, ccy) { return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; }
+// 성향 배분에 따른 기본 금액 — 자산군 몫을 그 자산군에 담긴 종목 수로 나눈다
+function bkAutoAmt(list) {
+  const p = (typeof svGet === "function") ? svGet() : null;
+  if (!p || !SV_GRADE[p.pick]) return {};
+  const mix = SV_GRADE[p.pick].mix;
+  const tot = mix.reduce(function (t, m) { return t + m[1]; }, 0) || 1;
+  const USDT = 100000;
+  const money = {};
+  mix.forEach(function (m) { money[m[0]] = USDT * m[1] / tot; });
+  const cnt = {};
+  list.forEach(function (x) { const c = x.cls || bkClassOf(x); cnt[c] = (cnt[c] || 0) + 1; });
+  const out = {};
+  list.forEach(function (x) {
+    const c = x.cls || bkClassOf(x);
+    out[x.code] = (money[c] && cnt[c]) ? (money[c] / cnt[c]) : 0;
+  });
+  return out;
+}
+// 줄마다 쓸 금액 — 고객이 넣은 값이 있으면 그것, 없으면 성향 배분값
+function bkAmtOf(list) {
+  const auto = bkAutoAmt(list), out = {};
+  list.forEach(function (x) { out[x.code] = (typeof x.amt === "number" && x.amt >= 0) ? x.amt : (auto[x.code] || 0); });
+  return out;
+}
+function bkSetAmt(i, v) {
+  const a = bkGet(); if (!a[i]) return;
+  const n = parseFloat(String(v).replace(/[^0-9.]/g, ""));
+  a[i].amt = isFinite(n) ? n : 0;
+  bkSave(a); bkRender();
+}
+function bkAmtReset() { const a = bkGet(); a.forEach(function (x) { delete x.amt; }); bkSave(a); bkRender(); }
+
 function bkAdd(code, name, mk) {
   if (!code) return;
   const a = bkGet();
@@ -2150,16 +2187,28 @@ function bkRender() {
   if (!a.length) {
     h += '<div class="mhempty">' + BK_EMPTY + '</div>';
   } else {
-  const w = 100 / a.length;
-  h += svPie(a.map(function (x) { return [x.name, w]; }));
-  h += '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
+  const AM = bkAmtOf(a);
+  const tAll = a.reduce(function (t, x) { return t + (AM[x.code] || 0); }, 0);
+  h += svPie(a.map(function (x) { return [x.name, (AM[x.code] || 0) || 1]; }));
+  h += '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>' + KE("투자금액", "Amount")
+     + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
   a.forEach(function (x, i) {
+    const amt = AM[x.code] || 0, w = tAll > 0 ? (amt / tAll * 100) : 0;
     h += '<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="' + x.code + '" data-mk="' + (x.mk || "")
        + '" data-nm="' + String(x.name).replace(/"/g, "") + '">' + x.name + (/^\d/.test(x.code) ? ' <span class="dplbl">' + x.code + '</span>' : '')
-       + '</td><td>' + w.toFixed(1) + '%</td>'
+       + '</td><td><input class="bkamt" type="text" inputmode="decimal" value="' + (+amt).toFixed(2)
+       + '" onchange="bkSetAmt(' + i + ',this.value)" style="width:96px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 6px;font-size:12px">'
+       + ' <span class="dplbl">USDT</span></td>'
+       + '<td>' + w.toFixed(1) + '%</td>'
        + '<td><span class="mhx" onclick="bkDel(' + i + ')">✕</span></td></tr>';
   });
+  if (tAll > 0) h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
+       + '<td colspan="3" style="text-align:right">' + bkMoney(tAll, "USDT") + '</td></tr>';
   h += '</table>';
+  h += '<div class="svsub">' + KE("금액은 고른 포트폴리오의 배분율로 채워집니다. 직접 고치셔도 됩니다.",
+       "Amounts follow the portfolio you chose. You can edit them.")
+     + ' <span class="dplbl" style="cursor:pointer;text-decoration:underline" onclick="bkAmtReset()">'
+     + KE("배분율로 되돌리기", "Reset to allocation") + '</span></div>';
   h += '<div class="cvrow">' + BK_SPANS.map(function (s) {
       return '<button class="svbtn" style="flex:1;text-align:center;margin:0" onclick="bkRun(' + s[0] + ')">' + KE(s[1], s[2]) + '</button>';
     }).join("") + '<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="bkClear()">' + KE("비우기", "Clear") + '</button></div>';
@@ -2255,11 +2304,13 @@ async function bkStore() {
   const saved = bkSaveGet();
   if (saved.length >= 20) { bkMsg(KE("보관은 스무 개까지 됩니다.", "You can keep up to 20.")); return; }
   bkMsg(mpWait(KE("보관 중… 기준가를 받습니다", "Saving… fetching base prices")), true);
+  const AMT = bkAmtOf(a);
   const items = [];
   for (let i = 0; i < a.length; i++) {
     let cs = null; try { cs = await bkBars(a[i]); } catch (e) { cs = null; }
     const base = (cs && cs.length) ? cs[cs.length - 1] : 0;
-    items.push({code: a[i].code, name: a[i].name, mk: a[i].mk, base: base, cls: a[i].cls || bkClassOf(a[i])});
+    items.push({code: a[i].code, name: a[i].name, mk: a[i].mk, base: base, cls: a[i].cls || bkClassOf(a[i]),
+                amt: AMT[a[i].code] || 0, ccy: "USDT"});
   }
   saved.unshift({id: "p" + Date.now(), at: Date.now(), items: items, er: null, erows: null, calc: 0});
   bkSavePut(saved);
@@ -2283,7 +2334,9 @@ async function bkSavedRefresh() {
       const it = p.items[j]; let cs = null;
       try { cs = await bkBars(it); } catch (e) { cs = null; }
       const cur = (cs && cs.length) ? cs[cs.length - 1] : 0;
-      if (cur > 0 && it.base > 0) { const r = cur / it.base - 1; rows.push({nm: bkNm(it), r: r}); sum += r; ok++; }
+      if (cur > 0 && it.base > 0) { const r = cur / it.base - 1;
+        rows.push({nm: bkNm(it), r: r, amt: (it.amt || 0), pl: (it.amt || 0) * r, ccy: "USDT"});
+        sum += r; ok++; }
       else rows.push({nm: bkNm(it), err: true});
     }
     p.erows = rows; p.er = ok ? sum / ok : null; p.calc = Date.now();
@@ -2318,14 +2371,30 @@ function bkSavedHtml() {
        + '<span onclick="event.stopPropagation();towerFromSaved(\'' + p.id + '\')" style="cursor:pointer;color:#2bd4c0;font-weight:800;font-size:11px;border:1px solid #2bd4c0;border-radius:6px;padding:1px 5px;margin-right:5px">3D</span>'
        + '<span class="mhx" onclick="event.stopPropagation();bkSavedDel(\'' + p.id + '\')">✕</span></div>';
     if (open) {
-      h += '<table class="mhtab" style="margin:2px 0 6px">';
+      h += '<table class="mhtab" style="margin:2px 0 6px"><tr><th>' + KE("종목", "Item") + '</th><th>'
+         + KE("원금", "Cost") + '</th><th>' + KE("수익금", "P/L") + '</th><th>' + KE("수익률", "Return") + '</th></tr>';
       const er = p.erows || p.items.map(function (it) { return {nm: bkNm(it), pending: true}; });
+      const sumPl = {};
       er.forEach(function (r, ix) {
         const it = p.items[ix] || {};
+        const ccy = r.ccy || it.ccy || bkCcy(it);
+        const amt = (typeof r.amt === "number") ? r.amt : (it.amt || 0);
         const val = r.err ? ('<span class="fl">' + KE("자료 없음", "No data") + '</span>')
                           : (r.pending ? '<span class="dplbl">—</span>' : ('<span class="' + cls(r.r) + '">' + pc(r.r) + '</span>'));
+        const plTxt = (r.err || r.pending || typeof r.pl !== "number") ? '<span class="dplbl">—</span>'
+                    : ('<span class="' + cls(r.pl) + '">' + (r.pl >= 0 ? "+" : "-") + bkMoney(Math.abs(r.pl), ccy) + '</span>');
+        if (!r.err && !r.pending) { sumPl[ccy] = sumPl[ccy] || {c: 0, p: 0}; sumPl[ccy].c += amt; sumPl[ccy].p += (r.pl || 0); }
         h += '<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="' + (it.code || "") + '" data-mk="' + (it.mk || "")
-           + '" data-nm="' + String(it.name || r.nm).replace(/"/g, "") + '">' + r.nm + '</td><td>' + val + '</td></tr>';
+           + '" data-nm="' + String(it.name || r.nm).replace(/"/g, "") + '">' + r.nm + '</td>'
+           + '<td>' + (amt > 0 ? bkMoney(amt, ccy) : '<span class="dplbl">—</span>') + '</td>'
+           + '<td>' + plTxt + '</td><td>' + val + '</td></tr>';
+      });
+      Object.keys(sumPl).forEach(function (ccy) {
+        const o = sumPl[ccy];
+        h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + ' <span class="dplbl">'
+           + (ccy === "USD" ? "$" : KE("원", "KRW")) + '</span></td><td>' + bkMoney(o.c, ccy) + '</td>'
+           + '<td><span class="' + cls(o.p) + '">' + (o.p >= 0 ? "+" : "-") + bkMoney(Math.abs(o.p), ccy) + '</span></td>'
+           + '<td>' + (o.c > 0 ? ('<span class="' + cls(o.p) + '">' + pc(o.p / o.c) + '</span>') : "—") + '</td></tr>';
       });
       h += '</table>';
     }
