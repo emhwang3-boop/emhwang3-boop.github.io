@@ -1957,6 +1957,25 @@ function svRender() {
        + ' <span class="dplbl">' + g.mix.map(function (m) { return KN(m[0]) + " " + m[1] + "%"; }).join(" · ") + '</span>'
        + '</button>';
   });
+  // 고른 성향의 배분 표 — USDT 합계까지 (사장님 2026-09-23)
+  if (cur >= 0 && SV_GRADE[cur]) {
+    const mix = SV_GRADE[cur].mix;
+    const tot = mix.reduce(function (t, m) { return t + m[1]; }, 0) || 1;
+    const usdt = 100000;
+    const f = function (v) { return Math.round(v).toLocaleString() + " USDT"; };
+    h += '<div class="svgrpt svacct2" style="margin-top:12px">' + KE("가상 계좌", "Virtual Account")
+       + ' <b>' + f(usdt) + '</b></div>';
+    h += svPie(mix.map(function (m) { return [m[0], m[1]]; }));
+    h += '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("목표 비중", "Target %")
+       + '</th><th>' + KE("목표 금액", "Target amount") + '</th></tr>';
+    mix.forEach(function (m) {
+      const pc = m[1] / tot * 100;
+      h += '<tr><td style="text-align:left">' + KN(m[0]) + '</td><td>' + pc.toFixed(1) + '%</td><td>'
+         + f(usdt * pc / 100) + '</td></tr>';
+    });
+    h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
+       + '<td>100.0%</td><td>' + f(usdt) + '</td></tr></table>';
+  }
   box.innerHTML = h;
 }
 
