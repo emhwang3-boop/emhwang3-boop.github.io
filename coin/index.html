@@ -2275,7 +2275,22 @@ async function bkRun(days) {
     const n = Math.min(days, cs.length - 1);
     const from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
     if (!(from > 0)) { rows.push({nm: bkNm(a[i]), err: true}); continue; }
-    rows.push({nm: bkNm(a[i]), r: to / from - 1, n: n, cs: cs.slice(cs.length - 1 - n)});
+    // 선물이면 배수와 청산을 함께 본다 (사장님 2026-09-23)
+    const lev = bkIsPerp(a[i]) ? bkLev(a[i]) : 1;
+    let r = (to / from - 1) * lev, liq = false, seg = cs.slice(cs.length - 1 - n);
+    if (lev > 1) {
+      let lows = null; try { lows = await bkLows(a[i]); } catch (e) { lows = null; }
+      const src = lows || cs;
+      const lseg = src.slice(Math.max(0, src.length - n));
+      const low = lseg.length ? Math.min.apply(null, lseg) : to;
+      if ((low / from - 1) <= -bkLiqDrop(lev)) { r = -1; liq = true; }
+      // 청산된 뒤로는 값이 0 — 그래프도 거기서 바닥으로 떨어진다
+      if (liq) { let hit = false; seg = seg.map(function (v, k) {
+          if (!hit && (v / from - 1) <= -bkLiqDrop(lev)) hit = true;
+          return hit ? from * 0.0001 : from * (1 + (v / from - 1) * lev); }); }
+      else { seg = seg.map(function (v) { return from * (1 + (v / from - 1) * lev); }); }
+    }
+    rows.push({nm: bkNm(a[i]), r: r, n: n, cs: seg, lev: lev, liq: liq});
   }
   const ok = rows.filter(function (x) { return !x.err; });
   if (!ok.length) { bkMsg(KE("자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요.", "Could not load data. Please try again shortly.")); return; }
@@ -2312,7 +2327,10 @@ async function bkRun(days) {
   h += '<tr class="mhsum"><td style="text-align:left"><b>' + KE("바스켓(균등)", "Basket (equal)") + '</b></td>'
      + '<td class="' + cls(eq - 1) + '"><b>' + pc(eq - 1) + '</b></td></tr>';
   ok.slice().sort(function (p, q) { return q.r - p.r; }).forEach(function (x) {
-    h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="' + cls(x.r) + '">' + pc(x.r) + '</td></tr>';
+    h += '<tr><td style="text-align:left">' + x.nm
+       + ((x.lev > 1) ? ' <span class="dplbl">' + x.lev + '×</span>' : '')
+       + '</td><td class="' + cls(x.r) + '">' + pc(x.r)
+       + (x.liq ? ' <span class="dn" style="font-size:10.5px;font-weight:800">' + KE("청산", "Liq.") + '</span>' : '') + '</td></tr>';
   });
   rows.filter(function (x) { return x.err; }).forEach(function (x) {
     h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="fl" style="white-space:nowrap">' + KE("자료 없음", "No data") + '</td></tr>';
