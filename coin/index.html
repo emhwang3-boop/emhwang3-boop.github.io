@@ -2134,20 +2134,32 @@ function bkCcy(it) { return "USDT"; }
 function bkMoney(v, ccy) { return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; }
 // 성향 배분에 따른 기본 금액 — 자산군 몫을 그 자산군에 담긴 종목 수로 나눈다
 function bkAutoAmt(list) {
+  const USDT = 100000, out = {};
+  if (!list.length) return out;
   const p = (typeof svGet === "function") ? svGet() : null;
-  if (!p || !SV_GRADE[p.pick]) return {};
-  const mix = SV_GRADE[p.pick].mix;
+  const g = (p && SV_GRADE[p.pick]) ? SV_GRADE[p.pick] : null;
+  // 🔴 성향을 안 골랐으면 똑같이 나눈다 — 0 으로 두지 않는다 (사장님 2026-09-23)
+  if (!g) { list.forEach(function (x) { out[x.code] = USDT / list.length; }); return out; }
+  const mix = g.mix;
   const tot = mix.reduce(function (t, m) { return t + m[1]; }, 0) || 1;
-  const USDT = 100000;
   const money = {};
   mix.forEach(function (m) { money[m[0]] = USDT * m[1] / tot; });
+  // 🔴 담을 때 적어 둔 cls 는 믿지 않는다 — 옛 꼬리표가 남아 0 이 됐다
+  const clsOf = function (x) { return bkClassOf(x); };
   const cnt = {};
-  list.forEach(function (x) { const c = x.cls || bkClassOf(x); cnt[c] = (cnt[c] || 0) + 1; });
-  const out = {};
+  list.forEach(function (x) { const c = clsOf(x); cnt[c] = (cnt[c] || 0) + 1; });
+  let left = 0, blank = [];
   list.forEach(function (x) {
-    const c = x.cls || bkClassOf(x);
-    out[x.code] = (money[c] && cnt[c]) ? (money[c] / cnt[c]) : 0;
+    const c = clsOf(x);
+    if (money[c] && cnt[c]) out[x.code] = money[c] / cnt[c];
+    else { out[x.code] = 0; blank.push(x); }
   });
+  // 성향에 없는 자산군(예: 현물 성향인데 선물을 담음)은 남은 돈을 나눠 갖는다
+  if (blank.length) {
+    const used = list.reduce(function (t, x) { return t + (out[x.code] || 0); }, 0);
+    left = Math.max(0, USDT - used);
+    blank.forEach(function (x) { out[x.code] = left / blank.length; });
+  }
   return out;
 }
 // 줄마다 쓸 금액 — 고객이 넣은 값이 있으면 그것, 없으면 성향 배분값
