@@ -61,13 +61,16 @@
   const items = RAW.slice().sort(function (a, b) { return ((a.k || 0) - (b.k || 0)) || (a.vol - b.vol); });
 
   // ── 앱에서 고른 모양·목표·손절 (2026-09-23) — 화면에 바꾸는 단추는 없다 ──
-  let SHAPE = "tower", GOAL = 0.25, STOP = -0.10;
+  let SHAPE = "tower", GOAL = 0.25, STOP = -0.15, IGOAL = 0.15, ISTOP = -0.10;
   try {
     const q = new URLSearchParams((location.hash || "").slice(1));
     if (q.get("shape") === "tree") SHAPE = "tree";
     const g = parseFloat(q.get("goal")), st = parseFloat(q.get("stop"));
     if (isFinite(g)) GOAL = g;
     if (isFinite(st)) STOP = st;
+    const ig = parseFloat(q.get("igoal")), is = parseFloat(q.get("istop"));   // 종목 하나하나 (2026-09-23)
+    if (isFinite(ig)) IGOAL = ig;
+    if (isFinite(is)) ISTOP = is;
   } catch (e) {}
   const CLS_N = items.reduce(function (m, it) { return Math.max(m, (it.k || 0) + 1); }, 1);
   function ptRet() {                                  // 포트폴리오 수익률 — 균등 비중
@@ -164,6 +167,11 @@
     const cube = new THREE.Mesh(geo, mat); cube.renderOrder = 1;
     it.edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 }));
     cube.add(it.edge);
+    // 종목 익절·손절에 닿으면 굵은 테두리 — 같은 선을 조금 키워 한 겹 더 씌운다 (사장님 2026-09-23)
+    it.edge2 = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
+    it.edge2.scale.setScalar(1.035); cube.add(it.edge2);
+    it.edge3 = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
+    it.edge3.scale.setScalar(1.07); cube.add(it.edge3);
     const crackMat = new THREE.MeshBasicMaterial({ map: CRACK, transparent: true, opacity: 0, depthWrite: false, depthTest: false });
     const crackMesh = new THREE.Mesh(new THREE.BoxGeometry(1.03, 1.03, 1.03), crackMat); crackMesh.renderOrder = 2;
     cube.add(crackMesh); it.crackMat = crackMat;
@@ -382,17 +390,23 @@
       it.mat.emissiveIntensity = gain > 0 ? Math.min(gain, 1) * 0.6 * (0.7 + 0.3 * Math.sin(t * 6 + it.vol)) : 0;
       it.edge.material.color.setHex(it.cur > 0.005 ? 0x2bff86 : (it.cur < -0.005 ? 0xff3b3b : 0xffffff));
       it.edge.material.opacity = Math.abs(it.cur) > 0.005 ? 0.95 : 0.55;
+      // 종목 익절·손절 — 닿으면 테두리를 굵게 (익절 초록 · 손절 빨강)
+      const hitG = it.cur >= IGOAL, hitS = it.cur <= ISTOP, hit = hitG || hitS;
+      const hc = hitG ? 0x2bff86 : 0xff3b3b, hp = hit ? (0.75 + 0.25 * Math.sin(t * 4 + it.vol)) : 0;
+      it.edge2.material.color.setHex(hc); it.edge2.material.opacity = hp;
+      it.edge3.material.color.setHex(hc); it.edge3.material.opacity = hp * 0.55;
       it.crackMat.opacity = loss > 0.002 ? Math.min(0.5 + loss * 3.5, 1) : 0;
       it.sparks.forEach(function (sp) { sp.material.opacity = gain > 0.02 ? Math.min(gain, 1) * (0.35 + 0.65 * Math.abs(Math.sin(t * 5 + sp.userData.phase))) : 0; });
       const half = side / 2, footY = it.mesh.position.y - half;
       it.dust.forEach(function (sp) {
-        if (loss > 0.01) {
+        const pour = hitS ? Math.max(loss, 0.35) : loss;          // 종목 손절에 닿으면 우르르
+        if (pour > 0.01) {
           if (!sp.userData.live || sp.position.y < footY - side * 1.7) {
             sp.position.set(it.mesh.position.x + (Math.random() - 0.5) * half * 1.6, footY + Math.random() * 2, (Math.random() - 0.5) * half * 1.6);
-            sp.userData.vy = -(0.25 + Math.random() * 0.5 + loss); sp.userData.live = true;
+            sp.userData.vy = -(0.25 + Math.random() * 0.5 + pour) * (hitS ? 1.7 : 1); sp.userData.live = true;
           }
           sp.position.y += sp.userData.vy; sp.position.x += (Math.random() - 0.5) * 0.05;
-          sp.material.opacity = Math.min(loss * 2.2, 0.9) * (0.5 + Math.random() * 0.5); sp.scale.setScalar(0.8 + Math.random() * 0.9);
+          sp.material.opacity = Math.min(pour * 2.2, 0.95) * (0.5 + Math.random() * 0.5); sp.scale.setScalar((hitS ? 1.1 : 0.8) + Math.random() * 0.9);
         } else { sp.material.opacity = 0; sp.userData.live = false; }
       });
       if (fc % 6 === 0) drawText(it);
