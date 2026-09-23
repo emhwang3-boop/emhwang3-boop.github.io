@@ -307,6 +307,19 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div class="card">
   <a class="svlink" style="background:#f59f00" href="../coin/" target="_blank" rel="noopener" data-pkg="org.chromium.webapk.a5b34683660bf4b3a_v2" onclick="return svOpenApp(this)"><span class="kko">코인앱 열기</span><span class="ken">Open Coin App</span></a>
 </div><script>
+// 종목 로고 (사장님 2026-09-23) — 국내는 토스, 미국은 FMP. 없으면 조용히 빈칸.
+function stkLogo(code, mk, px){
+  try{
+    var c = String(code||"").replace(/\.US$/i,"").replace(/^A/,"").trim();
+    if(!c) return "";
+    var us = (mk==="us") || !/^[0-9]{6}$/.test(c);
+    var u = us ? ("https://financialmodelingprep.com/image-stock/" + c.toUpperCase() + ".png")
+               : ("https://static.toss.im/png-icons/securities/icn-sec-fill-" + c + ".png");
+    var d = px || 16;
+    return '<img src="'+u+'" alt="" loading="lazy" onerror="this.style.display=&quot;none&quot;"'
+      + ' style="width:'+d+'px;height:'+d+'px;border-radius:50%;object-fit:contain;background:#fff;vertical-align:-3px;margin-right:5px">';
+  }catch(e){ return ""; }
+}
 function svOpenApp(a){
   try{
     var ua=navigator.userAgent||"", sa=false, pkg=a.getAttribute("data-pkg")||"";
@@ -2775,19 +2788,6 @@ function svPuz(parts){
     +'<defs>'+defs+'</defs>'+g+'</svg>';
 }
 
-// 종목 로고 (사장님 2026-09-23) — 국내는 토스, 미국은 FMP. 없으면 조용히 빈칸.
-function stkLogo(code, mk, px){
-  try{
-    var c = String(code||"").replace(/\.US$/i,"").replace(/^A/,"").trim();
-    if(!c) return "";
-    var us = (mk==="us") || !/^[0-9]{6}$/.test(c);
-    var u = us ? ("https://financialmodelingprep.com/image-stock/" + c.toUpperCase() + ".png")
-               : ("https://static.toss.im/png-icons/securities/icn-sec-fill-" + c + ".png");
-    var d = px || 16;
-    return '<img src="'+u+'" alt="" loading="lazy" onerror="this.style.display=&quot;none&quot;"'
-      + ' style="width:'+d+'px;height:'+d+'px;border-radius:50%;object-fit:contain;background:#fff;vertical-align:-3px;margin-right:5px">';
-  }catch(e){ return ""; }
-}
 function svRecoRender() {
   try { svEnIndex(); } catch (e) {}
   const box = document.getElementById("svRecoBody");
