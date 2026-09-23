@@ -3042,20 +3042,7 @@ function cvRecoRender() {
      'BTC 45 · ETH 45 · Alts 10, and within each <b>spot ' + CV_SPOT + ' · perpetual ' + (100 - CV_SPOT)
      + '</b>. Perpetuals can be liquidated, so they get less. The amounts below are virtual amounts '
      + 'given equally to every user.') + '</div>';
-  h += svPie(CV_MIX.map(function (m) { return [m[0], m[1]]; }));
-
-  // ② 목표 비중과 목표 금액 — 지금 비중과 견주지 않는다(보유부가 없다)
-  h += '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("목표 비중", "Target %")
-     + '</th><th>' + KE("목표 금액", "Target amount") + '</th></tr>';
-  CV_MIX.forEach(function (m) {
-    [["spot", CV_SPOT], ["perp", 100 - CV_SPOT]].forEach(function (kk) {
-      const pct = m[1] * kk[1] / 100;                     // 자산군 비중 × 현물/선물 비율
-      h += '<tr><td style="text-align:left"><b>' + KN(m[0]) + '</b> '
-         + '<span class="mkt ' + (kk[0] === "perp" ? "fu" : "sp") + '">' + cvKindNm(kk[0]) + '</span></td>'
-         + '<td>' + pct.toFixed(1) + '%</td><td>' + cvUsd(CV_USDT * pct / 100) + '</td></tr>';
-    });
-  });
-  h += '</table>';
+  // 🔴 원그래프와 목표 비중 표는 뺐다 (사장님 2026-09-23) — 아래 퍼즐이 같은 것을 보여 준다
 
   // ③ 자산군별 코인 — **이름만** (비중 없음)
   // 🔴 방향 딱지와 그에 딸린 위험 설명 문장은 뺐다 (사장님 2026-09-20 "매매 한다는 인상을 주면 안 돼").
