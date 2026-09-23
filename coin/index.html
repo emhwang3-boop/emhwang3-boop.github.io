@@ -794,7 +794,7 @@ async function loadStockUS(){
   const cls=x=>x>0?"up":(x<0?"dn":"fl"),arw=x=>x>0?"▲":(x<0?"▼":"");
   const en=LANG==="en", tick=stkCode.replace(/\.US$/,"");
   E("stkDetail").innerHTML=
-    '<div class="stkhd">'+tick+' <span style="color:var(--sub);font-size:13px;font-weight:600">US</span></div>'
+    '<div class="stkhd">'+((typeof stkLogo==="function")?stkLogo(tick,"us",22):"")+tick+' <span style="color:var(--sub);font-size:13px;font-weight:600">US</span></div>'
    +'<table class="stktab">'
    +'<tr><td class="k">'+L("price")+'</td><td class="v">'+usPrice(price)+'</td></tr>'
    +'<tr><td class="k">'+L("vsOpen")+'</td><td class="v '+cls(co)+'">'+arw(co)+Math.abs(co).toFixed(2)+'%</td></tr>'
@@ -828,7 +828,7 @@ async function loadStock(){
   const co=d.chg_open, cp=d.chg_prev;
   const nm=(LANG==="en"&&d.en)?d.en:d.name;
   E("stkDetail").innerHTML=
-    '<div class="stkhd">'+nm+' <span style="color:var(--sub);font-size:13px;font-weight:600">'+d.code+'</span></div>'
+    '<div class="stkhd">'+((typeof stkLogo==="function")?stkLogo(d.code,"kr",22):"")+nm+' <span style="color:var(--sub);font-size:13px;font-weight:600">'+d.code+'</span></div>'
    +'<table class="stktab">'
    +'<tr><td class="k">'+L("price")+'</td><td class="v">'+won(d.cur)+'</td></tr>'
    +'<tr><td class="k">'+L("vsOpen")+'</td><td class="v '+cls(co)+'">'+arw(co)+Math.abs(co).toFixed(2)+'%</td></tr>'
@@ -1341,7 +1341,7 @@ function pickCoin(sym,name){
 async function loadCoinDetail(){if(!coinSym)return;
   try{const d=await fetch(cvApi()+"/ticker/24hr?symbol="+coinSym).then(r=>r.json());
     const p=parseFloat(d.priceChangePercent),cls=p>0?"up":(p<0?"dn":"fl"),arw=p>0?"▲":(p<0?"▼":"");
-    E("coinDetail").innerHTML='<div class="stkhd">'+coinSym.replace("USDT","")+' <span style="color:var(--sub);font-size:13px;font-weight:600">'+coinSym+'</span></div>'
+    E("coinDetail").innerHTML='<div class="stkhd">'+((typeof cvIcon==="function")?cvIcon(coinSym,22):"")+coinSym.replace("USDT","")+' <span style="color:var(--sub);font-size:13px;font-weight:600">'+coinSym+'</span></div>'
      +'<table class="stktab">'
      +'<tr><td class="k">'+L("price")+'</td><td class="v">$'+coinFmt(+d.lastPrice)+'</td></tr>'
      +'<tr><td class="k">'+L("chg24")+'</td><td class="v '+cls+'">'+arw+Math.abs(p).toFixed(2)+'%</td></tr>'
