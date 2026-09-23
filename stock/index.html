@@ -2920,7 +2920,14 @@ function svRecoRender() {
     const pcs = base > 0 ? (m[1] / base * 100) : 0;
     if (pcs > 0) PZP.push([KN(cls), pcs, "cls", 0, cls, 0, null]);
   });
-  h += svPuz(PZP) + pzDraftHtml();
+  try { h += svPuz(PZP) + pzDraftHtml(); }
+  catch (e) {                                   // 퍼즐이 터져도 카드는 살린다
+    h += '<div class="svsub">' + KE("퍼즐을 못 그렸습니다: ", "Puzzle failed: ") + String(e && e.message || e) + '</div>';
+    Object.keys(window._SVPICK || {}).forEach(function (cls) {
+      h += '<div class="svgrp"><div class="svgrpt"><i style="background:' + svColor(cls, 0) + '"></i>' + KN(cls) + '</div>'
+         + (window._SVPICK[cls] || []).map(function (c) { return '<div class="svitem">' + c.name + '</div>'; }).join("") + '</div>';
+    });
+  }
   h += '<div class="svsub">' + KE("레버리지 ETF는 지수 움직임의 2~3배로 오르내립니다. 손실도 그만큼 커집니다.",
        "Leveraged ETFs move 2–3× the index, up and down. Losses are magnified just as much.") + '</div>';
 
