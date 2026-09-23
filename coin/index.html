@@ -2176,6 +2176,18 @@ function bkSetAmt(i, v) {
 }
 function bkAmtReset() { const a = bkGet(); a.forEach(function (x) { delete x.amt; }); bkSave(a); bkRender(); }
 
+// 선물 레버리지·청산 (사장님 2026-09-23) — 청산되면 원금이 다 날아간다(-100%)
+function bkIsPerp(it) { return /\|F$/i.test(String(it && it.code || "")) || /선물|Perp/i.test(String(it && it.name || "")); }
+function bkLev(it) { var v = +(it && it.lev); return (isFinite(v) && v >= 1) ? v : 1; }
+function bkSetLev(i, v) {
+  var a = bkGet(); if (!a[i]) return;
+  var n = parseFloat(String(v).replace(/[^0-9.]/g, ""));
+  a[i].lev = (isFinite(n) && n >= 1) ? Math.min(n, 125) : 1;
+  bkSave(a); bkRender();
+}
+// 청산선 — 진입가 대비 이만큼 떨어지면 청산 (유지증거금 0.4% 실측)
+function bkLiqDrop(lev) { return Math.max(0.005, 1 / lev - 0.004); }
+
 function bkAdd(code, name, mk) {
   if (!code) return;
   const a = bkGet();
@@ -2215,7 +2227,7 @@ function bkRender() {
   const tAll = a.reduce(function (t, x) { return t + (AM[x.code] || 0); }, 0);
   h += svPie(a.map(function (x) { return [x.name, (AM[x.code] || 0) || 1]; }));
   h += '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>' + KE("투자금액", "Amount")
-     + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
+     + '</th><th>' + KE("배수", "Lev") + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
   a.forEach(function (x, i) {
     const amt = AM[x.code] || 0, w = tAll > 0 ? (amt / tAll * 100) : 0;
     h += '<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="' + x.code + '" data-mk="' + (x.mk || "")
@@ -2223,11 +2235,15 @@ function bkRender() {
        + '</td><td><input class="bkamt" type="text" inputmode="decimal" value="' + bkNum(amt, "USDT")
        + '" oninput="bkAmtLive(this)" onchange="bkSetAmt(' + i + ',this.value)" style="width:96px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 6px;font-size:12px">'
        + ' <span class="dplbl">USDT</span></td>'
+       + '<td>' + (bkIsPerp(x)
+           ? ('<input type="text" inputmode="decimal" value="' + bkLev(x) + '" onchange="bkSetLev(' + i + ',this.value)"'
+              + ' style="width:44px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 5px;font-size:12px"> ×')
+           : '<span class="dplbl">—</span>') + '</td>'
        + '<td>' + w.toFixed(1) + '%</td>'
        + '<td><span class="mhx" onclick="bkDel(' + i + ')">✕</span></td></tr>';
   });
   if (tAll > 0) h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
-       + '<td colspan="3" style="text-align:right">' + bkMoney(tAll, "USDT") + '</td></tr>';
+       + '<td colspan="4" style="text-align:right">' + bkMoney(tAll, "USDT") + '</td></tr>';
   h += '</table>';
   h += '<div class="svsub">' + KE("금액은 고른 포트폴리오의 배분율로 채워집니다. 직접 고치셔도 됩니다.",
        "Amounts follow the portfolio you chose. You can edit them.")
@@ -2334,7 +2350,7 @@ async function bkStore() {
     let cs = null; try { cs = await bkBars(a[i]); } catch (e) { cs = null; }
     const base = (cs && cs.length) ? cs[cs.length - 1] : 0;
     items.push({code: a[i].code, name: a[i].name, mk: a[i].mk, base: base, cls: a[i].cls || bkClassOf(a[i]),
-                amt: AMT[a[i].code] || 0, ccy: "USDT"});
+                amt: AMT[a[i].code] || 0, ccy: "USDT", lev: bkLev(a[i]), perp: bkIsPerp(a[i])});
   }
   saved.unshift({id: "p" + Date.now(), at: Date.now(), items: items, er: null, erows: null, calc: 0});
   bkSavePut(saved);
@@ -2358,8 +2374,17 @@ async function bkSavedRefresh() {
       const it = p.items[j]; let cs = null;
       try { cs = await bkBars(it); } catch (e) { cs = null; }
       const cur = (cs && cs.length) ? cs[cs.length - 1] : 0;
-      if (cur > 0 && it.base > 0) { const r = cur / it.base - 1;
-        rows.push({nm: bkNm(it), r: r, amt: (it.amt || 0), pl: (it.amt || 0) * r, ccy: "USDT"});
+      if (cur > 0 && it.base > 0) {
+        const lev = (it.perp || bkIsPerp(it)) ? bkLev(it) : 1;
+        let r = (cur / it.base - 1) * lev, liq = false;
+        if (lev > 1) {
+          // 보관한 날부터 지금까지 한 번이라도 청산선을 스쳤으면 원금이 다 날아간다
+          const days = Math.max(1, Math.round((Date.now() - (p.at || Date.now())) / 86400000) + 1);
+          const seg = cs.slice(Math.max(0, cs.length - days - 1));
+          const low = seg.length ? Math.min.apply(null, seg) : cur;
+          if ((low / it.base - 1) <= -bkLiqDrop(lev)) { r = -1; liq = true; }
+        }
+        rows.push({nm: bkNm(it), r: r, amt: (it.amt || 0), pl: (it.amt || 0) * r, ccy: "USDT", lev: lev, liq: liq});
         sum += r; ok++; }
       else rows.push({nm: bkNm(it), err: true});
     }
@@ -2404,7 +2429,10 @@ function bkSavedHtml() {
         const ccy = r.ccy || it.ccy || bkCcy(it);
         const amt = (typeof r.amt === "number") ? r.amt : (it.amt || 0);
         const val = r.err ? ('<span class="fl">' + KE("자료 없음", "No data") + '</span>')
-                          : (r.pending ? '<span class="dplbl">—</span>' : ('<span class="' + cls(r.r) + '">' + pc(r.r) + '</span>'));
+                          : (r.pending ? '<span class="dplbl">—</span>'
+                             : ('<span class="' + cls(r.r) + '">' + pc(r.r) + '</span>'
+                                + (r.liq ? ' <span class="dn" style="font-size:10.5px;font-weight:800">' + KE("청산", "Liq.") + '</span>' : '')
+                                + ((r.lev > 1) ? ' <span class="dplbl" style="font-size:10.5px">' + r.lev + '×</span>' : '')));
         const plTxt = (r.err || r.pending || typeof r.pl !== "number") ? '<span class="dplbl">—</span>'
                     : ('<span class="' + cls(r.pl) + '">' + (r.pl >= 0 ? "+" : "-") + bkMoney(Math.abs(r.pl), ccy) + '</span>');
         if (!r.err && !r.pending) { sumPl[ccy] = sumPl[ccy] || {c: 0, p: 0}; sumPl[ccy].c += amt; sumPl[ccy].p += (r.pl || 0); }
