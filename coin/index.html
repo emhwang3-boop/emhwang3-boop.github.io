@@ -3011,7 +3011,7 @@ function svPuz(parts){
     const p=b.p, c=col(p), pad=1.6;
     const x=b.x+pad, y=b.y+pad, w=Math.max(2,b.w-pad*2), hh=Math.max(2,b.h-pad*2);
     const pct=(p[1]/tot*100), rt=(p[2]==="held"&&Number.isFinite(+p[6]))?(+p[6]):null;
-    const isCash=true, pmk=p[0], flipped=!!PZFLIP[pmk];
+    const isCash=true, pmk=p[4]||p[0], flipped=!!PZFLIP[pmk];
     const picks=flipped?puzPicks(pmk):[];
     const full=String(p[0])
       +(en?' · weight ':' · 비중 ')+pct.toFixed(1)+'%'
