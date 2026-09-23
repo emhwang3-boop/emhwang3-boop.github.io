@@ -2254,8 +2254,8 @@ function bkRender() {
     }).join("") + '<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="bkClear()">' + KE("비우기", "Clear") + '</button></div>';
   h += '<div id="bkMsg" class="c21msg" hidden></div><div id="bkOut"></div>';
   h += '<div class="discNote">' + bkNote() + '<br>'
-     + '<b>' + KE("배당(분배금)·세금·거래 수수료는 감안하지 않은 값입니다.",
-                  "Dividends (distributions), taxes and trading fees are not included.") + '</b></div>';
+     + '<b>' + KE("세금·거래 수수료·펀딩비는 감안하지 않은 값입니다.",
+                  "Taxes, trading fees and funding fees are not included.") + '</b></div>';
   }
   h += bkSavedHtml();
   box.innerHTML = h;
