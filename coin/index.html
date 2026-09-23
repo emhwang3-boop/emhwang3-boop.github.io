@@ -250,6 +250,11 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 
 
 
+<div class="card svcard" id="svProfile">
+  <h3><span class="kko">포트폴리오 선택</span><span class="ken">Choose a Portfolio</span></h3>
+  <div id="svBody"></div>
+</div>
+
 <div class="card svcard" id="cvAcct">
   <h3><span class="kko">가상 계좌</span><span class="ken">Virtual Account</span></h3>
   <div class="svacct"><span>USDT</span><b>100,000 USDT</b></div>
@@ -1893,19 +1898,14 @@ const SV_USD = 100000;               // 미화 10만 달러
 const SV_USD_CLS = {"해외 ETF(달러)": 1, "레버리지 ETF(달러)": 1, "해외 주식": 1};
 
 const SV_GRADE = [
-  {nm: "안정형", mix: [["예금", 70], ["국내 ETF", 25], ["해외 ETF(원화)", 5]]},
-  {nm: "안정추구형", mix: [["예금", 50], ["국내 ETF", 30], ["해외 ETF(원화)", 15], ["국내 주식", 5]]},
-  {nm: "위험중립형", mix: [["예금", 30], ["국내 ETF", 25], ["해외 ETF(원화)", 15], ["해외 ETF(달러)", 10],
-                          ["국내 주식", 10], ["해외 주식", 10]]},
-  {nm: "적극투자형", mix: [["예금", 10], ["국내 ETF", 20], ["해외 ETF(원화)", 10], ["해외 ETF(달러)", 15],
-                          ["국내 주식", 20], ["해외 주식", 25]]},
-  // 🔴 레버리지 ETF 10%는 **공격투자 포트폴리오에만** 둔다 (사장님 2026-09-20).
-  //    해외 ETF(달러) 15% 에서 10% 를 떼어 왔다. 원화 밑에 5%, 달러 밑에 5% (사장님 지시).
-  //    그 결과 원화:달러가 45:55 → 50:50 이 된다.
-  {nm: "공격투자형", mix: [["국내 ETF", 10], ["해외 ETF(원화)", 5], ["레버리지 ETF(원화)", 5],
-                          ["해외 ETF(달러)", 5], ["레버리지 ETF(달러)", 5],
-                          ["국내 주식", 30], ["해외 주식", 40]]},
+  // 🔴 코인앱 배분 (사장님 2026-09-23) — 맨 위 성향만 선물, 그 하나 아래는 코인 현물, 나머지는 예금만.
+  {nm: "안정형", mix: [["예금", 100]]},
+  {nm: "안정추구형", mix: [["예금", 100]]},
+  {nm: "위험중립형", mix: [["예금", 100]]},
+  {nm: "적극투자형", mix: [["BTC 현물", 45], ["ETH 현물", 45], ["알트 현물", 10]]},
+  {nm: "공격투자형", mix: [["BTC 선물", 45], ["ETH 선물", 45], ["알트 선물", 10]]},
 ];
+
 // 색은 무지개로 흩뿌리지 않는다. 배분은 안전한 쪽 → 위험한 쪽 차례라서
 // 차가운 남색에서 따뜻한 테라코타로 이어지는 한 줄기 색띠로 둔다(채도 낮춤).
 const SV_PAL = ["#3AA6F0", "#20C4B8", "#37D67A", "#FFC93C", "#FF8A5B", "#FF6BB3", "#9B7BFF"];
@@ -1916,6 +1916,8 @@ const SV_COLOR = {
   "예금": "#20C4B8", "국내 ETF": "#3AA6F0", "해외 ETF(원화)": "#37D67A", "해외 ETF(달러)": "#8FD14F",
   "국내 주식": "#FFC93C", "해외 주식": "#FF8A5B", "레버리지 ETF(원화)": "#FF6BB3", "레버리지 ETF(달러)": "#9B7BFF",
   "BTC": "#FFB020", "ETH": "#5B8DEF", "알트": "#FF6BB3", "현금(USDT)": "#A8B8C8",
+  "BTC 현물": "#FFB020", "ETH 현물": "#5B8DEF", "알트 현물": "#FF6BB3",
+  "BTC 선물": "#FF8A5B", "ETH 선물": "#9B7BFF", "알트 선물": "#FF6BB3",
 };
 function svColor(nm, i) { return SV_COLOR[nm] || SV_PAL[i % SV_PAL.length]; }
 
@@ -2069,7 +2071,7 @@ async function cvRecoLoad() {
 // 🔴 CV_STATE(롱·숏·쉼 딱지)는 통째로 뺐다 (사장님 2026-09-20 "매매 한다는 인상을 주면 안 돼").
 //    state 값은 reco.json 안에서 후보를 고르는 데만 쓰고, 화면에는 글자로 내보내지 않는다.
 function cvNum(n) { return (+n).toLocaleString(undefined, {maximumFractionDigits: 2}); }
-setTimeout(function () { try { cvRecoLoad(); } catch (e) {} }, 800);
+setTimeout(function () { try { svRender(); } catch (e) {} try { cvRecoLoad(); } catch (e) {} }, 800);
 setInterval(function () { try { cvRecoLoad(); } catch (e) {} }, 30 * 60000);
 
 </script>
