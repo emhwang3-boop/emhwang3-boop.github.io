@@ -2837,15 +2837,8 @@ function puzTip(ev,txt){
   clearTimeout(puzTip.t); puzTip.t=setTimeout(function(){ d.style.display="none"; },3000);
 }
 // 퍼즐에서 고른 추천 — 코드는 뒤에만 두고 화면엔 이름만 (사장님 2026-09-23)
-var PZSEL = [];
-function pzHas(code){ return PZSEL.some(function(z){ return z.code===code; }); }
-function pzPick(ev, mk, ix){
-  ev.stopPropagation();
-  var L = puzPicks(mk); var it = L[ix]; if(!it) return;
-  if(pzHas(it.code)) PZSEL = PZSEL.filter(function(z){ return z.code!==it.code; });
-  else PZSEL.push({code:it.code, name:it.name, mk:it.mk||mk});
-  try{ recoRender(); }catch(e){}
-}
+
+
 // 고른 추천 + 지금 보유 → 한 목록으로
 function pzDraft(){
   var out = PZSEL.slice();
@@ -2858,72 +2851,14 @@ function pzDraft(){
   return out;
 }
 var PZDRAFT = null;
-function pzOpen(){ PZDRAFT = pzDraft(); try{ recoRender(); }catch(e){} }
-function pzClose(){ PZDRAFT = null; try{ recoRender(); }catch(e){} }
-function pzDrop(i){ if(!PZDRAFT) return; PZDRAFT.splice(i,1); try{ recoRender(); }catch(e){} }
-function pzSave(){
-  if(!PZDRAFT || !PZDRAFT.length) return;
-  var a = bkGet();
-  PZDRAFT.forEach(function(z){
-    if(a.length>=10) return;
-    if(a.some(function(q){ return q.code===z.code; })) return;
-    a.push({code:z.code, name:z.name, mk:z.mk, spot:z.spot, cls:bkClassOf(z)});
-  });
-  bkSave(a); PZDRAFT=null; PZSEL=[];
-  try{ bkRender(); }catch(e){}
-  try{ recoRender(); }catch(e){}
-  var c=document.getElementById("bkCard"); if(c&&c.scrollIntoView)c.scrollIntoView({behavior:"smooth",block:"start"});
-}
-function pzDraftHtml(){
-  var en=(typeof LANG!=="undefined"&&LANG==="en");
-  if(!PZDRAFT){
-    var n=PZSEL.length;
-    return '<div class="cvrow" style="margin:6px 0"><button class="svbtn" style="flex:1;margin:0" onclick="pzOpen()">'
-      + (en?("Build basket from picks + holdings"+(n?(" ("+n+")"):"")):("고른 것 + 보유로 바스켓 만들기"+(n?(" "+n+"개"):"")))
-      + '</button></div>';
-  }
-  var h='<div class="dphd" style="margin-top:6px">'+(en?"New basket":"새 바스켓")+' <span class="dplbl">'+PZDRAFT.length+(en?"":"종목")+'</span></div>';
-  h+='<table class="mhtab">';
-  PZDRAFT.forEach(function(z,i){
-    h+='<tr><td style="text-align:left">'+dpEsc(z.name)
-      +(z.held?' <span class="dplbl">'+(en?"held":"보유")+'</span>':' <span class="dplbl" style="color:#FFD43B">'+(en?"pick":"추천")+'</span>')
-      +'</td><td><span class="mhx" onclick="pzDrop('+i+')">✕</span></td></tr>';
-  });
-  h+='</table><div class="cvrow" style="margin:6px 0">'
-    +'<button class="svbtn svgo" style="flex:1;margin:0" onclick="pzSave()">'+(en?"Add to virtual basket":"가상 바스켓에 담기")+'</button>'
-    +'<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="pzClose()">'+(en?"Cancel":"그만하기")+'</button></div>';
-  return h;
-}
+
+
+
+
+
 // 현금 조각을 누르면 뒤집혀 추천 종목을 보여 준다 (사장님 2026-09-23) — 다시 누르면 돌아온다
-var PZFLIP = {};
-function puzFlip(ev, mk){
-  ev.stopPropagation();
-  PZFLIP[mk] = !PZFLIP[mk];
-  try{ recoRender(); }catch(e){}
-}
-function puzPicks(mk){
-  try{
-    var R=(typeof window._RECO!=="undefined")?window._RECO:null;
-    if(mk==="coin"){                       // 왕관 판정이 '롱'인 코인만 (사장님 2026-09-23)
-      var out=[];
-      try{ ["BTC","ETH"].forEach(function(k){ var z=(R&&R.coin&&R.coin[k])||null;
-        if(!z||z.state==="long")out.push({name:k, code:k+"-USDT-SWAP", mk:"coin"}); }); }
-      catch(e){ out=[{name:"BTC",code:"BTC-USDT-SWAP",mk:"coin"},{name:"ETH",code:"ETH-USDT-SWAP",mk:"coin"}]; }
-      return out;
-    }
-    // 주식 12칸 후보 + 신호가 뜬 ETF·레버리지 (사장님 2026-09-23)
-    //   원화 현금 → 국내 주식·해외ETF(원화)·레버리지(원화) · 달러 현금 → 미국 주식·해외ETF(달러)·레버리지(달러)
-    var list=(window._PZBUY && window._PZBUY[mk]) ? window._PZBUY[mk].slice() : [];
-    var keys=(mk==="us")?["etfu","levu"]:["etfw","levw"];
-    keys.forEach(function(k){
-      try{ var b=(R&&R[k]&&R[k].buy)?R[k].buy:[];
-        b.forEach(function(r){ var nm=r.name||r.code;
-          if(nm&&!list.some(function(z){return z.name===nm;}))list.push({name:nm, code:r.code, mk:mk}); });
-      }catch(e){}
-    });
-    return list;
-  }catch(e){ return []; }
-}
+
+
 function svPuz(parts){
   const en=LANG==="en";
   parts=parts.filter(function(p){return p[1]>0;}).sort(function(a,b){return b[1]-a[1];});
