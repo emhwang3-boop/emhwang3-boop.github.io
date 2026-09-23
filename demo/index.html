@@ -290,7 +290,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   </div>
   <canvas id="stkChart" class="stkchart" hidden></canvas>
   <div id="stkChartLbl" class="stkcl" hidden></div>
-  <button id="bkAddBtn" class="dppct" style="width:100%;margin-top:8px" hidden onclick="bkAddCurrent()"></button>
+  <button id="bkAddBtn" class="dppct" style="width:100%;margin-top:8px" hidden onclick="bkAddCurrent()">＋ 가상 바스켓 담기</button>
 </div>
 
 <div class="card" id="coin2">
@@ -4959,7 +4959,7 @@ function applyLang(){
   updStkTag();
   if(window._lastD)render(window._lastD);
   if(stkCode)loadStock();
-  var _ba=E("bkAddBtn"); if(_ba)_ba.textContent=KE("＋ 가상 바스켓에 담기","＋ Add to virtual basket");
+  var _ba=E("bkAddBtn"); if(_ba){ var _bt=KE("＋ 가상 바스켓 담기","＋ Add to virtual basket"); if(_bt) _ba.textContent=_bt; }   // 빈 글자로 덮어 단추가 납작해졌다 (2026-09-24)
   try{ bkRender(); }catch(e){}
   if(coinSym)loadCoinDetail();
 }
