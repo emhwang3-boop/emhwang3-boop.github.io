@@ -230,6 +230,7 @@
   }
 
   let camR = 200, fc = 0, eyeX = 0, eyeY = 0;
+  const _TMPV = new THREE.Vector3(), _TMPV2 = new THREE.Vector3(), _TMPQ = new THREE.Quaternion();
   let ZOOM = 1;           // [크게][작게] — 일반 화면에서도 탑 크기를 조절 (사장님 2026-09-23)
   let playing = false, prog = 1;
   document.getElementById("btn-play").addEventListener("click", function () { playing = true; prog = 0; document.getElementById("tstate").innerText = "경과 중…"; });
@@ -426,9 +427,24 @@
       } else {
         it.mesh.position.set(swayX, it._baseY + shakeY, 0);
       }
-      it.mesh.rotation.y += 0.0015 + Math.pow(it.vol / volMax, 1.3) * 0.026;
-      it.mesh.rotation.x = loss > 0 ? Math.sin(t * (2.5 + loss * 5)) * loss * 0.32 : 0;
-      it.mesh.rotation.z = loss > 0 ? Math.sin(t * (3 + loss * 6) + 1) * loss * 0.26 : 0;
+      const spin = 0.0015 + Math.pow(it.vol / volMax, 1.3) * 0.026;
+      if (SHAPE === "tree") {
+        // 🔴 가지에 꿰인 큐브는 **가지 축**을 중심으로 굴러야 한다 (사장님 2026-09-24).
+        //    세로축으로 돌리면 실제로는 있을 수 없는 움직임이 된다.
+        it._roll = (it._roll || 0) + spin;
+        const ax = _TMPV.set(Math.cos(it._ang), 0, -Math.sin(it._ang)).normalize();
+        it.mesh.quaternion.setFromAxisAngle(ax, it._roll);
+        if (loss > 0) {                                   // 손실 흔들림은 구르는 위에 얹는다
+          _TMPQ.setFromAxisAngle(_TMPV2.set(1, 0, 0), Math.sin(t * (2.5 + loss * 5)) * loss * 0.32);
+          it.mesh.quaternion.multiply(_TMPQ);
+          _TMPQ.setFromAxisAngle(_TMPV2.set(0, 0, 1), Math.sin(t * (3 + loss * 6) + 1) * loss * 0.26);
+          it.mesh.quaternion.multiply(_TMPQ);
+        }
+      } else {
+        it.mesh.rotation.y += spin;
+        it.mesh.rotation.x = loss > 0 ? Math.sin(t * (2.5 + loss * 5)) * loss * 0.32 : 0;
+        it.mesh.rotation.z = loss > 0 ? Math.sin(t * (3 + loss * 6) + 1) * loss * 0.26 : 0;
+      }
       it.mat.color.copy(litColor(it.baseColor, it.cur));
       it.mat.emissive.copy(litColor(it.baseColor, it.cur));
       it.mat.emissiveIntensity = gain > 0 ? Math.min(gain, 1) * 0.6 * (0.7 + 0.3 * Math.sin(t * 6 + it.vol)) : 0;
