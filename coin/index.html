@@ -2380,7 +2380,9 @@ async function bkSavedRefresh() {
         if (lev > 1) {
           // 보관한 날부터 지금까지 한 번이라도 청산선을 스쳤으면 원금이 다 날아간다
           const days = Math.max(1, Math.round((Date.now() - (p.at || Date.now())) / 86400000) + 1);
-          const seg = cs.slice(Math.max(0, cs.length - days - 1));
+          let lows = null; try { lows = await bkLows(it); } catch (e) { lows = null; }
+          const src = lows || cs;
+          const seg = src.slice(Math.max(0, src.length - days));
           const low = seg.length ? Math.min.apply(null, seg) : cur;
           if ((low / it.base - 1) <= -bkLiqDrop(lev)) { r = -1; liq = true; }
         }
@@ -2858,6 +2860,13 @@ const BK_EMPTY = "";
 const BK_COL = "코인";
 const BK_COL_EN = "Coin";
 // 🔴 바이낸스 현물 일봉 — 화면 그래프와 같은 자료다.
+// 청산 판정용 — 일봉 저가(low). 종가만 보면 장중에 스친 청산을 놓친다 (사장님 2026-09-23)
+async function bkLows(x) {
+  const u = "https://api.binance.com/api/v3/klines?symbol=" + String(x.code || "").replace(/\|[FS]$/i, "") + "&interval=1d&limit=300";
+  const k = await fetch(u).then(function (r) { return r.json(); });
+  if (!Array.isArray(k) || k.length < 5) return null;
+  return k.map(function (c) { return +c[3]; });
+}
 async function bkBars(x) {
   // 꼬리표(|S 현물 · |F 선물)는 떼고 시세를 부른다 (2026-09-23)
   const u = "https://api.binance.com/api/v3/klines?symbol=" + String(x.code || "").replace(/\|[FS]$/i, "") + "&interval=1d&limit=300";
