@@ -3716,7 +3716,13 @@ setTimeout(function(){ dpRender(); dpTick(); }, 1200); setInterval(dpTick,10000)
   "#mhBody .mhtab td:nth-child(3),#mhBody .mhtab td:nth-child(4),#mhBody .mhtab td:nth-child(6){white-space:nowrap}"
  +"#mhBody .mhtab td,#mhBody .mhtab th{padding-left:2px;padding-right:2px;font-size:12px}"
  +"#mhBody .mhtab .dpsm{white-space:nowrap;padding:5px 5px}"
- +"#mhBody .mhtab td:first-child{width:22%}";
+ +"#mhBody .mhtab td:first-child{width:22%}"
+ +"@media(max-width:520px){#mhBody .mhtab{table-layout:fixed}"          /* 폰: 오른쪽 손익 칸이 잘렸다 → 왼쪽으로 당김 (사장님 2026-09-23) */
+ +"#mhBody .mhtab td:first-child,#mhBody .mhtab th:first-child{width:21%}"
+ +"#mhBody .mhtab td:nth-child(2),#mhBody .mhtab th:nth-child(2){width:11%}"
+ +"#mhBody .mhtab td:nth-child(7),#mhBody .mhtab th:nth-child(7){width:44px}"
+ +"#mhBody .mhtab td,#mhBody .mhtab th{padding-left:1px;padding-right:1px;font-size:11.3px}"
+ +"#mhBody .mhtab td:nth-child(6){font-size:11px}}";
   document.head.appendChild(st); })();
 
 function obKrRow(r,side,i){                 // ka10004: 1호가만 fpr, 2~10 은 Nth_pre (3th 도 th)
