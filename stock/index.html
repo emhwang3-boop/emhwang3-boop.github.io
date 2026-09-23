@@ -974,7 +974,8 @@ function c21Calc(key,B,CH){
 
 function makeChart(cid,opt){
   opt=opt||{};const cv=E(cid);
-  if(!cv)return {setData:function(){},patchLast:function(){}};   // 칸이 없으면 조용히 넘어간다const NF=opt.fmt||(v=>Math.round(v).toLocaleString());
+  if(!cv)return {setData:function(){},patchLast:function(){}};   // 칸이 없으면 조용히 넘어간다
+  const NF=opt.fmt||(v=>Math.round(v).toLocaleString());
   // 🔴 청산맵 판은 **선물일 때만** 보인다 (사장님 2026-09-20 "현물이면 청산맵을 보여주면 안 되는 거로").
   //    현물에는 청산이 없으므로 그 판 자체를 목록에서 뺀다. setLiq() 로 오가며 바꾼다.
   let LIQ=!!opt.liq;
