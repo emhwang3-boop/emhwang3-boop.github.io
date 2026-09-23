@@ -30,8 +30,8 @@
   <button id="btn-ar" class="ghost" style="display:none">AR로 보기</button>
 </div>
 <div id="controlsL">
-  <button id="btn-arp" class="ghost" style="display:none">크게</button>
-  <button id="btn-arm" class="ghost" style="display:none">작게</button>
+  <button id="btn-arp" class="ghost">크게</button>
+  <button id="btn-arm" class="ghost">작게</button>
   <button id="btn-arf" style="display:none">앞에 세우기</button>
 </div>
 
@@ -225,9 +225,11 @@
   }
 
   let camR = 200, fc = 0, eyeX = 0, eyeY = 0;
+  let ZOOM = 1;           // [크게][작게] — 일반 화면에서도 탑 크기를 조절 (사장님 2026-09-23)
   let playing = false, prog = 1;
   document.getElementById("btn-play").addEventListener("click", function () { playing = true; prog = 0; document.getElementById("tstate").innerText = "경과 중…"; });
   document.getElementById("btn-reset").addEventListener("click", function () {
+    ZOOM = 1;
     playing = false; prog = 0;
     items.forEach(function (it) { it.cur = 0; });
     document.getElementById("tstate").innerText = "처음(0%)";
@@ -255,8 +257,14 @@
     try { const cam = renderer.xr.getCamera(camera); cam.getWorldPosition(_camPos); cam.getWorldDirection(_camDir); _camDir.y = 0; _camDir.normalize();
       arRoot.position.copy(_camPos).addScaledVector(_camDir, 0.8); arRoot.position.y = _camPos.y - 0.4; arPlaced = true; } catch (e) {}
   });
-  arBtnP.addEventListener("click", function () { arHeight = Math.min(arHeight * 1.35, 4); });
-  arBtnM.addEventListener("click", function () { arHeight = Math.max(arHeight / 1.35, 0.1); });
+  arBtnP.addEventListener("click", function () {
+    if (arOn) arHeight = Math.min(arHeight * 1.35, 4);
+    else ZOOM = Math.min(ZOOM * 1.25, 4);
+  });
+  arBtnM.addEventListener("click", function () {
+    if (arOn) arHeight = Math.max(arHeight / 1.35, 0.1);
+    else ZOOM = Math.max(ZOOM / 1.25, 0.3);
+  });
   const reticle = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.08, 32).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({ color: 0x2bd4c0, transparent: true, opacity: 0.9 }));
   reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
@@ -270,7 +278,7 @@
     camera.near = 1; camera.far = 3000; camera.updateProjectionMatrix();
     document.getElementById("arHint").style.display = "none";
     renderer.xr.enabled = false; arRoot.position.set(0, 0, 0); arRoot.scale.set(1, 1, 1); arRoot.quaternion.set(0, 0, 0, 1);
-    frameG.visible = true; arBtn.textContent = "AR로 보기"; arBtnP.style.display = "none"; arBtnM.style.display = "none"; arBtnF.style.display = "none";
+    frameG.visible = true; arBtn.textContent = "AR로 보기"; arBtnF.style.display = "none";
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
   arBtn.addEventListener("click", async function () {
@@ -376,7 +384,7 @@
     if (gyroOn && gyro) { ex = THREE.MathUtils.clamp((gyro.gamma || 0) / 32, -1, 1) * SW2 * 1.15; ey = THREE.MathUtils.clamp(((gyro.beta || 0) - 45) / 38, -1, 1) * SH2 * 0.95; }
     else { baseAng += 0.004; ex = Math.sin(baseAng) * SW2 * 0.55; ey = Math.sin(baseAng * 0.6) * SH2 * 0.15; }
     eyeX += (ex - eyeX) * 0.12; eyeY += (ey - eyeY) * 0.12;
-    const EZ = camR * 1.15, nr = 1, fr = 3000;
+    const EZ = camR * 1.15 / ZOOM, nr = 1, fr = 3000;
     if (!arOn) {
     camera.projectionMatrix.makePerspective(nr * (-SW2 - eyeX) / EZ, nr * (SW2 - eyeX) / EZ, nr * (SH2 - eyeY) / EZ, nr * (-SH2 - eyeY) / EZ, nr, fr);
     camera.position.set(eyeX, cyc + eyeY, EZ); camera.quaternion.set(0, 0, 0, 1); camera.updateMatrixWorld(); }
