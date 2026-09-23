@@ -139,7 +139,7 @@
   const SPARK = softDot("255,255,255");
   const DUST = softDot("205,180,140");
 
-  const K = 1.3, TW = 9;
+  const K = 1.3, TW = 12;      // 글자판 — 한 단계 키움 (사장님 2026-09-23)
   function baseSide(v) { return Math.cbrt(Math.max(v, 1)) * K; }
   // 금액은 숫자 그대로 — 뒤 0 세 개를 K, 여섯 개를 M 으로 (사장님 2026-09-23)
   const fmtMoney = function (v) {
@@ -408,7 +408,7 @@
       const side = it._side, loss = it._loss, gain = Math.max(0, it.cur);
       it.mesh.scale.set(side, side, side);
       // 글자는 큐브를 넘지 않는다 — 작은 큐브에서 글자가 밖으로 삐져나왔다 (사장님 2026-09-23)
-      const tw = Math.min(TW, side * 0.92);
+      const tw = Math.min(TW, side * 1.12);
       it.textSprite.scale.set(tw / side, tw / side, 1);
       const vr = Math.pow(it.vol / volMax, 1.5);   // 변동성 = 그 큐브의 좌우 흔들림 (사장님 2026-09-22)
       const volX = Math.sin(t * (1.6 + vr * 4) + it.vol) * vr * Math.min(it._side * 0.22, 1.6) + Math.sin(t * 8 + it.vol) * vr * it._side * 0.05;
