@@ -4160,7 +4160,14 @@ function recoPuz(parts){
         items.forEach(function(it2,ix2){
           const on=pzHas(it2.code);
           const txt=(on?"✓ ":"")+fit1(String(it2.name),w,fs*0.92);
-          g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="middle" font-size="'+(fs*0.92).toFixed(1)
+          const lg=anyLogoUrl(it2.code, it2.mk);
+          const f3=fs*0.92, iw3=lg?f3*1.2:0;
+          let nw3=0; for(let q=0;q<txt.length;q++)nw3+=wide(txt[q])*f3;
+          const sx3=x+w/2-(iw3+nw3)/2;
+          if(lg)g+='<image href="'+lg+'" x="'+sx3.toFixed(1)+'" y="'+(fy-f3*0.8).toFixed(1)
+            +'" width="'+(f3*1.02).toFixed(1)+'" height="'+(f3*1.02).toFixed(1)
+            +'" style="cursor:pointer" onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')"></image>';
+          g+='<text x="'+(sx3+iw3).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="start" font-size="'+f3.toFixed(1)
             +'" font-weight="800" fill="'+(on?"#2bff86":"#fff")+'" stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke"'
             +' style="cursor:pointer" onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')">'+dpEsc(txt)+'</text>';
           fy+=fs*1.18; });
@@ -4187,6 +4194,18 @@ function cvIcon(sym, px){
 }
 // 종목이든 코인이든 알아서 — 데모앱은 셋이 섞인다
 function anyLogo(code, mk, px){ return (mk==="coin") ? cvIcon(code, px) : stkLogo(code, mk, px); }
+// 로고 주소만 (SVG image 용) — 코인이면 아이콘, 아니면 종목 로고
+function anyLogoUrl(code, mk){
+  try{
+    if(mk==="coin"){ var k=String(code||"").toUpperCase().replace(/\|[FS]$/,"").replace(/-USDT-SWAP$/,"").replace(/-?USDT$/,"").replace(/-.*$/,"");
+      return CV_ICON[k]||""; }
+    var c=String(code||"").replace(/\.US$/i,"").replace(/^A/,"").trim();
+    if(!c) return "";
+    var us=(mk==="us")||!/^[0-9]{6}$/.test(c);
+    return us ? ("https://financialmodelingprep.com/image-stock/"+c.toUpperCase()+".png")
+              : ("https://static.toss.im/png-icons/securities/icn-sec-fill-"+c+".png");
+  }catch(e){ return ""; }
+}
 // 종목 로고 (사장님 2026-09-23) — 국내는 토스, 미국은 FMP. 없으면 조용히 빈칸.
 function stkLogo(code, mk, px){
   try{
