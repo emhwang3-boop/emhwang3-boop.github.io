@@ -4315,7 +4315,7 @@ function bkSlot(mk){
     return tot/12;
   }catch(e){ return 0; }
 }
-function bkAmtOf(list){ var o={}; list.forEach(function(x){ o[x.code]=(typeof x.amt==="number"&&x.amt>=0)?x.amt:bkSlot(x.mk); }); return o; }
+function bkAmtOf(list){ var o={}; list.forEach(function(x){ o[x.code]=(typeof x.amt==="number"&&x.amt>0)?x.amt:bkSlot(x.mk); }); return o; }
 function bkSetAmt(i,v){ var a=bkGet(); if(!a[i])return; var n=parseFloat(String(v).replace(/[^0-9.]/g,""));
   a[i].amt=isFinite(n)?n:0; bkSave(a); bkRender(); }
 function bkAmtReset(){ var a=bkGet(); a.forEach(function(x){ delete x.amt; }); bkSave(a); bkRender(); }
