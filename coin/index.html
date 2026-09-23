@@ -2528,6 +2528,13 @@ function towerPick(list, title, pid) {
 
 function openTower3D(list, title, pid) { towerPick(list, title, pid); }
 
+// 큐브에 적을 돈과 그 통화 — 달러는 달러로, USDT 는 USDT 로 적는다 (사장님 2026-09-23)
+function twAmt(it){
+  var v = (typeof it.amt === "number" && it.amt > 0) ? it.amt
+        : ((typeof it.val === "number" && it.val > 0) ? it.val : 0);
+  var c = it.ccy || (it.mk === "coin" ? "USDT" : (it.mk === "us" ? "USD" : "KRW"));
+  return {m: v, c: c};
+}
 // 큐브 크기·글자에 쓸 돈 — 만원 단위. 달러·USDT 는 원화로 환산한다 (사장님 2026-09-23)
 function twMan(it){
   var v = 0;
@@ -2550,7 +2557,7 @@ async function openTower3DGo(list, title, pid, shape) {
     var it = list[i], cs = null;
     try { cs = await bkBars(it); } catch (e) { cs = null; }
     var mm = document.querySelector("#tower3dOv .mpTxt") || document.getElementById("t3dmsg"); if (mm) mm.textContent = "3D 준비 중… " + (i + 1) + "/" + list.length;
-    if (!cs || cs.length < 10) { data.push({ n: bkNm(it), b: twMan(it), r: 0, v: 1, k: bkClassRank(it) }); rows.push({nm: bkNm(it), err: true}); continue; }
+    if (!cs || cs.length < 10) { data.push({ n: bkNm(it), b: twMan(it), m: twAmt(it).m, c: twAmt(it).c, r: 0, v: 1, k: bkClassRank(it) }); rows.push({nm: bkNm(it), err: true}); continue; }
     var n = Math.min(60, cs.length - 1), from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
     // 보관한 PT 는 표와 같은 값(보관 기준가 대비 지금). 기준가가 없을 때만 60일 수익률.  (사장님 2026-09-21)
     var r = (it.base > 0) ? (to / it.base - 1) : ((from > 0) ? (to / from - 1) : 0);
@@ -2558,7 +2565,7 @@ async function openTower3DGo(list, title, pid, shape) {
     for (var k = 1; k < seg.length; k++) dd.push(seg[k] / seg[k - 1] - 1);
     var m = dd.reduce(function (s, x) { return s + x; }, 0) / (dd.length || 1);
     var sd = Math.sqrt(dd.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / (dd.length || 1)) * 100;
-    data.push({ n: bkNm(it), b: twMan(it), r: +r.toFixed(4), v: +Math.max(0.05, sd).toFixed(2), k: bkClassRank(it) });
+    data.push({ n: bkNm(it), b: twMan(it), m: twAmt(it).m, c: twAmt(it).c, r: +r.toFixed(4), v: +Math.max(0.05, sd).toFixed(2), k: bkClassRank(it) });
     if (it.base > 0 && to > 0) { rows.push({nm: bkNm(it), r: r}); rsum += r; rok++; } else rows.push({nm: bkNm(it), err: true});
   }
   if (pid) { try { var sv = bkSaveGet(); sv.forEach(function (p) { if (p.id === pid) { p.erows = rows; p.er = rok ? rsum / rok : null; p.calc = Date.now(); } }); bkSavePut(sv); bkRender(); } catch (e) {} }
