@@ -574,6 +574,7 @@ function render(d){
       h+='<div class="srow" style="font-size:11px;color:var(--soon)">'+(en?"Business hours 08:00 – 20:00 (KST)":"운영시간 08:00 – 20:00 (KST)")+'</div>';
       if(st.today_exp)h+='<div class="srow" style="font-weight:700;color:#e0a020">⚠ '+(en?(st.today_quad?"Quadruple witching today":"Options expiry today"):(st.today_quad?"오늘 네 마녀(동시만기)":"오늘 옵션 만기"))+'</div>';
       else if(st.next_exp)h+='<div class="srow" style="color:var(--sub)">'+(en?("Next expiry "+st.next_exp+(st.next_quad?" (quad witching)":" (options)")):("다음 만기 "+st.next_exp+(st.next_quad?" (네 마녀)":" (옵션)")))+'</div>';
+      h+='<div id="regLine"></div>';                 // 장세 줄 자리 (사장님 2026-09-24)
       sSpecial=h+'</div>';
     }
     let sCalendar="";
@@ -619,6 +620,7 @@ function render(d){
     // 코인은 #coin-card(3초 갱신) 독립 슬롯 → #cards 는 장단기까지, #news 는 그 아래
     // 경제지표 일정은 뉴스 바로 앞으로 (사장님 2026-09-18)
     document.getElementById("cards").innerHTML=sSpecial;   // 증시 현황만(주식앱)
+    try{ regPaint(); }catch(e){}
     document.getElementById("news").innerHTML=sNews;  // 경제일정 없음(주식앱)
   }
 }
@@ -2815,6 +2817,9 @@ function svPuz(parts){
     +'<defs>'+defs+'</defs>'+g+'</svg>';
 }
 
+var REG_HTML = "";
+// 장세 줄은 맨 위 [국내 증시 현황] 카드 안에 그린다 (사장님 2026-09-24)
+function regPaint(){ var n=document.getElementById("regLine"); if(n && REG_HTML) n.innerHTML = REG_HTML; }
 function svRecoRender() {
   try { svEnIndex(); } catch (e) {}
   const box = document.getElementById("svRecoBody");
@@ -2889,10 +2894,11 @@ function svRecoRender() {
       return KN(nm) + ' <b style="color:' + (good ? "#2f9e44" : "#e03131") + '">' + (good ? KE("좋음", "Good") : KE("나쁨", "Bad")) + ' (' + (v > 0 ? "+" : "") + v.toFixed(1) + '%)</b>';
     };
     var _ld = window._lastD, live = (_ld && _ld.asof) ? String(_ld.asof).slice(11, 16) : "";
-    h += '<div class="svsub" style="font-size:13px">' + KE("지금 장세", "Market now") + ' · ' + mk("국내", SVR.kr, "코스피") + ' · ' + mk("미국", SVR.us, "S&P500")
+    REG_HTML = '<div class="svsub" style="font-size:13px">' + KE("지금 장세", "Market now") + ' · ' + mk("국내", SVR.kr, "코스피") + ' · ' + mk("미국", SVR.us, "S&P500")
        + (live ? ' <span class="dplbl">' + live + KE(" 실시간", " live") + '</span>' : ' <span class="dplbl">' + (SVR.at || "") + '</span>') + svInfoMark("svRegInfo") + '</div>'
        + '<div id="svRegInfo" class="svsub" style="display:' + (typeof svInfoDisp === "function" ? svInfoDisp("svRegInfo") : "none") + ';font-size:11px">' + KE("일봉 기준입니다. 어제 종가가 기준선보다 위인지 아래인지에 오늘 지수 등락을 더해 봅니다. 기준선 위면 좋음, 아래면 나쁨.",
              "Daily bars. Yesterday's close above or below the baseline, plus today's index move. Above is Good, below is Bad.") + '</div>';
+    try{ regPaint(); }catch(e){}
   }
 
 
