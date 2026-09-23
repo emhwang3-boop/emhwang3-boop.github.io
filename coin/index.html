@@ -2798,8 +2798,17 @@ function pzPick(ev, cls, ix){
   ev.stopPropagation();
   var L = puzPicks(cls), it = L[ix]; if(!it || !it.code) return;
   if(pzHas(it.code)) PZSEL = PZSEL.filter(function(z){ return z.code!==it.code; });
-  else PZSEL.push({code:it.code, name:it.name, mk:it.mk});
+  else { PZSEL.push({code:it.code, name:it.name, mk:it.mk}); pzView(it); }
   try{ cvRecoRender(); }catch(e){}
+}
+// 고른 코인을 아래 조회 칸에 띄운다 (사장님 2026-09-24)
+function pzView(it){
+  var c = String(it.code || "").split("|")[0];
+  if(!c) return;
+  try{
+    pickCoin(c, String(it.name || c.replace(/USDT$/, "")));
+    var e = document.getElementById("coin2"); if(e) e.scrollIntoView({behavior:"smooth"});
+  }catch(e){}
 }
 function pzOpen(){ PZDRAFT = PZSEL.slice(); try{ cvRecoRender(); }catch(e){} }
 function pzClose(){ PZDRAFT = null; try{ cvRecoRender(); }catch(e){} }
@@ -3002,7 +3011,7 @@ function svPuz(parts){
           const rh=fs*1.12, ry=fy-fs*0.82;
           // 글자 획만 누르면 잘 안 눌린다 — 줄 전체를 누르는 자리로 깐다 (사장님 2026-09-23)
           g+='<rect x="'+(x+3).toFixed(1)+'" y="'+ry.toFixed(1)+'" width="'+(w-6).toFixed(1)+'" height="'+rh.toFixed(1)
-            +'" rx="4" fill="'+(on?"rgba(43,255,134,.18)":"rgba(255,255,255,.06)")+'" style="cursor:pointer"'
+            +'" rx="4" fill="'+(on?"rgba(43,255,134,.18)":"rgba(255,255,255,0)")+'" style="cursor:pointer;pointer-events:all"'
             +' onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')"></rect>';
           if(kd){                                   // 현물·선물 딱지 (사장님 2026-09-23)
             const f2=fs*0.92, tw=fs*2.0, gap=fs*0.35;
