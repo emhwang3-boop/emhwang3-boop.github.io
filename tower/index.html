@@ -160,9 +160,20 @@
       g.lineWidth = 6; g.strokeStyle = "rgba(0,0,0,0.95)"; g.strokeText(txt, 128, y);
       g.fillStyle = fill; g.fillText(txt, 128, y);
     }
-    ln(it.name, 94, 36, "800", "#ffffff");
-    ln(cubeMoney(it), 128, 30, "700", "#eef3f9");
-    ln(fmtPct(it.cur), 162, 40, "800", it.cur > 0.0005 ? "#2bff86" : (it.cur < -0.0005 ? "#ff4d4d" : "#c7ced8"));
+    // 이름이 길면 두 줄로 나눈다 — 잘려 나가지 않게 (사장님 2026-09-23)
+    const nmLines = (function (t, size) {
+      g.font = '800 ' + size + 'px "Segoe UI", system-ui, sans-serif';
+      if (g.measureText(t).width <= 232) return [t];
+      const sp = t.indexOf(" ");
+      let a, b;
+      if (sp > 0 && sp < t.length - 1) { a = t.slice(0, sp); b = t.slice(sp + 1); }
+      else { const h = Math.ceil(t.length / 2); a = t.slice(0, h); b = t.slice(h); }
+      return [a, b];
+    })(String(it.name || ""), 36);
+    if (nmLines.length === 1) { ln(nmLines[0], 94, 36, "800", "#ffffff"); }
+    else { ln(nmLines[0], 74, 30, "800", "#ffffff"); ln(nmLines[1], 106, 30, "800", "#ffffff"); }
+    ln(cubeMoney(it), 136, 30, "700", "#eef3f9");
+    ln(fmtPct(it.cur), 170, 40, "800", it.cur > 0.0005 ? "#2bff86" : (it.cur < -0.0005 ? "#ff4d4d" : "#c7ced8"));
     it.ttex.needsUpdate = true;
   }
 
