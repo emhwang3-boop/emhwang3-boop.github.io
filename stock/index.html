@@ -2024,7 +2024,12 @@ function bkRender() {
   const AM = bkAmtOf(a);
   const tKR = a.reduce(function (t, x) { return t + (bkCcy(x) === "KRW" ? (AM[x.code] || 0) : 0); }, 0);
   const tUS = a.reduce(function (t, x) { return t + (bkCcy(x) === "USD" ? (AM[x.code] || 0) : 0); }, 0);
-  h += svPie(a.map(function (x) { return [x.name, (AM[x.code] || 0) || 1]; }));
+  // 원그래프는 원화로 환산해 그린다 — 달러와 원을 그냥 섞으면 한 종목이 99% 를 먹는다 (사장님 2026-09-23)
+  const _fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1300;
+  h += svPie(a.map(function (x) {
+    const v = (AM[x.code] || 0) * (bkCcy(x) === "USD" ? _fx : 1);
+    return [x.name, v || 1];
+  }));
   h += '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>' + KE("투자금액", "Amount")
      + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
   a.forEach(function (x, i) {
