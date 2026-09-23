@@ -4292,6 +4292,34 @@ function sySave() {
 }
 setTimeout(function () { if (syPass()) syPull(true); }, 2500);      // 앱을 열면 받아온다
 
+
+// 가상 바스켓 투자금액 (사장님 2026-09-23) — 기본값은 추천 1칸 금액(그 시장 총자산÷12)
+function bkCcy(it){ return it&&it.mk==="coin" ? "USDT" : (it&&it.mk==="us" ? "USD" : "KRW"); }
+function bkNum(v,ccy){ return ccy==="KRW" ? Math.round(v).toLocaleString()
+  : (+v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function bkMoney(v,ccy){ return bkNum(v,ccy)+(ccy==="KRW"?KE("원",""):(ccy==="USD"?" $":" USDT")); }
+function bkAmtLive(el){
+  var raw=String(el.value||""), dot=raw.indexOf(".")>=0;
+  var n=parseFloat(raw.replace(/,/g,"")); if(!isFinite(n))return;
+  var tail=dot?raw.replace(/,/g,"").split(".")[1]:null;
+  el.value=Math.floor(n).toLocaleString()+(dot?("."+(tail||"")):"");
+}
+function bkSlot(mk){
+  try{
+    if(typeof RL==="undefined"||!RL.at)return 0;
+    var cash=RL.cash||{};
+    if(mk==="coin"){ var co=(RL.co||[]).reduce(function(t,q){return t+(q.spot?((q.qty||0)*(q.cur||0)):(q.evl||0));},0);
+      return (co+(cash.usdt||0))/12; }
+    var rows=(mk==="us")?(RL.us||[]):(RL.kr||[]);
+    var tot=rows.reduce(function(t,q){return t+(q.evl||0);},0)+((mk==="us")?(cash.usd||0):(cash.krw||0));
+    return tot/12;
+  }catch(e){ return 0; }
+}
+function bkAmtOf(list){ var o={}; list.forEach(function(x){ o[x.code]=(typeof x.amt==="number"&&x.amt>=0)?x.amt:bkSlot(x.mk); }); return o; }
+function bkSetAmt(i,v){ var a=bkGet(); if(!a[i])return; var n=parseFloat(String(v).replace(/[^0-9.]/g,""));
+  a[i].amt=isFinite(n)?n:0; bkSave(a); bkRender(); }
+function bkAmtReset(){ var a=bkGet(); a.forEach(function(x){ delete x.amt; }); bkSave(a); bkRender(); }
+
 function bkGet(){ try{ return JSON.parse(localStorage.getItem(BK_KEY)||"[]")||[]; }catch(e){ return []; } }
 function bkSave(a){ try{ localStorage.setItem(BK_KEY,JSON.stringify(a)); }catch(e){} try{ sySoon(); }catch(e){} }
 function bkMsg(t){ var m=E("bkMsg"); if(m){ m.textContent=t||""; m.hidden=!t; } }
@@ -4530,11 +4558,12 @@ async function bkStore(){
   var saved=bkSaveGet();
   if(saved.length>=20){ bkSavedMsg(KE("보관은 스무 개까지 됩니다.","You can keep up to 20.")); return; }
   bkSavedMsg(KE("보관 중\u2026 기준가를 받습니다","Saving\u2026 fetching base prices"));
+  var AMT=bkAmtOf(a);
   var items=[];
   for(var i=0;i<a.length;i++){
     var cs=null; try{ cs=await bkBars(a[i]); }catch(e){ cs=null; }
     var base=(cs&&cs.length)?cs[cs.length-1]:0;
-    items.push({code:a[i].code, name:a[i].name, mk:a[i].mk, spot:a[i].spot, base:base, cls:a[i].cls||bkClassOf(a[i])});
+    items.push({code:a[i].code, name:a[i].name, mk:a[i].mk, spot:a[i].spot, base:base, cls:a[i].cls||bkClassOf(a[i]), amt:AMT[a[i].code]||0, ccy:bkCcy(a[i])});
   }
   saved.unshift({id:"p"+Date.now(), at:Date.now(), items:items, er:null, erows:null, calc:0});
   bkSavePut(saved);
@@ -4561,7 +4590,7 @@ async function bkSavedRefresh(){
       var it=p.items[j], cs=null;
       try{ cs=await bkBars(it); }catch(e){ cs=null; }
       var cur=(cs&&cs.length)?cs[cs.length-1]:0;
-      if(cur>0&&it.base>0){ var r=cur/it.base-1; rows.push({nm:it.name, r:r}); sum+=r; ok++; }
+      if(cur>0&&it.base>0){ var r=cur/it.base-1; rows.push({nm:it.name, r:r, amt:(it.amt||0), pl:(it.amt||0)*r, ccy:it.ccy||bkCcy(it)}); sum+=r; ok++; }
       else rows.push({nm:it.name, err:true});
     }
     p.erows=rows; p.er=ok?sum/ok:null; p.calc=Date.now();
@@ -4595,14 +4624,27 @@ function bkSavedHtml(){
       +'<span onclick="event.stopPropagation();towerFromSaved(\''+p.id+'\')" style="cursor:pointer;color:#2bd4c0;font-weight:800;font-size:11px;border:1px solid #2bd4c0;border-radius:6px;padding:1px 5px;margin-right:5px">3D</span>'
       +'<span class="mhx" onclick="event.stopPropagation();bkSavedDel(\''+p.id+'\')">\u2715</span></div>';
     if(open){
-      h+='<table class="mhtab" style="margin:2px 0 6px">';
+      h+='<table class="mhtab" style="margin:2px 0 6px"><tr><th>'+KE("종목","Item")+'</th><th>'+KE("원금","Cost")
+        +'</th><th>'+KE("수익금","P/L")+'</th><th>'+KE("수익률","Return")+'</th></tr>';
       var er=p.erows||p.items.map(function(it){ return {nm:it.name, pending:true}; });
+      var SUM={};
       er.forEach(function(r,ix){
         var it=p.items[ix]||{};
+        var c=r.ccy||it.ccy||bkCcy(it), amt=(typeof r.amt==="number")?r.amt:(it.amt||0);
         var val=r.err?('<span class="fl">'+KE("자료 없음","No data")+'</span>')
-                     :(r.pending?'<span class="dplbl">\u2014</span>':('<span class="'+cls(r.r)+'">'+pc(r.r)+'</span>'));
+                     :(r.pending?'<span class="dplbl">—</span>':('<span class="'+cls(r.r)+'">'+pc(r.r)+'</span>'));
+        var plT=(r.err||r.pending||typeof r.pl!=="number")?'<span class="dplbl">—</span>'
+               :('<span class="'+cls(r.pl)+'">'+(r.pl>=0?"+":"-")+bkMoney(Math.abs(r.pl),c)+'</span>');
+        if(!r.err&&!r.pending){ SUM[c]=SUM[c]||{c:0,p:0}; SUM[c].c+=amt; SUM[c].p+=(r.pl||0); }
         h+='<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="'+dpEsc(it.code||"")+'" data-mk="'+dpEsc(it.mk||"")
-          +'" data-nm="'+dpEsc(it.name||r.nm)+'" data-spot="'+(it.spot?1:0)+'">'+dpEsc(r.nm)+'</td><td>'+val+'</td></tr>';
+          +'" data-nm="'+dpEsc(it.name||r.nm)+'" data-spot="'+(it.spot?1:0)+'">'+dpEsc(r.nm)+'</td>'
+          +'<td>'+(amt>0?bkMoney(amt,c):'<span class="dplbl">—</span>')+'</td>'
+          +'<td>'+plT+'</td><td>'+val+'</td></tr>';
+      });
+      Object.keys(SUM).forEach(function(c){ var o=SUM[c];
+        h+='<tr style="font-weight:800"><td style="text-align:left">'+KE("합계","Total")+'</td>'
+          +'<td>'+bkMoney(o.c,c)+'</td><td><span class="'+cls(o.p)+'">'+(o.p>=0?"+":"-")+bkMoney(Math.abs(o.p),c)+'</span></td>'
+          +'<td>'+(o.c>0?('<span class="'+cls(o.p)+'">'+pc(o.p/o.c)+'</span>'):"—")+'</td></tr>';
       });
       h+='</table>';
     }
@@ -4644,13 +4686,24 @@ function bkRender(){
   var h='<h3>'+KE("가상 바스켓","Virtual basket")+(a.length?' <span style="color:var(--nm);font-weight:800">'+a.length+'</span>':'')+'</h3>';
   h+='<div class="dpmsg">'+KE("추천 종목을 [조회]한 뒤 [＋ 가상 바스켓에 담기]를 누르면, 담긴 종목 전체의 3·6·12개월 과거 수익률을 함께 계산합니다.","Look up a pick, tap Add to virtual basket, then we compute the whole basket's past 3/6/12-month return.")+'</div>';
   if(!a.length){ h+='<div class="mhempty">'+KE("아직 담긴 종목이 없습니다.","No items yet.")+'</div>'+bkSavedHtml(); card.innerHTML=h; return; }
-  var w=100/a.length;
-  h+='<table class="mhtab"><tr><th>'+KE("종목","Item")+'</th><th>'+KE("비중","Weight")+'</th><th></th></tr>';
+  var AM=bkAmtOf(a), TOT={};
+  a.forEach(function(x){ var c=bkCcy(x); TOT[c]=(TOT[c]||0)+(AM[x.code]||0); });
+  h+='<table class="mhtab"><tr><th>'+KE("종목","Item")+'</th><th>'+KE("투자금액","Amount")+'</th><th>'+KE("비중","Weight")+'</th><th></th></tr>';
   a.forEach(function(x,i){
-    h+='<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-i="'+i+'">'+dpEsc(x.name)+(/^\d/.test(x.code)?' <span class="dplbl">'+x.code+'</span>':'')+(x.mk==="us"?' <span class="dplbl">US</span>':'')
-      +'</td><td>'+w.toFixed(1)+'%</td><td><span class="mhx" onclick="bkDel('+i+')">\u2715</span></td></tr>';
+    var c=bkCcy(x), amt=AM[x.code]||0, w=(TOT[c]>0)?(amt/TOT[c]*100):0;
+    h+='<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-i="'+i+'">'+dpEsc(x.name)
+      +(/^\d/.test(x.code)?' <span class="dplbl">'+x.code+'</span>':'')
+      +'</td><td><input class="bkamt" type="text" inputmode="decimal" value="'+bkNum(amt,c)
+      +'" oninput="bkAmtLive(this)" onchange="bkSetAmt('+i+',this.value)" style="width:96px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 6px;font-size:12px">'
+      +' <span class="dplbl">'+(c==="KRW"?KE("원","KRW"):(c==="USD"?"$":"USDT"))+'</span></td>'
+      +'<td>'+w.toFixed(1)+'%</td>'
+      +'<td><span class="mhx" onclick="bkDel('+i+')">✕</span></td></tr>';
   });
+  var tl=[]; Object.keys(TOT).forEach(function(c){ if(TOT[c]>0)tl.push(bkMoney(TOT[c],c)); });
+  if(tl.length)h+='<tr style="font-weight:800"><td style="text-align:left">'+KE("합계","Total")+'</td><td colspan="3" style="text-align:right">'+tl.join(" · ")+'</td></tr>';
   h+='</table>';
+  h+='<div class="dpmsg">'+KE("금액은 추천 1칸 금액(총자산÷12)으로 채워집니다. 직접 고치셔도 됩니다.","Amounts default to one slot (total ÷ 12). You can edit them.")
+    +' <span class="dplbl" style="cursor:pointer;text-decoration:underline" onclick="bkAmtReset()">'+KE("되돌리기","Reset")+'</span></div>';
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+BK_SPANS.map(function(s){ return '<button class="dppct" style="flex:1" onclick="bkRun('+s[0]+')">'+KE(s[1],s[2])+'</button>'; }).join("")+'<button class="dppct" style="border-color:#2bd4c0;color:#2bd4c0" onclick="openTower3D(bkGet(),\'가상 바스켓\')">3D</button>'+'<button class="dppct" onclick="bkClear()">'+KE("비우기","Clear")+'</button></div>';
   h+='<div id="bkMsg" class="c21msg" hidden></div><div id="bkOut">'+BK_OUT+'</div>';
   h+=bkSavedHtml();
