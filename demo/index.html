@@ -2523,8 +2523,8 @@ async function rlLoad(auto) {
     try { dpRender(); } catch (e) {}
     setTimeout(function () { try { rlOsoLoad(); } catch (e) {} }, 300);   // 미체결도 같이 (2026-09-19)
     setTimeout(function () {                                   // 산 날 — 국내를 끝까지 받은 뒤 미국 (요청이 겹치지 않게, 2026-09-22)
-      Promise.resolve().then(function () { return rlHoldSince(); }).catch(function () {})
-        .then(function () { return rlHoldSinceUS(); }).catch(function () {});
+      Promise.resolve().then(function () { return rlHoldSinceUS(); }).catch(function () {})   // 미국은 조회 한 번 — 먼저
+        .then(function () { return rlHoldSince(); }).catch(function () {});
     }, 2500);
   }
 }
@@ -2725,7 +2725,7 @@ async function rlHoldSinceUS() {
   Object.keys(hs).forEach(function (c) { if (c.indexOf("US:") === 0 && codes.indexOf(c) < 0) delete hs[c]; });
   (RL.us || []).forEach(function (p) {
     const c = String(p.code).replace(/\.US$/, "").toUpperCase(), h = hs["US:" + c];
-    if ((!h || h.q !== p.qty) && now - (hs._t2["US:" + c] || 0) > 600000) want[c] = p.qty;
+    if ((!h || h.q !== p.qty) && now - (hs._t2["US:" + c] || 0) > 60000) want[c] = p.qty;   // 조회 한 번이라 1분이면 다시
   });
   rlHsSave(hs);                                   // 정리분은 기다리기 전에 저장 (2026-09-22)
   if (!Object.keys(want).length) return;
@@ -3914,6 +3914,142 @@ function recoPie(parts){
   return '<div style="text-align:center;margin:2px 0 8px">'+svg+'</div>'+leg
     +(function(){var kw=0,ud=0;parts.forEach(function(p){var v=+p[5];if(!Number.isFinite(v))return;if(p[4]==="kr")kw+=v;else if(p[4]==="us")ud+=v;});var rows=[];if(kw>0)rows.push((en?"KRW total ":"원화 합계 ")+Math.round(kw).toLocaleString()+(en?"":"원"));if(ud>0)rows.push((en?"USD total $":"달러 합계 $")+ud.toLocaleString(undefined,{maximumFractionDigits:2}));if(!rows.length)rows.push((en?"Total ":"합계 ")+Math.round(tot).toLocaleString()+(en?" KRW":"원"));return '<div class="dpmsg" style="text-align:center;line-height:1.7">'+rows.join("<br>")+'</div>';})();
 }
+// 작은 조각은 글자가 다 안 들어간다 — 눌러 보면 이름·수익률을 통째로 띄운다 (사장님 2026-09-23)
+function puzTip(ev,txt){
+  ev.stopPropagation();
+  var d=document.getElementById("puzTipBox");
+  if(!d){
+    d=document.createElement("div"); d.id="puzTipBox";
+    d.style.cssText="position:fixed;z-index:99999;max-width:70vw;padding:7px 11px;border-radius:9px;"
+      +"background:#111826;color:#fff;border:1px solid #3a4658;font-size:13px;font-weight:800;"
+      +"box-shadow:0 6px 18px rgba(0,0,0,.45);pointer-events:none;white-space:nowrap";
+    document.body.appendChild(d);
+    document.addEventListener("click",function(){ d.style.display="none"; });
+  }
+  d.textContent=txt; d.style.display="block"; d.style.left="0px"; d.style.top="0px";
+  var r=d.getBoundingClientRect();
+  d.style.left=Math.max(6,Math.min(window.innerWidth-r.width-6,ev.clientX-r.width/2))+"px";
+  d.style.top=Math.max(6,ev.clientY-r.height-12)+"px";
+  clearTimeout(puzTip.t); puzTip.t=setTimeout(function(){ d.style.display="none"; },3000);
+}
+function recoPuz(parts){
+  const en=LANG==="en";
+  parts=parts.filter(function(p){return p[1]>0;}).sort(function(a,b){return b[1]-a[1];});
+  const tot=parts.reduce(function(s,p){return s+p[1];},0); if(!(tot>0))return "";
+  let small=0; const big=[];
+  parts.forEach(function(p){ if(p[1]/tot<0.012)small+=p[1]; else big.push(p); });
+  if(small>0)big.push([en?"Others":"기타",small,"etc",0,"",0,null]);
+
+  const hx=function(c){ const n=parseInt(c.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; };
+  const mix=function(a,b,t){ const A=hx(a),B=hx(b),o=[0,1,2].map(function(i){return Math.round(A[i]+(B[i]-A[i])*t);});
+    return "#"+((1<<24)+(o[0]<<16)+(o[1]<<8)+o[2]).toString(16).slice(1); };
+  // 색 — 오름 로빈후드 그린 #00C805 · 내림 #FF433D. 많이 움직일수록 밝다 (사장님 2026-09-23 세 후보 중 고르심)
+  //   바탕(검정·흰색)에 따라 색을 바꾸지 않는다 — 한 벌만 쓴다.
+  const UP0="#0E3A2C", UP1="#00C805", DN0="#451412", DN1="#FF433D";
+  const col=function(p){
+    if(p[2]!=="held")return p[2]==="cash"?"#5E656E":(p[2]==="etc"?"#6C737C":"#7D858F");
+    const r=+p[6]; if(!Number.isFinite(r)||r===0)return "#7D858F";
+    const t=Math.min(1,Math.max(.14,Math.abs(r)/10));
+    return r>0?mix(UP0,UP1,t):mix(DN0,DN1,t); };
+
+  // 네모를 둘로 갈라 내려가는 트리맵 — 조각이 너무 길쭉해지지 않는다
+  const box=[]; const W=320, H=300;
+  (function cut(list,x,y,w,h){
+    if(!list.length||w<=0||h<=0)return;
+    if(list.length===1){ box.push({p:list[0],x:x,y:y,w:w,h:h}); return; }
+    const t=list.reduce(function(s,i){return s+i[1];},0); let acc=0,i=0;
+    for(;i<list.length-1;i++){ if(i>0&&acc+list[i][1]>t/2)break; acc+=list[i][1]; }
+    const f=acc/t;
+    if(w>=h){ cut(list.slice(0,i),x,y,w*f,h); cut(list.slice(i),x+w*f,y,w*(1-f),h); }
+    else { cut(list.slice(0,i),x,y,w,h*f); cut(list.slice(i),x,y+h*f,w,h*(1-f)); }
+  })(big,0,0,W,H);
+
+  // 퍼즐 조각 — 위·왼쪽은 파이고, 오른쪽·아래는 튀어나온다
+  const piece=function(x,y,w,h){
+    const r=Math.max(3,Math.min(w,h)*0.15), mx=x+w/2, my=y+h/2;
+    if(Math.min(w,h)<22)return 'M'+x+','+y+' h'+w+' v'+h+' h'+(-w)+' Z';
+    return 'M'+x.toFixed(1)+','+y.toFixed(1)
+      +' H'+(mx-r).toFixed(1)+' A'+r.toFixed(1)+','+r.toFixed(1)+' 0 0,0 '+(mx+r).toFixed(1)+','+y.toFixed(1)+' H'+(x+w).toFixed(1)
+      +' V'+(my-r).toFixed(1)+' A'+r.toFixed(1)+','+r.toFixed(1)+' 0 0,1 '+(x+w).toFixed(1)+','+(my+r).toFixed(1)+' V'+(y+h).toFixed(1)
+      +' H'+(mx+r).toFixed(1)+' A'+r.toFixed(1)+','+r.toFixed(1)+' 0 0,1 '+(mx-r).toFixed(1)+','+(y+h).toFixed(1)+' H'+x.toFixed(1)
+      +' V'+(my+r).toFixed(1)+' A'+r.toFixed(1)+','+r.toFixed(1)+' 0 0,0 '+x.toFixed(1)+','+(my-r).toFixed(1)+' Z'; };
+
+  const wide=function(c){ return /[가-힣㄰-㆏]/.test(c)?1:0.56; };
+  // 조각 너비에 맞춰 이름을 두 줄까지 나눈다 (사장님 2026-09-23)
+  //   · 띄어쓰기가 있으면 낱말에서 가른다 · 한 낱말뿐이면 가운데서 가른다
+  //   · 한 줄에 한 글자만 떨어지게 두지 않는다 · 두 줄에도 안 들어가면 끝을 … 로 줄인다
+  const wrap=function(t,w,fs,maxLines){
+    const lim=(w-7)/fs;
+    const uw=function(s){ let u=0; for(let i=0;i<s.length;i++)u+=wide(s[i]); return u; };
+    const cut=function(s){ let u=0,o="";
+      for(let i=0;i<s.length;i++){ const d=wide(s[i]); if(u+d>lim)return o.length>1?o.slice(0,-1)+"…":(o||s[0]); u+=d; o+=s[i]; }
+      return o; };
+    t=String(t).trim();
+    if(uw(t)<=lim)return [t];
+    if(maxLines<2)return [cut(t)];
+    const score=function(i){
+      const a=t.slice(0,i).trim(), b=t.slice(i).trim();
+      if(!a||!b)return null;
+      if((a.length===1&&b.length>1)||(b.length===1&&a.length>1))return null;   // 외톨이 한 글자 금지
+      const ua=uw(a), ub=uw(b);
+      return {a:a,b:b,fit:(ua<=lim&&ub<=lim),bal:Math.abs(ua-ub)}; };
+    const pick=function(list){ let b=null;
+      list.map(score).filter(Boolean).forEach(function(c){
+        if(!b||(c.fit&&!b.fit)||(c.fit===b.fit&&c.bal<b.bal))b=c; });
+      return b; };
+    let idx=[]; for(let i=1;i<t.length;i++)if(t[i-1]===" ")idx.push(i);
+    let best=pick(idx);                       // 낱말에서 갈라 둘 다 들어가면 그것으로 — 낱말을 쪼개지 않는다
+    if(!best||!best.fit){ const all=[]; for(let i=1;i<t.length;i++)all.push(i);
+      const c=pick(all); if(c&&(!best||c.fit))best=c; }
+    if(!best)return [cut(t)];
+    return [cut(best.a),cut(best.b)]; };
+  // 입체감 — 조각마다 왼쪽 위는 밝고 오른쪽 아래는 어두운 결, 밑에 그림자 (사장님 2026-09-23)
+  const uid="pz"+(recoPuz.n=(recoPuz.n||0)+1)+"_";
+  const grad={}; let defs='<filter id="'+uid+'sh" x="-20%" y="-20%" width="150%" height="150%">'
+    +'<feDropShadow dx="0.9" dy="1.6" stdDeviation="1.3" flood-color="#000" flood-opacity="0.55"/></filter>';
+  const gid=function(c){
+    if(!grad[c]){ const id=uid+"g"+Object.keys(grad).length; grad[c]=id;
+      defs+='<linearGradient id="'+id+'" x1="0" y1="0" x2="0.65" y2="1">'
+        +'<stop offset="0" stop-color="'+mix(c,"#ffffff",0.26)+'"/>'
+        +'<stop offset="0.55" stop-color="'+c+'"/>'
+        +'<stop offset="1" stop-color="'+mix(c,"#000000",0.30)+'"/></linearGradient>'; }
+    return grad[c]; };
+
+  let g="";
+  box.forEach(function(b){
+    const p=b.p, c=col(p), pad=1.6;
+    const x=b.x+pad, y=b.y+pad, w=Math.max(2,b.w-pad*2), hh=Math.max(2,b.h-pad*2);
+    const pct=(p[1]/tot*100), rt=(p[2]==="held"&&Number.isFinite(+p[6]))?(+p[6]):null;
+    const full=(p[2]==="new"?(en?"[Pick] ":"[추천] "):"")+String(p[0])+' '+pct.toFixed(1)+'%'
+      +(rt===null?"":' · '+(rt>0?"+":"")+rt.toFixed(1)+'%');
+    const dpth=piece(x,y,w,hh);
+    g+='<path d="'+dpth+'" fill="'+mix(c,"#000000",0.55)+'" transform="translate(0.8,1.4)" opacity=".85"/>';
+    g+='<path d="'+dpth+'" fill="url(#'+gid(c)+')" filter="url(#'+uid+'sh)" stroke="rgba(255,255,255,.22)" stroke-width="0.9" style="cursor:pointer"'
+      +' onclick="puzTip(event,\''+dpEsc(String(full).replace(/\\/g,"").replace(/'/g,""))+'\')"><title>'
+      +dpEsc(full)+'</title></path>';
+    if(w>34&&hh>24){
+      // 글자는 조각 크기를 따라간다 — 커도 12.5 를 넘지 않는다(크면 촌스럽다, 사장님 2026-09-23)
+      const fs=Math.max(7.5,Math.min(12.5,Math.min(w/5.4,hh/4.0)));
+      const tagS=fs*0.72, pctS=fs*0.86;                      // 추천 딱지는 본글자보다 작게
+      const tag=(p[2]==="new")?(en?"Pick":"추천"):null;
+      const lh=fs*1.12, showPct=hh>40;
+      const extra=(showPct?pctS*1.1:0)+(tag?tagS*1.25:0);
+      const maxL=Math.max(1,Math.floor((hh-6-extra)/lh));
+      const L=wrap(p[0],w,fs,Math.min(2,maxL));
+      const blockH=L.length*lh+extra;
+      let ty=y+hh/2-blockH/2+lh*0.62;
+      const T=function(s,size,fill,op,yy){ return '<text x="'+(x+w/2).toFixed(1)+'" y="'+yy.toFixed(1)+'" text-anchor="middle" '
+        +'font-size="'+size.toFixed(1)+'" font-weight="800" fill="'+fill+'"'+(op?' opacity="'+op+'"':'')
+        +' stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke">'+dpEsc(s)+'</text>'; };
+      if(tag){ g+=T(tag,tagS,"#FFD43B",0,ty-lh*0.18); ty+=tagS*1.25; }
+      L.forEach(function(s){ g+=T(s,fs,"#fff",0,ty); ty+=lh; });
+      if(showPct)g+=T((rt===null?pct.toFixed(1)+'%':((rt>0?"+":"")+rt.toFixed(1)+'%')),pctS,"#fff",".92",ty-lh*0.08);
+    }
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;margin:2px 0 6px">'
+    +'<defs>'+defs+'</defs>'+g+'</svg>';
+}
+
 function recoRender(){
   let card=E("recoCard");
   if(!card){
@@ -4007,7 +4143,7 @@ function recoRender(){
     if(has){
       const k=(mk==="kr")?1:fx;
       if(k>0){
-        held.forEach(function(p){ PIEP.push([p.name,(p.evl||0)*k,"held",(p.evl||0),mk,(p.evl||0)]); });
+        held.forEach(function(p){ PIEP.push([p.name,(p.evl||0)*k,"held",(p.evl||0),mk,(p.evl||0),(typeof p.rt==="number"?p.rt:null)]); });
         let left=cashM;                               // 지금 현금으로 살 수 있는 만큼만 — 1칸씩, 모자라면 남은 만큼
         buys.slice(0,empty).forEach(function(r){
           const amt=Math.min(slot,left);
@@ -4024,11 +4160,11 @@ function recoRender(){
   const body=sec("kr",R.kr,totKR,kr)+sec("us",R.us,totUS,us);
   if(has){
     if(fx>0){
-      (RL.co||[]).filter(function(p){return !p.spot;}).forEach(function(p){ PIEP.push([String(p.code).split("-")[0]+(en?" perp":" 선물"),(p.evl||0)*fx,"held",(p.evl||0),"us",(p.evl||0)]); });
-      (RL.co||[]).filter(function(p){return p.spot;}).forEach(function(p){ PIEP.push([String(p.code).split("-")[0]+(en?" spot":" 현물"),(p.qty||0)*(p.cur||0)*fx,"held",(p.qty||0)*(p.cur||0),"us",(p.qty||0)*(p.cur||0)]); });
+      (RL.co||[]).filter(function(p){return !p.spot;}).forEach(function(p){ PIEP.push([String(p.code).split("-")[0]+(en?" perp":" 선물"),(p.evl||0)*fx,"held",(p.evl||0),"us",(p.evl||0),(typeof p.rt==="number"?p.rt:null)]); });
+      (RL.co||[]).filter(function(p){return p.spot;}).forEach(function(p){ PIEP.push([String(p.code).split("-")[0]+(en?" spot":" 현물"),(p.qty||0)*(p.cur||0)*fx,"held",(p.qty||0)*(p.cur||0),"us",(p.qty||0)*(p.cur||0),(typeof p.rt==="number"?p.rt:null)]); });
       if(cash.usdt>0)PIEP.push(["USDT",cash.usdt*fx,"cash",cash.usdt,"us",cash.usdt]);
     }
-    h+='<div class="dphd" style="margin-top:4px">'+(en?"Recommended portfolio":"추천 포트폴리오")+'</div>'+recoPie(PIEP)
+    h+='<div class="dphd" style="margin-top:4px">'+(en?"Recommended portfolio":"추천 포트폴리오")+'</div>'+recoPuz(PIEP)
       +(fx>0?"":'<div class="dpmsg">'+(en?"USD rate not loaded yet — KR only.":"환율을 아직 못 받아 국내만 그렸습니다.")+'</div>');
   }
   h+=body;
