@@ -4026,8 +4026,9 @@ function recoPuz(parts){
     const p=b.p, c=col(p), pad=1.6;
     const x=b.x+pad, y=b.y+pad, w=Math.max(2,b.w-pad*2), hh=Math.max(2,b.h-pad*2);
     const pct=(p[1]/tot*100), rt=(p[2]==="held"&&Number.isFinite(+p[6]))?(+p[6]):null;
-    const full=(p[2]==="new"?(en?"[Pick] ":"[추천] "):"")+String(p[0])+' '+pct.toFixed(1)+'%'
-      +(rt===null?"":' · '+(rt>0?"+":"")+rt.toFixed(1)+'%');
+    const full=(p[2]==="new"?(en?"[Pick] ":"[추천] "):"")+String(p[0])
+      +(en?' · weight ':' · 비중 ')+pct.toFixed(1)+'%'
+      +(rt===null?"":(en?' · return ':' · 수익률 ')+(rt>0?"+":"")+rt.toFixed(1)+'%');
     const dpth=piece(x,y,w,hh);
     g+='<path d="'+dpth+'" fill="'+mix(c,"#000000",0.55)+'" transform="translate(0.8,1.4)" opacity=".85"/>';
     g+='<path d="'+dpth+'" fill="url(#'+gid(c)+')" filter="url(#'+uid+'sh)" stroke="rgba(255,255,255,.22)" stroke-width="0.9" style="cursor:pointer"'
