@@ -1948,7 +1948,13 @@ function bkMoney(v, ccy) {
 // 성향 배분에 따른 기본 금액 — 자산군 몫을 그 자산군에 담긴 종목 수로 나눈다
 function bkAutoAmt(list) {
   const p = (typeof svGet === "function") ? svGet() : null;
-  if (!p || !SV_GRADE[p.pick]) return {};
+  // 🔴 성향을 안 골랐으면 계좌를 종목 수로 똑같이 나눈다 (사장님 2026-09-23)
+  if (!p || !SV_GRADE[p.pick]) {
+    const o = {}, nk = list.filter(function (x) { return bkCcy(x) === "KRW"; }).length,
+          nu = list.filter(function (x) { return bkCcy(x) === "USD"; }).length;
+    list.forEach(function (x) { o[x.code] = bkCcy(x) === "USD" ? (nu ? SV_USD / nu : 0) : (nk ? SV_KRW / nk : 0); });
+    return o;
+  }
   const mix = SV_GRADE[p.pick].mix;
   const krw = mix.filter(function (m) { return !SV_USD_CLS[m[0]]; });
   const usd = mix.filter(function (m) { return !!SV_USD_CLS[m[0]]; });
@@ -1958,10 +1964,10 @@ function bkAutoAmt(list) {
   krw.forEach(function (m) { if (kS > 0) money[m[0]] = SV_KRW * m[1] / kS; });
   usd.forEach(function (m) { if (uS > 0) money[m[0]] = SV_USD * m[1] / uS; });
   const cnt = {};
-  list.forEach(function (x) { const c = x.cls || bkClassOf(x); cnt[c] = (cnt[c] || 0) + 1; });
+  list.forEach(function (x) { const c = bkClassOf(x); cnt[c] = (cnt[c] || 0) + 1; });
   const out = {};
   list.forEach(function (x) {
-    const c = x.cls || bkClassOf(x);
+    const c = bkClassOf(x);
     out[x.code] = (money[c] && cnt[c]) ? (money[c] / cnt[c]) : 0;
   });
   return out;
