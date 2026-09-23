@@ -328,9 +328,10 @@
         const yy = y + big / 2;
         let rad = big * 1.05;
         arr.forEach(function (it) {
-          rad += it._side * 0.62;
+          // 구를 때 모서리가 옆 큐브에 닿지 않게 사이를 벌린다 (사장님 2026-09-24)
+          rad += it._side * 0.80;
           it._ang = ang; it._rad = rad; it._baseY = yy;
-          rad += it._side * 0.62;
+          rad += it._side * 0.80;
           if (rad > maxR) maxR = rad;
         });
         arr._tip = rad; arr._y = yy; arr._ang = ang;
