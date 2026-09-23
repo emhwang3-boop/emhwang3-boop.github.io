@@ -3508,7 +3508,17 @@ function dpHoldSumHtml(){
   a.forEach(function(x){ if(!(x.cost>0))return; const m=(x.ccy==="KRW")?1:fx; c+=x.cost*m; v+=x.val*m; });
   if(!(c>0))return "";
   const r=(v/c-1)*100, cls=r>0?"up":(r<0?"dn":"fl");
-  return '<div class="mhsum" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px">'
+  // 통화별 평가 합계 (사장님 2026-09-23) — 원화·달러·USDT 를 섞지 않고 따로 낸다
+  let sKR=0,sUS=0,sCO=0;
+  a.forEach(function(x){ const val=x.val||0;
+    if(x.mk==="kr")sKR+=val; else if(x.mk==="coin")sCO+=val; else sUS+=val; });
+  const parts=[];
+  if(sKR>0)parts.push((en?"KRW ":"원화 ")+Math.round(sKR).toLocaleString()+(en?"":"원"));
+  if(sUS>0)parts.push((en?"USD $":"달러 $")+sUS.toLocaleString(undefined,{maximumFractionDigits:2}));
+  if(sCO>0)parts.push((en?"USDT ":"USDT ")+sCO.toLocaleString(undefined,{maximumFractionDigits:2}));
+  const tot=parts.length?('<div class="mhsum" style="margin-top:4px;font-size:12px;color:var(--sub)">'
+    +(en?"Totals · ":"합계 · ")+parts.join(" · ")+'</div>'):"";
+  return tot+'<div class="mhsum" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px">'
     +'<span>'+(en?"Portfolio return ":"포트폴리오 수익률 ")+'<b class="'+cls+'">'+(r>0?"+":"")+r.toFixed(2)+'%</b></span>'
     +'<button class="dppct" style="border-color:#2bd4c0;color:#2bd4c0" onclick="holdTower3D()">3D</button>'
     +'<span onclick="bkTowerInfo(event)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span></div>';
