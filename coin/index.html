@@ -2362,8 +2362,12 @@ function bkClassRank(it) {
 // ── [3D] 모양 고르기 — 타워형 · 트리형 (사장님 2026-09-23) ──────────────────────
 //    고른 모양으로 바로 연다. 열린 화면 안에는 바꾸는 단추를 두지 않는다.
 var PT_GOAL_KEY = "pt_goal_v1", PT_STOP_KEY = "pt_stop_v1", PT_SHAPE_KEY = "pt_shape_v1";
+// 종목 하나하나의 익절·손절 (사장님 2026-09-23) — 닿은 큐브는 테두리가 굵어지고, 손절이면 부스러기가 우르르
+var PT_IG_KEY = "pt_item_goal_v1", PT_IS_KEY = "pt_item_stop_v1";
 function ptGoal() { var v = 0; try { v = parseFloat(localStorage.getItem(PT_GOAL_KEY)); } catch (e) {} return isFinite(v) ? v : 25; }
-function ptStop() { var v = 0; try { v = parseFloat(localStorage.getItem(PT_STOP_KEY)); } catch (e) {} return isFinite(v) ? v : -10; }
+function ptStop() { var v = 0; try { v = parseFloat(localStorage.getItem(PT_STOP_KEY)); } catch (e) {} return isFinite(v) ? v : -15; }
+function ptIGoal() { var v = 0; try { v = parseFloat(localStorage.getItem(PT_IG_KEY)); } catch (e) {} return isFinite(v) ? v : 15; }
+function ptIStop() { var v = 0; try { v = parseFloat(localStorage.getItem(PT_IS_KEY)); } catch (e) {} return isFinite(v) ? v : -10; }
 function ptShape() { try { return localStorage.getItem(PT_SHAPE_KEY) || "tower"; } catch (e) { return "tower"; } }
 function towerPick(list, title, pid) {
   if (!list || !list.length) return;
@@ -2385,18 +2389,29 @@ function towerPick(list, title, pid) {
     + '<span style="flex:1;color:#9aa4b2">' + (en ? "Stop loss" : "손절선") + '</span>'
     + '<input id="t3dStop" type="number" step="1" value="' + ptStop() + '" style="width:74px;background:#0f1420;color:#e8ecf2;border:1px solid #2b3446;border-radius:8px;padding:6px 8px;text-align:right;font:700 13px system-ui">%'
     + '</div>'
+    + '<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'
+    + '<span style="flex:1;color:#9aa4b2">' + (en ? "Item take-profit" : "종목 익절률") + '</span>'
+    + '<input id="t3dIGoal" type="number" step="1" value="' + ptIGoal() + '" style="width:74px;background:#0f1420;color:#e8ecf2;border:1px solid #2b3446;border-radius:8px;padding:6px 8px;text-align:right;font:700 14px system-ui"><span style="color:#9aa4b2">%</span>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'
+    + '<span style="flex:1;color:#9aa4b2">' + (en ? "Item stop-loss" : "종목 손절률") + '</span>'
+    + '<input id="t3dIStop" type="number" step="1" value="' + ptIStop() + '" style="width:74px;background:#0f1420;color:#e8ecf2;border:1px solid #2b3446;border-radius:8px;padding:6px 8px;text-align:right;font:700 14px system-ui"><span style="color:#9aa4b2">%</span>'
+    + '</div>'
     + '<div style="color:#6b7688;font-size:11.5px;margin-top:8px">' + (en
         ? "Reaching the target links the branch tips in bright green; hitting the stop turns them red."
-        : "목표에 닿으면 가지 끝이 형광 초록으로 이어지고, 손절에 닿으면 빨강이 됩니다.") + '</div>'
+        : "목표에 닿으면 가지 끝이 형광 초록으로 이어지고, 손절에 닿으면 빨강이 됩니다. 종목 익절·손절에 닿은 것은 테두리가 굵어집니다.") + '</div>'
     + '<button id="t3dNo" style="width:100%;margin-top:12px;background:transparent;color:#9aa4b2;border:1px solid #2b3446;border-radius:10px;padding:9px 0;font:700 13px system-ui;cursor:pointer">' + (en ? "Cancel" : "닫기") + '</button>'
     + '</div>';
   ov.innerHTML = card;
   document.body.appendChild(ov);
   function go(shape) {
     var g = parseFloat(document.getElementById("t3dGoal").value), st = parseFloat(document.getElementById("t3dStop").value);
+    var ig = parseFloat((document.getElementById("t3dIGoal")||{}).value), is = parseFloat((document.getElementById("t3dIStop")||{}).value);
     try {
       if (isFinite(g)) localStorage.setItem(PT_GOAL_KEY, String(g));
       if (isFinite(st)) localStorage.setItem(PT_STOP_KEY, String(st));
+      if (isFinite(ig)) localStorage.setItem(PT_IG_KEY, String(ig));
+      if (isFinite(is)) localStorage.setItem(PT_IS_KEY, String(is));
       localStorage.setItem(PT_SHAPE_KEY, shape);
     } catch (e) {}
     ov.remove();
@@ -2437,7 +2452,7 @@ async function openTower3DGo(list, title, pid, shape) {
   if (!document.getElementById("tower3dOv")) return;
   var enc = ""; try { enc = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(data))))); } catch (e) {}
   var tt = encodeURIComponent(title || ("\ub2f4\uae34 " + data.length + "\uc885\ubaa9"));
-  var _sh = "&shape=" + (shape === "tree" ? "tree" : "tower") + "&goal=" + (ptGoal() / 100) + "&stop=" + (ptStop() / 100);
+  var _sh = "&shape=" + (shape === "tree" ? "tree" : "tower") + "&goal=" + (ptGoal() / 100) + "&stop=" + (ptStop() / 100) + "&igoal=" + (ptIGoal() / 100) + "&istop=" + (ptIStop() / 100);
   ov.innerHTML = '<iframe src="' + TOWER_URL + '?v=' + Date.now() + '#items=' + enc + _sh + '&t=' + tt + '" style="position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent" allow="gyroscope;accelerometer;magnetometer;xr-spatial-tracking;camera"></iframe>'
     + '<button onclick="var o=document.getElementById(\'tower3dOv\');if(o)o.remove()" style="position:absolute;top:14px;right:14px;z-index:2;background:rgba(0,0,0,0.6);color:#fff;border:1px solid #666;border-radius:20px;width:42px;height:42px;font-size:20px;font-weight:800;cursor:pointer">\u2715</button>';
 }
