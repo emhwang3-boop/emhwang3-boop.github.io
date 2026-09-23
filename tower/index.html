@@ -407,7 +407,9 @@
     items.forEach(function (it) {
       const side = it._side, loss = it._loss, gain = Math.max(0, it.cur);
       it.mesh.scale.set(side, side, side);
-      it.textSprite.scale.set(TW / side, TW / side, 1);
+      // 글자는 큐브를 넘지 않는다 — 작은 큐브에서 글자가 밖으로 삐져나왔다 (사장님 2026-09-23)
+      const tw = Math.min(TW, side * 0.92);
+      it.textSprite.scale.set(tw / side, tw / side, 1);
       const vr = Math.pow(it.vol / volMax, 1.5);   // 변동성 = 그 큐브의 좌우 흔들림 (사장님 2026-09-22)
       const volX = Math.sin(t * (1.6 + vr * 4) + it.vol) * vr * Math.min(it._side * 0.22, 1.6) + Math.sin(t * 8 + it.vol) * vr * it._side * 0.05;
       // 위아래 = 수익률. 이익 큐브는 제자리에서 **위로만**, 손실 큐브는 **아래로만** 움직인다(사장님 2026-09-22). 손실이 클수록 잦고 크다. 부스러기는 손실 때만
