@@ -3957,8 +3957,26 @@ function pzPick(ev, mk, ix){
   ev.stopPropagation();
   var L = puzPicks(mk); var it = L[ix]; if(!it) return;
   if(pzHas(it.code)) PZSEL = PZSEL.filter(function(z){ return z.code!==it.code; });
-  else PZSEL.push({code:it.code, name:it.name, mk:it.mk||mk});
+  else { PZSEL.push({code:it.code, name:it.name, mk:it.mk||mk}); pzView(it, mk); }
   try{ recoRender(); }catch(e){}
+}
+// 고른 종목을 아래 조회 화면에 띄운다 (사장님 2026-09-24)
+function pzView(it, mk){
+  var m = it.mk || mk || "kr", c = String(it.code || ""), nm = String(it.name || "");
+  try{
+    if(m === "coin"){
+      var k = c.split("-")[0].replace(/USDT$/, "");
+      pickCoin(k + "USDT", k, "F");
+      E("coin2").scrollIntoView({behavior:"smooth"});
+    } else if(m === "us"){
+      var t = c.replace(/\.US$/, "");
+      pickStockUS(t + ".US", t);
+      E("stock").scrollIntoView({behavior:"smooth"});
+    } else {
+      pickStock(c, nm);
+      E("stock").scrollIntoView({behavior:"smooth"});
+    }
+  }catch(e){}
 }
 // 고른 추천 + 지금 보유 → 한 목록으로
 function pzDraft(){
