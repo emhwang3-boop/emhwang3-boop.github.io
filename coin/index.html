@@ -3062,8 +3062,8 @@ function cvRecoRender() {
   //    주식앱과 같은 꼴로 간다 — 자산군과 이름뿐, 방향도 매매 말도 쓰지 않는다.
   // 🔴 제목 뒤에 붙던 설명 줄은 뺐다 (사장님 2026-09-20) — 판정을 가리키는 말을 화면에 쓰지 않는다.
   // 자산군 퍼즐 — 조각을 누르면 뒤집혀 그 자산군 추천 코인이 나온다 (사장님 2026-09-23)
-  h += '<div class="svsub" style="margin-top:10px"><b>' + KE("자산 종류별 추천 코인", "Picks by asset class") + '</b>'
-     + ' <span class="dplbl">' + KE("조각을 누르면 뒤집힙니다", "Tap a piece to flip") + '</span></div>';
+  h += '<div class="svgrpt svacct2" style="margin-top:12px">' + KE("자산 종류별 추천 코인", "Picks by asset class")
+     + ' <span class="dplbl" style="font-size:12px;font-weight:600">' + KE("조각을 누르면 뒤집힙니다", "Tap a piece to flip") + '</span></div>';
   window._SVPICK = {};
   const PZP = [];
   CV_MIX.forEach(function (m) {
