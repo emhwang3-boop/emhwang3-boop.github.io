@@ -217,11 +217,12 @@
     towerGroup.add(cube); it.mesh = cube; it.mat = mat;
   });
 
+  // 큐브 색 = 수익률 — 오르면 초록, 내리면 빨강. 많이 움직일수록 진하다 (사장님 2026-09-23)
+  const UP_LO = new THREE.Color(0x0e5a3a), UP_HI = new THREE.Color(0x00c805);
+  const DN_LO = new THREE.Color(0x5a1512), DN_HI = new THREE.Color(0xff433d);
   function litColor(base, ret) {
-    const c = base.clone();
-    if (ret >= 0) c.lerp(new THREE.Color(0xffffff), Math.min(ret, 1) * 0.5);
-    else c.multiplyScalar(1 + Math.max(ret, -0.7) * 0.75);
-    return c;
+    const t = Math.min(1, Math.max(0.16, Math.abs(ret || 0) / 0.10));
+    return (ret >= 0) ? UP_LO.clone().lerp(UP_HI, t) : DN_LO.clone().lerp(DN_HI, t);
   }
 
   let camR = 200, fc = 0, eyeX = 0, eyeY = 0;
