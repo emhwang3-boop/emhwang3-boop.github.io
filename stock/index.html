@@ -2868,6 +2868,21 @@ function svRecoRender() {
   // ③ 자산군 퍼즐 — 조각을 누르면 뒤집혀 그 자산군 추천 종목이 나온다 (사장님 2026-09-23)
   h += '<div class="svsub svacct2" style="margin-top:12px;font-weight:800;color:var(--sub)">' + KE("자산 종류별 추천 종목", "Picks by asset class")
      + ' <span class="dplbl" style="font-size:12px;font-weight:600">' + KE("조각을 누르면 뒤집힙니다", "Tap a piece to flip") + '</span></div>';
+  // 장세는 좋으면 초록, 나쁘면 빨강 (사장님 2026-09-20)
+  // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률(허브 changes)을 더해 "지금 60일선 대비"를 낸다. 데모앱과 같은 셈 (사장님 2026-09-22)
+  if (SVR && SVR.kr && SVR.kr.regime) {
+    const liveP = function (nm) { var d = window._lastD; if (d && d.changes) { for (var i = 0; i < d.changes.length; i++) { if (d.changes[i].nm === nm && typeof d.changes[i].pct === "number") return d.changes[i].pct; } } return null; };
+    const mk = function (nm, x, idx) {
+      var v = (+(x && x.regime && x.regime.vs_ma60) || 0) + (liveP(idx) || 0); var good = v >= 0;
+      return KN(nm) + ' <b style="color:' + (good ? "#2f9e44" : "#e03131") + '">' + (good ? KE("좋음", "Good") : KE("나쁨", "Bad")) + ' (' + (v > 0 ? "+" : "") + v.toFixed(1) + '%)</b>';
+    };
+    var _ld = window._lastD, live = (_ld && _ld.asof) ? String(_ld.asof).slice(11, 16) : "";
+    h += '<div class="svsub">' + KE("지금 장세", "Market now") + ' · ' + mk("국내", SVR.kr, "코스피") + ' · ' + mk("미국", SVR.us, "S&P500")
+       + (live ? ' <span class="dplbl">' + live + KE(" 실시간", " live") + '</span>' : ' <span class="dplbl">' + (SVR.at || "") + '</span>') + svInfoMark("svRegInfo") + '</div>'
+       + '<div id="svRegInfo" class="svsub" style="display:' + (typeof svInfoDisp === "function" ? svInfoDisp("svRegInfo") : "none") + ';font-size:11px">' + KE("일봉 기준입니다. 어제 종가가 기준선보다 위인지 아래인지에 오늘 지수 등락을 더해 봅니다. 기준선 위면 좋음, 아래면 나쁨.",
+             "Daily bars. Yesterday's close above or below the baseline, plus today's index move. Above is Good, below is Bad.") + '</div>';
+  }
+
 
   window._SVPICK = {};
   const PZP = [];
@@ -2909,20 +2924,6 @@ function svRecoRender() {
   h += '<div class="svsub">' + KE("레버리지 ETF는 지수 움직임의 2~3배로 오르내립니다. 손실도 그만큼 커집니다.",
        "Leveraged ETFs move 2–3× the index, up and down. Losses are magnified just as much.") + '</div>';
 
-  // 장세는 좋으면 초록, 나쁘면 빨강 (사장님 2026-09-20)
-  // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률(허브 changes)을 더해 "지금 60일선 대비"를 낸다. 데모앱과 같은 셈 (사장님 2026-09-22)
-  if (SVR && SVR.kr && SVR.kr.regime) {
-    const liveP = function (nm) { var d = window._lastD; if (d && d.changes) { for (var i = 0; i < d.changes.length; i++) { if (d.changes[i].nm === nm && typeof d.changes[i].pct === "number") return d.changes[i].pct; } } return null; };
-    const mk = function (nm, x, idx) {
-      var v = (+(x && x.regime && x.regime.vs_ma60) || 0) + (liveP(idx) || 0); var good = v >= 0;
-      return KN(nm) + ' <b style="color:' + (good ? "#2f9e44" : "#e03131") + '">' + (good ? KE("좋음", "Good") : KE("나쁨", "Bad")) + ' (' + (v > 0 ? "+" : "") + v.toFixed(1) + '%)</b>';
-    };
-    var _ld = window._lastD, live = (_ld && _ld.asof) ? String(_ld.asof).slice(11, 16) : "";
-    h += '<div class="svsub">' + KE("지금 장세", "Market now") + ' · ' + mk("국내", SVR.kr, "코스피") + ' · ' + mk("미국", SVR.us, "S&P500")
-       + (live ? ' <span class="dplbl">' + live + KE(" 실시간", " live") + '</span>' : ' <span class="dplbl">' + (SVR.at || "") + '</span>') + svInfoMark("svRegInfo") + '</div>'
-       + '<div id="svRegInfo" class="svsub" style="display:' + (typeof svInfoDisp === "function" ? svInfoDisp("svRegInfo") : "none") + ';font-size:11px">' + KE("일봉 기준입니다. 어제 종가가 기준선보다 위인지 아래인지에 오늘 지수 등락을 더해 봅니다. 기준선 위면 좋음, 아래면 나쁨.",
-             "Daily bars. Yesterday's close above or below the baseline, plus today's index move. Above is Good, below is Bad.") + '</div>';
-  }
   h += DISC_TAIL();
   box.innerHTML = h;
 }
