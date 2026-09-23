@@ -307,6 +307,14 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div class="card">
   <a class="svlink" style="background:#f59f00" href="../coin/" target="_blank" rel="noopener" data-pkg="org.chromium.webapk.a5b34683660bf4b3a_v2" onclick="return svOpenApp(this)"><span class="kko">코인앱 열기</span><span class="ken">Open Coin App</span></a>
 </div><script>
+// 로고 주소만 (SVG image 용)
+function stkLogoUrl(code, mk){
+  var c = String(code||"").replace(/\.US$/i,"").replace(/^A/,"").trim();
+  if(!c) return "";
+  var us = (mk==="us") || !/^[0-9]{6}$/.test(c);
+  return us ? ("https://financialmodelingprep.com/image-stock/" + c.toUpperCase() + ".png")
+            : ("https://static.toss.im/png-icons/securities/icn-sec-fill-" + c + ".png");
+}
 // 종목 로고 (사장님 2026-09-23) — 국내는 토스, 미국은 FMP. 없으면 조용히 빈칸.
 function stkLogo(code, mk, px){
   try{
@@ -2773,9 +2781,16 @@ function svPuz(parts){
           g+='<rect x="'+(x+3).toFixed(1)+'" y="'+ry.toFixed(1)+'" width="'+(w-6).toFixed(1)+'" height="'+rh.toFixed(1)
             +'" rx="4" fill="'+(on?"rgba(43,255,134,.18)":"rgba(255,255,255,.06)")+'" style="cursor:pointer"'
             +' onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')"></rect>';
-          g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="middle" font-size="'+(fs*0.92).toFixed(1)
+          // 종목 로고 — 이름 앞에 (사장님 2026-09-23)
+          const lg=(function(){ try{ return stkLogoUrl(it2.code, it2.mk); }catch(e){ return ""; } })();
+          const f3=fs*0.92, iw3=lg?f3*1.2:0;
+          let nw3=0; for(let q=0;q<txt.length;q++)nw3+=wide(txt[q])*f3;
+          const sx3=x+w/2-(iw3+nw3)/2;
+          if(lg)g+='<image href="'+lg+'" x="'+sx3.toFixed(1)+'" y="'+(fy-f3*0.8).toFixed(1)
+            +'" width="'+(f3*1.02).toFixed(1)+'" height="'+(f3*1.02).toFixed(1)+'" style="pointer-events:none"></image>';
+          g+='<text x="'+(sx3+iw3).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="start" font-size="'+f3.toFixed(1)
             +'" font-weight="800" fill="'+(on?"#2bff86":"#fff")+'" stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke"'
-            +' style="cursor:pointer;pointer-events:none">'+dpEsc(txt)+'</text>';
+            +' style="pointer-events:none">'+dpEsc(txt)+'</text>';
           fy+=fs*1.28; });
       } else {
       if(tag){ g+=T(tag,tagS,"#FFD43B",0,ty-lh*0.18); ty+=tagS*1.25; }
