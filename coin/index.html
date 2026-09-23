@@ -227,6 +227,8 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 .stktab tr:last-child td{border-bottom:none}
 .stktab td.k{color:var(--sub);white-space:nowrap}
 .stktab td.v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;color:var(--nm)}
+/* 조회 표에서도 오른 건 초록·내린 건 빨강 — td.v 색이 덮고 있었다 (사장님 2026-09-23) */
+.stktab td.v.up{color:#00c805}.stktab td.v.dn{color:#ff433d}.stktab td.v.fl{color:var(--sub)}
 .stkhd{font-size:17px;font-weight:800;color:var(--nm);margin-top:2px}
 .stkchart{width:100%;height:240px;margin-top:10px;display:block;border-radius:8px;touch-action:none;cursor:crosshair}
 .stkcl{font-size:11px;color:var(--sub);margin-top:3px;text-align:center}
