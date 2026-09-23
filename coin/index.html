@@ -2962,7 +2962,7 @@ function svPuz(parts){
       +dpEsc(full)+'</title></path>';
     if(w>34&&hh>24){
       // 글자는 조각 크기를 따라간다 — 커도 12.5 를 넘지 않는다(크면 촌스럽다, 사장님 2026-09-23)
-      const fs=Math.max(7.5,Math.min(12.5,Math.min(w/5.4,hh/4.0)));
+      const fs=Math.max(6.5,Math.min(10.5,Math.min(w/6.4,hh/4.8)));   // 두 단계 줄임 (사장님 2026-09-23)
       const tagS=fs*0.72, pctS=fs*0.86;                      // 추천 딱지는 본글자보다 작게
       const tag=null;
       const lh=fs*1.12, showPct=hh>40;
