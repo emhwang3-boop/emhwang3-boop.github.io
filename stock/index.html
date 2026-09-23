@@ -2889,7 +2889,7 @@ function svRecoRender() {
       return KN(nm) + ' <b style="color:' + (good ? "#2f9e44" : "#e03131") + '">' + (good ? KE("좋음", "Good") : KE("나쁨", "Bad")) + ' (' + (v > 0 ? "+" : "") + v.toFixed(1) + '%)</b>';
     };
     var _ld = window._lastD, live = (_ld && _ld.asof) ? String(_ld.asof).slice(11, 16) : "";
-    h += '<div class="svsub">' + KE("지금 장세", "Market now") + ' · ' + mk("국내", SVR.kr, "코스피") + ' · ' + mk("미국", SVR.us, "S&P500")
+    h += '<div class="svsub" style="font-size:13px">' + KE("지금 장세", "Market now") + ' · ' + mk("국내", SVR.kr, "코스피") + ' · ' + mk("미국", SVR.us, "S&P500")
        + (live ? ' <span class="dplbl">' + live + KE(" 실시간", " live") + '</span>' : ' <span class="dplbl">' + (SVR.at || "") + '</span>') + svInfoMark("svRegInfo") + '</div>'
        + '<div id="svRegInfo" class="svsub" style="display:' + (typeof svInfoDisp === "function" ? svInfoDisp("svRegInfo") : "none") + ';font-size:11px">' + KE("일봉 기준입니다. 어제 종가가 기준선보다 위인지 아래인지에 오늘 지수 등락을 더해 봅니다. 기준선 위면 좋음, 아래면 나쁨.",
              "Daily bars. Yesterday's close above or below the baseline, plus today's index move. Above is Good, below is Bad.") + '</div>';
