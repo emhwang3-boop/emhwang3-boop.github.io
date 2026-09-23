@@ -306,6 +306,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   </div>
   <canvas id="coinChart" class="stkchart" hidden></canvas>
   <div id="coinChartLbl" class="stkcl" hidden></div>
+  <button id="bkAddBtnCo" class="dppct" style="width:100%;margin-top:8px" hidden onclick="bkAddCoin()">＋ 가상 바스켓 담기</button>
 </div>
 
 <div id="ordHead"></div>
@@ -1268,6 +1269,7 @@ E("coinq").addEventListener("input",function(){clearTimeout(coinSearchTimer);con
 });
 E("coinq").addEventListener("keydown",function(e){if(e.key==="Enter"&&coinLast.length){pickCoin(coinLast[0].sym,coinLast[0].name,coinLast[0].kind);this.blur();}});
 function pickCoin(sym,name,kind){coinSym=sym;coinKind=(kind==="S")?"S":"F";
+  var _cb=E("bkAddBtnCo"); if(_cb)_cb.hidden=false;
   try{ rememberPick("co",sym,name,coinKind); }catch(e){}E("coinResults").innerHTML="";E("coinq").value=name+" ("+sym+") "+(coinKind==="S"?(LANG==="en"?"SPOT":"현물"):(LANG==="en"?"PERP":"선물"));
   E("coinTf").hidden=false;E("coinChart").hidden=false;E("coinChartLbl").hidden=false;
   E("coinDetail").innerHTML='<div class="soonrow">'+L("loading")+'</div>';
@@ -4498,12 +4500,14 @@ function bkAmtReset(){ var a=bkGet(); a.forEach(function(x){ delete x.amt; }); b
 function bkGet(){ try{ return JSON.parse(localStorage.getItem(BK_KEY)||"[]")||[]; }catch(e){ return []; } }
 function bkSave(a){ try{ localStorage.setItem(BK_KEY,JSON.stringify(a)); }catch(e){} try{ sySoon(); }catch(e){} }
 function bkMsg(t){ var m=E("bkMsg"); if(m){ m.textContent=t||""; m.hidden=!t; } }
-function bkAdd(code,name,mk){
+function bkAdd(code,name,mk,spot){
   if(!code)return;
   var a=bkGet();
   if(a.some(function(x){return x.code===code;})){ bkRender(); bkMsg(KE("이미 담겨 있습니다.","Already added.")); return; }
   if(a.length>=10){ bkMsg(KE("한 번에 열 개까지 담을 수 있습니다.","You can add up to 10 at a time.")); return; }
-  a.push({code:code,name:name||code,mk:mk||"kr"});
+  var _it={code:code,name:name||code,mk:mk||"kr"};
+  if(spot!==undefined)_it.spot=!!spot;          // 코인은 현물·선물을 갈라 담는다 (2026-09-24)
+  a.push(_it);
   BK_OUT=""; bkSave(a); bkRender();
 }
 function bkDel(i){ var a=bkGet(); a.splice(i,1); BK_OUT=""; bkSave(a); bkRender(); }
@@ -4512,6 +4516,13 @@ function bkAddCurrent(){
   if(typeof stkCode==="undefined"||!stkCode){ bkMsg(KE("먼저 종목을 [조회]해 주세요.","Look up a stock first.")); return; }
   var nm=((E("stkq")||{}).value||stkCode).replace(/\s*\(.*\)\s*$/,"");
   bkAdd(stkCode,nm,(typeof stkMarket!=="undefined"&&stkMarket==="us")?"us":"kr");
+  var c=E("bkCard"); if(c&&c.scrollIntoView)c.scrollIntoView({behavior:"smooth",block:"start"});
+}
+// 지금 보고 있는 코인을 담는다 (사장님 2026-09-24)
+function bkAddCoin(){
+  if(typeof coinSym==="undefined"||!coinSym){ bkMsg(KE("먼저 코인을 [조회]해 주세요.","Look up a coin first.")); return; }
+  var nm=String((E("coinq")||{}).value||coinSym).replace(/\s*\(.*$/,"").trim()||coinSym;
+  bkAdd(coinSym, nm, "coin", (typeof coinKind!=="undefined"&&coinKind==="S"));
   var c=E("bkCard"); if(c&&c.scrollIntoView)c.scrollIntoView({behavior:"smooth",block:"start"});
 }
 async function bkBars(x){
