@@ -2940,7 +2940,7 @@ function svPuz(parts){
   const UP0="#0E3A2C", UP1="#00C805", DN0="#451412", DN1="#FF433D";
   // 자산군 색을 조금 눌러 쓴다 — 원색 그대로면 촌스럽고 입체감이 안 산다 (사장님 2026-09-23)
   const col=function(p){ const c=(typeof svColor==="function")?svColor(p[4]||p[0],0):"#7D858F";
-    return mix(c,"#0f1420",0.30); };
+    return mix(c,"#0f1420",0.46); };
 
   // 네모를 둘로 갈라 내려가는 트리맵 — 조각이 너무 길쭉해지지 않는다
   const box=[]; const W=320, H=300;
@@ -3046,10 +3046,15 @@ function svPuz(parts){
         items.forEach(function(it2,ix2){
           const on=pzHas(it2.code);
           const txt=(on?"✓ ":"")+fit1(String(it2.name),w,fs*0.92);
+          const rh=fs*1.12, ry=fy-fs*0.82;
+          // 글자 획만 누르면 잘 안 눌린다 — 줄 전체를 누르는 자리로 깐다 (사장님 2026-09-23)
+          g+='<rect x="'+(x+3).toFixed(1)+'" y="'+ry.toFixed(1)+'" width="'+(w-6).toFixed(1)+'" height="'+rh.toFixed(1)
+            +'" rx="4" fill="'+(on?"rgba(43,255,134,.18)":"rgba(255,255,255,.06)")+'" style="cursor:pointer"'
+            +' onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')"></rect>';
           g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="middle" font-size="'+(fs*0.92).toFixed(1)
             +'" font-weight="800" fill="'+(on?"#2bff86":"#fff")+'" stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke"'
-            +' style="cursor:pointer" onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')">'+dpEsc(txt)+'</text>';
-          fy+=fs*1.18; });
+            +' style="cursor:pointer;pointer-events:none">'+dpEsc(txt)+'</text>';
+          fy+=fs*1.28; });
       } else {
       if(tag){ g+=T(tag,tagS,"#FFD43B",0,ty-lh*0.18); ty+=tagS*1.25; }
       L.forEach(function(s){ g+=T(s,fs,"#fff",0,ty); ty+=lh; });
