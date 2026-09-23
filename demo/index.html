@@ -3957,13 +3957,23 @@ function puzFlip(ev, mk){
 }
 function puzPicks(mk){
   try{
+    var R=(typeof window._RECO!=="undefined")?window._RECO:null;
     if(mk==="coin"){                       // 왕관 판정이 '롱'인 코인만 (사장님 2026-09-23)
-      var R=(typeof window._RECO!=="undefined")?window._RECO:null, out=[];
+      var out=[];
       try{ ["BTC","ETH"].forEach(function(k){ var z=(R&&R.coin&&R.coin[k])||null;
         if(!z||z.state==="long")out.push(k); }); }catch(e){ out=["BTC","ETH"]; }
       return out;
     }
-    return (window._PZBUY && window._PZBUY[mk]) ? window._PZBUY[mk] : [];
+    // 주식 12칸 후보 + 신호가 뜬 ETF·레버리지 (사장님 2026-09-23)
+    //   원화 현금 → 국내 주식·해외ETF(원화)·레버리지(원화) · 달러 현금 → 미국 주식·해외ETF(달러)·레버리지(달러)
+    var list=(window._PZBUY && window._PZBUY[mk]) ? window._PZBUY[mk].slice() : [];
+    var keys=(mk==="us")?["etfu","levu"]:["etfw","levw"];
+    keys.forEach(function(k){
+      try{ var b=(R&&R[k]&&R[k].buy)?R[k].buy:[];
+        b.forEach(function(r){ var nm=r.name||r.code; if(nm&&list.indexOf(nm)<0)list.push(nm); });
+      }catch(e){}
+    });
+    return list;
   }catch(e){ return []; }
 }
 function recoPuz(parts){
