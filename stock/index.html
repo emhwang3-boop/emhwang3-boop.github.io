@@ -1975,7 +1975,7 @@ function bkAutoAmt(list) {
 // 줄마다 쓸 금액 — 고객이 넣은 값이 있으면 그것, 없으면 성향 배분값
 function bkAmtOf(list) {
   const auto = bkAutoAmt(list), out = {};
-  list.forEach(function (x) { out[x.code] = (typeof x.amt === "number" && x.amt >= 0) ? x.amt : (auto[x.code] || 0); });
+  list.forEach(function (x) { out[x.code] = (typeof x.amt === "number" && x.amt > 0) ? x.amt : (auto[x.code] || 0); });
   return out;
 }
 function bkSetAmt(i, v) {
