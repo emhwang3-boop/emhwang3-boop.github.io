@@ -435,11 +435,11 @@
         it._roll = (it._roll || 0) + spin;
         const ax = _TMPV.set(Math.cos(it._ang), 0, -Math.sin(it._ang)).normalize();
         it.mesh.quaternion.setFromAxisAngle(ax, it._roll);
-        if (loss > 0) {                                   // 손실 흔들림은 구르는 위에 얹는다
-          _TMPQ.setFromAxisAngle(_TMPV2.set(1, 0, 0), Math.sin(t * (2.5 + loss * 5)) * loss * 0.32);
-          it.mesh.quaternion.multiply(_TMPQ);
-          _TMPQ.setFromAxisAngle(_TMPV2.set(0, 0, 1), Math.sin(t * (3 + loss * 6) + 1) * loss * 0.26);
-          it.mesh.quaternion.multiply(_TMPQ);
+        // 🔴 손실 흔들림도 **가지 축 둘레**로만 준다 (사장님 2026-09-24).
+        //    딴 축을 섞으면 모서리가 축 방향으로 튀어나와 옆 큐브 옆면을 찍는다.
+        if (loss > 0) {
+          it._roll += Math.sin(t * (2.6 + loss * 5)) * loss * 0.06;
+          it.mesh.quaternion.setFromAxisAngle(ax, it._roll);
         }
       } else {
         it.mesh.rotation.y += spin;
