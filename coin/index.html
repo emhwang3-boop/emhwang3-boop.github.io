@@ -260,8 +260,13 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 
 </div>
 
-<div class="card svcard" id="cvReco">
+<div class="card svcard" id="cvMkt">
   <h3><span class="kko">주요 코인 현황</span><span class="ken">Major Coins</span></h3>
+  <div id="cvMktBody"></div>
+</div>
+
+<div class="card svcard" id="cvReco">
+  <h3><span class="kko">추천 포트폴리오</span><span class="ken">Recommended Portfolio</span></h3>
   <div id="cvRecoBody"></div>
 </div>
 
@@ -3024,11 +3029,15 @@ function cvRecoRender() {
   })();
   if (!CV_LIVE_AT && !window._cvLiveKick) { window._cvLiveKick = 1; setTimeout(cvLiveRefresh, 300); }
   h += '</table><div class="svsub">' + (CV_LIVE_AT ? (CV_LIVE_AT + KE(" 실시간 (바이낸스)", " live (Binance)")) : KE(((CVR && CVR.at) || "") + ' 기준', 'as of ' + ((CVR && CVR.at) || ""))) + '</div>';
+  // 여기까지가 '주요 코인 현황' — 따로 있는 칸에 넣고, 아래는 '추천 포트폴리오' 칸에 (사장님 2026-09-23)
+  const mbox = document.getElementById("cvMktBody");
+  if (mbox) { mbox.innerHTML = h; h = ""; }
 
   // 🔴 누구에게나 같은 내용을 낸다 (사장님 2026-09-20).
   // ① 자산 배분 — 가상 계좌 10만 USDT 기준. 코인은 포트폴리오가 하나뿐이다(사장님 2026-09-20).
   // 🔴 제목은 주식앱과 같이 "추천 포트폴리오", 계좌 머리줄은 주식앱과 같은 크기 (사장님 2026-09-22)
-  h += '<div class="svsub svacct2" style="margin-top:12px;font-weight:800;color:var(--sub)">' + KE("추천 포트폴리오", "Recommended Portfolio") + '</div>';
+  // 제목은 카드 머리에 있다 (2026-09-23)
+
   // USDT 계좌 줄은 뺐다 — 위 가상 계좌 카드에 이미 있다 (사장님 2026-09-23)
   h += '<div class="svsub">' + KE('BTC 45 · ETH 45 · 알트 10, 그 안에서 <b>현물 ' + CV_SPOT + ' · 선물 '
      + (100 - CV_SPOT) + '</b>. 선물은 청산이 있어 적게 둡니다. 아래 금액은 모든 이용자에게 '
