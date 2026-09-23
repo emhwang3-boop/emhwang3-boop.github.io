@@ -189,9 +189,9 @@
     cube.add(it.edge);
     // 종목 익절·손절에 닿으면 굵은 테두리 — 같은 선을 조금 키워 한 겹 더 씌운다 (사장님 2026-09-23)
     it.edge2 = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
-    it.edge2.scale.setScalar(1.035); cube.add(it.edge2);
+    it.edge2.scale.setScalar(1.05); cube.add(it.edge2);
     it.edge3 = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
-    it.edge3.scale.setScalar(1.07); cube.add(it.edge3);
+    it.edge3.scale.setScalar(1.10); cube.add(it.edge3);
     const crackMat = new THREE.MeshBasicMaterial({ map: CRACK, transparent: true, opacity: 0, depthWrite: false, depthTest: false });
     const crackMesh = new THREE.Mesh(new THREE.BoxGeometry(1.03, 1.03, 1.03), crackMat); crackMesh.renderOrder = 2;
     cube.add(crackMesh); it.crackMat = crackMat;
@@ -217,12 +217,16 @@
     towerGroup.add(cube); it.mesh = cube; it.mat = mat;
   });
 
-  // 큐브 색 = 자산군 색 (사장님 2026-09-23 되돌림). 수익률은 밝기로만 — 오르면 밝게, 내리면 어둡게
+  // 큐브 색 = 수익률 (사장님 2026-09-23) — 오름 로빈후드 초록 · 내림 로빈후드 빨강 · 0% 밝은 회색.
+  //   많이 움직일수록 진하다. 글자가 작아도 큐브 색만 보고 오르내림을 안다.
+  const FLAT_C = new THREE.Color(0xb9c0c8);
+  const UP_C   = new THREE.Color(0x00c805);
+  const DN_C   = new THREE.Color(0xff433d);
   function litColor(base, ret) {
-    const c = base.clone();
-    if (ret >= 0) c.lerp(new THREE.Color(0xffffff), Math.min(ret, 1) * 0.5);
-    else c.multiplyScalar(1 + Math.max(ret, -0.7) * 0.75);
-    return c;
+    const r = ret || 0;
+    const t = Math.min(1, Math.abs(r) / 0.10);          // 10% 에서 제일 진하다
+    if (Math.abs(r) < 0.0005) return FLAT_C.clone();
+    return FLAT_C.clone().lerp(r > 0 ? UP_C : DN_C, Math.max(0.12, t));
   }
 
   let camR = 200, fc = 0, eyeX = 0, eyeY = 0;
@@ -433,8 +437,8 @@
       // 종목 익절·손절 — 닿으면 테두리를 굵게 (익절 초록 · 손절 빨강)
       const hitG = it.cur >= IGOAL, hitS = it.cur <= ISTOP, hit = hitG || hitS;
       const hc = hitG ? 0x2bff86 : 0xff3b3b, hp = hit ? (0.75 + 0.25 * Math.sin(t * 4 + it.vol)) : 0;
-      it.edge2.material.color.setHex(hc); it.edge2.material.opacity = hp;
-      it.edge3.material.color.setHex(hc); it.edge3.material.opacity = hp * 0.55;
+      it.edge2.material.color.setHex(hc); it.edge2.material.opacity = hit ? 1 : 0;
+      it.edge3.material.color.setHex(hc); it.edge3.material.opacity = hit ? (0.85 + 0.15 * Math.sin(t * 4 + it.vol)) : 0;
       it.crackMat.opacity = loss > 0.002 ? Math.min(0.5 + loss * 3.5, 1) : 0;
       it.sparks.forEach(function (sp) { sp.material.opacity = gain > 0.02 ? Math.min(gain, 1) * (0.35 + 0.65 * Math.abs(Math.sin(t * 5 + sp.userData.phase))) : 0; });
       const half = side / 2, footY = it.mesh.position.y - half;
