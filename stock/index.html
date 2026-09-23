@@ -2705,7 +2705,9 @@ function svPuz(parts){
   // 색 — 오름 로빈후드 그린 #00C805 · 내림 #FF433D. 많이 움직일수록 밝다 (사장님 2026-09-23 세 후보 중 고르심)
   //   바탕(검정·흰색)에 따라 색을 바꾸지 않는다 — 한 벌만 쓴다.
   const UP0="#0E3A2C", UP1="#00C805", DN0="#451412", DN1="#FF433D";
-  const col=function(p){ return (typeof svColor==="function") ? svColor(p[0],0) : "#7D858F"; };
+  // 자산군 색을 조금 눌러 쓴다 — 원색 그대로면 촌스럽고 입체감이 안 산다 (사장님 2026-09-23)
+  const col=function(p){ const c=(typeof svColor==="function")?svColor(p[4]||p[0],0):"#7D858F";
+    return mix(c,"#0f1420",0.30); };
 
   // 네모를 둘로 갈라 내려가는 트리맵 — 조각이 너무 길쭉해지지 않는다
   const box=[]; const W=320, H=300;
@@ -2764,10 +2766,10 @@ function svPuz(parts){
     +'<feDropShadow dx="0.9" dy="1.6" stdDeviation="1.3" flood-color="#000" flood-opacity="0.55"/></filter>';
   const gid=function(c){
     if(!grad[c]){ const id=uid+"g"+Object.keys(grad).length; grad[c]=id;
-      defs+='<linearGradient id="'+id+'" x1="0" y1="0" x2="0.65" y2="1">'
-        +'<stop offset="0" stop-color="'+mix(c,"#ffffff",0.26)+'"/>'
-        +'<stop offset="0.55" stop-color="'+c+'"/>'
-        +'<stop offset="1" stop-color="'+mix(c,"#000000",0.30)+'"/></linearGradient>'; }
+      defs+='<linearGradient id="'+id+'" x1="0" y1="0" x2="0.62" y2="1">'
+        +'<stop offset="0" stop-color="'+mix(c,"#ffffff",0.40)+'"/>'
+        +'<stop offset="0.42" stop-color="'+c+'"/>'
+        +'<stop offset="1" stop-color="'+mix(c,"#000000",0.50)+'"/></linearGradient>'; }
     return grad[c]; };
 
   const fit1=function(t,w,fs){ let u=0,o=""; const lim=(w-7)/fs;
