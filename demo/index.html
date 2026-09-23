@@ -3990,7 +3990,7 @@ function pzDraftHtml(){
   var en=(typeof LANG!=="undefined"&&LANG==="en");
   if(!PZDRAFT){
     var n=PZSEL.length;
-    return '<div class="cvrow" style="margin:6px 0"><button class="svbtn" style="flex:1;margin:0" onclick="pzOpen()">'
+    return '<div class="cvrow" style="margin:6px 0"><button class="dppct" style="flex:1;margin:0;padding:9px 10px;font-size:13px" onclick="pzOpen()">'
       + (en?("Build basket from picks + holdings"+(n?(" ("+n+")"):"")):("고른 것 + 보유로 바스켓 만들기"+(n?(" "+n+"개"):"")))
       + '</button></div>';
   }
@@ -4002,8 +4002,8 @@ function pzDraftHtml(){
       +'</td><td><span class="mhx" onclick="pzDrop('+i+')">✕</span></td></tr>';
   });
   h+='</table><div class="cvrow" style="margin:6px 0">'
-    +'<button class="svbtn svgo" style="flex:1;margin:0" onclick="pzSave()">'+(en?"Add to virtual basket":"가상 바스켓에 담기")+'</button>'
-    +'<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="pzClose()">'+(en?"Cancel":"그만하기")+'</button></div>';
+    +'<button class="dpb sell" style="flex:1;margin:0" onclick="pzSave()">'+(en?"Add to virtual basket":"가상 바스켓에 담기")+'</button>'
+    +'<button class="dppct" style="flex:0 0 auto;margin:0;padding:9px 12px;font-size:13px" onclick="pzClose()">'+(en?"Cancel":"그만하기")+'</button></div>';
   return h;
 }
 // 현금 조각을 누르면 뒤집혀 추천 종목을 보여 준다 (사장님 2026-09-23) — 다시 누르면 돌아온다
