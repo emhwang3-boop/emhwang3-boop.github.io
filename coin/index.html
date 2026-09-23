@@ -2118,6 +2118,18 @@ function bkSave(a) { try { localStorage.setItem(BK_KEY, JSON.stringify(a)); } ca
 // ── 가상 바스켓 투자금액 (사장님 2026-09-23) ──────────────────────────────
 //   기본값 = 고른 성향의 자산군 배분율 × 가상 계좌. 같은 자산군에 여럿이면 똑같이 나눈다.
 //   고객이 고치면 그 값이 남는다(amt). 통화는 국내=원 · 미국=달러.
+function bkNum(v, ccy) {
+  return (+v).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+// 치는 동안에도 콤마를 붙여 준다 (사장님 2026-09-23)
+function bkAmtLive(el) {
+  const raw = String(el.value || "");
+  const dot = raw.indexOf(".") >= 0;
+  const n = parseFloat(raw.replace(/,/g, ""));
+  if (!isFinite(n)) return;
+  const tail = dot ? raw.replace(/,/g, "").split(".")[1] : null;
+  el.value = Math.floor(n).toLocaleString() + (dot ? ("." + (tail || "")) : "");
+}
 function bkCcy(it) { return "USDT"; }
 function bkMoney(v, ccy) { return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; }
 // 성향 배분에 따른 기본 금액 — 자산군 몫을 그 자산군에 담긴 종목 수로 나눈다
@@ -2196,8 +2208,8 @@ function bkRender() {
     const amt = AM[x.code] || 0, w = tAll > 0 ? (amt / tAll * 100) : 0;
     h += '<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="' + x.code + '" data-mk="' + (x.mk || "")
        + '" data-nm="' + String(x.name).replace(/"/g, "") + '">' + x.name + (/^\d/.test(x.code) ? ' <span class="dplbl">' + x.code + '</span>' : '')
-       + '</td><td><input class="bkamt" type="text" inputmode="decimal" value="' + (+amt).toFixed(2)
-       + '" onchange="bkSetAmt(' + i + ',this.value)" style="width:96px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 6px;font-size:12px">'
+       + '</td><td><input class="bkamt" type="text" inputmode="decimal" value="' + bkNum(amt, "USDT")
+       + '" oninput="bkAmtLive(this)" onchange="bkSetAmt(' + i + ',this.value)" style="width:96px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 6px;font-size:12px">'
        + ' <span class="dplbl">USDT</span></td>'
        + '<td>' + w.toFixed(1) + '%</td>'
        + '<td><span class="mhx" onclick="bkDel(' + i + ')">✕</span></td></tr>';
