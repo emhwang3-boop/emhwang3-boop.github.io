@@ -2094,7 +2094,7 @@ function slotBars(name, slotTxt, filled) {
   const en = (typeof LANG !== "undefined" && LANG === "en");
   return '<div class="slrow"><div class="slhd"><b>' + name + '</b>'
        + (slotTxt ? '<span>' + (en ? "slot " : "1칸 ") + slotTxt + '</span>' : '')
-       + '<span class="sn">' + n + ' / 12</span></div>' + b + '</div>';
+       + '<span class="sn">' + n + (en ? " items / 12 slots" : " 종목 / 12 칸") + '</span></div>' + b + '</div>';
 }
 function bkOldest() {                       // 보관한 포트폴리오가 여럿이면 **가장 오래된 것** (사장님 2026-09-24)
   const sv = (typeof bkSaveGet === "function") ? bkSaveGet() : [];
@@ -2118,7 +2118,7 @@ function bkSlotInfo() {
 }
 function bkAcctPaint() {
   // 담은 게 있으면 원금 줄은 감춘다 — 잔고·평가금액·합계로 갈음 (사장님 2026-09-24)
-  try { const on = (typeof bkGet === "function") && bkGet().length > 0;
+  try { const on = !!bkOldest() || ((typeof bkGet === "function") && bkGet().length > 0);
         document.querySelectorAll(".svorig").forEach(function (q) { q.style.display = on ? "none" : ""; }); } catch (e) {}
 
   const s = bkSlotInfo(), en = (typeof LANG !== "undefined" && LANG === "en");
