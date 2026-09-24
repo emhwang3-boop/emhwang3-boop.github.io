@@ -3362,7 +3362,10 @@ function cvRecoRender() {
     const keys = Object.keys(c).filter(function (k) {
       return grp === "알트" ? (k !== "BTC" && k !== "ETH") : (k === grp);
     });
-    const L = keys.filter(function (k) { return c[k]["new"]; });
+    // 데모앱 puzPicks 와 같게 (사장님 2026-09-24) — BTC·ETH 는 롱일 때, 알트는 새 신호 또는 지금 롱 · 리본 폭 순(rank)
+    const L = keys.filter(function (k) { const z = c[k] || {};
+        return grp === "알트" ? (z["new"] || z.state === "long") : (!z.state || z.state === "long"); })
+      .sort(function (a, b) { return ((+c[a].rank || 999) - (+c[b].rank || 999)) || ((+c[b].turn || 0) - (+c[a].turn || 0)); });
     // 자산군마다 현물·선물 두 줄 (사장님 2026-09-23)
     const rows = [];
     L.forEach(function (k) {
