@@ -1771,8 +1771,10 @@ function mpWait(txt) {
 // 🔴 이 앱에는 가입 절차가 없다(고객 정보를 받지 않으므로). 그래서 **첫 실행 화면**이 가입 화면 자리다.
 //    여기서 네 문구를 보여 주고 확인을 받는다. 확인 기록은 이 폰에만 남는다(서버로 보내지 않는다).
 // 🔴 문구는 사장님이 주신 그대로다. `build_apps.py` 의 DISC_A~D 와 **같은 글이어야 한다**(영어도 같이).
-var DISC_KEY = "disc_ok_v4";   // v4: 가상포트폴리오 문구 추가(2026-09-21)   // 🔴 문구가 바뀌면 올린다 — 이미 확인한 분들께 한 번 더 받는다 (사장님 2026-09-20)
+var DISC_KEY = "disc_ok_v5";   // v5: 코인 청산 경고 추가(2026-09-24)   // v4: 가상포트폴리오 문구 추가(2026-09-21)   // 🔴 문구가 바뀌면 올린다 — 이미 확인한 분들께 한 번 더 받는다 (사장님 2026-09-20)
 var DISC_LINES = [
+  ["가상자산은 변동성이 매우 큰 위험자산이며, 선물거래에서 레버리지를 높일수록 청산의 위험도가 상승합니다. 가상자산에서 청산이란 원금의 100% 손실을 의미하므로 투자에 매우 유의하시기 바랍니다.",
+   "Crypto assets are highly volatile risk assets, and the higher the leverage in futures trading, the greater the risk of liquidation. In crypto, liquidation means a 100% loss of principal, so please invest with great caution."],
   ["본 서비스는 특정 종목의 매수·매도를 권유하지 않으며, 투자 판단의 책임은 본인에게 있습니다.",
    "This service does not recommend buying or selling any specific security; responsibility for investment decisions rests with you."],
   ["과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.",
@@ -1819,9 +1821,12 @@ function discGate(force) {
     + '<div style="font-size:17px;font-weight:800;margin-bottom:4px">' + KE("투자 유의사항", "Investment Notice") + '</div>'
     + '<div style="font-size:12.5px;color:var(--sub);margin-bottom:14px">'
     + KE("시작하기 전에 아래를 꼭 읽어 주십시오.", "Please read the following before you start.") + '</div>'
-    + DISC_LINES.map(function (t) {
-        return '<div style="display:flex;gap:8px;margin:11px 0;font-size:13.5px;line-height:1.62">'
-             + '<span style="color:var(--tint,#1c7ed6);font-weight:900">·</span><span>' + KE(t[0], t[1]) + '</span></div>';
+    + DISC_LINES.map(function (t, i) {
+        var red = (i === 0);        // 코인 청산 경고는 붉게 (사장님 2026-09-24)
+        return '<div style="display:flex;gap:8px;margin:11px 0;font-size:13.5px;line-height:1.62'
+             + (red ? ';color:#ff433d;font-weight:700' : '') + '">'
+             + '<span style="color:' + (red ? '#ff433d' : 'var(--tint,#1c7ed6)') + ';font-weight:900">·</span><span>'
+             + KE(t[0], t[1]) + '</span></div>';
       }).join("")
     + '<div style="font-size:12px;color:var(--sub);margin-top:14px;line-height:1.6">'
     + KE('이 앱은 시세와 참고 정보를 보여 줄 뿐, 주문을 내지 않습니다. 매매는 고객님이 거래하시는 '
