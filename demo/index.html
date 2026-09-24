@@ -3989,7 +3989,7 @@ function pzView(it, mk){
   try{
     if(m === "coin"){
       var k = c.split("-")[0].replace(/USDT$/, "");
-      pickCoin(k + "USDT", k, "F");
+      pickCoin(k + "USDT", k, it.spot ? "S" : "F");     // 추천 코인은 현물 (사장님 2026-09-24)
       E("coin2").scrollIntoView({behavior:"smooth"});
     } else if(m === "us"){
       var t = c.replace(/\.US$/, "");
@@ -4059,11 +4059,20 @@ function puzFlip(ev, mk){
 function puzPicks(mk){
   try{
     var R=(typeof window._RECO!=="undefined")?window._RECO:null;
-    if(mk==="coin"){                       // 왕관 판정이 '롱'인 코인만 (사장님 2026-09-23)
+    if(mk==="coin"){                       // 코인앱과 같은 방식 — 알트까지 (사장님 2026-09-24)
+      //   BTC·ETH 는 왕관 판정이 '롱'일 때, 그 밖(알트)은 새 신호가 떴을 때. 현물로 산다.
       var out=[];
-      try{ ["BTC","ETH"].forEach(function(k){ var z=(R&&R.coin&&R.coin[k])||null;
-        if(!z||z.state==="long")out.push({name:k, code:k+"-USDT-SWAP", mk:"coin"}); }); }
-      catch(e){ out=[{name:"BTC",code:"BTC-USDT-SWAP",mk:"coin"},{name:"ETH",code:"ETH-USDT-SWAP",mk:"coin"}]; }
+      try{
+        var C=(R&&R.coin)||{};
+        ["BTC","ETH"].forEach(function(k){ var z=C[k];
+          if(!z||z.state==="long")out.push({name:k, code:k+"-USDT", mk:"coin", spot:true}); });
+        Object.keys(C).forEach(function(k){
+          if(k==="BTC"||k==="ETH")return;
+          var z=C[k]||{};
+          if(z["new"]||z.state==="long")out.push({name:k, code:k+"-USDT", mk:"coin", spot:true});
+        });
+      }
+      catch(e){ out=[{name:"BTC",code:"BTC-USDT",mk:"coin",spot:true},{name:"ETH",code:"ETH-USDT",mk:"coin",spot:true}]; }
       return out;
     }
     // 주식 12칸 후보 + 신호가 뜬 ETF·레버리지 (사장님 2026-09-23)
