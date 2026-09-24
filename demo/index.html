@@ -4354,7 +4354,7 @@ function recoRender(){
     if(!x||x.err)return '<div class="dpmsg">'+(mk==="kr"?"국내":"미국")+' '+(en?"not ready":"자료 없음")+'</div>';
     const slot=tot>0?tot/12:0, empty=Math.max(0,12-held.length);
     const money=function(v){ return mk==="kr"?(Math.round(v).toLocaleString()+(en?" KRW":"원")):("$"+(+v).toLocaleString(undefined,{maximumFractionDigits:2})); };
-    let s='<div class="dphd" style="margin-top:8px">'+(mk==="kr"?(en?"KR stocks":"국내 주식"):(en?"US stocks":"미국 주식"))
+    let s='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(mk==="kr"?(en?"KR stocks":"국내 주식"):(en?"US stocks":"미국 주식"))
       +' <span class="dplbl">'+(en?"as of ":"")+x.asof+(en?"":" 종가")+'</span></div>';
     // 칸 줄은 위 [12칸 현황] 표로 옮겼다 (사장님 2026-09-24)
     // 팔 것 — +15% 도달 · 60영업일 만기 · (국내·미국 공통 규칙)
@@ -4445,7 +4445,7 @@ function recoRender(){
   h+=body;
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
   const co=(has?RL.co:[]).filter(function(p){return !p.spot;});
-  let c='<div class="dphd" style="margin-top:8px">'+(en?"Crypto":"코인")+'</div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Now":"지금")+'</th><th></th><th></th></tr>';
+  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto":"코인")+'</div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Now":"지금")+'</th><th></th><th></th></tr>';
   ["BTC","ETH"].forEach(function(k){
     const z=(R.coin||{})[k]||{}, pos=co.filter(function(p){return String(p.code).indexOf(k+"-")===0;})[0];
     const now=pos?(pos.side==="L"?(en?"LONG":"롱"):(en?"SHORT":"숏")):(en?"none":"없음");
@@ -4470,8 +4470,24 @@ function recoRender(){
       var co2=(has&&RL.co)?RL.co.filter(function(p){return p.spot;}):[];
       var coVal=co2.reduce(function(s,p){ return s+(p.qty||0)*(p.cur||0); },0);
       var totCO=coVal+((cash&&cash.usdt)||0), slotCO=totCO>0?totCO/12:0;
-      var a2='<div class="dphd" style="margin-top:8px">'+(en?"Altcoins (spot)":"알트 (현물)")+'</div>'
-        +(slotCO>0?'<div class="dpmsg">'+(en?"Slot ":"1칸 ")+slotCO.toLocaleString(undefined,{maximumFractionDigits:2})+' USDT</div>':'')
+      // 오늘 살 것 — 말로 한 줄, 제목 바로 아래 (사장님 2026-09-24)
+      var ALT_TODAY="", t1=alt2[0], p1=+((t1.z||{}).price||0);
+      if(slotCO>0&&p1>0){
+        var q1=slotCO/p1;
+        var qs1=q1>=1?q1.toLocaleString(undefined,{maximumFractionDigits:2})
+                     :q1.toLocaleString(undefined,{maximumFractionDigits:6});
+        ALT_TODAY='<div class="dpmsg">'+(en
+          ? ("Today: buy " + t1.k + " with one slot (" + slotCO.toLocaleString(undefined,{maximumFractionDigits:2})
+             + " USDT) — " + qs1 + " " + t1.k + " at " + p1.toLocaleString(undefined,{maximumFractionDigits:4}) + " USDT.")
+          : ("오늘은 1칸 " + slotCO.toLocaleString(undefined,{maximumFractionDigits:2}) + " USDT 로 "
+             + t1.k + " 을(를) " + p1.toLocaleString(undefined,{maximumFractionDigits:4}) + " USDT 에 "
+             + qs1 + " 개 삽니다."))+'</div>';
+      } else {
+        ALT_TODAY='<div class="dpmsg">'+(en?"Load your real account to size the slot."
+                                    :"실계좌를 불러오면 1칸 금액과 살 수량이 나옵니다.")+'</div>';
+      }
+          var a2='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Altcoins (spot)":"알트 (현물)")+'</div>'
+        +ALT_TODAY
         +'<table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th>'
         +'<th>'+(en?"20d":"20일")+'</th><th>'+(en?"Qty":"수량")+'</th><th></th></tr>';
       alt2.forEach(function(r,i){
@@ -4487,23 +4503,7 @@ function recoRender(){
           +'<button class="dpb buy dpsm" onclick="pickCoin(&quot;'+r.k+'USDT&quot;,&quot;'+r.k+'&quot;,&quot;S&quot;);E(&quot;coin2&quot;).scrollIntoView({behavior:&quot;smooth&quot;})">'+(en?"View":"조회")+'</button></td></tr>'
       });
       h+=a2+'</table>';
-      // 오늘 살 것 — 말로 한 줄 (사장님 2026-09-24)
-      var t1=alt2[0], p1=+((t1.z||{}).price||0);
-      if(slotCO>0&&p1>0){
-        var q1=slotCO/p1;
-        var qs1=q1>=1?q1.toLocaleString(undefined,{maximumFractionDigits:2})
-                     :q1.toLocaleString(undefined,{maximumFractionDigits:6});
-        h+='<div class="dpmsg">'+(en
-          ? ("Today: buy " + t1.k + " with one slot (" + slotCO.toLocaleString(undefined,{maximumFractionDigits:2})
-             + " USDT) — " + qs1 + " " + t1.k + " at " + p1.toLocaleString(undefined,{maximumFractionDigits:4}) + " USDT.")
-          : ("오늘은 1칸 " + slotCO.toLocaleString(undefined,{maximumFractionDigits:2}) + " USDT 로 "
-             + t1.k + " 을(를) " + p1.toLocaleString(undefined,{maximumFractionDigits:4}) + " USDT 에 "
-             + qs1 + " 개 삽니다."))+'</div>';
-      } else {
-        h+='<div class="dpmsg">'+(en?"Load your real account to size the slot."
-                                    :"실계좌를 불러오면 1칸 금액과 살 수량이 나옵니다.")+'</div>';
-      }
-    }
+  }
   }catch(e){}
   h+='<div class="dpmsg" style="margin-top:6px">'+(en?"Measured rules only. Tap View to open the stock and order.":"잰 규칙만 씁니다. [조회]를 누르면 종목이 열리고 바로 주문할 수 있습니다.")+'</div>';
   card.innerHTML=h;
