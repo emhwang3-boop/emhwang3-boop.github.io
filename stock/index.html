@@ -2147,7 +2147,18 @@ function bkAcctPaint() {
     + '<button class="dppct" style="flex:0 0 auto;border-radius:10px;background:var(--bg);color:var(--nm);border:1px solid var(--bd);font-weight:700;padding:5px 10px;cursor:pointer;" onclick="bkAcctReset()">' + KE("초기화", "Reset") + '</button></div>';
   // 설명은 ⓘ 안으로 몰아 둔다 (사장님 2026-09-24)
   const inf = document.getElementById("svAcctInfo");
-  if (inf) { inf.textContent = KE("총자산을 열두 칸으로 나눠 한 칸씩 담습니다. 한 칸 = 가상 계좌 ÷ 12 이고, 담으면 그만큼 현재 잔고가 줄어 평가금액으로 옮겨 갑니다. 평가금액은 보관한 포트폴리오에서 가져오며, 여럿이면 가장 오래된 것을 씁니다. [평가금액 업데이트] 를 누르면 다시 셉니다. 합계 = 현재 잔고 + 평가금액입니다. [초기화] 를 누르면 처음으로 돌아갑니다. 모두 가상 금액이며 실제 매수를 권하는 값이 아닙니다.", "The account is split into twelve slots; one slot = virtual account ÷ 12. Adding an item moves that much from cash into holdings. Holdings value comes from a saved portfolio — the oldest one if there are several; tap Refresh to recalculate. Total = cash + holdings. Reset returns everything to the start. All amounts are virtual.");
+  if (inf) { inf.style.whiteSpace = "pre-line"; inf.textContent = KE("🧩 원화 자산과 달러 자산을 각각 12칸으로 나눠, 하루에 한 칸씩 투자합니다.
+🎯 칸마다 들어갈 종목은 추천 종목에서 고객님이 직접 고릅니다.
+💰 한 칸 금액 = 가상 계좌 합계 ÷ 12. 그래서 평가금액이 불어나면 한 칸이 현재 잔고보다 커질 수도 있어요!
+📦 평가금액은 보관한 포트폴리오에서 가져오며, 여럿이면 가장 오래된 것을 씁니다. [평가금액 업데이트] 를 누르면 다시 셉니다 🔄
+➕ 합계 = 현재 잔고 + 평가금액입니다. [초기화] 를 누르면 처음으로 돌아갑니다 ⏪
+🎮 모두 가상 금액이며 실제 매수를 권하는 값이 아닙니다.",
+      "🧩 KRW and USD assets are each split into 12 slots — invest one slot a day.
+🎯 You pick each slot's item from the recommended list.
+💰 One slot = account total ÷ 12, so if holdings grow, a slot can be larger than your cash!
+📦 Holdings come from a saved portfolio (the oldest if several). Tap Update holdings to recount 🔄
+➕ Total = cash + holdings. Reset takes you back to the start ⏪
+🎮 All amounts are virtual and not a recommendation to buy.");
              inf.style.display = (typeof svInfoDisp === "function") ? svInfoDisp("svAcctInfo") : "none"; }
 }
 // ── 가상 계좌 — 굴러가는 잔고 (사장님 2026-09-24) ─────────────────────────────
@@ -2177,11 +2188,17 @@ function bkAcctReset() {                          // 처음으로 되돌린다
   bkSave([]); bkRender();
 }
 
+// 한 칸 = 가상 계좌 합계(현재 잔고 + 평가금액) ÷ 12 (사장님 2026-09-24)
+function bkSlotAmt(ccy) {
+  const s = bkSlotInfo();
+  return ccy === "USD" ? (s.leftU + s.evalU) / 12 : (s.leftK + s.evalK) / 12;
+}
 function bkAutoAmt(list) {
   // 12칸 — 가상 계좌를 열둘로 나눈 한 칸씩 (사장님 2026-09-24, 데모앱과 같은 방식)
   //   🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
   const out = {};
-  list.forEach(function (x) { out[x.code] = (bkCcy(x) === "USD") ? (SV_USD / 12) : (SV_KRW / 12); });
+  const sK = bkSlotAmt("KRW"), sU = bkSlotAmt("USD");
+  list.forEach(function (x) { out[x.code] = (bkCcy(x) === "USD") ? sU : sK; });
   return out;
 }
 function bkAmtOf(list) {
@@ -2233,8 +2250,8 @@ function bkRender() {
   {
     const si = bkSlotInfo(), en2 = (typeof LANG !== "undefined" && LANG === "en");
     h += '<div class="slbox">'
-       + slotBars(KE("국내 주식", "KR stocks"), Math.round(SV_KRW / 12).toLocaleString() + (en2 ? "" : "원"), si.nK)
-       + slotBars(KE("미국 주식", "US stocks"), "$" + Math.round(SV_USD / 12).toLocaleString(), si.nU)
+       + slotBars(KE("국내 주식", "KR stocks"), Math.round(bkSlotAmt("KRW")).toLocaleString() + (en2 ? "" : "원"), si.nK)
+       + slotBars(KE("미국 주식", "US stocks"), "$" + Math.round(bkSlotAmt("USD")).toLocaleString(), si.nU)
        + '</div>';
   }
   if (!a.length) {
@@ -2243,7 +2260,7 @@ function bkRender() {
   const AM = bkAmtOf(a);
   const tKR = a.reduce(function (t, x) { return t + (bkCcy(x) === "KRW" ? (AM[x.code] || 0) : 0); }, 0);
   const tUS = a.reduce(function (t, x) { return t + (bkCcy(x) === "USD" ? (AM[x.code] || 0) : 0); }, 0);
-  h += '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>' + KE("투자금액", "Amount")
+  h += '<table class="mhtab"><tr><th>' + KE("지금 바스켓", "Current basket") + '</th><th>' + KE("투자금액", "Amount")
      + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
   a.forEach(function (x, i) {
     const ccy = bkCcy(x), amt = AM[x.code] || 0;
@@ -2470,7 +2487,7 @@ function bkSavedHtml() {
      + '<div class="svsub" style="margin-top:' + (bkGet().length ? '6' : '12') + 'px;font-weight:800;color:var(--nm);display:flex;align-items:center;gap:6px">' + KE("보관한 포트폴리오", "Saved portfolios") + '<span onclick="bkTowerInfo(event)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span>'
      + '<span style="margin-left:auto"></span>'
      + (lastCalc ? '<span class="dplbl" style="flex:0 0 auto;font-weight:400">' + KE("계산 ", "") + bkAgo(lastCalc) + '</span>' : '')
-     + (s.length ? '<button class="svbtn" style="flex:0 0 auto;width:auto;margin:0;padding:5px 10px;font-weight:700" onclick="bkSavedRefresh()">' + KE("수익률 새로고침", "Refresh") + '</button>' : '')
+     + (s.length ? '<button class="svbtn" style="flex:0 0 auto;width:auto;margin:0;padding:3px 9px;font-size:inherit;font-weight:700" onclick="bkSavedRefresh()">' + KE("수익률 새로고침", "Refresh") + '</button>' : '')
      + '</div><div id="bkSavedMsg" class="c21msg" hidden></div>';
   if (!s.length) { h += '<div class="mhempty">' + KE("보관한 것이 없습니다. 바스켓을 만들고 [보관]을 누르세요.", "Nothing saved yet. Build a basket and tap Save.") + '</div>'; return h; }
   h += '<div style="max-height:150px;overflow-y:auto;border:1px solid var(--bd);border-radius:10px;padding:2px 6px">';
