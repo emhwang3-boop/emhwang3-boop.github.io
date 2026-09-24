@@ -268,7 +268,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div class="gauges" id="gauges"></div>
 <div class="gnote">시장온도 · VIX · 공포·탐욕 — 주식시장 기준</div>
 <div class="card" id="myhold">
-  <h3>내 보유종목 <span class="tag live">● 실시간</span></h3><div class="rlbar"><button class="dpb flat dpsm" onclick="rlLoad()">실계좌 불러오기</button><button class="dpb flat dpsm" onclick="rlClear()">지움</button><span class="rlmsg" id="rlMsg"></span></div>
+  <h3>내 보유종목 <span style="display:flex;align-items:center;gap:8px"><button class="dpb flat dpsm" id="atBtn" onclick="atOpen()">자동매매</button><span class="tag live">● 실시간</span></span></h3><div class="rlbar"><button class="dpb flat dpsm" onclick="rlLoad()">실계좌 불러오기</button><button class="dpb flat dpsm" onclick="rlClear()">지움</button><span class="rlmsg" id="rlMsg"></span></div>
   <div id="mhBody"></div>
 </div>
 
@@ -3561,6 +3561,85 @@ function dpHoldSumHtml(){
     +'<span>'+(en?"Portfolio return ":"포트폴리오 수익률 ")+'<b class="'+cls+'">'+(r>0?"+":"")+r.toFixed(2)+'%</b></span>'
     +'<button class="dppct" style="border-color:#2bd4c0;color:#2bd4c0" onclick="holdTower3D()">3D</button>'
     +'<span onclick="bkTowerInfo(event)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span></div>';
+}
+// ── [자동매매] — 판단·주문은 PC 중계기가 한다 (사장님 2026-09-24). 폰은 켜고 끄기·기준·기록만 ──────────
+//    🔴 기본 꺼짐 · 켜도 기본 '연습'(기록만). '실전'은 한 번 더 묻는다.
+//    중계기 /auto — GET 상태·기록 · POST {on, live, rules}. 열쇠(X-Relay-Key)가 있어야 된다(열쇠판 /demo2/).
+function atHdr(){ var h={"Content-Type":"application/json"}; try{ if(typeof rlHdr==="function") h=rlHdr(h); }catch(e){} return h; }
+async function atCall(body){
+  var base=(typeof rlRelay==="function")?rlRelay():"";
+  if(!base) throw new Error(KE("설정 ⚙ 에 중계기 주소가 없습니다","No relay address in Settings"));
+  var r=await fetch(base+"/auto",body?{method:"POST",headers:atHdr(),body:JSON.stringify(body)}:{headers:atHdr(),cache:"no-store"});
+  if(r.status===401) throw new Error(KE("중계기 열쇠가 틀리거나 없습니다","Relay key missing or wrong"));
+  if(r.status===404||r.status===503) throw new Error(KE("중계기가 옛 판입니다 — 새 설치 파일로 다시 깔아 주세요","Relay is outdated — reinstall"));
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return r.json();
+}
+var AT={st:null,busy:false};
+function atOpen(){
+  if(E("atPop"))return;
+  var d=document.createElement("div"); d.id="atPop";
+  d.setAttribute("style","position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:14px");
+  d.addEventListener("click",function(ev){ if(ev.target===d){ d.remove(); clearInterval(AT.iv); } });
+  d.innerHTML='<div id="atBox" style="background:var(--card);color:var(--nm);border-radius:16px;max-width:440px;width:100%;padding:18px 16px;max-height:88vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.45)"></div>';
+  document.body.appendChild(d);
+  atPaint(); atLoad();
+  AT.iv=setInterval(function(){ if(!E("atPop")){ clearInterval(AT.iv); return; } atLoad(); },15000);
+}
+async function atLoad(){
+  try{ AT.st=await atCall(null); AT.err=""; }catch(e){ AT.err=String(e.message||e); }
+  atPaint();
+}
+async function atSet(body){
+  if(AT.busy)return; AT.busy=true;
+  try{ AT.st=await atCall(body); AT.err=""; }catch(e){ AT.err=String(e.message||e); }
+  AT.busy=false; atPaint();
+}
+function atToggleOn(){
+  var on=!(AT.st&&AT.st.on);
+  if(on&&!confirm(KE("자동매매를 켭니다. 규칙대로 사고팝니다.\n(지금 모드: ","Turn auto-trading on?\n(mode: ")+((AT.st&&AT.st.live)?KE("실전 — 진짜 주문","LIVE — real orders"):KE("연습 — 기록만","Practice — log only"))+")"))return;
+  atSet({on:on});
+}
+function atToggleLive(){
+  var live=!(AT.st&&AT.st.live);
+  if(live&&!confirm(KE("⚠ 실전으로 바꿉니다.\n이제부터 국내·미국 주식과 코인에 진짜 주문이 나갑니다.\n정말 바꿀까요?","⚠ Switch to LIVE?\nReal orders will be placed from now on.")))return;
+  atSet({live:live});
+}
+function atSaveRules(){
+  var g=function(id){ var v=parseFloat(String((E(id)||{}).value||"").replace(/[^0-9.\-]/g,"")); return isFinite(v)?v:null; };
+  var r={item_tp:g("atItp"),item_sl:g("atIsl"),pf_tp:g("atPtp"),pf_sl:g("atPsl")};
+  if(r.item_sl!==null&&r.item_sl>0)r.item_sl=-r.item_sl;       // 손절은 마이너스로
+  if(r.pf_sl!==null&&r.pf_sl>0)r.pf_sl=-r.pf_sl;
+  Object.keys(r).forEach(function(k){ if(r[k]===null)delete r[k]; });
+  atSet({rules:r});
+}
+function atPaint(){
+  var b=E("atBox"); if(!b)return;
+  var st=AT.st||{}, ru=st.rules||{item_tp:15,item_sl:-10,pf_tp:35,pf_sl:-25}, on=!!st.on, live=!!st.live, L=st.last||{};
+  var inp=function(id,v){ return '<input id="'+id+'" class="stin" inputmode="decimal" value="'+v+'" style="width:64px;text-align:right;margin:0">'; };
+  var sw=function(lbl,val,col,fn){ return '<button class="dpb" onclick="'+fn+'()" style="flex:1;background:'+(val?col:'var(--bg)')+';color:'+(val?'#fff':'var(--nm)')+';border:1px solid '+(val?col:'var(--bd)')+'">'+lbl+'</button>'; };
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="font-size:17px">'+KE("자동매매","Auto-trading")+'</b>'
+    +'<span onclick="E(\'atPop\').remove()" style="cursor:pointer;font-size:20px;color:var(--sub)">✕</span></div>';
+  if(AT.err) h+='<div class="dpmsg" style="color:#e03131;margin-bottom:8px">'+dpEsc(AT.err)+'</div>';
+  h+='<div style="display:flex;gap:8px;margin-bottom:8px">'
+    +sw(on?KE("● 켜짐","● ON"):KE("○ 꺼짐","○ OFF"),on,"#2f9e44","atToggleOn")
+    +sw(live?KE("실전","LIVE"):KE("연습","Practice"),live,"#e03131","atToggleLive")+'</div>';
+  h+='<div class="dpmsg" style="margin-bottom:10px">'+(live?KE("⚠ 실전 — 진짜 주문이 나갑니다.","⚠ LIVE — real orders."):KE("연습 — 주문 없이 「샀을 것·팔았을 것」만 기록합니다.","Practice — logs what it would do, no orders."))
+    +(st.liquidate?'<br><b style="color:#e03131">'+dpEsc(st.liquidate)+KE(" — 전부 파는 중"," — selling all")+'</b>':'')+'</div>';
+  h+='<div style="font-weight:800;margin:6px 0 4px">'+KE("기준","Rules")+'</div>'
+    +'<table class="mhtab" style="margin:0"><tr><th></th><th>'+KE("익절 %","Take %")+'</th><th>'+KE("손절 %","Stop %")+'</th></tr>'
+    +'<tr><td style="text-align:left">'+KE("종목 하나","Each item")+'</td><td>'+inp("atItp",ru.item_tp)+'</td><td>'+inp("atIsl",ru.item_sl)+'</td></tr>'
+    +'<tr><td style="text-align:left">'+KE("전체 (국내+미국+코인)","Whole (KR+US+crypto)")+'</td><td>'+inp("atPtp",ru.pf_tp)+'</td><td>'+inp("atPsl",ru.pf_sl)+'</td></tr></table>'
+    +'<button class="dpb flat" style="width:100%;margin-top:6px" onclick="atSaveRules()">'+KE("기준 저장","Save rules")+'</button>';
+  h+='<div class="dpmsg" style="margin-top:8px">'+KE("사기: 시장마다 하루 한 번, 「오늘 살 것」을 1칸(총자산÷12)만큼. 1주도 못 사면 건너뜁니다.<br>팔기: 종목이 익절·손절 기준에 닿으면 그 종목만, 전체가 닿으면 전부 팔고 스스로 꺼집니다.<br>컴퓨터가 켜져 있어야 돕니다.",
+      "Buy: once a day per market, today's pick for one slot (assets÷12).<br>Sell: an item at its take/stop, everything at the whole-portfolio take/stop, then it turns itself off.<br>Your PC must be on.")+'</div>';
+  if(L.at) h+='<div class="dpmsg" style="margin-top:6px">'+KE("마지막 점검 ","Last check ")+dpEsc(L.at)+' · '+KE("전체 ","whole ")+'<b>'+((L.pf>0?"+":"")+(+L.pf||0).toFixed(2))+'%</b>'
+      +((L.err||[]).length?'<br><span style="color:#e03131">'+dpEsc(L.err.join(" / "))+'</span>':'')+'</div>';
+  var lg=(st.log||[]).slice().reverse();
+  h+='<div style="font-weight:800;margin:10px 0 4px">'+KE("기록","Log")+'</div>'
+    +'<div style="max-height:220px;overflow:auto;border:1px solid var(--bd);border-radius:10px;padding:6px 8px;font-size:12px;line-height:1.6">'
+    +(lg.length?lg.map(function(l){ return '<div>'+dpEsc(l)+'</div>'; }).join(""):'<span class="dpmsg">'+KE("아직 기록이 없습니다","No entries yet")+'</span>')+'</div>';
+  b.innerHTML=h;
 }
 function holdTower3D(){
   const a=dpHoldItems(); if(!a.length)return;
