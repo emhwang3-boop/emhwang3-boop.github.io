@@ -4483,8 +4483,8 @@ function recoRender(){
           +'<td class="'+(r.m>=0?"up":"dn")+'">'+(r.m>0?"+":"")+r.m.toFixed(1)+'%</td>'
           +'<td>'+(i?"-":qs)+'</td>'
           +'<td style="white-space:nowrap"><button class="dpb dpsm" style="background:#2f9e44;border-color:#2b8a3e;margin-right:4px"'
-          +' onclick="bkAdd(''+r.k+'-USDT',''+r.k+'','coin',1)">'+(en?"+Cart":"담기")+'</button>'
-          +'<button class="dpb buy dpsm" onclick="pickCoin(''+r.k+'USDT',''+r.k+'','S');E('coin2').scrollIntoView({behavior:'smooth'})">'+(en?"View":"조회")+'</button></td></tr>';
+          +' onclick="bkAdd(&quot;'+r.k+'-USDT&quot;,&quot;'+r.k+'&quot;,&quot;coin&quot;,1)">'+(en?"+Cart":"담기")+'</button>'
+          +'<button class="dpb buy dpsm" onclick="pickCoin(&quot;'+r.k+'USDT&quot;,&quot;'+r.k+'&quot;,&quot;S&quot;);E(&quot;coin2&quot;).scrollIntoView({behavior:&quot;smooth&quot;})">'+(en?"View":"조회")+'</button></td></tr>'
       });
       h+=a2+'</table>';
       // 오늘 살 것 — 말로 한 줄 (사장님 2026-09-24)
