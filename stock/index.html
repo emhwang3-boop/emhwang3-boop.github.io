@@ -3144,7 +3144,8 @@ function svRecoRender() {
      + ' <span class="dplbl" style="font-size:12px;font-weight:600">' + KE("조각을 누르면 뒤집힙니다", "Tap a piece to flip") + '</span></div>';
   // 장세는 좋으면 초록, 나쁘면 빨강 (사장님 2026-09-20)
   // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률(허브 changes)을 더해 "지금 60일선 대비"를 낸다. 데모앱과 같은 셈 (사장님 2026-09-22)
-  if (SVR && SVR.kr && SVR.kr.regime) {
+  // 🔴 「지금 장세」 줄은 뺐다 — 권유처럼 보인다 (사장님 2026-09-24)
+  if (false && SVR && SVR.kr && SVR.kr.regime) {
     const liveP = function (nm) { var d = window._lastD; if (d && d.changes) { for (var i = 0; i < d.changes.length; i++) { if (d.changes[i].nm === nm && typeof d.changes[i].pct === "number") return d.changes[i].pct; } } return null; };
     const mk = function (nm, x, idx) {
       var v = (+(x && x.regime && x.regime.vs_ma60) || 0) + (liveP(idx) || 0); var good = v >= 0;
