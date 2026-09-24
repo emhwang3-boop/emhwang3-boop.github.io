@@ -2105,7 +2105,7 @@ function bkAdd(code, name, mk) {
   if (!code) return;
   const a = bkGet();
   if (a.some(function (x) { return x.code === code; })) { bkRender(); return; }
-  if (a.length >= 12) { bkMsg(KE("한 번에 열두 개까지 담을 수 있습니다.", "You can add up to 12 at a time.")); return; }
+  if (a.length >= 12) { bkMsg(KE("한 번에 열두 개까지 담을 수 있습니다.", "You can add up to 12 at a time.")); try{ var _bc=document.getElementById("bkCard"); if(_bc&&_bc.scrollIntoView)_bc.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){} return; }
   a.push({code: code, name: name || code, mk: mk || "kr", cls: bkClassOf({code: code, mk: mk || "kr"})});
   bkSave(a); bkRender();
 }
