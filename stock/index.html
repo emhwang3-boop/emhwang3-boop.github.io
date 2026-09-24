@@ -1949,7 +1949,95 @@ function bkNote() {
 }
 
 function bkGet() { try { return JSON.parse(localStorage.getItem(BK_KEY) || "[]") || []; } catch (e) { return []; } }
-function bkSave(a) { try { localStorage.setItem(BK_KEY, JSON.stringify(a)); } catch (e) {} }
+// ── 두 기기 맞추기 (사장님 2026-09-24) ────────────────────────────
+//   맞추는 것: 가상 바스켓 · 보관한 포트폴리오 둘뿐. 열쇠·암호는 안 올라간다(뒤섞은 값만).
+//   🔴 주식앱·코인앱은 같은 주소를 쓰므로 APP_TAG 로 갈라 둔다 — 서로 섞이지 않는다.
+const SY_PASS_KEY = "sync_pass_" + (window.APP_TAG || "x") + "_v1";
+const SY_AT_KEY = "sync_at_" + (window.APP_TAG || "x") + "_v1";
+let SY_HASH = "", SY_BUSY = false, SY_T = null;
+function syPass() { try { return localStorage.getItem(SY_PASS_KEY) || ""; } catch (e) { return ""; } }
+function syAt() { try { return +(localStorage.getItem(SY_AT_KEY) || 0) || 0; } catch (e) { return 0; } }
+function sySetAt(v) { try { localStorage.setItem(SY_AT_KEY, String(v || 0)); } catch (e) {} }
+async function syKey() {
+  const p = syPass(); if (!p) return "";
+  if (SY_HASH && SY_HASH.p === p) return SY_HASH.h;
+  const buf = await crypto.subtle.digest("SHA-256",
+    new TextEncoder().encode("brief-sync:" + (window.APP_TAG || "x") + ":" + p));
+  const h = Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  SY_HASH = { p: p, h: h };
+  return h;
+}
+function syMsg(t) { const e = document.getElementById("syMsg"); if (e) { e.textContent = t || ""; e.hidden = !t; } }
+function syLocal() {
+  let bk = [], sv = [];
+  try { bk = JSON.parse(localStorage.getItem(BK_KEY) || "[]") || []; } catch (e) {}
+  try { sv = JSON.parse(localStorage.getItem(BK_SAVED_KEY) || "[]") || []; } catch (e) {}
+  return { bk: bk, saved: sv };
+}
+function syApply(d) {
+  if (!d) return false;
+  try {
+    localStorage.setItem(BK_KEY, JSON.stringify(d.bk || []));
+    localStorage.setItem(BK_SAVED_KEY, JSON.stringify(d.saved || []));
+  } catch (e) { return false; }
+  try { bkRender(); } catch (e) {}
+  return true;
+}
+async function syPush(quiet) {
+  const k = await syKey(); if (!k || SY_BUSY) return;
+  SY_BUSY = true;
+  try {
+    const r = await fetch(HUB + "/sync?k=" + k, { method: "POST", cache: "no-store",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: JSON.stringify(syLocal()) });
+    const j = await r.json();
+    if (j && j.ok) { sySetAt(j.at); if (!quiet) syMsg(KE("올렸습니다.", "Uploaded.")); }
+    else if (!quiet) syMsg(KE("올리지 못했습니다.", "Upload failed."));
+  } catch (e) { if (!quiet) syMsg(KE("올리지 못했습니다.", "Upload failed.")); }
+  SY_BUSY = false;
+}
+async function syPull(quiet) {
+  const k = await syKey(); if (!k) return false;
+  try {
+    const j = await (await fetch(HUB + "/sync?k=" + k, { cache: "no-store" })).json();
+    if (j && j.ok && j.at > syAt() && j.data) {
+      syApply(j.data); sySetAt(j.at);
+      if (!quiet) syMsg(KE("다른 기기 것을 받아왔습니다.", "Pulled from the other device."));
+      return true;
+    }
+  } catch (e) { if (!quiet) syMsg(KE("받아오지 못했습니다.", "Download failed.")); }
+  return false;
+}
+function sySoon() {                       // 바뀌면 조용히 올린다 — 여러 번 바뀌어도 한 번만
+  if (!syPass()) return;
+  if (SY_T) clearTimeout(SY_T);
+  SY_T = setTimeout(function () { SY_T = null; syPush(true); }, 1500);
+}
+async function syNow() {                  // [연동] — 서버 것이 새로우면 받고, 아니면 올린다
+  if (!syPass()) { syMsg(KE("먼저 암호를 넣으세요.", "Enter a passphrase first.")); return; }
+  syMsg(KE("맞추는 중…", "Syncing…"));
+  const got = await syPull(false);
+  if (!got) await syPush(false);
+}
+function sySave() {
+  const el = document.getElementById("syPass"); if (!el) return;
+  try { localStorage.setItem(SY_PASS_KEY, (el.value || "").trim()); } catch (e) {}
+  SY_HASH = "";
+  syNow();
+}
+function syBoxHtml() {                    // 바스켓 카드 맨 아래 한 줄
+  const en = (typeof LANG !== "undefined" && LANG === "en");
+  return '<div class="svsub" style="margin-top:10px">'
+    + (en ? "Put the same passphrase on your phone and PC to share the basket."
+          : "폰과 컴퓨터에 같은 암호를 넣으면 바스켓이 두 기기에서 같아집니다.") + '</div>'
+    + '<div style="display:flex;gap:6px;margin-top:4px">'
+    + '<input id="syPass" type="text" autocomplete="off" style="flex:1;min-width:0;background:#0f1420;color:#e8ecf2;'
+    + 'border:1px solid #2b3446;border-radius:8px;padding:8px 10px;font:600 13px system-ui" placeholder="'
+    + (en ? "Sync passphrase" : "연동 암호") + '" value="' + String(syPass()).replace(/"/g, "&quot;") + '">'
+    + '<button class="dppct" style="flex:0 0 auto" onclick="sySave()">' + (en ? "Sync" : "연동") + '</button></div>'
+    + '<div id="syMsg" class="svsub" hidden></div>';
+}
+setTimeout(function () { if (syPass()) syPull(true); }, 2500);      // 앱을 열면 받아온다
+function bkSave(a) { try { localStorage.setItem(BK_KEY, JSON.stringify(a)); } catch (e) {} try { sySoon(); } catch (e) {} }
 
 // ── 가상 바스켓 투자금액 (사장님 2026-09-23) ──────────────────────────────
 //   기본값 = 고른 성향의 자산군 배분율 × 가상 계좌. 같은 자산군에 여럿이면 똑같이 나눈다.
@@ -2090,6 +2178,7 @@ function bkRender() {
                   "Dividends (distributions), taxes and trading fees are not included.") + '</b></div>';
   }
   h += bkSavedHtml();
+  try { h += syBoxHtml(); } catch (e) {}        // 두 기기 맞추기 (사장님 2026-09-24)
   box.innerHTML = h;
 }
 
@@ -2162,7 +2251,7 @@ async function bkRun(days) {
 // ── 보관한 포트폴리오 — 지울 때까지 수익률을 계속 관찰 (사장님 2026-09-21) ──
 //   수익률 = 보관한 날 종가(base) 대비 지금 종가. 균등 비중.
 function bkSaveGet() { try { return JSON.parse(localStorage.getItem(BK_SAVED_KEY) || "[]") || []; } catch (e) { return []; } }
-function bkSavePut(a) { try { localStorage.setItem(BK_SAVED_KEY, JSON.stringify(a)); } catch (e) {} }
+function bkSavePut(a) { try { localStorage.setItem(BK_SAVED_KEY, JSON.stringify(a)); } catch (e) {} try { sySoon(); } catch (e) {} }
 function bkAgo(ms) { if (!ms) return ""; var s = (Date.now() - ms) / 1000;
   if (s < 60) return KE("방금", "just now");
   if (s < 3600) return Math.floor(s / 60) + KE("분 전", "m ago");
