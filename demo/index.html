@@ -4178,7 +4178,9 @@ function recoPuz(parts){
     const dpth=piece(x,y,w,hh);
     g+='<path d="'+dpth+'" fill="'+mix(c,"#000000",0.55)+'" transform="translate(0.8,1.4)" opacity=".85"/>';
     g+='<path d="'+dpth+'" fill="url(#'+gid(c)+')" filter="url(#'+uid+'sh)" stroke="rgba(255,255,255,.22)" stroke-width="0.9" style="cursor:pointer"'
-      +' onclick="'+(isCash?('puzFlip(event,&quot;'+pmk+'&quot;)'):('puzTip(event,&quot;'+dpEsc(String(full).split("'").join("").split('"').join(""))+'&quot;)'))+'"><title>'
+      +' onclick="'+(isCash?('puzFlip(event,&quot;'+pmk+'&quot;)')
+          :(p[7]?('mhGo(&quot;'+dpEsc(String(p[7])).split('"').join("")+'&quot;,&quot;'+dpEsc(String(p[0]||"")).split('"').join("")+'&quot;,&quot;'+(pmk==="coin"?"coin":(pmk==="us"?"us":"kr"))+'&quot;,0)')
+               :('puzTip(event,&quot;'+dpEsc(String(full).split("'").join("").split('"').join(""))+'&quot;)')))+'"><title>'
       +dpEsc(full)+'</title></path>';
     if(w>34&&hh>24){
       // 글자는 조각 크기를 따라간다 — 커도 12.5 를 넘지 않는다(크면 촌스럽다, 사장님 2026-09-23)
@@ -4370,7 +4372,7 @@ function recoRender(){
         let left=cashM;                               // 지금 현금으로 살 수 있는 만큼만 — 1칸씩, 모자라면 남은 만큼
         buys.slice(0,empty).forEach(function(r){
           const amt=Math.min(slot,left);
-          if(amt>=r.close&&amt>0){ PIEP.push([r.name,amt*k,"new",amt,mk,amt]); left-=amt; }
+          if(amt>=r.close&&amt>0){ PIEP.push([r.name,amt*k,"new",amt,mk,amt,null,r.code]); left-=amt; }
         });
         if(left>0)PIEP.push([(mk==="kr")?(en?"KRW cash":"원화 현금"):(en?"USD cash":"달러 현금"),left*k,"cash",left,mk,left]);
       }
