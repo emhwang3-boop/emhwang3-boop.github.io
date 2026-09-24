@@ -3028,7 +3028,12 @@ function svRecoRender() {
 
   // ── 원화 계좌 ──────────────────────────────────────────
   // 🔴 계좌 머리줄은 크게, 금액은 줄이지 않고 전부 적는다 (사장님 2026-09-22)
-  h += '<div class="svgrpt svacct2" style="margin-top:10px">' + KE("원화 계좌", "KRW Account") + ' <b>' + KE(SV_KRW.toLocaleString() + "원", "₩" + SV_KRW.toLocaleString()) + '</b></div>';
+  // 잔액을 함께 적는다 — 담은 만큼 줄어든다 (사장님 2026-09-24)
+  const _si = (typeof bkSlotInfo === "function") ? bkSlotInfo() : {leftK: SV_KRW, leftU: SV_USD};
+  h += '<div class="svgrpt svacct2" style="margin-top:10px">' + KE("원화 계좌", "KRW Account")
+     + ' <b>' + KE(Math.round(_si.leftK).toLocaleString() + "원", "₩" + Math.round(_si.leftK).toLocaleString()) + '</b>'
+     + (_si.leftK < SV_KRW ? ' <span class="dplbl">' + KE("잔액 · 원금 ", "left · start ")
+        + KE(SV_KRW.toLocaleString() + "원", "₩" + SV_KRW.toLocaleString()) + '</span>' : '') + '</div>';
   if (kS > 0) {
     h += svPie(krw.map(function (m) { return [m[0], m[1]]; }));
     h += '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("목표 비중", "Target %")
@@ -3046,7 +3051,9 @@ function svRecoRender() {
 
   // ── 달러 계좌 ──────────────────────────────────────────
   const usdFmt = function (v) { return "$" + Math.round(v).toLocaleString(); };
-  h += '<div class="svgrpt svacct2" style="margin-top:12px">' + KE("달러 계좌", "USD Account") + ' <b>' + usdFmt(SV_USD) + '</b></div>';
+  h += '<div class="svgrpt svacct2" style="margin-top:12px">' + KE("달러 계좌", "USD Account")
+     + ' <b>' + usdFmt(_si.leftU) + '</b>'
+     + (_si.leftU < SV_USD ? ' <span class="dplbl">' + KE("잔액 · 원금 ", "left · start ") + usdFmt(SV_USD) + '</span>' : '') + '</div>';
   if (uS > 0) {
     h += svPie(usd.map(function (m) { return [m[0], m[1]]; }));
     h += '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("목표 비중", "Target %")
