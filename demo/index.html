@@ -2859,7 +2859,7 @@ function dpCoinBar(){
    +'<button id="dpTpM" class="dpseg on" onclick="dpCoinTp(0)">'+(en?"Market":"시장가")+'</button>'
    +'<button id="dpTpL" class="dpseg" onclick="dpCoinTp(1)">'+(en?"Limit":"지정가")+'</button>'
    +'<input id="dpCPx" class="dpin" type="number" inputmode="decimal" placeholder="'
-   +(en?"Limit price":"지정가 가격")+'" disabled>'
+   +(en?"Limit price":"지정가 가격")+'" oninput="try{dpSpotEst()}catch(e){}" disabled>'
    +'</div>';
   if(sp){
     // 🔴 현물은 주식과 똑같다 — 수량과 매수·매도뿐. 레버리지도 청산도 없다.
