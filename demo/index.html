@@ -4934,6 +4934,29 @@ async function bkStore(){
   bkSavedMsg(KE("보관했습니다. 지울 때까지 수익률을 지켜봅니다.","Saved. We'll keep tracking its return until you delete it."));
   bkSavedRefresh();
 }
+// 종목 줄 ＋ — 가장 최근 보관 바스켓에 더한다. 없거나 12종목이 찼으면 새로 만든다 (사장님 2026-09-24, 주식·코인앱과 같게)
+async function bkAddToSaved(i){
+  var a=bkGet(), it=a[i]; if(!it)return;
+  var saved=bkSaveGet();
+  var p=saved.slice().sort(function(x,y){ return (y.at||0)-(x.at||0); })[0]||null;
+  if(p&&(p.items||[]).some(function(x){ return x.code===it.code&&!!x.spot===!!it.spot; })){
+    bkSavedMsg(KE("이미 최근 바스켓에 들어 있습니다.","Already in the latest saved basket.")); return; }
+  if((!p||(p.items||[]).length>=12)&&saved.length>=20){ bkSavedMsg(KE("보관은 스무 개까지 됩니다.","You can keep up to 20.")); return; }
+  bkSavedMsg(KE("담는 중\u2026 기준가를 받습니다","Adding\u2026 fetching base price"));
+  var cs=null; try{ cs=await bkBars(it); }catch(e){ cs=null; }
+  var AMT=bkAmtOf(a);
+  var row={code:it.code, name:it.name, mk:it.mk, spot:it.spot, base:(cs&&cs.length)?cs[cs.length-1]:0,
+           cls:it.cls||bkClassOf(it), amt:AMT[it.code]||0, ccy:bkCcy(it)};
+  var msg;
+  if(!p||(p.items||[]).length>=12){
+    saved.unshift({id:"p"+Date.now(), at:Date.now(), items:[row], er:null, erows:null, calc:0});
+    msg=KE("새 바스켓을 만들어 담았습니다.","Created a new saved basket.");
+  }else{
+    p.items.push(row); p.erows=null; p.er=null;
+    msg=KE("최근 바스켓에 더했습니다.","Added to the latest saved basket.");
+  }
+  bkSavePut(saved); bkRender(); bkSavedMsg(msg); bkSavedRefresh();
+}
 function bkSavedDel(id){ bkSavePut(bkSaveGet().filter(function(p){ return p.id!==id; })); delete bkOpenS[id]; bkRender(); }
 function bkSavedToggle(id){ bkOpenS[id]=!bkOpenS[id]; bkRender(); }
 function towerFromSaved(id){
@@ -4981,7 +5004,7 @@ function bkSavedHtml(){
     var rtxt=(p.er==null)?'<span class="dplbl">'+KE("계산 전","\u2014")+'</span>':('<b class="'+cls(p.er)+'">'+pc(p.er)+'</b>');
     h+='<div style="border-bottom:1px solid var(--bd)">';
     h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 2px;cursor:pointer" onclick="bkSavedToggle(\''+p.id+'\')">'
-      +'<span style="width:12px;color:var(--sub)">'+(open?"\u25be":"\u25b8")+'</span>'
+      +'<span style="width:18px;font-size:19px;line-height:1;color:var(--sub)">'+(open?"\u25be":"\u25b8")+'</span>'
       +'<span style="flex:1;font-weight:700">'+lbl+' <span class="dplbl">'+p.items.length+KE("종목","")+'</span></span>'
       +'<span style="white-space:nowrap">'+rtxt+'</span>'
       +'<span onclick="event.stopPropagation();towerFromSaved(\''+p.id+'\')" style="cursor:pointer;color:#2bd4c0;font-weight:800;font-size:11px;border:1px solid #2bd4c0;border-radius:6px;padding:1px 5px;margin-right:5px">3D</span>'
@@ -5060,7 +5083,8 @@ function bkRender(){
       +'" oninput="bkAmtLive(this)" onchange="bkSetAmt('+i+',this.value)" style="width:96px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 6px;font-size:12px">'
       +' <span class="dplbl">'+(c==="KRW"?KE("원","KRW"):(c==="USD"?"$":"USDT"))+'</span></td>'
       +'<td>'+w.toFixed(1)+'%</td>'
-      +'<td><span class="mhx" onclick="bkDel('+i+')">✕</span></td></tr>';
+      +'<td style="white-space:nowrap"><span class="mhx" onclick="bkDel('+i+')">✕</span>'
+      +' <span class="mhx" style="color:#16a34a;font-weight:700;font-size:22px;line-height:12px;vertical-align:-3px" onclick="bkAddToSaved('+i+')">＋</span></td></tr>';
   });
   var tl=[]; Object.keys(TOT).forEach(function(c){ if(TOT[c]>0)tl.push(bkMoney(TOT[c],c)); });
   if(tl.length)h+='<tr style="font-weight:800"><td style="text-align:left">'+KE("합계","Total")+'</td><td colspan="3" style="text-align:right">'+tl.join(" · ")+'</td></tr>';
