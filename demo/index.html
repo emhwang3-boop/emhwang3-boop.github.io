@@ -4456,6 +4456,30 @@ function recoRender(){
       +'<button class="dpb buy dpsm" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'F\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})">'+(en?"View":"조회")+'</button></td></tr>';
   });
   h+=c+'</table>';
+  // 알트 — 20일 상승률 순, 현물로 산다 (사장님 2026-09-24)
+  try{
+    var C2=(R.coin||{}), alt2=[];
+    Object.keys(C2).forEach(function(k){
+      if(k==="BTC"||k==="ETH")return;
+      var z=C2[k]||{};
+      if(z["new"]||z.state==="long")alt2.push({k:k, z:z, m:(+z.mom20||0), t:(+z.turn||0)});
+    });
+    alt2.sort(function(a,b){ return (b.m-a.m) || (b.t-a.t); });
+    if(alt2.length){
+      var a2='<div class="dphd" style="margin-top:8px">'+(en?"Altcoins (spot)":"알트 (현물)")+'</div>'
+        +'<table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th>'
+        +'<th>'+(en?"20d":"20일")+'</th><th></th></tr>';
+      alt2.forEach(function(r,i){
+        a2+='<tr'+(i?' style="opacity:.62"':'')+'><td style="text-align:left">'+(i?"":"① ")+r.k+'</td>'
+          +'<td>'+(r.z.price?(+r.z.price).toLocaleString(undefined,{maximumFractionDigits:4}):"-")+'</td>'
+          +'<td class="'+(r.m>=0?"up":"dn")+'">'+(r.m>0?"+":"")+r.m.toFixed(1)+'%</td>'
+          +'<td style="white-space:nowrap"><button class="dpb dpsm" style="background:#2f9e44;border-color:#2b8a3e;margin-right:4px"'
+          +' onclick="bkAdd(''+r.k+'-USDT',''+r.k+'','coin',1)">'+(en?"+Cart":"담기")+'</button>'
+          +'<button class="dpb buy dpsm" onclick="pickCoin(''+r.k+'USDT',''+r.k+'','S');E('coin2').scrollIntoView({behavior:'smooth'})">'+(en?"View":"조회")+'</button></td></tr>';
+      });
+      h+=a2+'</table>';
+    }
+  }catch(e){}
   h+='<div class="dpmsg" style="margin-top:6px">'+(en?"Measured rules only. Tap View to open the stock and order.":"잰 규칙만 씁니다. [조회]를 누르면 종목이 열리고 바로 주문할 수 있습니다.")+'</div>';
   card.innerHTML=h;
   try{ bkRender(); }catch(e){}
