@@ -269,7 +269,8 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 
 
 <div class="card svcard" id="cvAcct">
-  <h3><span class="kko">가상 계좌</span><span class="ken">Virtual Account</span></h3>
+  <h3><span><span class="kko">가상 계좌</span><span class="ken">Virtual Account</span><span id="svAcctI" onclick="svInfoToggle(&quot;svAcctInfo&quot;)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle;margin-left:6px">i</span></span></h3>
+  <div id="svAcctInfo" class="svsub" style="display:none"></div>
   <div class="svacct"><span>USDT</span><b>100,000 USDT</b></div>
   <div id="svLeft"></div>
   <div class="svsub"><span class="kko">모든 이용자에게 똑같이 주어지는 가상 금액입니다. 실제 자산이 아니며 고칠 수 없습니다.</span><span class="ken">A virtual amount given equally to every user. It is not real money and cannot be changed.</span></div>
@@ -2274,19 +2275,72 @@ function slotBars(name, slotTxt, filled) {
        + (slotTxt ? '<span>' + (en ? "slot " : "1칸 ") + slotTxt + '</span>' : '')
        + '<span class="sn">' + n + ' / 12</span></div>' + b + '</div>';
 }
+function bkOldest() {                       // 보관한 포트폴리오가 여럿이면 **가장 오래된 것** (사장님 2026-09-24)
+  const sv = (typeof bkSaveGet === "function") ? bkSaveGet() : [];
+  if (!sv.length) return null;
+  return sv.slice().sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); })[0];
+}
 function bkSlotInfo() {
-  const a = (typeof bkGet === "function") ? bkGet() : [];
-  const amt = (typeof bkAmtOf === "function") ? bkAmtOf(a) : {};
-  let use = 0, n = 0;
-  a.forEach(function (x) { use += (+amt[x.code] || 0); n++; });
-  return {use: use, n: n, left: CV_USDT - use};
+  const p = bkOldest();
+  let use = 0, n = 0, ev = 0;
+  if (p) {
+    const er = p.erows || [];
+    (p.items || []).forEach(function (x, i) {
+      const v = +x.amt || 0, e = er[i] || {};
+      const pl = (typeof e.pl === "number") ? e.pl : 0;
+      use += v; n++; ev += v + pl;
+    });
+  }
+  return {use: use, n: n, eval: ev, left: CV_USDT - use, old: p};
 }
 function bkAcctPaint() {
   const s = bkSlotInfo(), en = (typeof LANG !== "undefined" && LANG === "en");
+  const t = function (v) { return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; };
   const n = document.getElementById("svLeft"); if (!n) return;
-  n.innerHTML = '<div class="svacct"><span>' + (en ? "USDT left" : "남은 돈") + '</span><b>'
-    + (+s.left).toLocaleString(undefined, {maximumFractionDigits: 2}) + ' USDT</b></div>';
+  const row = function (a, b, big) {
+    return '<div class="svacct"' + (big ? ' style="border-top:1px solid var(--bd);margin-top:2px;padding-top:4px"' : '')
+         + '><span>' + a + '</span><b' + (big ? ' style="color:var(--nm)"' : '') + '>' + b + '</b></div>'; };
+  n.innerHTML =
+      row(KE("현재 잔고", "Cash"), t(s.left))
+    + row(KE("평가금액", "Holdings"), t(s.eval))
+    + row(KE("합계", "Total"), t(s.left + s.eval), true)
+    + '<div id="svEvalMsg" class="svsub"></div>'
+
+    + '<div style="display:flex;gap:6px;margin-top:6px">'
+    + '<button class="dppct" style="flex:1" onclick="bkSavedRefresh()">' + KE("수익률 새로고침", "Refresh") + '</button>'
+    + '<button class="dppct" style="flex:0 0 auto" onclick="bkAcctReset()">' + KE("초기화", "Reset") + '</button></div>';
+  // 설명은 ⓘ 안으로 몰아 둔다 (사장님 2026-09-24)
+  const inf = document.getElementById("svAcctInfo");
+  if (inf) { inf.textContent = KE("총자산을 열두 칸으로 나눠 한 칸씩 담습니다. 한 칸 = 가상 계좌 ÷ 12 이고, 담으면 그만큼 현재 잔고가 줄어 평가금액으로 옮겨 갑니다. 평가금액은 보관한 포트폴리오에서 가져오며, 여럿이면 가장 오래된 것을 씁니다. [수익률 새로고침] 을 누르면 다시 셉니다. 합계 = 현재 잔고 + 평가금액입니다. [초기화] 를 누르면 처음으로 돌아갑니다. 모두 가상 금액이며 실제 매수를 권하는 값이 아닙니다.", "The account is split into twelve slots; one slot = virtual account ÷ 12. Adding an item moves that much from cash into holdings. Holdings value comes from a saved portfolio — the oldest one if there are several; tap Refresh to recalculate. Total = cash + holdings. Reset returns everything to the start. All amounts are virtual.");
+             inf.style.display = (typeof svInfoDisp === "function") ? svInfoDisp("svAcctInfo") : "none"; }
 }
+// ── 가상 계좌 — 굴러가는 잔고 (사장님 2026-09-24) ─────────────────────────────
+//   담으면 잔고가 줄고 평가금액으로 옮겨 간다. 합계 = 잔고 + 평가금액.
+//   🔴 가상 포트폴리오 안에서만 쓰는 셈이다. 실제 매수를 권하는 값이 아니다.
+let bkEvalBusy = false;
+async function bkEvalRefresh() {                 // 담은 종목의 지금 값으로 평가금액을 고친다
+  if (bkEvalBusy) return;
+  const a = bkGet(); if (!a.length) { bkAcctPaint(); return; }
+  bkEvalBusy = true;
+  const msg = document.getElementById("svEvalMsg");
+  if (msg) msg.textContent = KE("값을 받아오는 중… 종목마다 몇 초", "Loading… a few seconds per item");
+  for (let i = 0; i < a.length; i++) {
+    try {
+      const cs = await bkBars(a[i]);
+      const cur = (cs && cs.length) ? cs[cs.length - 1] : 0;
+      if (cur > 0) { if (!(a[i].base > 0)) a[i].base = cur; a[i].cur = cur; }
+    } catch (e) {}
+  }
+  bkSave(a); bkEvalBusy = false;
+  if (msg) msg.textContent = "";
+  bkRender();
+}
+function bkAcctReset() {                          // 처음으로 되돌린다
+  if (!confirm(KE("가상 계좌를 처음으로 되돌립니다. 바스켓이 비워집니다.",
+                  "Reset the virtual account? The basket will be emptied."))) return;
+  bkSave([]); bkRender();
+}
+
 function bkAutoAmt(list) {
   // 12칸 — 가상 계좌를 열둘로 나눈 한 칸씩 (사장님 2026-09-24, 데모앱과 같은 방식)
   //   🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
