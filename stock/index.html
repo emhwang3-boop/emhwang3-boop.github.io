@@ -257,6 +257,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   <h3><span class="kko">가상 계좌</span><span class="ken">Virtual Account</span></h3>
   <div class="svacct"><span><span class="kko">원화</span><span class="ken">KRW</span></span><b><span class="kko">100,000,000원</span><span class="ken">₩100,000,000</span></b></div>
   <div class="svacct"><span><span class="kko">미화</span><span class="ken">USD</span></span><b>$100,000</b></div>
+  <div id="svLeft"></div>
   <div class="svsub"><span class="kko">모든 이용자에게 똑같이 주어지는 가상 금액입니다. 실제 자산이 아니며 고칠 수 없습니다.</span><span class="ken">A virtual amount given equally to every user. It is not real money and cannot be changed.</span></div>
 </div>
 
@@ -2061,6 +2062,30 @@ function bkMoney(v, ccy) {
                        : (Math.round(v).toLocaleString() + KE("원", ""));
 }
 // 성향 배분에 따른 기본 금액 — 자산군 몫을 그 자산군에 담긴 종목 수로 나눈다
+// ── 가상 계좌 남은 돈 · 12칸 현황 (사장님 2026-09-24) ───────────────────────────
+//   🔴 가상 포트폴리오 안에서만 쓰는 셈이다. 실제 매수를 권하는 값이 아니다.
+function bkSlotInfo() {
+  const a = (typeof bkGet === "function") ? bkGet() : [];
+  const amt = (typeof bkAmtOf === "function") ? bkAmtOf(a) : {};
+  let useK = 0, useU = 0, nK = 0, nU = 0;
+  a.forEach(function (x) {
+    const v = +amt[x.code] || 0;
+    if (bkCcy(x) === "USD") { useU += v; nU++; } else { useK += v; nK++; }
+  });
+  return {useK: useK, useU: useU, nK: nK, nU: nU,
+          leftK: SV_KRW - useK, leftU: SV_USD - useU};
+}
+function bkAcctPaint() {
+  const s = bkSlotInfo(), en = (typeof LANG !== "undefined" && LANG === "en");
+  const won = function (v) { return Math.round(v).toLocaleString() + (en ? " KRW" : "원"); };
+  const usd = function (v) { return "$" + Math.round(v).toLocaleString(); };
+  const put = function (id, txt) { const n = document.getElementById(id); if (n) n.innerHTML = txt; };
+  put("svLeft",
+      '<div class="svacct"><span>' + (en ? "KRW left" : "원화 남은 돈") + '</span><b>' + won(s.leftK)
+    + ' <span class="dplbl">' + (en ? "slots " : "칸 ") + Math.min(12, s.nK) + '/12</span></b></div>'
+    + '<div class="svacct"><span>' + (en ? "USD left" : "달러 남은 돈") + '</span><b>' + usd(s.leftU)
+    + ' <span class="dplbl">' + (en ? "slots " : "칸 ") + Math.min(12, s.nU) + '/12</span></b></div>');
+}
 function bkAutoAmt(list) {
   // 12칸 — 가상 계좌를 열둘로 나눈 한 칸씩 (사장님 2026-09-24, 데모앱과 같은 방식)
   //   🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
@@ -2160,6 +2185,7 @@ function bkRender() {
   h += bkSavedHtml();
   try { h += syBoxHtml(); } catch (e) {}        // 두 기기 맞추기 (사장님 2026-09-24)
   box.innerHTML = h;
+  try { bkAcctPaint(); } catch (e) {}           // 가상 계좌 남은 돈·칸 (사장님 2026-09-24)
 }
 
 // 기간 수익률 — 균등 비중으로 그때 사서 지금까지 든 셈
