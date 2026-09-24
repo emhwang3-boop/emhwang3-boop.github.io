@@ -4407,7 +4407,7 @@ function recoRender(){
     const cashM=(mk==="kr")?(cash.krw||0):(cash.usd||0);
     const blk=function(title,list,mode){          // mode: "today"=오늘 살 것(수량 = 1칸과 현금 중 작은 쪽) · "next"=다음 후보(흐리게)
       if(!list.length)return "";
-      let t='<table class="mhtab"><tr><th>'+title+'</th><th>'+(mk==="kr"?(en?"Close (KRW)":"종가<br>(원)"):(en?"Close":"종가"))+'</th><th>'+(en?"Qty":"수량")+'</th><th></th></tr>';
+      let t='<table class="mhtab"><tr><th'+(mode==="today"?' style="font-size:12.5px;font-weight:400"':'')+'>'+title+'</th><th>'+(mk==="kr"?(en?"Close (KRW)":"종가<br>(원)"):(en?"Close":"종가"))+'</th><th>'+(en?"Qty":"수량")+'</th><th></th></tr>';
       list.forEach(function(r,i){
         const budget=(mode==="today"&&has)?Math.min(slot,cashM):slot;
         const q=(mode!=="next"&&budget>0&&r.close>0)?Math.floor(budget/r.close):0;
