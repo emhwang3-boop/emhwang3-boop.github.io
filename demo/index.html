@@ -4020,7 +4020,7 @@ function pzSave(){
   if(!PZDRAFT || !PZDRAFT.length) return;
   var a = bkGet();
   PZDRAFT.forEach(function(z){
-    if(a.length>=10) return;
+    if(a.length>=12) return;
     if(a.some(function(q){ return q.code===z.code; })) return;
     a.push({code:z.code, name:z.name, mk:z.mk, spot:z.spot, cls:bkClassOf(z)});
   });
@@ -4535,7 +4535,7 @@ function bkAdd(code,name,mk,spot){
   if(!code)return;
   var a=bkGet();
   if(a.some(function(x){return x.code===code;})){ bkRender(); bkMsg(KE("이미 담겨 있습니다.","Already added.")); return; }
-  if(a.length>=10){ bkMsg(KE("한 번에 열 개까지 담을 수 있습니다.","You can add up to 10 at a time.")); return; }
+  if(a.length>=12){ bkMsg(KE("한 번에 열두 개까지 담을 수 있습니다.","You can add up to 12 at a time.")); return; }
   var _it={code:code,name:name||code,mk:mk||"kr"};
   if(spot!==undefined)_it.spot=!!spot;          // 코인은 현물·선물을 갈라 담는다 (2026-09-24)
   a.push(_it);
@@ -5186,7 +5186,7 @@ setInterval(dpRegimeTick,15000);
     "좋음": "Good", "나쁨": "Bad", "장세 ·": "Market ·", "지금 60일선 대비": "vs 60-day now", "1칸": "1 slot", "빈 칸": "Empty slot", "일째": "days",
     "실계좌를 불러오면 칸 금액이 나옵니다.": "Load the real account to see slot amounts.", "+15% 도달": "+15% reached", "60일 ·": "60 days ·",
     "장세 무너짐(과매도 주머니)": "Market broke (oversold pocket)", "— 1칸에 모자랍니다. 남은 현금만큼의 수량입니다.": "— short of one slot; qty limited to remaining cash.",
-    "3개월": "3 mo", "6개월": "6 mo", "1년": "1 yr", "이미 담겨 있습니다.": "Already in the basket.", "한 번에 열 개까지 담을 수 있습니다.": "Up to ten items at once.",
+    "3개월": "3 mo", "6개월": "6 mo", "1년": "1 yr", "이미 담겨 있습니다.": "Already in the basket.", "한 번에 열두 개까지 담을 수 있습니다.": "Up to ten items at once.",
     "먼저 종목을 [조회]해 주세요.": "Look up a stock first.", "＋ 가상 바스켓에 담기": "＋ Add to virtual basket", "가상 바스켓": "Virtual basket",
     "받는 중… 종목마다 몇 초 걸립니다": "Loading… a few seconds per item", "자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요.": "Could not load. Try again shortly.",
     "· 제일 나빴던 것": "· Worst", "3D 준비 중…": "Preparing 3D…", "불러오는 중…": "Loading…", "자료 없음": "No data", "결과 없음": "No match",
