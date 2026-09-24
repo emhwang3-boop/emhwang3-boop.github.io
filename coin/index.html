@@ -2689,10 +2689,10 @@ function bkSavedHtml() {
   const lastCalc = s.reduce(function (m, p) { return Math.max(m, p.calc || 0); }, 0);
   // 보관 단추 → 그 아래 한 줄에 제목 · 계산 시각 · 새로고침 (사장님 2026-09-24)
   let h = (bkGet().length ? '<div class="cvrow" style="margin:12px 0 4px"><button class="svbtn" style="flex:1;margin:0" onclick="bkStore()">' + KE("＋ 지금 바스켓 보관", "＋ Save current basket") + '</button></div>' : '')
-     + '<div class="svsub" style="margin-top:' + (bkGet().length ? '6' : '12') + 'px;font-weight:800;color:var(--nm);display:flex;align-items:center;gap:6px">' + KE("보관한 포트폴리오", "Saved portfolios") + '<span onclick="bkTowerInfo(event)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span>'
+     + '<div class="svsub" style="margin-top:' + (bkGet().length ? '6' : '12') + 'px;font-size:13px;font-weight:700;color:var(--nm);display:flex;align-items:center;gap:6px">' + KE("보관한 포트폴리오", "Saved portfolios") + '<span onclick="bkTowerInfo(event)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span>'
      + '<span style="margin-left:auto"></span>'
      + (lastCalc ? '<span class="dplbl" style="flex:0 0 auto;font-weight:400">' + KE("계산 ", "") + bkAgo(lastCalc) + '</span>' : '')
-     + (s.length ? '<button class="svbtn" style="flex:0 0 auto;width:auto;margin:0;padding:3px 9px;font-size:inherit;font-weight:700" onclick="bkSavedRefresh()">' + KE("수익률 새로고침", "Refresh") + '</button>' : '')
+     + (s.length ? '<button class="svbtn" style="flex:0 0 auto;width:auto;margin:0;padding:3px 9px;font-size:13px;font-weight:700" onclick="bkSavedRefresh()">' + KE("수익률 새로고침", "Refresh") + '</button>' : '')
      + '</div><div id="bkSavedMsg" class="c21msg" hidden></div>';
   if (!s.length) { h += '<div class="mhempty">' + KE("보관한 것이 없습니다. 바스켓을 만들고 [보관]을 누르세요.", "Nothing saved yet. Build a basket and tap Save.") + '</div>'; return h; }
   h += '<div style="max-height:150px;overflow-y:auto;border:1px solid var(--bd);border-radius:10px;padding:2px 6px">';
