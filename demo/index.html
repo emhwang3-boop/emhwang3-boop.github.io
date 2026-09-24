@@ -4066,11 +4066,16 @@ function puzPicks(mk){
         var C=(R&&R.coin)||{};
         ["BTC","ETH"].forEach(function(k){ var z=C[k];
           if(!z||z.state==="long")out.push({name:k, code:k+"-USDT", mk:"coin", spot:true}); });
+        // 알트 줄 세우기 — ① 새 신호 ② 거래대금 ③ 20일 상승률 (사장님 2026-09-24)
+        var alt=[];
         Object.keys(C).forEach(function(k){
           if(k==="BTC"||k==="ETH")return;
           var z=C[k]||{};
-          if(z["new"]||z.state==="long")out.push({name:k, code:k+"-USDT", mk:"coin", spot:true});
+          if(z["new"]||z.state==="long")alt.push({name:k, code:k+"-USDT", mk:"coin", spot:true,
+            _new:(z["new"]?1:0), _turn:(+z.turn||0), _m20:(+z.mom20||0)});
         });
+        alt.sort(function(a,b){ return (b._new-a._new) || (b._turn-a._turn) || (b._m20-a._m20); });
+        alt.forEach(function(z){ out.push(z); });
       }
       catch(e){ out=[{name:"BTC",code:"BTC-USDT",mk:"coin",spot:true},{name:"ETH",code:"ETH-USDT",mk:"coin",spot:true}]; }
       return out;
