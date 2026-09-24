@@ -2888,16 +2888,24 @@ function dpCoinBar(){
 }
 // 🔴 현물도 **USDT 금액**으로 넣는다(선물 증거금과 같은 단위). 코인 수량은 여기서 보여 준다.
 function dpSpotEst(){
+  // 금액을 몇 개로 사는지 바로 보여준다 — 지정가면 그 값으로, 아니면 현재가로 (사장님 2026-09-24)
   const en=LANG==="en", e=E("dpMsgC"); if(!e)return;
   const amt=dpNum(E("dpSpQ")&&E("dpSpQ").value), cur=dpPx["coin:"+coinSym]||0;
+  const isLim=!!(E("dpTpL")&&E("dpTpL").classList.contains("on"));
+  const lim=isLim?dpNum(E("dpCPx")&&E("dpCPx").value):0;
+  const px=isLim?lim:cur;
   const sym=String(coinSym||"").replace(/USDT$/,"");
-  if(amt>0&&cur>0){ e.textContent="≈ "+(+(amt/cur).toFixed(8))+" "+sym; }
+  if(amt>0&&px>0){
+    e.textContent="= "+(+(amt/px).toFixed(8))+" "+sym
+      +(isLim?(en?" (at limit "+lim+")":" (지정가 "+lim+" 기준)"):(en?" (at market)":" (현재가 기준)"));
+  }
   else { e.textContent=en?"Spot — no leverage, no liquidation.":"현물 — 레버리지도 청산도 없습니다."; }
 }
 function dpCoinTp(limit){
   const m=E("dpTpM"), l=E("dpTpL"), px=E("dpCPx");
   if(!m||!l||!px)return;
   m.classList.toggle("on",!limit); l.classList.toggle("on",!!limit);
+  try{ setTimeout(dpSpotEst,0); }catch(e){}
   px.disabled=!limit; if(!limit)px.value="";
   if(limit&&!px.value&&dpPx["coin:"+coinSym])px.value=dpPx["coin:"+coinSym];
   const ob=E("obCoin"); if(ob&&!limit)ob.innerHTML="";          // 호가창은 지정가일 때만
