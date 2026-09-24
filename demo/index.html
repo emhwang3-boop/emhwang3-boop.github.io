@@ -4332,8 +4332,13 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
     rows.forEach(function(r){
       const nm=r[0], tot=r[1], fill=Math.max(0,Math.min(12,r[2])), f=r[3];
       const empty = 12 - fill;
-      const bar = new Array(fill+1).join("■") + new Array(empty+1).join("□");
-      t += '<tr><td style="text-align:left">'+nm+'<br><span class="dplbl" style="letter-spacing:1px">'+bar+'</span></td>'
+      // 코인앱과 같은 컬러 램프 — 1~4 빨강(어둡→밝) · 5~6 초록빛 회색 · 7~12 초록(어둡→밝), 12px 정사각형 (사장님 2026-09-24)
+      const SLC = ["#7a2600","#a83400","#d64300","#ff5000","#8f9690","#7fa587","#006b03","#008604","#00a105","#00c805","#33da38","#66ec6a"];
+      let bar = '<span style="display:flex;gap:4px;margin-top:4px">';
+      for (let i = 0; i < 12; i++) bar += '<span style="flex:0 0 12px;width:12px;height:12px;border-radius:3px;'
+        + (i < fill ? 'background:'+SLC[i] : 'background:var(--bd);opacity:.45') + '"></span>';
+      bar += '</span>';
+      t += '<tr><td style="text-align:left">'+nm+bar+'</td>'
         + '<td>'+(tot>0?f(tot/12):"-")+'</td>'
         + '<td>'+fill+'</td><td'+(empty>0?' style="color:#00c805;font-weight:800"':'')+'>'+empty+'</td></tr>';
     });
@@ -4461,8 +4466,9 @@ function recoRender(){
       (RL.co||[]).filter(function(p){return p.spot;}).forEach(function(p){ PIEP.push([String(p.code).split("-")[0]+(en?" spot":" 현물"),(p.qty||0)*(p.cur||0)*fx,"held",(p.qty||0)*(p.cur||0),"us",(p.qty||0)*(p.cur||0),(typeof p.rt==="number"?p.rt:null)]); });
       if(cash.usdt>0)PIEP.push(["USDT",cash.usdt*fx,"cash",cash.usdt,"coin",cash.usdt]);
     }
-    h+=slotTable(kr,us,totKR,totUS,cash,fx,en);          // 12칸 현황 (사장님 2026-09-24)
-    h+='<div class="dphd" style="margin-top:4px;font-size:14px;color:var(--nm)">'+(en?"Holdings + picks":"보유 + 추천 포트폴리오")+'</div>'+recoPuz(PIEP)+pzDraftHtml()
+    // 퍼즐맵 먼저, 12칸 현황은 그 아래 · 「보유 + 추천 포트폴리오」 제목은 뺐다 (사장님 2026-09-24)
+    h+=recoPuz(PIEP)+pzDraftHtml()
+      +slotTable(kr,us,totKR,totUS,cash,fx,en)
       +(fx>0?"":'<div class="dpmsg">'+(en?"USD rate not loaded yet — KR only.":"환율을 아직 못 받아 국내만 그렸습니다.")+'</div>');
   }
   h+=body;
