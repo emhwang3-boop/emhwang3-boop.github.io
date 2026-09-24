@@ -4517,6 +4517,11 @@ function recoRender(){
       }else if(buys.length){
         s+='<div class="dpmsg">'+(en?"One slot (":"1칸 금액(")+money(budget)+(en?") is below one share of every pick — nothing to buy today."
           :")이 후보들의 1주 가격보다 작아 오늘은 살 수 있는 종목이 없습니다.")+'</div>';
+      }else{
+        // 새 후보가 없을 때 — 표가 말없이 비지 않게 (사장님 2026-09-25 "미국 추천이 안 뜬다")
+        const hn=(x.buy12||[]).filter(function(r){return heldCodes.indexOf(r.code)>=0;}).map(function(r){return dpEsc(r.name||r.code);});
+        s+='<div class="dpmsg">'+(en?("No new pick today"+(hn.length?" — already holding "+hn.join(", "):"")+".")
+          :("오늘 새 후보 없음"+(hn.length?" — "+hn.join(", ")+"은(는) 이미 보유 중":"")+"."))+'</div>';
       }
       s+=blk((en?"Next candidates":"다음 후보"),buys.slice(0,5).filter(function(r,i){return i!==ti;}).slice(0,4),"next");
     }
@@ -4611,6 +4616,10 @@ function recoRender(){
           +'<button class="dpb buy dpsm" onclick="pickCoin(&quot;'+r.k+'USDT&quot;,&quot;'+r.k+'&quot;,&quot;S&quot;);E(&quot;coin2&quot;).scrollIntoView({behavior:&quot;smooth&quot;})">'+(en?"View":"조회")+'</button></td></tr>'
       });
       h+=a2+'</table>';
+  }else{
+      // 새 알트 후보가 없을 때 — 말없이 비지 않게 (사장님 2026-09-25)
+      h+='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Altcoins (spot)":"알트 (현물)")+'</div>'
+        +'<div class="dpmsg">'+(en?"No new pick today.":"오늘 새 후보 없음.")+'</div>';
   }
   }catch(e){}
   h+='<div class="dpmsg" style="margin-top:6px">'+(en?"Measured rules only. Tap View to open the stock and order.":"잰 규칙만 씁니다. [조회]를 누르면 종목이 열리고 바로 주문할 수 있습니다.")+'</div>';
