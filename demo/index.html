@@ -2565,7 +2565,7 @@ function rlPick(o, names) {
   return "";
 }
 function rlSideOf(x) {
-  const t = String(rlPick(x, ["io_tp_nm", "sll_buy_tp_nm", "trde_tp_nm", "ord_tp_nm", "bs_tp_nm", "sll_buy_tp"]));
+  const t = String(rlPick(x, ["slby_tp_nm", "io_tp_nm", "sll_buy_tp_nm", "trde_tp_nm", "ord_tp_nm", "bs_tp_nm", "sll_buy_tp"]));
   if (/매도|sell/i.test(t) || /^-/.test(t)) return "S";
   if (/매수|buy/i.test(t) || /^\+/.test(t)) return "B";
   return "?";
@@ -2601,13 +2601,14 @@ async function rlOsoLoad() {
             let rows = [];
             for (const k in j) if (Array.isArray(j[k])) rows = rows.concat(j[k]);
             rows.forEach(function (x) {
-              const left = rlAbs(rlPick(x, ["oso_qty", "nccs_qty", "rmn_qty", "ord_rmn_qty", "ncls_qty"]));
+              // 🔴 실물 확인(2026-09-24): 미국은 ord_remnq 로 온다. 나머지는 다른 판을 대비해 남겨 둔다.
+              const left = rlAbs(rlPick(x, ["ord_remnq", "oso_qty", "nccs_qty", "rmn_qty", "ord_rmn_qty", "ncls_qty"]));
               if (!(left > 0)) return;
               out.push({mk: "us", id: String(rlPick(x, ["ord_no", "odno"])),
                         code: String(rlPick(x, ["stk_cd", "pdno"])),
-                        name: rlPick(x, ["stk_nm", "fgn_stk_nm", "stk_enm"]) || x.stk_cd, side: rlSideOf(x),
+                        name: rlPick(x, ["frgn_stk_nm", "stk_nm", "fgn_stk_nm", "stk_enm"]) || x.stk_cd, side: rlSideOf(x),
                         px: rlAbs(rlPick(x, ["ord_uv", "ord_pric", "ord_pr"])), left: left,
-                        stex: String(rlPick(x, ["stex_tp"]))});
+                        stex: String(rlPick(x, ["stex_tp", "stex_nm"]))});
             });
           } catch (e) { err.push("미국 미체결 " + e.message); }
         }
