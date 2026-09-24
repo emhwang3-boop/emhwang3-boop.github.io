@@ -4271,6 +4271,40 @@ function stkLogo(code, mk, px){
 var REG_HTML = "";
 // 장세 줄은 맨 위 [국내 증시 현황] 카드 안에 그린다 (사장님 2026-09-24)
 function regPaint(){ var n=document.getElementById("regLine"); if(n && REG_HTML) n.innerHTML = REG_HTML; }
+// ── 12칸 현황 표 (사장님 2026-09-24) — 국내·미국·코인을 한 눈에 ────────────────
+//   총자산을 열두 칸으로 나눠 한 칸씩 채운다. 코인은 현물만, 칸을 금액으로 센다.
+function slotTable(kr, us, totKR, totUS, cash, fx, en){
+  try{
+    const co = (typeof RL!=="undefined" && RL.co) ? RL.co.filter(function(p){ return p.spot; }) : [];
+    const coVal = co.reduce(function(s,p){ return s+(p.qty||0)*(p.cur||0); }, 0);
+    const totCO = coVal + (cash.usdt||0);
+    const won = function(v){ return Math.round(v).toLocaleString()+(en?" KRW":"원"); };
+    const usd = function(v){ return "$"+(+v).toLocaleString(undefined,{maximumFractionDigits:2}); };
+    const tet = function(v){ return (+v).toLocaleString(undefined,{maximumFractionDigits:2})+" USDT"; };
+    // 채운 칸 — 주식은 종목 수, 코인은 든 돈을 칸으로 나눈 값
+    const rows = [
+      [(en?"KR stocks":"국내 주식"), totKR, kr.length, won],
+      [(en?"US stocks":"미국 주식"), totUS, us.length, usd],
+      [(en?"Crypto (spot)":"코인 (현물)"), totCO, (totCO>0?Math.round(coVal/(totCO/12)):0), tet],
+    ];
+    let t = '<div class="dphd" style="margin-top:8px">'+(en?"12-slot status":"12칸 현황")+'</div>'
+      + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
+      + '<th>'+(en?"Filled":"채운 칸")+'</th><th>'+(en?"Empty":"빈 칸")+'</th></tr>';
+    rows.forEach(function(r){
+      const nm=r[0], tot=r[1], fill=Math.max(0,Math.min(12,r[2])), f=r[3];
+      const empty = 12 - fill;
+      const bar = new Array(fill+1).join("■") + new Array(empty+1).join("□");
+      t += '<tr><td style="text-align:left">'+nm+'<br><span class="dplbl" style="letter-spacing:1px">'+bar+'</span></td>'
+        + '<td>'+(tot>0?f(tot/12):"-")+'</td>'
+        + '<td>'+fill+'</td><td'+(empty>0?' style="color:#00c805;font-weight:800"':'')+'>'+empty+'</td></tr>';
+    });
+    t += '</table><div class="dpmsg">'
+      + (en ? "Total assets are split into twelve slots; one slot is bought per day while slots are empty. Crypto counts slots by amount (spot only)."
+            : "총자산을 열두 칸으로 나누고, 빈 칸이 있는 날에만 한 칸씩 삽니다. 코인은 현물만 보며 칸을 금액으로 셉니다.")
+      + '</div>';
+    return t;
+  }catch(e){ return ""; }
+}
 function recoRender(){
   let card=E("recoCard");
   if(!card){
@@ -4389,6 +4423,7 @@ function recoRender(){
       (RL.co||[]).filter(function(p){return p.spot;}).forEach(function(p){ PIEP.push([String(p.code).split("-")[0]+(en?" spot":" 현물"),(p.qty||0)*(p.cur||0)*fx,"held",(p.qty||0)*(p.cur||0),"us",(p.qty||0)*(p.cur||0),(typeof p.rt==="number"?p.rt:null)]); });
       if(cash.usdt>0)PIEP.push(["USDT",cash.usdt*fx,"cash",cash.usdt,"coin",cash.usdt]);
     }
+    h+=slotTable(kr,us,totKR,totUS,cash,fx,en);          // 12칸 현황 (사장님 2026-09-24)
     h+='<div class="dphd" style="margin-top:4px">'+(en?"Holdings + picks":"보유 + 추천 포트폴리오")+'</div>'+recoPuz(PIEP)+pzDraftHtml()
       +(fx>0?"":'<div class="dpmsg">'+(en?"USD rate not loaded yet — KR only.":"환율을 아직 못 받아 국내만 그렸습니다.")+'</div>');
   }
