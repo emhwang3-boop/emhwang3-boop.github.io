@@ -75,11 +75,13 @@ body.light .mk img.lt{display:block}
 .slhd{display:flex;align-items:baseline;gap:6px;font-size:12.5px;color:var(--sub)}
 .slhd b{color:var(--nm);font-size:13.5px}
 .slhd .sn{margin-left:auto;font-weight:800;color:var(--nm)}
-.slbars{display:flex;gap:3px;align-items:flex-end;height:34px;margin-top:4px}
-.slb{flex:1;border-radius:3px 3px 1px 1px;background:var(--bd);height:34%;transition:height .35s ease,background .35s ease}
-.slb.on{background:linear-gradient(180deg,#00c805,#0a8f20);height:100%}
-.slb.on.hi{animation:slpulse 1.4s ease-in-out infinite}
-@keyframes slpulse{0%,100%{height:100%}50%{height:72%}}
+.slbars{display:flex;gap:3px;align-items:stretch;height:22px;margin-top:4px}
+.slb{flex:1;border-radius:3px;background:var(--bd);opacity:.45;transition:background .3s ease,opacity .3s ease}
+.slb.on{background:linear-gradient(180deg,#19e35c,#0a8f20);opacity:1}
+.slb.on.hi{animation:slhi 1.1s ease-in-out infinite}          /* 켜진 끝 칸 — 앰프처럼 깜빡 */
+.slb.pk{animation:slpk 1.1s ease-in-out infinite}             /* 그 다음 칸 — 넘실거림 */
+@keyframes slhi{0%,100%{opacity:1}55%{opacity:.55}}
+@keyframes slpk{0%,100%{background:var(--bd);opacity:.45}45%{background:linear-gradient(180deg,#19e35c,#0a8f20);opacity:.9}}
 
 /* 표 안에서도 오른 건 초록·내린 건 빨강 — td 규칙이 덮고 있었다 (사장님 2026-09-23) */
 .mhtab td.up{color:#00c805}.mhtab td.dn{color:#ff433d}.mhtab td.fl{color:var(--sub)}
@@ -2267,8 +2269,12 @@ function bkMoney(v, ccy) { return (+v).toLocaleString(undefined, {maximumFractio
 function slotBars(name, slotTxt, filled) {
   const n = Math.max(0, Math.min(12, filled | 0));
   let b = '<div class="slbars">';
-  for (let i = 0; i < 12; i++)
-    b += '<div class="slb' + (i < n ? (i === n - 1 ? ' on hi' : ' on') : '') + '"></div>';
+  for (let i = 0; i < 12; i++) {
+    let c = "slb";
+    if (i < n) c += (i === n - 1) ? " on hi" : " on";      // 켜진 끝 칸이 깜빡인다
+    else if (i === n) c += " pk";                          // 그 다음 칸이 넘실거린다
+    b += '<div class="' + c + '"></div>';
+  }
   b += '</div>';
   const en = (typeof LANG !== "undefined" && LANG === "en");
   return '<div class="slrow"><div class="slhd"><b>' + name + '</b>'
