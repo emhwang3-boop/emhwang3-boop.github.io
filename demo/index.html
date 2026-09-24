@@ -4066,7 +4066,9 @@ function puzPicks(mk){
         var C=(R&&R.coin)||{};
         ["BTC","ETH"].forEach(function(k){ var z=C[k];
           if(!z||z.state==="long")out.push({name:k, code:k+"-USDT", mk:"coin", spot:true}); });
-        // 알트 줄 세우기 — ① 새 신호 ② 거래대금 ③ 20일 상승률 (사장님 2026-09-24)
+        // 알트 줄 세우기 — 20일 상승률 하나로 (사장님 2026-09-24).
+        //   5년 1,626일 실측: 20일 상승률만 아무거나 산 것을 이겼다(40일 +17.9% vs +14.0%).
+        //   새 신호(+10.4%)·거래대금(+9.7%)은 되레 대조군보다 못해 뺐다.
         var alt=[];
         Object.keys(C).forEach(function(k){
           if(k==="BTC"||k==="ETH")return;
@@ -4074,7 +4076,7 @@ function puzPicks(mk){
           if(z["new"]||z.state==="long")alt.push({name:k, code:k+"-USDT", mk:"coin", spot:true,
             _new:(z["new"]?1:0), _turn:(+z.turn||0), _m20:(+z.mom20||0)});
         });
-        alt.sort(function(a,b){ return (b._new-a._new) || (b._turn-a._turn) || (b._m20-a._m20); });
+        alt.sort(function(a,b){ return (b._m20-a._m20) || (b._turn-a._turn); });
         alt.forEach(function(z){ out.push(z); });
       }
       catch(e){ out=[{name:"BTC",code:"BTC-USDT",mk:"coin",spot:true},{name:"ETH",code:"ETH-USDT",mk:"coin",spot:true}]; }
