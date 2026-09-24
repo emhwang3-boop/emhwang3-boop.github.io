@@ -2452,7 +2452,7 @@ function bkRender() {
            : '<span class="dplbl">—</span>') + '</td>'
        + '<td>' + w.toFixed(1) + '%</td>'
        + '<td style="white-space:nowrap"><span class="mhx" onclick="bkDel(' + i + ')">✕</span>'
-       + ' <span class="mhx" style="color:#16a34a;font-weight:700;font-size:1.45em;line-height:1;vertical-align:-2px" onclick="bkAddToSaved(' + i + ')">＋</span></td></tr>';
+       + ' <span class="mhx" style="color:#16a34a;font-weight:700;font-size:22px;line-height:12px;vertical-align:-3px" onclick="bkAddToSaved(' + i + ')">＋</span></td></tr>';
   });
   if (tAll > 0) h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
        + '<td colspan="4" style="text-align:right">' + bkMoney(tAll, "USDT") + '</td></tr>';
@@ -2703,7 +2703,7 @@ function bkSavedHtml() {
     const rtxt = (p.er == null) ? '<span class="dplbl">' + KE("계산 전", "—") + '</span>' : ('<b class="' + cls(p.er) + '">' + pc(p.er) + '</b>');
     h += '<div style="border-bottom:1px solid var(--bd)">';
     h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 2px;cursor:pointer" onclick="bkSavedToggle(\'' + p.id + '\')">'
-       + '<span style="width:12px;color:var(--sub)">' + (open ? "▾" : "▸") + '</span>'
+       + '<span style="width:18px;font-size:19px;line-height:1;color:var(--sub)">' + (open ? "▾" : "▸") + '</span>'
        + '<span style="flex:1;font-weight:700">' + lbl + ' <span class="dplbl">' + p.items.length + KE("종목", "") + '</span></span>'
        + '<span style="white-space:nowrap">' + rtxt + '</span>'
        + '<span onclick="event.stopPropagation();towerFromSaved(\'' + p.id + '\')" style="cursor:pointer;color:#2bd4c0;font-weight:800;font-size:11px;border:1px solid #2bd4c0;border-radius:6px;padding:1px 5px;margin-right:5px">3D</span>'
