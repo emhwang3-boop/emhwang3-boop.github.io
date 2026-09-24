@@ -322,22 +322,37 @@
       const byK = {};
       items.forEach(function (it) { (byK[it.k || 0] = byK[it.k || 0] || []).push(it); });
       const ks = Object.keys(byK).map(Number).sort(function (a, b) { return a - b; });
+      const BR_MAX = 4;                      // 한 가지에 넷까지 (사장님 2026-09-24)
+      const allBr = [];
       ks.forEach(function (k, bi) {
-        const arr = byK[k], ang = bi * (2 * Math.PI / Math.max(ks.length, 1)) + 0.35;
+        const arr = byK[k], ang0 = bi * (2 * Math.PI / Math.max(ks.length, 1)) + 0.35;
         const big = arr.reduce(function (m, it) { return Math.max(m, it._side); }, 1);
-        const yy = y + big / 2;
-        let rad = big * 1.05;
-        arr.forEach(function (it) {
-          // 구를 때 모서리가 옆 큐브에 닿지 않게 사이를 벌린다 (사장님 2026-09-24)
-          rad += it._side * 0.80;
-          it._ang = ang; it._rad = rad; it._baseY = yy;
-          rad += it._side * 0.80;
-          if (rad > maxR) maxR = rad;
+        // 넷을 넘으면 같은 높이 **반대편**으로 새 가지를 낸다. 그것도 차면 한 층 올린다.
+        const groups = [];
+        for (let gi = 0; gi < arr.length; gi += BR_MAX) groups.push(arr.slice(gi, gi + BR_MAX));
+        // 앞·뒤 두 가지가 다 차면 위아래로 잔가지를 낸다 — 0, +1, -1, +2, -2 … (사장님 2026-09-24)
+        const step = big * 1.35, offs = [];
+        for (let li = 0; li < Math.ceil(groups.length / 2); li++)
+          offs.push(li === 0 ? 0 : ((li % 2) ? Math.ceil(li / 2) : -(li / 2)));
+        const lo = Math.min.apply(null, offs), hi = Math.max.apply(null, offs);
+        const base = y + big / 2 + (-lo) * step;
+        groups.forEach(function (gA, gi) {
+          const ang = ang0 + ((gi % 2) ? Math.PI : 0);
+          const gy = base + offs[Math.floor(gi / 2)] * step;
+          let rad = big * 1.05;
+          gA.forEach(function (it) {
+            // 구를 때 모서리가 옆 큐브에 닿지 않게 사이를 벌린다 (사장님 2026-09-24)
+            rad += it._side * 0.80;
+            it._ang = ang; it._rad = rad; it._baseY = gy;
+            rad += it._side * 0.80;
+            if (rad > maxR) maxR = rad;
+          });
+          gA._tip = rad; gA._y = gy; gA._ang = ang;
+          allBr.push(gA);
         });
-        arr._tip = rad; arr._y = yy; arr._ang = ang;
-        y = yy + big / 2 + big * 0.85;
+        y = base + hi * step + big / 2 + big * 0.85;
       });
-      window._BRANCH = ks.map(function (k) { return byK[k]; });
+      window._BRANCH = allBr;
     }
     const towerTop = Math.max(y, 1);
     // 가장 큰 큐브의 반만큼 여유를 둔다 — 위아래가 잘려 나갔다 (사장님 2026-09-23)
