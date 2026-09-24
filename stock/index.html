@@ -78,8 +78,8 @@ body.light .mk img.lt{display:block}
 .slbars{display:flex;gap:4px;align-items:center;margin-top:4px}
 .slb{flex:0 0 12px;width:12px;height:12px;border-radius:3px;background:var(--bd);opacity:.45;transition:background .3s ease,opacity .3s ease}
 .slb.on{background:linear-gradient(180deg,#19e35c,#0a8f20);opacity:1}
-.slb.on.hi{animation:slhi 1.1s ease-in-out infinite}          /* 켜진 끝 칸 — 앰프처럼 깜빡 */
-.slb.pk{animation:slpk 1.1s ease-in-out infinite}             /* 그 다음 칸 — 넘실거림 */
+.slb.on.hi{animation:none}          /* 켜진 끝 칸 — 앰프처럼 깜빡 */
+.slb.pk{animation:none}             /* 그 다음 칸 — 넘실거림 */
 @keyframes slhi{0%,100%{opacity:1}55%{opacity:.55}}
 @keyframes slpk{0%,100%{background:var(--bd);opacity:.45}45%{background:linear-gradient(180deg,#19e35c,#0a8f20);opacity:.9}}
 
