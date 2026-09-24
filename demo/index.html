@@ -4733,7 +4733,14 @@ function bkClassOf(it) {
 function bkClassRank(it) {
   var c = it.cls || bkClassOf(it);
   // 코인은 주식 자산군 전부보다 위 (사장님 2026-09-22 "비트코인이 젤로 위험한 자산"). 코인끼리는 BTC < ETH < 알트.
-  if (it.mk === "coin") return 8 + (c === "BTC" ? 0 : (c === "ETH" ? 1 : 2));
+  // 🔴 현물 전부가 아래, 선물 전부가 위 — BTC현물 < ETH현물 < 알트현물 < BTC선물 < ETH선물 < 알트선물 (사장님 2026-09-24)
+  //    cls 는 "BTC 현물" 꼴이다. 옛 보관분은 "BTC" 만 있을 수 있어 앞머리로 가른다.
+  if (it.mk === "coin") {
+    var hd = String(c).split(" ")[0];
+    // 데모앱은 spot 표시로 가른다 — spot 이 없으면 선물(bkBars 와 같은 뜻)
+    var perp = /선물/.test(c) || /-SWAP$/i.test(String(it.code || "")) || (!/현물/.test(c) && it.spot !== true);
+    return 8 + (perp ? 3 : 0) + (hd === "BTC" ? 0 : (hd === "ETH" ? 1 : 2));
+  }
   var i = BK_CLS_ORDER.indexOf(c); return i < 0 ? 4 : i;
 }
 
