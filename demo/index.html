@@ -4058,7 +4058,7 @@ function pzDraftHtml(){
   var en=(typeof LANG!=="undefined"&&LANG==="en");
   if(!PZDRAFT){
     var n=PZSEL.length;
-    return '<div class="cvrow" style="margin:6px 0"><button class="dppct" style="flex:1;margin:0;padding:9px 10px;font-size:13px;background:transparent;border:0;color:var(--nm);text-align:left" onclick="pzOpen()">'
+    return '<div class="cvrow" style="margin:6px 0;display:flex;justify-content:flex-end"><button class="dppct" style="flex:0 0 auto;margin:0;padding:9px 10px;font-size:13px;background:transparent;border:0;color:var(--nm);text-align:right" onclick="pzOpen()">'
       + (en?("Build basket from picks + holdings"+(n?(" ("+n+")"):"")):("고른 것 + 보유로 바스켓 만들기"+(n?(" "+n+"개"):"")))
       + '</button></div>';
   }
