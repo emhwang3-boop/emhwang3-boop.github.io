@@ -69,6 +69,18 @@ body.light .mk img.lt{display:block}
 .val{font-size:16px;font-weight:500;font-variant-numeric:tabular-nums}
 .pc{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;min-width:58px;text-align:right}
 .up{color:#00c805}.dn{color:#ff433d}.fl{color:var(--sub)}
+/* 12칸 앰프 — 채운 칸은 불이 켜지고 끝 칸이 살짝 오르내린다 (사장님 2026-09-24) */
+.slbox{margin:6px 0 10px}
+.slrow{margin:8px 0}
+.slhd{display:flex;align-items:baseline;gap:6px;font-size:12.5px;color:var(--sub)}
+.slhd b{color:var(--nm);font-size:13.5px}
+.slhd .sn{margin-left:auto;font-weight:800;color:var(--nm)}
+.slbars{display:flex;gap:3px;align-items:flex-end;height:34px;margin-top:4px}
+.slb{flex:1;border-radius:3px 3px 1px 1px;background:var(--bd);height:34%;transition:height .35s ease,background .35s ease}
+.slb.on{background:linear-gradient(180deg,#00c805,#0a8f20);height:100%}
+.slb.on.hi{animation:slpulse 1.4s ease-in-out infinite}
+@keyframes slpulse{0%,100%{height:100%}50%{height:72%}}
+
 /* 표 안에서도 오른 건 초록·내린 건 빨강 — td 규칙이 덮고 있었다 (사장님 2026-09-23) */
 .mhtab td.up{color:#00c805}.mhtab td.dn{color:#ff433d}.mhtab td.fl{color:var(--sub)}
 .soonrow{color:var(--soon);font-size:14px;padding:8px 2px}
@@ -2064,6 +2076,19 @@ function bkMoney(v, ccy) {
 // 성향 배분에 따른 기본 금액 — 자산군 몫을 그 자산군에 담긴 종목 수로 나눈다
 // ── 가상 계좌 남은 돈 · 12칸 현황 (사장님 2026-09-24) ───────────────────────────
 //   🔴 가상 포트폴리오 안에서만 쓰는 셈이다. 실제 매수를 권하는 값이 아니다.
+// ── 12칸 앰프 — 채운 칸에 불이 들어온다 (사장님 2026-09-24) ─────────────────────
+//   🔴 가상 포트폴리오 안에서만 쓰는 그림이다.
+function slotBars(name, slotTxt, filled) {
+  const n = Math.max(0, Math.min(12, filled | 0));
+  let b = '<div class="slbars">';
+  for (let i = 0; i < 12; i++)
+    b += '<div class="slb' + (i < n ? (i === n - 1 ? ' on hi' : ' on') : '') + '"></div>';
+  b += '</div>';
+  const en = (typeof LANG !== "undefined" && LANG === "en");
+  return '<div class="slrow"><div class="slhd"><b>' + name + '</b>'
+       + (slotTxt ? '<span>' + (en ? "slot " : "1칸 ") + slotTxt + '</span>' : '')
+       + '<span class="sn">' + n + ' / 12</span></div>' + b + '</div>';
+}
 function bkSlotInfo() {
   const a = (typeof bkGet === "function") ? bkGet() : [];
   const amt = (typeof bkAmtOf === "function") ? bkAmtOf(a) : {};
@@ -2081,10 +2106,8 @@ function bkAcctPaint() {
   const usd = function (v) { return "$" + Math.round(v).toLocaleString(); };
   const put = function (id, txt) { const n = document.getElementById(id); if (n) n.innerHTML = txt; };
   put("svLeft",
-      '<div class="svacct"><span>' + (en ? "KRW left" : "원화 남은 돈") + '</span><b>' + won(s.leftK)
-    + ' <span class="dplbl">' + (en ? "slots " : "칸 ") + Math.min(12, s.nK) + '/12</span></b></div>'
-    + '<div class="svacct"><span>' + (en ? "USD left" : "달러 남은 돈") + '</span><b>' + usd(s.leftU)
-    + ' <span class="dplbl">' + (en ? "slots " : "칸 ") + Math.min(12, s.nU) + '/12</span></b></div>');
+      '<div class="svacct"><span>' + (en ? "KRW left" : "원화 남은 돈") + '</span><b>' + won(s.leftK) + '</b></div>'
+    + '<div class="svacct"><span>' + (en ? "USD left" : "달러 남은 돈") + '</span><b>' + usd(s.leftU) + '</b></div>');
 }
 function bkAutoAmt(list) {
   // 12칸 — 가상 계좌를 열둘로 나눈 한 칸씩 (사장님 2026-09-24, 데모앱과 같은 방식)
@@ -2144,12 +2167,14 @@ function bkRender() {
   const AM = bkAmtOf(a);
   const tKR = a.reduce(function (t, x) { return t + (bkCcy(x) === "KRW" ? (AM[x.code] || 0) : 0); }, 0);
   const tUS = a.reduce(function (t, x) { return t + (bkCcy(x) === "USD" ? (AM[x.code] || 0) : 0); }, 0);
-  // 원그래프는 원화로 환산해 그린다 — 달러와 원을 그냥 섞으면 한 종목이 99% 를 먹는다 (사장님 2026-09-23)
-  const _fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1300;
-  h += svPie(a.map(function (x) {
-    const v = (AM[x.code] || 0) * (bkCcy(x) === "USD" ? _fx : 1);
-    return [x.name, v || 1];
-  }));
+  // 파이 대신 12칸 앰프 (사장님 2026-09-24)
+  {
+    const si = bkSlotInfo(), en2 = (typeof LANG !== "undefined" && LANG === "en");
+    h += '<div class="slbox">'
+       + slotBars(KE("국내 주식", "KR stocks"), Math.round(SV_KRW / 12).toLocaleString() + (en2 ? "" : "원"), si.nK)
+       + slotBars(KE("미국 주식", "US stocks"), "$" + Math.round(SV_USD / 12).toLocaleString(), si.nU)
+       + '</div>';
+  }
   h += '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>' + KE("투자금액", "Amount")
      + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
   a.forEach(function (x, i) {
