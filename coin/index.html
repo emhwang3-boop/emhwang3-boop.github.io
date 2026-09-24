@@ -2247,35 +2247,12 @@ function bkCcy(it) { return "USDT"; }
 function bkMoney(v, ccy) { return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; }
 // 성향 배분에 따른 기본 금액 — 자산군 몫을 그 자산군에 담긴 종목 수로 나눈다
 function bkAutoAmt(list) {
-  const USDT = 100000, out = {};
-  if (!list.length) return out;
-  const p = (typeof svGet === "function") ? svGet() : null;
-  const g = (p && SV_GRADE[p.pick]) ? SV_GRADE[p.pick] : null;
-  // 🔴 성향을 안 골랐으면 똑같이 나눈다 — 0 으로 두지 않는다 (사장님 2026-09-23)
-  if (!g) { list.forEach(function (x) { out[x.code] = USDT / list.length; }); return out; }
-  const mix = g.mix;
-  const tot = mix.reduce(function (t, m) { return t + m[1]; }, 0) || 1;
-  const money = {};
-  mix.forEach(function (m) { money[m[0]] = USDT * m[1] / tot; });
-  // 🔴 담을 때 적어 둔 cls 는 믿지 않는다 — 옛 꼬리표가 남아 0 이 됐다
-  const clsOf = function (x) { return bkClassOf(x); };
-  const cnt = {};
-  list.forEach(function (x) { const c = clsOf(x); cnt[c] = (cnt[c] || 0) + 1; });
-  let left = 0, blank = [];
-  list.forEach(function (x) {
-    const c = clsOf(x);
-    if (money[c] && cnt[c]) out[x.code] = money[c] / cnt[c];
-    else { out[x.code] = 0; blank.push(x); }
-  });
-  // 성향에 없는 자산군(예: 현물 성향인데 선물을 담음)은 남은 돈을 나눠 갖는다
-  if (blank.length) {
-    const used = list.reduce(function (t, x) { return t + (out[x.code] || 0); }, 0);
-    left = Math.max(0, USDT - used);
-    blank.forEach(function (x) { out[x.code] = left / blank.length; });
-  }
+  // 12칸 — 가상 계좌를 열둘로 나눈 한 칸씩 (사장님 2026-09-24, 데모앱과 같은 방식)
+  //   🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
+  const out = {};
+  list.forEach(function (x) { out[x.code] = CV_USDT / 12; });
   return out;
 }
-// 줄마다 쓸 금액 — 고객이 넣은 값이 있으면 그것, 없으면 성향 배분값
 function bkAmtOf(list) {
   const auto = bkAutoAmt(list), out = {};
   list.forEach(function (x) { out[x.code] = (typeof x.amt === "number" && x.amt > 0) ? x.amt : (auto[x.code] || 0); });
@@ -2358,10 +2335,10 @@ function bkRender() {
   if (tAll > 0) h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
        + '<td colspan="4" style="text-align:right">' + bkMoney(tAll, "USDT") + '</td></tr>';
   h += '</table>';
-  h += '<div class="svsub">' + KE("금액은 고른 포트폴리오의 배분율로 채워집니다. 직접 고치셔도 됩니다.",
-       "Amounts follow the portfolio you chose. You can edit them.")
+  h += '<div class="svsub">' + KE("금액은 가상 계좌를 열두 칸으로 나눈 한 칸씩으로 채워집니다. 직접 고치셔도 됩니다.",
+       "Amounts are one of twelve equal slots of the virtual account. You can edit them.")
      + ' <span class="dplbl" style="cursor:pointer;text-decoration:underline" onclick="bkAmtReset()">'
-     + KE("배분율로 되돌리기", "Reset to allocation") + '</span></div>';
+     + KE("1칸으로 되돌리기", "Reset to one slot") + '</span></div>';
   h += '<div class="cvrow">' + BK_SPANS.map(function (s) {
       return '<button class="svbtn" style="flex:1;text-align:center;margin:0" onclick="bkRun(' + s[0] + ')">' + KE(s[1], s[2]) + '</button>';
     }).join("") + '<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="bkClear()">' + KE("비우기", "Clear") + '</button></div>';
