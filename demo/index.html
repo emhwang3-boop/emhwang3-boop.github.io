@@ -4296,7 +4296,7 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
       [(en?"US stocks":"미국 주식"), totUS, us.length, usd],
       [(en?"Crypto (spot)":"코인 (현물)"), totCO, (totCO>0?Math.round(coVal/(totCO/12)):0), tet],
     ];
-    let t = '<div class="dphd" style="margin-top:8px">'+(en?"12-slot status":"12칸 현황")+'</div>'
+    let t = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"12-slot status":"12칸 현황")+'</div>'
       + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
       + '<th>'+(en?"Filled":"채운 칸")+'</th><th>'+(en?"Empty":"빈 칸")+'</th></tr>';
     rows.forEach(function(r){
@@ -4433,7 +4433,7 @@ function recoRender(){
       if(cash.usdt>0)PIEP.push(["USDT",cash.usdt*fx,"cash",cash.usdt,"coin",cash.usdt]);
     }
     h+=slotTable(kr,us,totKR,totUS,cash,fx,en);          // 12칸 현황 (사장님 2026-09-24)
-    h+='<div class="dphd" style="margin-top:4px">'+(en?"Holdings + picks":"보유 + 추천 포트폴리오")+'</div>'+recoPuz(PIEP)+pzDraftHtml()
+    h+='<div class="dphd" style="margin-top:4px;font-size:14px;color:var(--nm)">'+(en?"Holdings + picks":"보유 + 추천 포트폴리오")+'</div>'+recoPuz(PIEP)+pzDraftHtml()
       +(fx>0?"":'<div class="dpmsg">'+(en?"USD rate not loaded yet — KR only.":"환율을 아직 못 받아 국내만 그렸습니다.")+'</div>');
   }
   h+=body;
