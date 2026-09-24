@@ -2868,6 +2868,9 @@ function dpCoinBar(){
      +'<span class="dplbl">'+(en?"Amount":"금액")+'</span>'
      +'<input id="dpSpQ" class="dpin" type="number" inputmode="decimal" step="any" placeholder="USDT" oninput="dpSpotEst()">'
      +'<span class="dplbl">$</span>'
+     +'<span class="dplbl">'+(en?"Qty":"수량")+'</span>'
+     +'<input id="dpSpN" class="dpin" type="number" inputmode="decimal" step="any" placeholder="'
+     +(en?"qty":"수량")+'" oninput="dpSpotEst()" disabled>'
      +'<button class="dpb buy" onclick="dpCoinSpot(\'B\')">'+(en?"BUY":"매수")+'</button>'
      +'<button class="dpb sell" onclick="dpSpotSell()">'+(en?"SELL":"매도")+'</button>'
      +'</div><div class="dpmsg" id="dpSpEst" style="color:var(--nm);font-weight:700"></div>'
@@ -2891,21 +2894,30 @@ function dpCoinBar(){
 function dpSpotEst(){
   // 금액을 몇 개로 사는지 바로 보여준다 — 지정가면 그 값으로, 아니면 현재가로 (사장님 2026-09-24)
   const en=LANG==="en", e=E("dpSpEst"); if(!e)return;
-  const amt=dpNum(E("dpSpQ")&&E("dpSpQ").value), cur=dpPx["coin:"+coinSym]||0;
+  const cur=dpPx["coin:"+coinSym]||0;
   const isLim=!!(E("dpTpL")&&E("dpTpL").classList.contains("on"));
   const lim=isLim?dpNum(E("dpCPx")&&E("dpCPx").value):0;
-  const px=isLim?lim:cur;
   const sym=String(coinSym||"").replace(/USDT$/,"");
-  if(amt>0&&px>0){
-    e.textContent="= "+(+(amt/px).toFixed(8))+" "+sym
-      +(isLim?(en?" (at limit "+lim+")":" (지정가 "+lim+" 기준)"):(en?" (at market)":" (현재가 기준)"));
+  // 화면을 다시 그려도 쓰는 칸만 켜져 있게 (사장님 2026-09-24)
+  try{ var qa=E("dpSpQ"), qn=E("dpSpN");
+       if(qa){ qa.disabled=isLim;  qa.style.opacity=isLim?".4":"1"; }
+       if(qn){ qn.disabled=!isLim; qn.style.opacity=isLim?"1":".4"; } }catch(e){}
+  if(isLim){                                   // 지정가 — 수량을 넣으면 드는 돈을 보여준다
+    const qty=dpNum(E("dpSpN")&&E("dpSpN").value);
+    e.textContent=(qty>0&&lim>0)?("= "+(+(qty*lim).toFixed(2))+" USDT ("+qty+" "+sym+" × "+lim+")"):"";
+  } else {                                     // 시장가 — 금액을 넣으면 몇 개인지 보여준다
+    const amt=dpNum(E("dpSpQ")&&E("dpSpQ").value);
+    e.textContent=(amt>0&&cur>0)?("= "+(+(amt/cur).toFixed(8))+" "+sym+(en?" (at market)":" (현재가 기준)")):"";
   }
-  else { e.textContent=""; }
 }
 function dpCoinTp(limit){
   const m=E("dpTpM"), l=E("dpTpL"), px=E("dpCPx");
   if(!m||!l||!px)return;
   m.classList.toggle("on",!limit); l.classList.toggle("on",!!limit);
+  // 시장가면 금액(USDT), 지정가면 수량 — 쓰는 칸만 켠다 (사장님 2026-09-24)
+  try{ var qa=E("dpSpQ"), qn=E("dpSpN");
+       if(qa){ qa.disabled=!!limit; qa.style.opacity=limit?".4":"1"; }
+       if(qn){ qn.disabled=!limit;  qn.style.opacity=limit?"1":".4"; } }catch(e){}
   try{ setTimeout(dpSpotEst,0); }catch(e){}
   px.disabled=!limit; if(!limit)px.value="";
   if(limit&&!px.value&&dpPx["coin:"+coinSym])px.value=dpPx["coin:"+coinSym];
@@ -3087,11 +3099,14 @@ function dpCoinSpot(side){
   if(dpBusyC){ dpMsg("dpMsgC",en?"Previous order in flight":"앞 주문을 보내는 중입니다"); return; }
   if(!coinSym){ dpMsg("dpMsgC",en?"Pick a coin":"코인을 먼저 고르세요"); return; }
   const pk="coin:"+coinSym, cur=dpPx[pk]||0, key="coinS:"+coinSym;
-  const amt=dpNum(E("dpSpQ")&&E("dpSpQ").value);     // 🔴 USDT 금액이다 — 코인 수량이 아니다
+  // 🔴 시장가면 금액(USDT), 지정가면 수량을 받는다 (사장님 2026-09-24)
   const isLim=!!(E("dpTpL")&&E("dpTpL").classList.contains("on"));
   const lim=isLim?dpNum(E("dpCPx").value):0;
-  if(amt<=0){ dpMsg("dpMsgC",en?"Enter amount (USDT)":"금액(USDT)을 넣으세요"); return; }
   if(isLim&&lim<=0){ dpMsg("dpMsgC",en?"Enter limit price":"지정가 가격을 넣으세요"); return; }
+  const qtyIn=isLim?dpNum(E("dpSpN")&&E("dpSpN").value):0;
+  if(isLim&&qtyIn<=0){ dpMsg("dpMsgC",en?"Enter quantity":"수량을 넣으세요"); return; }
+  const amt=isLim?(qtyIn*lim):dpNum(E("dpSpQ")&&E("dpSpQ").value);
+  if(amt<=0){ dpMsg("dpMsgC",en?"Enter amount (USDT)":"금액(USDT)을 넣으세요"); return; }
   if(cur<=0&&!isLim){ dpMsg("dpMsgC",en?"No price yet":"현재가를 아직 못 받았습니다"); return; }
   const fill=isLim?lim:cur;
   const p=DP.pos[key]||{mk:"coinS",code:coinSym,name:coinSym,qty:0,avg:0};
