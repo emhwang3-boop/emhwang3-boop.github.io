@@ -259,6 +259,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div class="card svcard" id="cvAcct">
   <h3><span class="kko">가상 계좌</span><span class="ken">Virtual Account</span></h3>
   <div class="svacct"><span>USDT</span><b>100,000 USDT</b></div>
+  <div id="svLeft"></div>
   <div class="svsub"><span class="kko">모든 이용자에게 똑같이 주어지는 가상 금액입니다. 실제 자산이 아니며 고칠 수 없습니다.</span><span class="ken">A virtual amount given equally to every user. It is not real money and cannot be changed.</span></div>
 </div>
 
@@ -2246,6 +2247,22 @@ function bkAmtLive(el) {
 function bkCcy(it) { return "USDT"; }
 function bkMoney(v, ccy) { return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; }
 // 성향 배분에 따른 기본 금액 — 자산군 몫을 그 자산군에 담긴 종목 수로 나눈다
+// ── 가상 계좌 남은 돈 · 12칸 현황 (사장님 2026-09-24) ───────────────────────────
+//   🔴 가상 포트폴리오 안에서만 쓰는 셈이다. 실제 매수를 권하는 값이 아니다.
+function bkSlotInfo() {
+  const a = (typeof bkGet === "function") ? bkGet() : [];
+  const amt = (typeof bkAmtOf === "function") ? bkAmtOf(a) : {};
+  let use = 0, n = 0;
+  a.forEach(function (x) { use += (+amt[x.code] || 0); n++; });
+  return {use: use, n: n, left: CV_USDT - use};
+}
+function bkAcctPaint() {
+  const s = bkSlotInfo(), en = (typeof LANG !== "undefined" && LANG === "en");
+  const n = document.getElementById("svLeft"); if (!n) return;
+  n.innerHTML = '<div class="svacct"><span>' + (en ? "USDT left" : "남은 돈") + '</span><b>'
+    + (+s.left).toLocaleString(undefined, {maximumFractionDigits: 2}) + ' USDT'
+    + ' <span class="dplbl">' + (en ? "slots " : "칸 ") + Math.min(12, s.n) + '/12</span></b></div>';
+}
 function bkAutoAmt(list) {
   // 12칸 — 가상 계좌를 열둘로 나눈 한 칸씩 (사장님 2026-09-24, 데모앱과 같은 방식)
   //   🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
@@ -2350,6 +2367,7 @@ function bkRender() {
   h += bkSavedHtml();
   try { h += syBoxHtml(); } catch (e) {}        // 두 기기 맞추기 (사장님 2026-09-24)
   box.innerHTML = h;
+  try { bkAcctPaint(); } catch (e) {}           // 가상 계좌 남은 돈·칸 (사장님 2026-09-24)
 }
 
 // 기간 수익률 — 균등 비중으로 그때 사서 지금까지 든 셈
