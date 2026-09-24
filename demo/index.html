@@ -4349,8 +4349,7 @@ function recoRender(){
     const money=function(v){ return mk==="kr"?(Math.round(v).toLocaleString()+(en?" KRW":"원")):("$"+(+v).toLocaleString(undefined,{maximumFractionDigits:2})); };
     let s='<div class="dphd" style="margin-top:8px">'+(mk==="kr"?(en?"KR stocks":"국내 주식"):(en?"US stocks":"미국 주식"))
       +' <span class="dplbl">'+(en?"as of ":"")+x.asof+(en?"":" 종가")+'</span></div>';
-    s+='<div class="dpmsg">'+(has?((en?"Slot ":"1칸 ")+money(slot)+" · "+(en?"empty ":"빈 칸 ")+empty+"/12")
-                             :(en?"Load your real account to size slots.":"실계좌를 불러오면 칸 금액이 나옵니다."))+'</div>';
+    // 칸 줄은 위 [12칸 현황] 표로 옮겼다 (사장님 2026-09-24)
     // 팔 것 — +15% 도달 · 60영업일 만기 · (국내·미국 공통 규칙)
     const sells=[];
     held.forEach(function(p){
