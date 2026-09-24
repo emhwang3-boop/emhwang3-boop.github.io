@@ -3371,6 +3371,23 @@ function dpSellGo(){
   dpSellCancel();
 }
 // [내 보유종목] 카드 — 주식과 코인을 한 표에. 지움(✕) 대신 매도·청산.
+// 보유종목 이름을 누르면 아래 조회창에 그 종목을 띄운다 (사장님 2026-09-24)
+function mhGo(code, name, mk, spot){
+  code = String(code || ""); if(!code) return;
+  try{
+    if(mk === "coin"){
+      pickCoin(code, String(name || code).split("-")[0], spot ? "S" : "F");
+      var c = E("coin2"); if(c) c.scrollIntoView({behavior:"smooth"});
+    } else if(mk === "us"){
+      var t = code.replace(/\.US$/, "");
+      pickStockUS(t + ".US", t);
+      var s1 = E("stock"); if(s1) s1.scrollIntoView({behavior:"smooth"});
+    } else {
+      pickStock(code, String(name || code));
+      var s2 = E("stock"); if(s2) s2.scrollIntoView({behavior:"smooth"});
+    }
+  }catch(e){}
+}
 function dpHoldRender(){
   const en=LANG==="en", box=E("mhBody"); if(!box)return;
   // 🔴 매도·청산 판이 열려 있으면 표를 다시 그리지 않는다 — 그리면 판이 사라진다(10초 갱신)
@@ -3420,7 +3437,10 @@ function dpHoldRender(){
       :p.spot?(en?"SPOT":"현물")
       :((en?"PERP ":"선물 ")+(p.side==="L"?(en?"LONG":"롱"):(en?"SHORT":"숏"))+" "+p.lev+"x");
     const tagc=(p.mk==="coin")?(p.spot?" sp":" fu"):"";
-    h+='<tr><td>'+anyLogo(p.code,p.mk)+dpEsc(p.name||p.code)+' <span class="mkt'+tagc+'">'+tag+'</span>'
+    h+='<tr><td>'+anyLogo(p.code,p.mk)
+     +'<span style="cursor:pointer" onclick="mhGo(&quot;'+dpEsc(String(p.code||"")).replace(/"/g,"")+'&quot;,&quot;'
+       +dpEsc(String(p.name||p.code||"")).replace(/"/g,"")+'&quot;,&quot;'+(p.mk||"kr")+'&quot;,'+(p.spot?1:0)+')">'
+       +dpEsc(p.name||p.code)+'</span>'+' <span class="mkt'+tagc+'">'+tag+'</span>'
      +'<span class="rlb">'+(en?"REAL":"실계좌")+'</span>'
      +(((p.mk==="kr"||p.mk==="coin"||p.mk==="us")&&typeof rlHeldDays==="function"&&rlHeldDays(p.code))
         ?'<br><span class="dplbl">'+(en?"day ":"")+rlHeldDays(p.code).days+(en?"":"일째")+'</span>':'')+'</td>'
