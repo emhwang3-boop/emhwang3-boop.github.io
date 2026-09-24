@@ -2870,7 +2870,8 @@ function dpCoinBar(){
      +'<span class="dplbl">$</span>'
      +'<button class="dpb buy" onclick="dpCoinSpot(\'B\')">'+(en?"BUY":"매수")+'</button>'
      +'<button class="dpb sell" onclick="dpSpotSell()">'+(en?"SELL":"매도")+'</button>'
-     +'</div><div class="dpmsg" id="dpMsgC">'+(en?"Spot — no leverage, no liquidation."
+     +'</div><div class="dpmsg" id="dpSpEst" style="color:var(--nm);font-weight:700"></div>'
+     +'<div class="dpmsg" id="dpMsgC">'+(en?"Spot — no leverage, no liquidation."
        :"현물 — 레버리지도 청산도 없습니다.")+'</div><div id="obCoin" class="ob"></div>';
   }
   const lev=[1,2,3,5,10].map(function(v){
@@ -2889,7 +2890,7 @@ function dpCoinBar(){
 // 🔴 현물도 **USDT 금액**으로 넣는다(선물 증거금과 같은 단위). 코인 수량은 여기서 보여 준다.
 function dpSpotEst(){
   // 금액을 몇 개로 사는지 바로 보여준다 — 지정가면 그 값으로, 아니면 현재가로 (사장님 2026-09-24)
-  const en=LANG==="en", e=E("dpMsgC"); if(!e)return;
+  const en=LANG==="en", e=E("dpSpEst"); if(!e)return;
   const amt=dpNum(E("dpSpQ")&&E("dpSpQ").value), cur=dpPx["coin:"+coinSym]||0;
   const isLim=!!(E("dpTpL")&&E("dpTpL").classList.contains("on"));
   const lim=isLim?dpNum(E("dpCPx")&&E("dpCPx").value):0;
@@ -2899,7 +2900,7 @@ function dpSpotEst(){
     e.textContent="= "+(+(amt/px).toFixed(8))+" "+sym
       +(isLim?(en?" (at limit "+lim+")":" (지정가 "+lim+" 기준)"):(en?" (at market)":" (현재가 기준)"));
   }
-  else { e.textContent=en?"Spot — no leverage, no liquidation.":"현물 — 레버리지도 청산도 없습니다."; }
+  else { e.textContent=""; }
 }
 function dpCoinTp(limit){
   const m=E("dpTpM"), l=E("dpTpL"), px=E("dpCPx");
