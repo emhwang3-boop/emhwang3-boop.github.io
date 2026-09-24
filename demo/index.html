@@ -4207,12 +4207,16 @@ function recoPuz(parts){
           const f3=fs*0.92, iw3=lg?f3*1.2:0;
           let nw3=0; for(let q=0;q<txt.length;q++)nw3+=wide(txt[q])*f3;
           const sx3=x+w/2-(iw3+nw3)/2;
+          // 글자 획만 누르면 잘 안 눌린다 — 줄 전체를 누르는 자리로 깐다 (사장님 2026-09-24)
+          g+='<rect x="'+(x+3).toFixed(1)+'" y="'+(fy-f3*0.92).toFixed(1)+'" width="'+(w-6).toFixed(1)
+            +'" height="'+(f3*1.16).toFixed(1)+'" rx="4" fill="'+(on?"rgba(43,255,134,.18)":"rgba(255,255,255,0)")
+            +'" style="cursor:pointer;pointer-events:all" onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')"></rect>';
           if(lg)g+='<image href="'+lg+'" x="'+sx3.toFixed(1)+'" y="'+(fy-f3*0.8).toFixed(1)
             +'" width="'+(f3*1.02).toFixed(1)+'" height="'+(f3*1.02).toFixed(1)
-            +'" style="cursor:pointer" onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')"></image>';
+            +'" style="pointer-events:none"></image>';
           g+='<text x="'+(sx3+iw3).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="start" font-size="'+f3.toFixed(1)
             +'" font-weight="800" fill="'+(on?"#2bff86":"#fff")+'" stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke"'
-            +' style="cursor:pointer" onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')">'+dpEsc(txt)+'</text>';
+            +' style="pointer-events:none">'+dpEsc(txt)+'</text>';
           fy+=fs*1.18; });
       } else {
       if(tag){ g+=T(tag,tagS,"#FFD43B",0,ty-lh*0.18); ty+=tagS*1.25; }
