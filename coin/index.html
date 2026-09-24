@@ -273,7 +273,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div class="card svcard" id="cvAcct">
   <h3><span><span class="kko">가상 계좌</span><span class="ken">Virtual Account</span><span id="svAcctI" onclick="svInfoToggle(&quot;svAcctInfo&quot;)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle;margin-left:6px">i</span></span></h3>
   <div id="svAcctInfo" class="svsub" style="display:none"></div>
-  <div class="svacct"><span>USDT</span><b>100,000 USDT</b></div>
+  <div class="svacct svorig"><span>USDT</span><b>100,000 USDT</b></div>
   <div id="svLeft"></div>
   <div class="svsub"><span class="kko">모든 이용자에게 똑같이 주어지는 가상 금액입니다. 실제 자산이 아니며 고칠 수 없습니다.</span><span class="ken">A virtual amount given equally to every user. It is not real money and cannot be changed.</span></div>
 </div>
@@ -2300,6 +2300,10 @@ function bkSlotInfo() {
   return {use: use, n: n, eval: ev, left: CV_USDT - use, old: p};
 }
 function bkAcctPaint() {
+  // 담은 게 있으면 원금 줄은 감춘다 — 잔고·평가금액·합계로 갈음 (사장님 2026-09-24)
+  try { const on = (typeof bkGet === "function") && bkGet().length > 0;
+        document.querySelectorAll(".svorig").forEach(function (q) { q.style.display = on ? "none" : ""; }); } catch (e) {}
+
   const s = bkSlotInfo(), en = (typeof LANG !== "undefined" && LANG === "en");
   const t = function (v) { return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; };
   const n = document.getElementById("svLeft"); if (!n) return;
