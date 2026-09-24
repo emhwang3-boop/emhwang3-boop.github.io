@@ -4466,13 +4466,22 @@ function recoRender(){
     });
     alt2.sort(function(a,b){ return (b.m-a.m) || (b.t-a.t); });
     if(alt2.length){
+      // 1칸 = 코인 총자산(현물 + USDT)÷12 — 국내·미국과 같은 방식
+      var co2=(has&&RL.co)?RL.co.filter(function(p){return p.spot;}):[];
+      var coVal=co2.reduce(function(s,p){ return s+(p.qty||0)*(p.cur||0); },0);
+      var totCO=coVal+((cash&&cash.usdt)||0), slotCO=totCO>0?totCO/12:0;
       var a2='<div class="dphd" style="margin-top:8px">'+(en?"Altcoins (spot)":"알트 (현물)")+'</div>'
+        +(slotCO>0?'<div class="dpmsg">'+(en?"Slot ":"1칸 ")+slotCO.toLocaleString(undefined,{maximumFractionDigits:2})+' USDT</div>':'')
         +'<table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th>'
-        +'<th>'+(en?"20d":"20일")+'</th><th></th></tr>';
+        +'<th>'+(en?"20d":"20일")+'</th><th>'+(en?"Qty":"수량")+'</th><th></th></tr>';
       alt2.forEach(function(r,i){
+        var q=(slotCO>0&&r.z.price>0)?(slotCO/(+r.z.price)):0;
+        var qs=q>0?(q>=1?q.toLocaleString(undefined,{maximumFractionDigits:2})
+                        :q.toLocaleString(undefined,{maximumFractionDigits:6})):"-";
         a2+='<tr'+(i?' style="opacity:.62"':'')+'><td style="text-align:left">'+(i?"":"① ")+r.k+'</td>'
           +'<td>'+(r.z.price?(+r.z.price).toLocaleString(undefined,{maximumFractionDigits:4}):"-")+'</td>'
           +'<td class="'+(r.m>=0?"up":"dn")+'">'+(r.m>0?"+":"")+r.m.toFixed(1)+'%</td>'
+          +'<td>'+(i?"-":qs)+'</td>'
           +'<td style="white-space:nowrap"><button class="dpb dpsm" style="background:#2f9e44;border-color:#2b8a3e;margin-right:4px"'
           +' onclick="bkAdd(''+r.k+'-USDT',''+r.k+'','coin',1)">'+(en?"+Cart":"담기")+'</button>'
           +'<button class="dpb buy dpsm" onclick="pickCoin(''+r.k+'USDT',''+r.k+'','S');E('coin2').scrollIntoView({behavior:'smooth'})">'+(en?"View":"조회")+'</button></td></tr>';
