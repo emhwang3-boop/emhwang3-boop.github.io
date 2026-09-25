@@ -6360,12 +6360,19 @@ function bmPlan(o){
     tot += (+cash.krw || 0) + (+cash.usd || 0) * fx;                  // 코인은 빼고 센다 — 성향 밖 자산
     var rows = [];
     // ── 팔 것 ──
-    (RL.kr || []).concat(RL.us || []).forEach(function(p){
-      var hd = (typeof rlHeldDays === "function") ? rlHeldDays(p.code) : null, d = hd ? hd.days : 0, why = [];
-      if((+p.rt || 0) >= 15) why.push("+15% 도달");
-      if(d >= 60) why.push("60일 · " + d + "일째");
-      if(why.length && (+p.qty || 0) > 0) rows.push({side: "S", mk: p.mk, code: p.code, name: p.name || p.code, cls: pfClassOf(p), qty: Math.floor(+p.qty), why: why.join(" · ")});
+    // 🔴 자동매매와 같은 기준 (사장님 2026-09-26): 종목 +30/−15 · 바스켓(국내+미국) 전체 +15/−10 이면 전부. 자동매매 창에서 바꾼 값을 읽는다
+    var RU = (typeof AT !== "undefined" && AT.st && AT.st.rules) || {item_tp: 30, item_sl: -15, pf_tp: 15, pf_sl: -10};
+    var hs = (RL.kr || []).concat(RL.us || []), pc = 0, pl = 0;
+    hs.forEach(function(p){ var k = p.mk === "us" ? fx : 1, e = (+p.evl || 0) * k, l = (+p.pl || 0) * k; pc += e - l; pl += l; });
+    var pf = pc > 0 ? pl / pc * 100 : 0, all = pc > 0 && (pf >= RU.pf_tp || pf <= RU.pf_sl);
+    hs.forEach(function(p){
+      var rt = +p.rt || 0, why = "";
+      if(all) why = "바스켓 전체 " + (pf > 0 ? "+" : "") + pf.toFixed(1) + "% — 전부 " + (pf >= RU.pf_tp ? "익절" : "손절");
+      else if(rt >= RU.item_tp) why = "종목 " + (rt > 0 ? "+" : "") + rt.toFixed(1) + "% 익절(+" + RU.item_tp + "%)";
+      else if(rt <= RU.item_sl) why = "종목 " + rt.toFixed(1) + "% 손절(" + RU.item_sl + "%)";
+      if(why && (+p.qty || 0) > 0) rows.push({side: "S", mk: p.mk, code: p.code, name: p.name || p.code, cls: pfClassOf(p), qty: Math.floor(+p.qty), why: why});
     });
+    if(all) return {rows: rows, fx: fx, cash: cash};          // 전부 파는 날은 사지 않는다
     var ym = bmToday().slice(0, 7), trimOk = (function(){ try{ return localStorage.getItem("bm_trim_v1") !== ym; }catch(e){ return true; } })();
     g.mix.forEach(function(m){
       var c = m[0], budget = tot * m[1] / 100, slot = budget / 12, have = val[c] || 0;
@@ -6397,6 +6404,7 @@ async function bmBuild(){
   if(!(typeof RL !== "undefined" && RL.at)){ BM.msg = "먼저 실계좌를 불러와 주십시오."; bmRender(); return; }
   if(typeof RECO === "undefined" || !RECO){ BM.msg = "추천 자료를 받는 중입니다. 잠시 뒤 다시 눌러 주십시오."; bmRender(); return; }
   BM.busy = true; BM.msg = "현재가를 받는 중…"; BM.rows = null; bmRender();
+  try{ if(typeof AT !== "undefined" && !AT.st) AT.st = await atCall(null); }catch(e){}   // 파는 기준 = 자동매매 창 값
   try{
     var P = bmPlan(o), rows = P.rows, fx = P.fx, cash = P.cash;
     // 값 받기 · 수량 · 지정가
@@ -6458,7 +6466,7 @@ function bmRender(){
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = bmDoneGet() === bmToday();
   var h = '<h3>바스켓 매매</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여 매수·매도할 종목과 수량을 보여 줍니다. '
-        + '사기는 현재가 +1호가, 팔기는 현재가 −1호가 지정가입니다. 코인은 따로 다룹니다.</div>';
+        + '사기는 현재가 +1호가, 팔기는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)입니다. 코인은 따로 다룹니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button></div>';
   if(done) h += '<div class="dpmsg" style="color:#e8590c">오늘은 바스켓 매매를 했습니다 — 자동 사기는 쉬는 중입니다.</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
