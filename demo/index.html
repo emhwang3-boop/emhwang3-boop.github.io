@@ -251,6 +251,8 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 .discCard .discList li{font-size:12.5px;color:var(--sub);line-height:1.65;margin:6px 0}
 .discNote{margin-top:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;font-size:11.5px;color:var(--sub);line-height:1.6}
 #stkTag{display:none !important}   /* 주식 조회 제목 옆 장 상태 딱지 가림 (사장님 2026-09-25) */
+.svleg{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px;font-size:11px;color:var(--nm)}
+.svleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}   /* 성향 원형 그래프 범례 — 주식앱과 같게 (2026-09-25) */
 </style></head><body>
 <div class="top">
   <h1 id="ttl"></h1>
@@ -6100,6 +6102,25 @@ function pfShell(inner){
   d.innerHTML='<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:480px;width:100%;padding:20px 18px calc(16px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:90vh;overflow:auto">'+inner+'</div>';
   document.body.appendChild(d);
 }
+// 생년월일 — 년·월·일 세 칸. 다 치면 다음 칸으로 넘어간다 · 숫자는 앱 글꼴 그대로 (사장님 2026-09-25)
+function pfBirthHtml(b){
+  var p = String(b||"").split("-"), st = 'class="dpin" inputmode="numeric" autocomplete="off" style="font:inherit;font-size:14px;text-align:center;min-width:0;';
+  return '<div style="flex:1;display:flex;gap:4px;align-items:center">'
+    + '<input id="pfBy" '+st+'flex:1.6" maxlength="4" placeholder="생년" value="'+pfEsc(p[0]||"")+'" oninput="pfBirthNext(this,4,&quot;pfBm&quot;)">'
+    + '<input id="pfBm" '+st+'flex:1" maxlength="2" placeholder="월" value="'+pfEsc(p[1]||"")+'" oninput="pfBirthNext(this,2,&quot;pfBd&quot;)">'
+    + '<input id="pfBd" '+st+'flex:1" maxlength="2" placeholder="일" value="'+pfEsc(p[2]||"")+'" oninput="pfBirthNext(this,2,&quot;&quot;)">'
+    + '</div>';
+}
+function pfBirthNext(el, n, nx){
+  el.value = String(el.value||"").replace(/[^0-9]/g,"").slice(0,n);
+  if(el.value.length >= n){ var e = nx ? document.getElementById(nx) : null; if(e){ e.focus(); e.select && e.select(); } else el.blur(); }
+}
+function pfBirthVal(){
+  var y=(document.getElementById("pfBy")||{}).value||"", m=(document.getElementById("pfBm")||{}).value||"", d=(document.getElementById("pfBd")||{}).value||"";
+  if(!/^(19|20)\d\d$/.test(y)) return "";
+  var mi=+m, di=+d; if(!(mi>=1&&mi<=12&&di>=1&&di<=31)) return "";
+  return y+"-"+String(mi).padStart(2,"0")+"-"+String(di).padStart(2,"0");
+}
 // 설문 팝업 — 이름·생년월일 + 7문항
 function pfOpen(){
   var o = pfGet() || {}, A = o.ans || [];
@@ -6107,7 +6128,7 @@ function pfOpen(){
     + '<span onclick="pfClose()" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
     + '<div class="dpmsg" style="margin:4px 0 10px">금융투자협회 표준투자권유준칙의 투자자정보 확인서 문항입니다. 결과는 이 폰에만 저장됩니다.</div>'
     + '<div style="display:flex;gap:8px;margin-bottom:10px"><input id="pfName" class="dpin" placeholder="성명" value="'+pfEsc(o.name||"")+'" style="flex:1">'
-    + '<input id="pfBirth" class="dpin" type="date" value="'+pfEsc(o.birth||"")+'" style="flex:1"></div>';
+    + pfBirthHtml(o.birth) + '</div>';
   PF_Q.forEach(function(q, i){
     h += '<div style="margin:12px 0 4px;font-weight:800;font-size:14px">'+(i+1)+'. '+q.q+'</div>';
     q.a.forEach(function(t, k){
@@ -6121,14 +6142,14 @@ function pfOpen(){
   pfShell(h);
 }
 function pfSubmit(){
-  var nm = (document.getElementById("pfName").value||"").trim(), bd = document.getElementById("pfBirth").value||"";
+  var nm = (document.getElementById("pfName").value||"").trim(), bd = pfBirthVal();
   var ans = [], miss = [];
   PF_Q.forEach(function(q, i){
     var els = [].slice.call(document.querySelectorAll('input[name="pfq'+i+'"]:checked')).map(function(e){ return +e.value; });
     if(q.multi) ans.push(els); else ans.push(els.length ? els[0] : null);
     if(!els.length) miss.push(i+1); });
   var err = document.getElementById("pfErr");
-  if(!nm || !bd){ err.textContent = "성명과 생년월일을 넣어 주십시오."; return; }
+  if(!nm || !bd){ err.textContent = "성명과 생년월일(년 4자리 · 월 · 일)을 바르게 넣어 주십시오."; return; }
   if(miss.length){ err.textContent = miss.join(", ") + "번 문항에 답해 주십시오."; return; }
   var r = pfScore(ans);
   pfSave({name: nm, birth: bd, ans: ans, raw: r.raw, score: r.score, gi: r.gi, at: new Date().toISOString().slice(0,10)});
@@ -6223,11 +6244,11 @@ function pfRender(){
   card.innerHTML = h;
   pfAcctRender(o);
 }
-// ③ 계좌 카드 아래 — 증권사명 · 계좌번호(가운데 가림) · 성명
+// ③ 계좌 카드 바로 위 — 증권사명 · 계좌번호(가운데 가림) · 성명
 function pfAcctRender(o){
   var box = document.getElementById("pfAcct");
   if(!box){ var ac=document.getElementById("demoacct"); if(!ac) return;
-    box=document.createElement("div"); box.id="pfAcct"; box.className="card"; ac.parentNode.insertBefore(box, ac.nextSibling); }
+    box=document.createElement("div"); box.id="pfAcct"; box.className="card"; ac.parentNode.insertBefore(box, ac); }   // 계좌 카드 바로 위 (사장님 2026-09-25)
   if(!PF_ACCT && typeof ST!=="undefined" && ST && ST.kr && ST.kr.broker) pfAcctLoad();   // 키는 보지 않는다 — 열쇠판은 키가 중계기에 있다
   var nm = o ? pfEsc(o.name) : '<span class="dplbl">성향 분석 후 표시</span>';
   var rows = [];
