@@ -2715,7 +2715,10 @@ function svAcctPop(e) {
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
     + '<div style="font-size:19px;font-weight:800">' + (en ? "Virtual basket" : "가상 바스켓") + '</div>'
     + '<span onclick="document.getElementById(\'svAcctPop\').remove()" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
-    + body + '</div>';
+    + body
+    + '<button onclick="document.getElementById(\'svAcctPop\').remove()" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;'
+    + 'border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">'
+    + (en ? "Got it" : "알겠습니다") + '</button></div>';
   document.body.appendChild(d);
 }
 function bkTowerInfo(e) {
