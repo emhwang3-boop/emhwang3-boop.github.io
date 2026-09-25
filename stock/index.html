@@ -2181,7 +2181,7 @@ function slotBars(name, slotTxt, filled) {
   const en = (typeof LANG !== "undefined" && LANG === "en");
   return '<div class="slrow"><div class="slhd"><b>' + name + '</b>'
        + (slotTxt ? '<span>' + (en ? "slot " : "1칸 ") + slotTxt + '</span>' : '')
-       + '<span class="sn">' + n + (en ? " items / 12 slots" : " 종목 / 12 칸") + '</span></div>' + b + '</div>';
+       + '<span class="sn">' + n + (en ? " / 12 slots" : " / 12 칸") + '</span></div>' + b + '</div>';
 }
 function bkOldest() {                       // 보관한 포트폴리오가 여럿이면 **가장 오래된 것** (사장님 2026-09-24)
   const sv = (typeof bkSaveGet === "function") ? bkSaveGet() : [];
@@ -2264,12 +2264,44 @@ function bkSlotAmt(ccy) {
   return (s.leftK + s.evalK) / 12;               // 한 계좌 (2026-09-25)
 }
 function bkAutoAmt(list) {
-  // 12칸 — 가상 계좌를 열둘로 나눈 한 칸씩 (사장님 2026-09-24, 데모앱과 같은 방식)
-  //   🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
-  const out = {};
-  const sK = bkSlotAmt("KRW");
-  list.forEach(function (x) { out[x.code] = sK; });
+  // 🔴 하루 예산은 한 칸(가상 계좌 ÷ 12)뿐이다 (사장님 2026-09-25). 담은 종목이 몇 개든 합계가 한 칸을 넘지 않는다.
+  //    그 한 칸을 고른 성향의 목표 비중대로 나눈다 — 담긴 갈래끼리 비율을 다시 100 으로 맞추고, 같은 갈래가 여럿이면 똑같이 나눈다.
+  //    🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
+  const out = {}, D = bkSlotAmt("KRW");
+  let mix = null; try { const p = svGet(); if (p && SV_GRADE[p.pick]) mix = {}; if (mix) SV_GRADE[p.pick].mix.forEach(function (m) { mix[m[0]] = m[1]; }); } catch (e) {}
+  const clsOf = function (x) { let c = x.cls || bkClassOf(x); if (BK_CLS_OLD[c]) c = BK_CLS_OLD[c]; return c; };
+  const wOf = function (c) { return mix ? (mix[c] || 5) : 1; };          // 성향 밖 갈래는 가장 작은 몫(5)
+  const cnt = {}; list.forEach(function (x) { const c = clsOf(x); cnt[c] = (cnt[c] || 0) + 1; });
+  const sumW = Object.keys(cnt).reduce(function (t, c) { return t + wOf(c); }, 0) || 1;
+  list.forEach(function (x) { const c = clsOf(x); out[x.code] = D * wOf(c) / sumW / cnt[c]; });
   return out;
+}
+// 목표와의 차이 — 보관한 포트폴리오(가상 계좌가 세는 것)와 고른 성향 비율을 견준다 (사장님 2026-09-25, 퍼즐맵 앞)
+function bkGapHtml() {
+  var p = null; try { p = svGet(); } catch (e) {}
+  var g = p ? SV_GRADE[p.pick] : null; if (!g) return "";
+  var TGT = {}; g.mix.forEach(function (m) { TGT[m[0]] = m[1]; });
+  var hd = '<div class="svsub svacct2" style="margin-top:12px;font-weight:800;color:var(--sub)">' + KE("목표와의 차이", "Gap to target") + '</div>';
+  var old = bkOldest();
+  if (!old) return hd + '<div class="svsub">' + KE("바스켓을 보관하면 지금 포트폴리오와 목표 비중의 차이를 여기에 보여 드립니다.",
+                                          "Save a basket to see the gap between your portfolio and the target here.") + '</div>';
+  var er = old.erows || [], val = {};
+  (old.items || []).forEach(function (x, i) {
+    var c = x.cls || bkClassOf(x); if (BK_CLS_OLD[c]) c = BK_CLS_OLD[c];
+    var e = er[i] || {}, v = bkToKrw((+x.amt || 0) + ((typeof e.pl === "number") ? e.pl : 0), x.ccy || "KRW");
+    val[c] = (val[c] || 0) + v; });
+  var si = bkSlotInfo(), acct = si.leftK + si.evalK;
+
+  // 지금 = 가상 계좌(잔고+평가금액) 안에서 그 갈래가 차지하는 몫 · 목표 = 고른 성향 비율 · 차이 = 지금 − 목표
+  var keys = Object.keys(TGT); Object.keys(val).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
+  var h = hd + '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("지금", "Now")
+        + '</th><th>' + KE("목표", "Target") + '</th><th>' + KE("차이", "Gap") + '</th></tr>';
+  keys.forEach(function (k) {
+    var now = acct > 0 ? (val[k] || 0) / acct * 100 : 0, tg = TGT[k] || 0, d = now - tg;
+    h += '<tr><td style="text-align:left">' + KN(k) + '</td><td>' + now.toFixed(1) + '%</td><td>' + tg.toFixed(1) + '%</td>'
+       + '<td class="' + (d < -0.05 ? "dn" : (d > 0.05 ? "up" : "fl")) + '">' + (d > 0 ? "+" : (d < 0 ? "−" : "")) + Math.abs(d).toFixed(1) + '%p</td></tr>';
+  });
+  return h + '</table>';
 }
 function bkAmtOf(list) {
   const auto = bkAutoAmt(list), out = {};
@@ -2320,7 +2352,7 @@ function bkRender() {
   {
     const si = bkSlotInfo(), en2 = (typeof LANG !== "undefined" && LANG === "en");
     h += '<div class="slbox">'
-       + slotBars(KE("가상 계좌", "Account"), Math.round(bkSlotAmt("KRW")).toLocaleString() + (en2 ? " KRW" : "원"), si.nK)
+       + slotBars(KE("가상 계좌", "Account"), Math.round(bkSlotAmt("KRW")).toLocaleString() + (en2 ? " KRW" : "원"), Math.round(si.useK / (SV_KRW / 12)))      // 켜진 칸 = 쓴 돈 ÷ 한 칸 (2026-09-25)
        + '</div>';
   }
   if (!a.length) {
@@ -2350,10 +2382,10 @@ function bkRender() {
   if (tot.length) h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
        + '<td colspan="3" style="text-align:right">' + tot.join(" · ") + '</td></tr>';
   h += '</table>';
-  h += '<div class="svsub">' + KE("금액은 가상 계좌를 열두 칸으로 나눈 한 칸씩으로 채워집니다. 직접 고치셔도 됩니다.",
-       "Amounts are one of twelve equal slots of the virtual account. You can edit them.")
+  h += '<div class="svsub">' + KE("하루에 쓰는 돈은 한 칸(가상 계좌 ÷ 12)뿐이며, 그 안에서 목표 비중대로 나눠 채웁니다. 직접 고치셔도 됩니다.",
+       "You spend one slot (account ÷ 12) a day, split by the target weights. You can edit them.")
      + ' <span class="dplbl" style="cursor:pointer;text-decoration:underline" onclick="bkAmtReset()">'
-     + KE("1칸으로 되돌리기", "Reset to one slot") + '</span></div>';
+     + KE("하루 몫으로 되돌리기", "Reset to today's slot") + '</span></div>';
   h += '<div class="cvrow">' + BK_SPANS.map(function (s) {
       return '<button class="svbtn" style="flex:1;text-align:center;margin:0" onclick="bkRun(' + s[0] + ')">' + KE(s[1], s[2]) + '</button>';
     }).join("") + '<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="bkClear()">' + KE("비우기", "Clear") + '</button></div>';
@@ -3270,6 +3302,7 @@ function svRecoRender() {
 
   // ③ 자산군별 종목 — **비중 없이** 이름만
   // ③ 자산군 퍼즐 — 조각을 누르면 뒤집혀 그 자산군 추천 종목이 나온다 (사장님 2026-09-23)
+  try { h += bkGapHtml(); } catch (e) {}      // 목표와의 차이 — 퍼즐맵 앞 (사장님 2026-09-25)
   h += '<div class="svsub svacct2" style="margin-top:12px;font-weight:800;color:var(--sub)">' + KE("자산 종류별 추천 종목", "Picks by asset class")
      + ' <span class="dplbl" style="font-size:12px;font-weight:600">' + KE("조각을 누르면 뒤집힙니다", "Tap a piece to flip") + '</span></div>';
   // 장세는 좋으면 초록, 나쁘면 빨강 (사장님 2026-09-20)
