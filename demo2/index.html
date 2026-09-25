@@ -267,6 +267,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div id="krstat"></div>
 <div class="gauges" id="gauges"></div>
 <div class="gnote">시장온도 · VIX · 공포·탐욕 — 주식시장 기준</div>
+<div class="card" id="ydCard"><h3>어제 매매 <span class="dplbl" id="ydDate"></span></h3><div id="ydBody"><div class="dpmsg">실계좌를 불러오면 어제(00:00~24:00) 매매를 모아 보여 줍니다.</div></div></div>
 <div class="card" id="myhold">
   <h3>내 보유종목 <span class="tag live">● 실시간</span></h3><div class="rlbar"><button class="dpb flat dpsm" onclick="rlLoad()">실계좌 불러오기</button><button class="dpb flat dpsm" onclick="rlClear()">지움</button><button class="dpb flat dpsm" id="atBtn" onclick="atOpen()">자동매매</button><span class="rlmsg" id="rlMsg"></span></div>
   <div id="mhBody"></div>
@@ -3641,6 +3642,124 @@ function atPaint(){
     +(lg.length?lg.map(function(l){ return '<div>'+dpEsc(l)+'</div>'; }).join(""):'<span class="dpmsg">'+KE("아직 기록이 없습니다","No entries yet")+'</span>')+'</div>';
   b.innerHTML=h;
 }
+// ── 어제 매매 카드 (사장님 2026-09-25) — 어제 00:00~오늘 00:00(한국) 국내·미국·코인 체결 요약 ─────────────
+//    국내 = 매매일지 ka10170(실현손익 pl_amt 그대로) · 휴장이면 '휴장'(쉬는 날 ka10170 은 전날 것을 준다)
+//    미국 = ust21180 체결분 · 코인 = OKX 현물 체결 — 두 곳의 실현손익은 앞선 매수 평균으로 어림한 (추정)
+//    자동/수동 딱지 = 중계기 자동매매 기록(/auto)의 「주문」 줄과 맞춘다. 기록을 못 받으면 딱지 없음.
+var YD = {day: "", busy: false, html: ""};
+function ydYmd(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
+async function ydAutoKeys(md){
+  var out = null;
+  try{
+    var base = (typeof rlRelay === "function") ? rlRelay() : "";
+    if(!base) return null;
+    var h = {}; try{ if(typeof rlHdr === "function") h = rlHdr(h); }catch(e){}
+    var r = await fetch(base + "/auto", {headers: h, cache: "no-store"});
+    if(!r.ok) return null;
+    var j = await r.json(); out = {};
+    (j.log || []).forEach(function(l){
+      var m = /^(\d\d-\d\d) \d\d:\d\d 주문 (국내|미국|코인) (\S+) (매수|매도)/.exec(l);
+      if(m && m[1] === md) out[{"국내":"kr","미국":"us","코인":"coin"}[m[2]] + ":" + m[3] + ":" + (m[4] === "매수" ? "B" : "S")] = 1;
+    });
+  }catch(e){ return null; }
+  return out;
+}
+async function ydLoad(force){
+  var now = new Date(), y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  var ds = ydYmd(y), md = ds.slice(4,6) + "-" + ds.slice(6,8);
+  if(YD.busy || (!force && YD.day === ds)) return;
+  YD.busy = true;
+  var en = LANG === "en", rows = [], note = [];
+  try{
+    var auto = await ydAutoKeys(md);
+    var tok = null; try{ tok = await rlToken(); }catch(e){ note.push(KE("키움 ","Kiwoom ") + e.message); }
+    // 국내
+    if(tok){
+      try{
+        var c = await rlKiwoom(tok, "/api/dostk/chart", "ka20006", {inds_cd: "001", base_dt: ds});
+        var open = ((c && c.inds_dt_pole_qry) || [])[0]; open = open && String(open.dt) === ds;
+        if(!open) note.push(KE("국내 휴장","KR closed"));
+        else{
+          var j = await rlKiwoom(tok, "/api/dostk/acnt", "ka10170", {base_dt: ds, ottks_tp: "1", ch_crd_tp: "0"});
+          ((j && j.tdy_trde_diary) || []).forEach(function(r){
+            var cd = String(r.stk_cd || "").replace(/^A/, ""), bq = rlNum(r.buy_qty), sq = rlNum(r.sell_qty);
+            if(bq > 0) rows.push({mk:"kr", code:cd, name:r.stk_nm||cd, side:"B", qty:bq, amt:rlNum(r.buy_amt), pl:null});
+            if(sq > 0) rows.push({mk:"kr", code:cd, name:r.stk_nm||cd, side:"S", qty:sq, amt:rlNum(r.sell_amt), pl:rlNum(r.pl_amt), est:false});
+          });
+        }
+      }catch(e){ note.push(KE("국내 ","KR ") + e.message); }
+      // 미국 — 어제 체결 + 앞선 85일 매수로 평균값
+      try{
+        var st = new Date(y); st.setDate(st.getDate() - 85);
+        var u = await rlKiwoom(tok, "/api/us/acnt", "ust21180", {strt_dt: ydYmd(st), end_dt: ds, slby_tp: "", stex_tp: "", stk_cd: "", oppo_trde_tp: ""});
+        var ul = ((u && u.result_list) || []).filter(function(r){ return rlNum(r.cntr_qty) > 0; });
+        var avg = {};
+        ul.filter(function(r){ return String(r.ord_dt) < ds && /매수/.test(r.slby_tp_nm||""); }).forEach(function(r){
+          var k = String(r.stk_cd).toUpperCase(); avg[k] = avg[k] || {q:0, a:0}; avg[k].q += rlNum(r.cntr_qty); avg[k].a += rlNum(r.cntr_amt); });
+        var g = {};
+        ul.filter(function(r){ return String(r.ord_dt) === ds; }).forEach(function(r){
+          var k = String(r.stk_cd).toUpperCase(), sd = /매수/.test(r.slby_tp_nm||"") ? "B" : "S", key = k + ":" + sd;
+          g[key] = g[key] || {mk:"us", code:k, name:k, side:sd, qty:0, amt:0}; g[key].qty += rlNum(r.cntr_qty); g[key].amt += rlNum(r.cntr_amt); });
+        Object.keys(g).forEach(function(k){ var o = g[k];
+          if(o.side === "S"){ var a = avg[o.code]; o.pl = (a && a.q) ? o.amt - o.qty * (a.a / a.q) : null; o.est = true; } else o.pl = null;
+          rows.push(o); });
+      }catch(e){ note.push(KE("미국 ","US ") + e.message); }
+    }
+    // 코인 — 어제 체결 + 앞선 90일 매수로 평균값
+    try{
+      var b0 = new Date(y).getTime(), b1 = b0 + 86400000, b90 = b0 - 90 * 86400000;
+      var f = await rlOkx("/api/v5/trade/fills-history?instType=SPOT&begin=" + b90 + "&end=" + b1);
+      var fl = (f && f.data) || [], cavg = {}, cg = {};
+      fl.forEach(function(r){ var t = +r.ts, k = r.instId, q = rlNum(r.fillSz), px = rlNum(r.fillPx);
+        if(t < b0 && r.side === "buy"){ cavg[k] = cavg[k] || {q:0, a:0}; cavg[k].q += q; cavg[k].a += q * px; }
+        if(t >= b0 && t < b1){ var sd = r.side === "buy" ? "B" : "S", key = k + ":" + sd;
+          cg[key] = cg[key] || {mk:"coin", code:k, name:String(k).split("-")[0], side:sd, qty:0, amt:0}; cg[key].qty += q; cg[key].amt += q * px; } });
+      Object.keys(cg).forEach(function(k){ var o = cg[k];
+        if(o.side === "S"){ var a = cavg[o.code]; o.pl = (a && a.q) ? o.amt - o.qty * (a.a / a.q) : null; o.est = true; } else o.pl = null;
+        rows.push(o); });
+    }catch(e){ note.push(KE("코인 ","Crypto ") + e.message); }
+    rows.forEach(function(o){ o.auto = auto ? !!auto[o.mk + ":" + o.code + ":" + o.side] : null; });
+    YD.day = ds; YD.html = ydHtml(rows, note, auto);
+  }finally{ YD.busy = false; }
+  var b = E("ydBody"); if(b) b.innerHTML = YD.html;
+  var t = E("ydDate"); if(t) t.textContent = ds.slice(0,4) + "-" + md;
+}
+function ydHtml(rows, note, auto){
+  var en = LANG === "en", fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 0;
+  var money = function(mk, v){ return mk === "kr" ? Math.round(v).toLocaleString() + (en ? " KRW" : "원")
+    : (mk === "us" ? "$" + (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) : (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"); };
+  var MK = {kr: KE("국내","KR"), us: KE("미국","US"), coin: KE("코인","Crypto")};
+  var h = "";
+  if(!rows.length) h += '<div class="dpmsg">' + KE("어제 매매 없음.", "No trades yesterday.") + '</div>';
+  else{
+    h += '<table class="mhtab"><tr><th>' + KE("종목","Item") + '</th><th>' + KE("매매","Side") + '</th><th>' + KE("금액","Amount") + '</th><th>' + KE("실현손익","Realized") + '</th></tr>';
+    var ord = {kr:0, us:1, coin:2};
+    rows.sort(function(a, b){ return (ord[a.mk] - ord[b.mk]) || (a.side < b.side ? -1 : 1); });
+    var buyK = 0, sellK = 0, plK = 0, plEst = false;
+    rows.forEach(function(o){
+      var k = o.mk === "kr" ? 1 : fx;
+      if(o.side === "B") buyK += o.amt * k; else sellK += o.amt * k;
+      if(o.pl != null){ plK += o.pl * k; if(o.est) plEst = true; }
+      var tag = o.auto === null ? "" : (o.auto ? ' <span class="tag" style="background:#1c7ed6;color:#fff">' + KE("자동","Auto") + '</span>'
+                                                : ' <span class="tag" style="background:#868e96;color:#fff">' + KE("수동","Manual") + '</span>');
+      var pl = o.pl == null ? "" : ((o.est ? "(" : "") + (o.pl > 0 ? "+" : "") + money(o.mk, o.pl) + (o.est ? ")" : ""));
+      h += '<tr><td style="text-align:left">' + dpEsc(o.name) + ' <span class="dplbl">' + MK[o.mk] + '</span>' + tag + '</td>'
+        + '<td class="' + (o.side === "B" ? "up" : "dn") + '">' + (o.side === "B" ? KE("매수","Buy") : KE("매도","Sell")) + ' ' + (+o.qty).toLocaleString(undefined, {maximumFractionDigits: 6}) + '</td>'
+        + '<td>' + money(o.mk, o.amt) + '</td><td class="' + (o.pl > 0 ? "up" : (o.pl < 0 ? "dn" : "fl")) + '">' + pl + '</td></tr>';
+    });
+    h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계(원화)","Total (KRW)") + '</td><td colspan="3" style="text-align:right">'
+      + KE("매수 ","Buy ") + Math.round(buyK).toLocaleString() + ' · ' + KE("매도 ","Sell ") + Math.round(sellK).toLocaleString()
+      + ' · ' + KE("실현 ","Realized ") + (plEst ? "(" : "") + (plK > 0 ? "+" : "") + Math.round(plK).toLocaleString() + (plEst ? ")" : "") + '</td></tr></table>';
+    h += '<div class="dpmsg">' + KE("( ) 안은 추정값입니다 — 미국 주식·코인의 실현손익은 앞선 매수 평균값으로 어림했습니다.",
+      "( ) = estimate — US stock and crypto realized P/L use the average of earlier buys.") + (fx ? "" : KE(" 환율을 못 받아 합계는 국내만입니다."," FX not loaded; total is KR only.")) + '</div>';
+  }
+  if(note.length) h += '<div class="dpmsg">' + dpEsc(note.join(" · ")) + '</div>';
+  if(auto === null) h += '<div class="dpmsg">' + KE("자동매매 기록을 못 받아 자동·수동 딱지를 붙이지 못했습니다.","Auto-trading log unavailable — no Auto/Manual tags.") + '</div>';
+  return h;
+}
+// 계좌를 불러온 뒤 하루 한 번 (날이 바뀌면 다시)
+setInterval(function(){ try{ if(typeof RL !== "undefined" && RL.at && !YD.busy) ydLoad(false); }catch(e){} }, 20000);
+
 function holdTower3D(){
   const a=dpHoldItems(); if(!a.length)return;
   openTower3D(a.map(function(x){ return {code:x.code,name:x.name,mk:x.mk,spot:x.spot,base:x.base,ret:x.ret,val:x.val,ccy:x.ccy}; }),
