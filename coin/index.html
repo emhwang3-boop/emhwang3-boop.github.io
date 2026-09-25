@@ -295,7 +295,7 @@ button{text-align:center !important}
 </div>
 
 <div class="card svcard" id="bkCard">
-  <h3><span><span class="kko">가상 바스켓</span><span class="ken">Virtual Basket</span><span id="svAcctI" onclick="svInfoToggle(&quot;svAcctInfo&quot;)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle;margin-left:6px">i</span></span><span id="bkCnt" class="bkcnt"></span></h3>
+  <h3><span><span class="kko">가상 바스켓</span><span class="ken">Virtual Basket</span><span id="svAcctI" onclick="svAcctPop(event)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle;margin-left:6px">i</span></span><span id="bkCnt" class="bkcnt"></span></h3>
   <div id="svAcctInfo" class="svsub" style="display:none"></div>
   <div id="bkBody"></div>
 </div>
@@ -2331,7 +2331,7 @@ function bkAcctPaint() {
   const inf = document.getElementById("svAcctInfo");
   if (inf) { inf.style.whiteSpace = "pre-line"; inf.textContent = KE("🧩 USDT 자산을 12칸으로 나눠, 하루에 한 칸씩 투자합니다.\n🎯 칸마다 들어갈 코인은 추천 코인에서 고객님이 직접 고릅니다.\n💰 한 칸 금액 = 가상 계좌 합계 ÷ 12. 그래서 평가금액이 불어나면 한 칸이 현재 잔고보다 커질 수도 있어요!\n📦 평가금액은 보관한 포트폴리오에서 가져오며, 여럿이면 가장 오래된 것을 씁니다. [평가금액 업데이트] 를 누르면 다시 셉니다 🔄\n➕ 합계 = 현재 잔고 + 평가금액입니다. [초기화] 를 누르면 처음으로 돌아갑니다 ⏪\n🎮 모두 가상 금액이며 실제 매수를 권하는 값이 아닙니다.",
       "🧩 Your USDT assets are split into 12 slots — invest one slot a day.\n🎯 You pick each slot's coin from the recommended list.\n💰 One slot = account total ÷ 12, so if holdings grow, a slot can be larger than your cash!\n📦 Holdings come from a saved portfolio (the oldest if several). Tap Update holdings to recount 🔄\n➕ Total = cash + holdings. Reset takes you back to the start ⏪\n🎮 All amounts are virtual and not a recommendation to buy.");
-             inf.style.display = (typeof svInfoDisp === "function") ? svInfoDisp("svAcctInfo") : "none"; }
+             inf.style.display = "none"; }   // 이제 팝업(svAcctPop)으로 연다 (2026-09-25)
 }
 // ── 가상 계좌 — 굴러가는 잔고 (사장님 2026-09-24) ─────────────────────────────
 //   담으면 잔고가 줄고 평가금액으로 옮겨 간다. 합계 = 잔고 + 평가금액.
@@ -2928,6 +2928,27 @@ function towerFromSaved(id) {
 }
 
 // ⓘ → 3D 타워 보는 법 팝업 — 차트 쓰는 법(c21Coach)과 같은 모양 (사장님 2026-09-22 "화면에 글로 말고 팝업을 이쁘게")
+// 가상 바스켓 ⓘ → 팝업 (사장님 2026-09-25 "팝업으로 · 글씨 키우고") — 글은 #svAcctInfo 에 bkAcctPaint 가 채운 것을 그대로 쓴다
+function svAcctPop(e) {
+  try { if (e) e.stopPropagation(); } catch (x) {}
+  if (document.getElementById("svAcctPop")) return;
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  var src = document.getElementById("svAcctInfo");
+  var txt = src ? String(src.textContent || "") : "";
+  var d = document.createElement("div"); d.id = "svAcctPop";
+  d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
+  d.addEventListener("click", function (ev) { if (ev.target === d) d.remove(); });
+  var esc = function (s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+  var body = txt.split("\n").filter(function (l) { return l.trim(); }).map(function (l) {
+    return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + esc(l) + '</div>'; }).join("");
+  d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;'
+    + 'padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+    + '<div style="font-size:19px;font-weight:800">' + (en ? "Virtual basket" : "가상 바스켓") + '</div>'
+    + '<span onclick="document.getElementById(\'svAcctPop\').remove()" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
+    + body + '</div>';
+  document.body.appendChild(d);
+}
 function bkTowerInfo(e) {
   try { if (e) e.stopPropagation(); } catch (x) {}
   if (document.getElementById("bkTowerPop")) return;
