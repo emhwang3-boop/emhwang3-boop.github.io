@@ -4666,8 +4666,8 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
         + '<td>'+fill+'</td><td'+(empty>0?' style="color:#00c805;font-weight:800"':'')+'>'+empty+'</td></tr>';
     });
     t += '</table><div class="dpmsg">'
-      + (en ? "Total assets (cash + holdings) are split into twelve slots; one slot is bought per day while slots are empty. Crypto counts slots by amount (spot only)."
-            : "총자산(예수금+평가금액)을 열두 칸으로 나누고, 빈 칸이 있는 날에만 한 칸씩 삽니다. 코인은 현물만 보며 칸을 금액으로 셉니다.")
+      + (en ? "(Cash + holdings) × the allocation weight is split into twelve slots; one slot is bought per day while slots are empty. Crypto counts slots by amount (spot only)."
+            : "(예수금+평가금액) × 자산배분비율의 결과를 열두 칸으로 나누고, 빈 칸이 있는 날에만 한 칸씩 삽니다. 코인은 현물만 보며 칸을 금액으로 셉니다.")
       + '</div>';
     return t;
   }catch(e){ return ""; }
@@ -4755,10 +4755,12 @@ function recoRender(){
       var _pl = []; try{ _pl = bmPlan(_pfo).rows.filter(function(r){ return r.mk === mk; }); }catch(e){}
       s += '<div class="dpmsg" style="font-weight:700;color:var(--nm)">' + (en ? "Today (profile rule)" : "오늘 살 것·팔 것 — 내 성향 규칙") + '</div>';
       if(!_pl.length) s += '<div class="dpmsg">' + (en ? "Nothing today — classes are near target." : "오늘은 없습니다 — 갈래가 목표 근처입니다.") + '</div>';
-      else { window._RO = window._RO || {}; s += '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th>' + (en ? "Amount" : "금액·수량") + '</th><th></th></tr>' + _pl.map(function(r){
+      else { window._RO = window._RO || {}; s += '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th>' + (en ? "20d" : "20일") + '</th><th>' + (en ? "Amount" : "금액·수량") + '</th><th></th></tr>' + _pl.map(function(r){
+          var m20 = r20Of(r.code);
           var key = r.side + ":" + r.mk + ":" + r.code; window._RO[key] = r;
           var go = r.mk === "kr" ? ("pickStock('" + r.code + "','" + String(r.name).replace(/'/g, "") + "')") : ("pickStockUS('" + String(r.code).replace(/\.US$/, "") + ".US','" + String(r.code).replace(/\.US$/, "") + "')");
           return '<tr><td style="text-align:left;cursor:pointer" onclick="' + go + ';E(\'stock\').scrollIntoView({behavior:\'smooth\'})"><u>' + dpEsc(r.name) + '</u><br><span class="dplbl">' + dpEsc(r.why) + '</span></td>'
+            + '<td class="' + (m20 == null ? "fl" : (m20 >= 0 ? "up" : "dn")) + '">' + (m20 == null ? "-" : ((m20 > 0 ? "+" : "") + m20.toFixed(1) + "%")) + '</td>'
             + '<td id="roq_' + key.replace(/[^A-Za-z0-9]/g, "_") + '">' + (r.side === "B" ? '<span class="dplbl">' + money(r.mk === "us" ? r.amt / fx : r.amt) + '</span>' : (r.qty + (en ? " sh" : "주"))) + '</td>'
             + '<td><button class="dpb ' + (r.side === "B" ? "buy" : "sell") + ' dpsm" onclick="recoOrd(&quot;' + key + '&quot;)">' + (r.side === "B" ? (en ? "BUY" : "매수") : (en ? "SELL" : "매도")) + '</button></td></tr>'; }).join("") + '</table>'; }
     }
@@ -4814,15 +4816,19 @@ function recoRender(){
   }
   h+=body;
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
-  const co=(has?RL.co:[]).filter(function(p){return !p.spot;});
-  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto":"코인")+'</div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Held":"보유")+'</th><th></th><th></th></tr>';
+  // 🔴 BTC·ETH 는 현물로 본다 (사장님 2026-09-26) — 규칙은 매수/매도, 보유는 현물, 한 칸은 코인 총자산 × 45% ÷ 12
+  const co=(has?RL.co:[]).filter(function(p){return p.spot;});
+  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"20d":"20일")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Held":"보유")+'</th><th></th><th></th></tr>';
   ["BTC","ETH"].forEach(function(k){
     const z=(R.coin||{})[k]||{}, pos=co.filter(function(p){return String(p.code).indexOf(k+"-")===0;})[0];
-    const now=pos?(pos.side==="L"?(en?"LONG":"롱"):(en?"SHORT":"숏")):(en?"none":"없음");
-    const want=cs(z), ok=(!pos&&z.state==="cash")||(pos&&((pos.side==="L"&&z.state==="long")||(pos.side==="S"&&z.state==="short")));
-    c+='<tr><td style="text-align:left;cursor:pointer" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'F\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})"><u>'+k+'</u></td><td>'+(z.price?(+z.price).toLocaleString(undefined,{maximumFractionDigits:2}):"-")+'</td><td>'+want+'<br><span class="dplbl">'+(z.width!==undefined?(en?"width ":"폭 ")+z.width+"%":"")+'</span></td>'
+    const held=!!(pos&&pos.qty>0), buy=(z.state==="long");
+    const now=held?(+pos.qty).toLocaleString(undefined,{maximumFractionDigits:6}):(en?"none":"없음");
+    const want='<b class="'+(buy?"up":"dn")+'">'+(buy?(en?"Buy":"매수"):(en?"Sell":"매도"))+'</b>', ok=(buy&&held)||(!buy&&!held);
+    const m20=(z.mom20!=null)?+z.mom20:null;
+    c+='<tr><td style="text-align:left;cursor:pointer" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'S\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})"><u>'+k+'</u> <span class="dplbl">'+(en?"spot":"현물")+'</span></td><td>'+(z.price?(+z.price).toLocaleString(undefined,{maximumFractionDigits:2}):"-")+'</td>'
+      +'<td class="'+(m20==null?"fl":(m20>=0?"up":"dn"))+'">'+(m20==null?"-":((m20>0?"+":"")+m20.toFixed(1)+"%"))+'</td><td>'+want+'</td>'
       +'<td>'+now+'</td><td class="'+(ok?"up":"dn")+'">'+(ok?(en?"OK":"맞음"):(en?"Change":"바꿀 것"))+'</td>'
-      +'<td style="white-space:nowrap"><button class="dpb buy dpsm" style="margin-right:4px" onclick="coinOrd(&quot;'+k+'&quot;,&quot;B&quot;,'+(+coSlot0()||0).toFixed(2)+')">'+(en?"BUY":"매수")+'</button>'
+      +'<td style="white-space:nowrap"><button class="dpb buy dpsm" style="margin-right:4px" onclick="coinOrd(&quot;'+k+'&quot;,&quot;B&quot;,'+(+coSlotFor(k)||0).toFixed(2)+')">'+(en?"BUY":"매수")+'</button>'
       +'<button class="dpb sell dpsm" onclick="coinOrd(&quot;'+k+'&quot;,&quot;S&quot;,0)">'+(en?"SELL":"매도")+'</button></td></tr>';
   });
   h+=c+'</table>';
@@ -4840,7 +4846,7 @@ function recoRender(){
       // 1칸 = 코인 총자산(현물 + USDT)÷12 — 국내·미국과 같은 방식
       var co2=(has&&RL.co)?RL.co.filter(function(p){return p.spot;}):[];
       var coVal=co2.reduce(function(s,p){ return s+(p.qty||0)*(p.cur||0); },0);
-      var totCO=coVal+((cash&&cash.usdt)||0), slotCO=totCO>0?totCO/12:0;
+      var totCO=coVal+((cash&&cash.usdt)||0), slotCO=totCO>0?totCO*CO_MIX["알트"]/100/12:0;   // 알트 몫 10% 의 12분의 1 (2026-09-26)
       // 오늘 살 것 — 말로 한 줄, 제목 바로 아래 (사장님 2026-09-24)
       var ALT_TODAY="", t1=alt2[0], p1=+((t1.z||{}).price||0);
       if(slotCO>0&&p1>0){
@@ -6390,6 +6396,12 @@ async function roFill(){
 }
 // 코인 1칸 = (현물 평가 + USDT) ÷ 12 — 알트 줄과 같은 셈
 function coSlot0(){ try{ var co=(RL.co||[]).filter(function(p){ return p.spot; }), v=co.reduce(function(t,p){ return t+(p.qty||0)*(p.cur||0); },0), c=(RL.cash&&RL.cash.usdt)||0; return (v+c)/12; }catch(e){ return 0; } }
+var CO_MIX = {BTC: 45, ETH: 45, "알트": 10};              // 코인 자산배분 — 코인앱과 같은 45·45·10 (사장님 2026-09-26)
+function coSlotFor(k){ var w = CO_MIX[k] != null ? CO_MIX[k] : CO_MIX["알트"]; return coSlot0() * 12 * w / 100 / 12; }
+function r20Of(code){ try{ var c = String(code).replace(/\.US$/i, "").toUpperCase(), L = [];
+  ["kr","us"].forEach(function(m){ L = L.concat((RECO[m] && RECO[m].buy12) || []); });
+  ["etfw","etfu","levw","levu"].forEach(function(m){ L = L.concat((RECO[m] && RECO[m].buy) || []); });
+  var r = L.filter(function(x){ return String(x.code).toUpperCase() === c; })[0]; return (r && r.r20 != null) ? +r.r20 : null; }catch(e){ return null; } }
 // 코인 줄 주문 — 매수는 1칸 USDT 현물 시장가 · 매도는 든 현물 전량 (사장님 2026-09-26)
 async function coinOrd(k, side, amt){
   var inst = k + "-USDT", live = (typeof rlCanLive === "function") && rlCanLive();
@@ -6450,7 +6462,7 @@ function bmPlan(o){
           if(over <= 0) return; var k = p.mk === "us" ? fx : 1, pv = (+p.cur || 0) * k; if(!(pv > 0)) return;
           var q = Math.min(Math.floor(+p.qty || 0), Math.floor(over / pv)); if(q <= 0) return;
           if(rows.some(function(r){ return r.side === "S" && r.code === p.code; })) return;
-          rows.push({side: "S", mk: p.mk, code: p.code, name: p.name || p.code, cls: c, qty: q, why: "목표 초과 줄임(달 1회)"}); over -= q * pv; });
+          rows.push({side: "S", mk: p.mk, code: p.code, name: p.name || p.code, cls: c, qty: q, why: "자산배분비율 목표 초과"}); over -= q * pv; });
       }
       var n = Math.min(3, Math.floor((budget - have) / slot + 0.5));
       if(n <= 0) return;
