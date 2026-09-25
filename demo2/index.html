@@ -481,6 +481,8 @@ function grpLive(gr){
 function grpDelay(gr){
   if(!gr)return false;
   if(gr.title==="아시아")return asiaLiveNow();
+  // 미국 야간선물(야후 CME 선물, 약 10분 늦음) — 거래 중이면 '지연', 쉬는 시간만 '장마감' (사장님 2026-09-25)
+  if(gr.title==="미국 야간선물")return !gr.rt&&usFutLive();
   return false;
 }
 function render(d){
