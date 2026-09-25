@@ -4717,7 +4717,7 @@ function recoRender(){
     if(!x||x.err)return '<div class="dpmsg">'+(mk==="kr"?"국내":"미국")+' '+(en?"not ready":"자료 없음")+'</div>';
     const slot=tot>0?tot/12:0, empty=Math.max(0,12-held.length);
     const money=function(v){ return mk==="kr"?(Math.round(v).toLocaleString()+(en?" KRW":"원")):("$"+(+v).toLocaleString(undefined,{maximumFractionDigits:2})); };
-    let s='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(mk==="kr"?(en?"KR stocks":"국내 주식"):(en?"US stocks":"미국 주식"))
+    let s='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm);text-align:center">'+(mk==="kr"?(en?"KR stocks":"국내 주식"):(en?"US stocks":"미국 주식"))
       +' <span class="dplbl">'+(en?"as of ":"")+x.asof+(en?"":" 종가")+'</span></div>';
     // 칸 줄은 위 [12칸 현황] 표로 옮겼다 (사장님 2026-09-24)
     // 팔 것 — +15% 도달 · 60영업일 만기 · (국내·미국 공통 규칙)
@@ -4835,7 +4835,7 @@ function recoRender(){
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
   setTimeout(function(){ try{ roFill(); }catch(e){} }, 50);        // 국내·미국 수량 칸 채우기
   // 🔴 코인 — 국내·미국처럼 D 규칙 표 (사장님 2026-09-26): 현물 BTC 45 · ETH 45 · 알트 10, 줄 하나 = 오늘 주문 하나
-  h+='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div>';
+  h+='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm);text-align:center">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div>';
   if(!has){ h+='<div class="dpmsg">'+(en?"Load your real account to see today's crypto buys and sells.":"실계좌를 불러오면 오늘 살 것·팔 것이 나옵니다.")+'</div>'; }
   else{
     var _cp=[]; try{ _cp=coPlan(R); }catch(e){}
@@ -4843,6 +4843,7 @@ function recoRender(){
     if(!_cp.length) h+='<div class="dpmsg">'+(en?"Nothing today — classes are near target.":"오늘은 없습니다 — 갈래가 목표 근처입니다.")+'</div>';
     else h+='<table class="mhtab"><tr><th style="text-align:left">'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"20d return":"20일 수익률")+'</th><th>'+(en?"Amount":"금액·수량")+'</th><th></th></tr>'
       +_cp.map(function(r){
+        if(r.info) return '<tr><td style="text-align:left"><b>'+r.k+'</b><br><span class="dplbl">'+dpEsc(r.why)+'</span></td><td colspan="4" class="dplbl" style="text-align:center">'+r.msg+'</td></tr>';
         var m20=r.m20;
         return '<tr><td style="text-align:left;cursor:pointer" onclick="pickCoin(&quot;'+r.k+'USDT&quot;,&quot;'+r.k+'&quot;,&quot;S&quot;);E(&quot;coin2&quot;).scrollIntoView({behavior:&quot;smooth&quot;})"><u>'+r.k+'</u> <span class="ckind sp">'+(en?"SPOT":"현물")+'</span><br><span class="dplbl">'+dpEsc(r.why)+'</span></td>'
           +'<td>'+(r.px?(+r.px).toLocaleString(undefined,{maximumFractionDigits:4}):"-")+'</td>'
@@ -6383,10 +6384,13 @@ function coPlan(R){
       Object.keys(held).forEach(function(k){ var p=held[k]; if(over<=0||cls(k)!==c||!(p.cur>0)) return;
         if(rows.some(function(r){ return r.side==="S"&&r.k===k; })) return;
         var q=Math.min(p.qty, over/p.cur); if(q*p.cur>=5){ rows.push({side:"S",k:k,qty:+q.toFixed(8),px:p.cur,m20:m20(k),why:(LANG==="en"?"Over target":"자산배분비율 목표 초과")}); over-=q*p.cur; } }); }
-    var n=Math.min(3, Math.floor((budget-have)/slot+0.5)); if(n<=0) return;
+    var n=Math.min(3, Math.floor((budget-have)/slot+0.5));
+    var hold=c+" "+(LANG==="en"?"target ":"목표 ")+m[1]+"% · "+(LANG==="en"?"held ":"보유 ")+(tot>0?(have/tot*100).toFixed(1):"0")+"%";
+    var altInfo=function(){ rows.push({info:true, k:(LANG==="en"?"Alts":"알트"), why:hold, msg:(LANG==="en"?"No extra buy — asset mix target met":"자산배분비율에 따라 추가 매수 추천을 하지 않음")}); };   // 알트 줄은 늘 보인다 (사장님 2026-09-26)
+    if(n<=0){ if(c==="알트") altInfo(); return; }
     var L=[];
     if(c==="BTC"||c==="ETH"){ if(C[c]&&C[c].state==="long") L.push([c, Math.min(n*slot, budget-have)]); }
-    else alts.forEach(function(k){ if(!held[k]&&L.length<n) L.push([k, slot]); });
+    else{ alts.forEach(function(k){ if(!held[k]&&L.length<n) L.push([k, slot]); }); if(!L.length) altInfo(); }
     L.forEach(function(x){ var amt=Math.min(x[1], cash), r={side:"B", k:x[0], amt:amt, px:pxOf(x[0]), m20:m20(x[0]),
         why:c+" "+(LANG==="en"?"target ":"목표 ")+m[1]+"% · "+(LANG==="en"?"held ":"보유 ")+(tot>0?(have/tot*100).toFixed(1):"0")+"%"};
       if(amt<5) r.err=(LANG==="en"?"USDT short":"USDT 부족"); else cash-=amt; rows.push(r); });
