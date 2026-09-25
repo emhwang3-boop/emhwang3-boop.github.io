@@ -3807,7 +3807,7 @@ function atPaint(){
     +'<tr><td style="text-align:left">'+KE("종목 하나","Each item")+'</td><td>'+inp("atItp",ru.item_tp)+'</td><td>'+inp("atIsl",ru.item_sl)+'</td></tr>'
     +'<tr><td style="text-align:left">'+KE("전체 (국내+미국+코인)","Whole (KR+US+crypto)")+'</td><td>'+inp("atPtp",ru.pf_tp)+'</td><td>'+inp("atPsl",ru.pf_sl)+'</td></tr></table>'
     +'<button class="dpb flat" style="width:100%;margin-top:6px" onclick="atSaveRules()">'+KE("기준 저장","Save rules")+'</button>';
-  h+='<div class="dpmsg" style="margin-top:8px">'+KE("사기: 시장마다 하루 한 번, 「오늘 살 것」을 1칸(총자산÷12)만큼. 1주도 못 사면 건너뜁니다.<br>팔기: 종목이 익절·손절 기준에 닿으면 그 종목만, 전체가 닿으면 전부 팔고 스스로 꺼집니다.<br>컴퓨터가 켜져 있어야 돕니다.",
+  h+='<div class="dpmsg" style="margin-top:8px">'+KE("매수: 시장마다 하루 한 번, 「오늘 살 것」을 1칸(총자산÷12)만큼. 1주도 못 사면 건너뜁니다.<br>매도: 종목이 익절·손절 기준에 닿으면 그 종목만, 전체가 닿으면 전부 팔고 스스로 꺼집니다.<br>컴퓨터가 켜져 있어야 돕니다.",
       "Buy: once a day per market, today's pick for one slot (assets÷12).<br>Sell: an item at its take/stop, everything at the whole-portfolio take/stop, then it turns itself off.<br>Your PC must be on.")+'</div>';
   if(L.at) h+='<div class="dpmsg" style="margin-top:6px">'+KE("마지막 점검 ","Last check ")+dpEsc(L.at)+' · '+KE("전체 ","whole ")+'<b>'+((L.pf>0?"+":"")+(+L.pf||0).toFixed(2))+'%</b>'
       +((L.err||[]).length?'<br><span style="color:#e03131">'+dpEsc(L.err.join(" / "))+'</span>':'')+'</div>';
@@ -6378,8 +6378,8 @@ function pfAcctRender(o){
 //   D 규칙: 갈래 예산 = 목표% × 계좌(코인 뺌) · 갈래 한 칸 = 예산 ÷ 12 · 모자란 갈래만 산다 · 갈래마다 하루 최대 3칸
 //           주식 갈래는 오늘 추천(리본 폭 순) 종목마다 한 칸 · 대표 ETF 갈래는 한 종목에 모자란 만큼(최대 3칸)
 //   팔 것: +15% 도달 · 60영업일 지남(앱 「팔 것」과 같음) · 달마다 한 번 목표를 넘은 ETF 갈래를 목표까지 줄임
-//   값: 사기 = 현재가 + 1호가 지정가 · 팔기 = 현재가 − 1호가 지정가 (사기는 사장님 지시, 팔기는 반대쪽 한 호가)
-//   실행: 확인창 한 번 → 줄마다 키움 주문. 실주문 스위치가 꺼져 있으면 모의(기록만). 쓴 날은 중계기 자동 사기를 쉬게 한다.
+//   값: 매수 = 현재가 + 1호가 지정가 · 매도 = 현재가 − 1호가 지정가 (매수는 사장님 지시, 매도는 반대쪽 한 호가)
+//   실행: 확인창 한 번 → 줄마다 키움 주문. 실주문 스위치가 꺼져 있으면 모의(기록만). 쓴 날은 중계기 자동 매수를 쉬게 한다.
 //   코인은 성향 밖 — 여기서 다루지 않는다.
 var BM_REP = {"국내 지수형 ETF": ["069500", "KODEX 200", "kr"], "국내 채권형 ETF": ["114260", "KODEX 국고채3년", "kr"],
   "국내 원화 ETF": ["360750", "TIGER 미국S&P500", "kr"], "해외 원화표시 채권형 ETF": ["305080", "TIGER 미국채10년선물", "kr"],
@@ -6487,7 +6487,7 @@ async function coinOrd(k, side, amt){
   catch(e){ alert("주문 거부: " + (e.message || e)); }
   try{ [3000, 10000, 25000].forEach(function(ms){ setTimeout(function(){ try{ rlLoad(true); ydLoad(true); }catch(e){} }, ms); }); }catch(e){}
 }
-// 추천 표 한 줄 주문 (사장님 2026-09-26) — 바스켓 매매와 같은 값: 사기 +1호가 · 팔기 −1호가 지정가
+// 추천 표 한 줄 주문 (사장님 2026-09-26) — 바스켓 매매와 같은 값: 매수 +1호가 · 매도 −1호가 지정가
 async function recoOrd(key){
   var r = (window._RO || {})[key]; if(!r) return;
   var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350;
@@ -6622,7 +6622,7 @@ function bmRender(){
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
   var h = '<h3>바스켓 매매</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여 매수·매도할 종목과 수량을 보여 줍니다. '
-        + '사기는 현재가 +1호가, 팔기는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)입니다. 코인은 [가상 바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
+        + '매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)입니다. 코인은 [가상 바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
