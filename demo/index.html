@@ -4755,7 +4755,7 @@ function recoRender(){
           var key = r.side + ":" + r.mk + ":" + r.code; window._RO[key] = r;
           var go = r.mk === "kr" ? ("pickStock('" + r.code + "','" + String(r.name).replace(/'/g, "") + "')") : ("pickStockUS('" + String(r.code).replace(/\.US$/, "") + ".US','" + String(r.code).replace(/\.US$/, "") + "')");
           return '<tr><td style="text-align:left;cursor:pointer" onclick="' + go + ';E(\'stock\').scrollIntoView({behavior:\'smooth\'})"><u>' + dpEsc(r.name) + '</u><br><span class="dplbl">' + dpEsc(r.why) + '</span></td>'
-            + '<td>' + (r.side === "B" ? money(r.mk === "us" ? r.amt / fx : r.amt) : (r.qty + (en ? " sh" : "주"))) + '</td>'
+            + '<td id="roq_' + key.replace(/[^A-Za-z0-9]/g, "_") + '">' + (r.side === "B" ? '<span class="dplbl">' + money(r.mk === "us" ? r.amt / fx : r.amt) + '</span>' : (r.qty + (en ? " sh" : "주"))) + '</td>'
             + '<td><button class="dpb ' + (r.side === "B" ? "buy" : "sell") + ' dpsm" onclick="recoOrd(&quot;' + key + '&quot;)">' + (r.side === "B" ? (en ? "BUY" : "매수") : (en ? "SELL" : "매도")) + '</button></td></tr>'; }).join("") + '</table>'; }
     }
     else if(empty>0||!has){
@@ -4811,17 +4811,18 @@ function recoRender(){
   h+=body;
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
   const co=(has?RL.co:[]).filter(function(p){return !p.spot;});
-  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto":"코인")+'</div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Now":"지금")+'</th><th></th><th></th></tr>';
+  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto":"코인")+'</div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Held":"보유")+'</th><th></th><th></th></tr>';
   ["BTC","ETH"].forEach(function(k){
     const z=(R.coin||{})[k]||{}, pos=co.filter(function(p){return String(p.code).indexOf(k+"-")===0;})[0];
     const now=pos?(pos.side==="L"?(en?"LONG":"롱"):(en?"SHORT":"숏")):(en?"none":"없음");
     const want=cs(z), ok=(!pos&&z.state==="cash")||(pos&&((pos.side==="L"&&z.state==="long")||(pos.side==="S"&&z.state==="short")));
-    c+='<tr><td style="text-align:left">'+k+'</td><td>'+(z.price?(+z.price).toLocaleString(undefined,{maximumFractionDigits:2}):"-")+'</td><td>'+want+'<br><span class="dplbl">'+(z.width!==undefined?(en?"width ":"폭 ")+z.width+"%":"")+'</span></td>'
+    c+='<tr><td style="text-align:left;cursor:pointer" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'F\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})"><u>'+k+'</u></td><td>'+(z.price?(+z.price).toLocaleString(undefined,{maximumFractionDigits:2}):"-")+'</td><td>'+want+'<br><span class="dplbl">'+(z.width!==undefined?(en?"width ":"폭 ")+z.width+"%":"")+'</span></td>'
       +'<td>'+now+'</td><td class="'+(ok?"up":"dn")+'">'+(ok?(en?"OK":"맞음"):(en?"Change":"바꿀 것"))+'</td>'
-      +'<td style="white-space:nowrap">'
-      +'<button class="dpb buy dpsm" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'F\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})">'+(en?"View":"조회")+'</button></td></tr>';
+      +'<td style="white-space:nowrap"><button class="dpb buy dpsm" style="margin-right:4px" onclick="coinOrd(&quot;'+k+'&quot;,&quot;B&quot;,'+(+coSlot0()||0).toFixed(2)+')">'+(en?"BUY":"매수")+'</button>'
+      +'<button class="dpb sell dpsm" onclick="coinOrd(&quot;'+k+'&quot;,&quot;S&quot;,0)">'+(en?"SELL":"매도")+'</button></td></tr>';
   });
   h+=c+'</table>';
+  setTimeout(function(){ try{ roFill(); }catch(e){} }, 50);        // 국내·미국 수량 칸 채우기
   // 알트 — 리본 폭 넓은 순(rank), 현물로 산다 (사장님 2026-09-24)
   try{
     var C2=(R.coin||{}), alt2=[];
@@ -4860,13 +4861,12 @@ function recoRender(){
         var q=(slotCO>0&&r.z.price>0)?(slotCO/(+r.z.price)):0;
         var qs=q>0?(q>=1?q.toLocaleString(undefined,{maximumFractionDigits:2})
                         :q.toLocaleString(undefined,{maximumFractionDigits:6})):"-";
-        a2+='<tr'+(i?' style="opacity:.62"':'')+'><td style="text-align:left">'+(i?"":"① ")+r.k+'</td>'
+        a2+='<tr'+(i?' style="opacity:.62"':'')+'><td style="text-align:left;cursor:pointer" onclick="pickCoin(&quot;'+r.k+'USDT&quot;,&quot;'+r.k+'&quot;,&quot;S&quot;);E(&quot;coin2&quot;).scrollIntoView({behavior:&quot;smooth&quot;})">'+(i?"":"① ")+'<u>'+r.k+'</u></td>'
           +'<td>'+(r.z.price?(+r.z.price).toLocaleString(undefined,{maximumFractionDigits:4}):"-")+'</td>'
           +'<td class="'+(r.m>=0?"up":"dn")+'">'+(r.m>0?"+":"")+r.m.toFixed(1)+'%</td>'
           +'<td>'+(i?"-":qs)+'</td>'
-          +'<td style="white-space:nowrap"><button class="dpb dpsm" style="background:#2f9e44;border-color:#2b8a3e;margin-right:4px"'
-          +' onclick="bkAdd(&quot;'+r.k+'-USDT&quot;,&quot;'+r.k+'&quot;,&quot;coin&quot;,1)">'+(en?"+Cart":"담기")+'</button>'
-          +'<button class="dpb buy dpsm" onclick="pickCoin(&quot;'+r.k+'USDT&quot;,&quot;'+r.k+'&quot;,&quot;S&quot;);E(&quot;coin2&quot;).scrollIntoView({behavior:&quot;smooth&quot;})">'+(en?"View":"조회")+'</button></td></tr>'
+          +'<td style="white-space:nowrap"><button class="dpb buy dpsm" style="margin-right:4px" onclick="coinOrd(&quot;'+r.k+'&quot;,&quot;B&quot;,'+(+slotCO||0).toFixed(2)+')">'+(en?"BUY":"매수")+'</button>'
+          +'<button class="dpb sell dpsm" onclick="coinOrd(&quot;'+r.k+'&quot;,&quot;S&quot;,0)">'+(en?"SELL":"매도")+'</button></td></tr>'
       });
       h+=a2+'</table>';
   }else{
@@ -6363,6 +6363,41 @@ function bmLimit(mk, side, cur, nm){
   if(mk === "kr"){ var t = bmKrTick(cur, bmIsEtfNm(nm)); return side === "B" ? Math.round(cur / t) * t + t : Math.max(t, Math.round(cur / t) * t - t); }
   var st = cur >= 1 ? 0.01 : 0.0001; return side === "B" ? cur + st : Math.max(st, cur - st);
 }
+// 추천 표 수량 채우기 — 바스켓 매매와 같은 셈(목표 차이 → 예수금) · 3분 저장 (사장님 2026-09-26)
+var RO_P = {at: 0, sig: "", map: {}, busy: false};
+function roPaint(){
+  Object.keys(RO_P.map).forEach(function(k){
+    var r = RO_P.map[k], el = document.getElementById("roq_" + k.replace(/[^A-Za-z0-9]/g, "_")); if(!el) return;
+    if(window._RO && window._RO[k]){ window._RO[k].qty = r.qty; window._RO[k].px = r.px; window._RO[k].err = r.err; }
+    el.innerHTML = r.err ? '<span style="color:#ff5c5c;font-size:12px">' + r.err + '</span>'
+      : '<b>' + (r.qty || 0) + '주</b><br><span class="dplbl">' + bmMoney(r.mk, (r.qty || 0) * (r.px || 0)) + '</span>';
+  });
+}
+async function roFill(){
+  try{
+    var o = pfGet(); if(!o || !(typeof RL !== "undefined" && RL.at) || typeof RECO === "undefined" || !RECO) return;
+    var P = bmPlan(o), sig = P.rows.map(function(r){ return r.side + r.code + Math.round(r.amt || 0); }).join("|");
+    if(RO_P.sig === sig && Date.now() - RO_P.at < 180000){ roPaint(); return; }
+    if(RO_P.busy) return; RO_P.busy = true;
+    await bmPrice(P.rows, P.fx, P.cash);
+    RO_P.map = {}; P.rows.forEach(function(r){ RO_P.map[r.side + ":" + r.mk + ":" + r.code] = r; });
+    RO_P.sig = sig; RO_P.at = Date.now(); RO_P.busy = false; roPaint();
+  }catch(e){ RO_P.busy = false; }
+}
+// 코인 1칸 = (현물 평가 + USDT) ÷ 12 — 알트 줄과 같은 셈
+function coSlot0(){ try{ var co=(RL.co||[]).filter(function(p){ return p.spot; }), v=co.reduce(function(t,p){ return t+(p.qty||0)*(p.cur||0); },0), c=(RL.cash&&RL.cash.usdt)||0; return (v+c)/12; }catch(e){ return 0; } }
+// 코인 줄 주문 — 매수는 1칸 USDT 현물 시장가 · 매도는 든 현물 전량 (사장님 2026-09-26)
+async function coinOrd(k, side, amt){
+  var inst = k + "-USDT", live = (typeof rlCanLive === "function") && rlCanLive();
+  var held = ((typeof RL !== "undefined" && RL.co) || []).filter(function(p){ return p.spot && p.code === inst; })[0];
+  if(side === "S" && !(held && held.qty > 0)){ alert(k + " 현물을 들고 있지 않습니다."); return; }
+  var txt = side === "B" ? ("매수 " + k + " 현물 " + (+amt).toFixed(2) + " USDT (시장가)") : ("매도 " + k + " 현물 " + (+held.qty) + "개 전량 (시장가)");
+  if(!dpAsk((live ? "실주문 · " : "모의 · ") + txt)) return;
+  if(!live){ alert("모의 — 실주문 스위치가 꺼져 있어 주문을 내지 않았습니다."); return; }
+  try{ if(side === "B") await rlSpotBuy(inst, amt, 0); else await rlSpotSell(inst, held.qty, 0); alert("주문이 들어갔습니다."); }
+  catch(e){ alert("주문 거부: " + (e.message || e)); }
+  try{ [3000, 10000, 25000].forEach(function(ms){ setTimeout(function(){ try{ rlLoad(true); ydLoad(true); }catch(e){} }, ms); }); }catch(e){}
+}
 // 추천 표 한 줄 주문 (사장님 2026-09-26) — 바스켓 매매와 같은 값: 사기 +1호가 · 팔기 −1호가 지정가
 async function recoOrd(key){
   var r = (window._RO || {})[key]; if(!r) return;
@@ -6425,15 +6460,8 @@ function bmPlan(o){
     });
     return {rows: rows, fx: fx, cash: cash};
 }
-// 바스켓 만들기 — 값은 이때 받는다
-async function bmBuild(){
-  var o = pfGet(); if(!o){ BM.msg = "먼저 투자성향 분석을 해 주십시오."; bmRender(); return; }
-  if(!(typeof RL !== "undefined" && RL.at)){ BM.msg = "먼저 실계좌를 불러와 주십시오."; bmRender(); return; }
-  if(typeof RECO === "undefined" || !RECO){ BM.msg = "추천 자료를 받는 중입니다. 잠시 뒤 다시 눌러 주십시오."; bmRender(); return; }
-  BM.busy = true; BM.msg = "현재가를 받는 중…"; BM.rows = null; bmRender();
-  try{ if(typeof AT !== "undefined" && !AT.st) AT.st = await atCall(null); }catch(e){}   // 파는 기준 = 자동매매 창 값
-  try{
-    var P = bmPlan(o), rows = P.rows, fx = P.fx, cash = P.cash;
+// 값 받기 · 수량 · 예수금 한도 — 목표와의 차이로 금액을 먼저 정하고, 그다음 예수금으로 줄인다 (사장님 2026-09-26)
+async function bmPrice(rows, fx, cash){
     // 값 받기 · 수량 · 지정가
     for(var i = 0; i < rows.length; i++){
       var r = rows[i];
@@ -6454,6 +6482,17 @@ async function bmBuild(){
         if(use + c > have){ var q = Math.floor((have - use) / r.px); if(q > 0){ r.qty = q; use += q * r.px; } else { r.err = "예수금 모자람"; r.qty = 0; } }
         else use += c; });
     });
+}
+// 바스켓 만들기 — 값은 이때 받는다
+async function bmBuild(){
+  var o = pfGet(); if(!o){ BM.msg = "먼저 투자성향 분석을 해 주십시오."; bmRender(); return; }
+  if(!(typeof RL !== "undefined" && RL.at)){ BM.msg = "먼저 실계좌를 불러와 주십시오."; bmRender(); return; }
+  if(typeof RECO === "undefined" || !RECO){ BM.msg = "추천 자료를 받는 중입니다. 잠시 뒤 다시 눌러 주십시오."; bmRender(); return; }
+  BM.busy = true; BM.msg = "현재가를 받는 중…"; BM.rows = null; bmRender();
+  try{ if(typeof AT !== "undefined" && !AT.st) AT.st = await atCall(null); }catch(e){}   // 파는 기준 = 자동매매 창 값
+  try{
+    var P = bmPlan(o), rows = P.rows, fx = P.fx, cash = P.cash;
+    await bmPrice(rows, fx, cash);
     BM.rows = rows; BM.msg = rows.length ? "" : "오늘 사고팔 것이 없습니다 — 모든 갈래가 목표 근처입니다.";
   }catch(e){ BM.msg = "바스켓을 못 만들었습니다: " + (e.message || e); }
   BM.busy = false; bmRender();
