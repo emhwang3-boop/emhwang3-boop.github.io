@@ -2406,7 +2406,7 @@ async function bkRun(days) {
   if (!a.length) return;
   bkMsg(mpWait(KE("받는 중… 종목마다 몇 초 걸립니다", "Loading… a few seconds per item")), true);
   document.getElementById("bkOut").innerHTML = "";
-  const rows = [];
+  const rows = [], AMW = bkAmtOf(a);            // 투자금액 칸 — 수익률을 이 비중대로 센다 (사장님 2026-09-25)
   for (let i = 0; i < a.length; i++) {
     let cs = null;
     try { cs = await bkBars(a[i]); } catch (e) { cs = null; }
@@ -2414,7 +2414,7 @@ async function bkRun(days) {
     const n = Math.min(days, cs.length - 1);
     const from = cs[cs.length - 1 - n], to = cs[cs.length - 1];
     if (!(from > 0)) { rows.push({nm: bkNm(a[i]), err: true}); continue; }
-    rows.push({nm: bkNm(a[i]), r: to / from - 1, n: n, cs: cs.slice(cs.length - 1 - n)});
+    rows.push({nm: bkNm(a[i]), r: to / from - 1, n: n, cs: cs.slice(cs.length - 1 - n), w: AMW[a[i].code] || 0});
   }
   const ok = rows.filter(function (x) { return !x.err; });
   if (!ok.length) { bkMsg(KE("자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요.", "Could not load data. Please try again shortly.")); return; }
@@ -2423,11 +2423,16 @@ async function bkRun(days) {
   // 바스켓 = 균등 비중. 흔들림은 하루 수익률의 표준편차로 본다.
   const L = Math.min.apply(null, ok.map(function (x) { return x.cs.length; }));
   const daily = [];
-  for (let t = 1; t < L; t++) {
-    let s = 0;
-    ok.forEach(function (x) { const c = x.cs.slice(x.cs.length - L); s += c[t] / c[t - 1] - 1; });
-    daily.push(s / ok.length);
+  // 바스켓 = 투자금액 비중대로 그때 사서 들고 있었던 셈 (사장님 2026-09-25) — 날마다 다시 맞추지 않는다
+  const wSum = ok.reduce(function (t, x) { return t + (x.w || 0); }, 0);
+  const wt = function (x) { return wSum > 0 ? (x.w || 0) / wSum : 1 / ok.length; };
+  const V = [];
+  for (let t = 0; t < L; t++) {
+    let v = 0;
+    ok.forEach(function (x) { const c = x.cs.slice(x.cs.length - L); v += wt(x) * c[t] / c[0]; });
+    V.push(v);
   }
+  for (let t = 1; t < L; t++) daily.push(V[t] / V[t - 1] - 1);
   let eq = 1;
   daily.forEach(function (r) { eq *= (1 + r); });
   const mean = daily.reduce(function (s, r) { return s + r; }, 0) / (daily.length || 1);
@@ -2448,7 +2453,7 @@ async function bkRun(days) {
   const cls = function (v) { return v > 0 ? "up" : (v < 0 ? "dn" : "fl"); };
   let h = '<table class="mhtab"><tr><th>' + KE(BK_COL, BK_COL_EN) + '</th><th>'
         + KE((L - 1) + '일 수익률', (L - 1) + '-day return') + '</th></tr>';
-  h += '<tr class="mhsum"><td style="text-align:left"><b>' + KE("바스켓(균등)", "Basket (equal)") + '</b></td>'
+  h += '<tr class="mhsum"><td style="text-align:left"><b>' + KE("바스켓(투자비중별)", "Basket (by weight)") + '</b></td>'
      + '<td class="' + cls(eq - 1) + '"><b>' + pc(eq - 1) + '</b></td></tr>';
   ok.slice().sort(function (p, q) { return q.r - p.r; }).forEach(function (x) {
     h += '<tr><td style="text-align:left">' + x.nm + '</td><td class="' + cls(x.r) + '">' + pc(x.r) + '</td></tr>';
