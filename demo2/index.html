@@ -3666,7 +3666,7 @@ function dpHoldRender(){
       :((en?"PERP ":"선물 ")+(p.side==="L"?(en?"LONG":"롱"):(en?"SHORT":"숏"))+" "+p.lev+"x");
     const tagc=(p.mk==="coin")?(p.spot?" sp":" fu"):"";
     _rh[ri]='<tr><td>'+anyLogo(p.code,p.mk)
-     +'<span style="cursor:pointer" onclick="mhGo(&quot;'+dpEsc(String(p.code||"")).replace(/"/g,"")+'&quot;,&quot;'
+     +'<span class="mhnm" style="cursor:pointer" onclick="mhGo(&quot;'+dpEsc(String(p.code||"")).replace(/"/g,"")+'&quot;,&quot;'
        +dpEsc(String(p.name||p.code||"")).replace(/"/g,"")+'&quot;,&quot;'+(p.mk||"kr")+'&quot;,'+(p.spot?1:0)+')">'
        +dpEsc(p.name||p.code)+'</span>'+' <span class="mkt'+tagc+'">'+tag+'</span>'
      +'<span class="rlb">'+(en?"REAL":"실계좌")+'</span>'
@@ -3721,6 +3721,9 @@ function dpHoldRender(){
     ? "In crypto, $ means USDT."
     : "암호화폐에서 $는 USDT를 의미함")+'</div>'):"";
   box.innerHTML=h+'</table>'+dpHoldSumHtml()+note+'<div id="dpClose"></div>';
+  // 종목명 — 표가 카드 밖으로 넘치지 않으면 한 줄로 (사장님 2026-09-26)
+  try{ const tb=box.querySelector(".mhtab"); box.querySelectorAll(".mhnm").forEach(function(sp){
+    sp.style.whiteSpace="nowrap"; if(tb && tb.scrollWidth>box.clientWidth+1) sp.style.whiteSpace=""; }); }catch(e){}
 }
 function mhRender(){ try{ dpHoldRender(); }catch(e){} }   // 계좌가 준비되기 전에 불릴 수 있다
 
