@@ -2355,9 +2355,10 @@ async function bkEvalRefresh() {                 // 담은 종목의 지금 값�
   bkRender();
 }
 function bkAcctReset() {                          // 처음으로 되돌린다
-  if (!confirm(KE("가상 계좌를 처음으로 되돌립니다. 바스켓이 비워집니다.",
-                  "Reset the virtual account? The basket will be emptied."))) return;
-  bkSave([]); bkRender();
+  // 잔고·평가금액은 보관한 포트폴리오에서 세므로 보관한 것까지 지워야 처음으로 돌아간다 (사장님 2026-09-25 「나」)
+  if (!confirm(KE("가상 계좌를 처음으로 되돌립니다. 지금 바스켓과 보관한 포트폴리오가 모두 지워지며 되살릴 수 없습니다.",
+                  "Reset the virtual account? The current basket and all saved portfolios will be deleted permanently."))) return;
+  bkSave([]); bkSavePut([]); bkRender();
 }
 
 // 한 칸 = 가상 계좌 합계(현재 잔고 + 평가금액) ÷ 12 (사장님 2026-09-24)
