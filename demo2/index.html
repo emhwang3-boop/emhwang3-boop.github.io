@@ -5837,7 +5837,8 @@ async function nwLoad(id, v, kind){
   if(!q) return;
   if(t) t.textContent=q;
   if(b) b.innerHTML='<div class="dpmsg">'+KE("불러오는 중…","Loading…")+'</div>';
-  var j=null; try{ j=await fetch(HUB+"/news?q="+encodeURIComponent(q)).then(function(r){return r.json();}); }catch(e){}
+  var mk=(kind==="coin")?"coin":((typeof stkMarket!=="undefined"&&stkMarket==="us")?"us":"kr");   // 허브가 「주가」를 붙이고 AI 로 거른다 (2026-09-25)
+  var j=null; try{ j=await fetch(HUB+"/news?q="+encodeURIComponent(q)+"&mk="+mk+"&ctx="+encodeURIComponent(String(v).slice(0,60))).then(function(r){return r.json();}); }catch(e){}
   var it=(j&&j.items)||[], key=q.replace(/\s+/g,"").toLowerCase();
   var hit=function(x){ return (String(x.title)+String(x.desc)).replace(/\s+/g,"").toLowerCase().indexOf(key)>=0; };
   it=it.filter(hit).concat(it.filter(function(x){return !hit(x);})).slice(0,8);   // 이름이 든 기사를 앞에
