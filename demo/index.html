@@ -4771,6 +4771,11 @@ function recoRender(){
             + '<td id="roq_' + key.replace(/[^A-Za-z0-9]/g, "_") + '">' + (r.side === "B" ? '<span class="dplbl">' + money(r.mk === "us" ? r.amt / fx : r.amt) + '</span>' : (r.qty + (en ? " sh" : "주"))) + '</td>'
             + '<td><button class="dpb ' + (r.side === "B" ? "buy" : "sell") + ' dpsm" onclick="recoOrd(&quot;' + key + '&quot;)">' + (r.side === "B" ? (en ? "BUY" : "매수") : (en ? "SELL" : "매도")) + '</button></td></tr>'; }).join("") + '</table>'; }
     }
+    // 🔴 예전 표(오늘 살 것 하루 한 종목 · 다음 후보)는 더 안 보인다 — 계좌·성향이 없으면 한 줄만 (사장님 2026-09-26)
+    else if(true){
+      s += '<div class="dpmsg">' + (!_pfo ? (en ? "Take the investor-profile test to see today's buys and sells." : "투자성향 분석을 하면 오늘 살 것·팔 것이 나옵니다.")
+                                         : (en ? "Load your real account to see today's buys and sells." : "실계좌를 불러오면 오늘 살 것·팔 것이 나옵니다.")) + '</div>';
+    }
     else if(empty>0||!has){
       // 🔴 1칸(과 남은 현금)으로 1주라도 살 수 있는 첫 후보가 '오늘 살 것' — 원형 그래프와 같은 순서 (2026-09-19)
       const budget=has?Math.min(slot,cashM):slot;
