@@ -252,6 +252,8 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 button{text-align:center !important}
 #stkTag{display:none !important}   /* 주식 조회 제목 옆 장 상태 딱지 가림 (사장님 2026-09-25) */
 .svorig{display:none !important}   /* 가상 계좌 맨 위 원금 줄 — 아래와 겹쳐 지움 (사장님 2026-09-25) */
+/* ⓘ 통일 — 민트 동그라미 i (사장님 2026-09-26) */
+.c21help,.icoi{display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;width:16px!important;height:16px!important;border:1.5px solid #2ee6c0!important;border-radius:50%!important;color:#2ee6c0!important;background:none!important;font-size:10.5px!important;font-weight:800!important;line-height:1!important;font-style:normal;cursor:pointer;vertical-align:middle;margin-left:4px;flex:0 0 auto;padding:0!important}
 </style></head><body>
 <div class="top">
   <h1 id="ttl"></h1>
@@ -307,7 +309,7 @@ button{text-align:center !important}
 </div>
 
 <div class="card svcard" id="bkCard">
-  <h3><span><span class="kko">가상 바스켓</span><span class="ken">Virtual Basket</span><span id="svAcctI" onclick="svAcctPop(event)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle;margin-left:6px">i</span></span><span id="bkCnt" class="bkcnt"></span></h3>
+  <h3><span><span class="kko">가상 바스켓</span><span class="ken">Virtual Basket</span><span id="svAcctI" onclick="svAcctPop(event)" class="icoi" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle;margin-left:6px">i</span></span><span id="bkCnt" class="bkcnt"></span></h3>
   <div id="svAcctInfo" class="svsub" style="display:none"></div>
   <div id="bkBody"></div>
 </div>
@@ -1046,7 +1048,7 @@ function makeChart(cid,opt){
       +(p?p[en?2:1]:(en?"Base only":"기본판"))+'</span>'
       +(p?'<label class="c21add"><input type="checkbox"'+(on?" checked":"")+'> '+(en?"Keep on chart":"얹기")+'</label>':"")
       +'<span class="c21hint">'+(en?"Swipe the chart left / right":"차트를 좌우로 밀어보세요")
-      +' <span class="c21help" onclick="c21Coach(1)">ⓘ</span></span></div>'
+      +' <span class="c21help" onclick="c21Coach(1)">i</span></span></div>'
       +'<div class="c21r2"><span class="c21lbl">'+(en?"Base":"기본판")+'</span><select class="c21sel">'
       +C21_BASE.map((b,i)=>'<option value="'+i+'"'+(i===ST0.base?" selected":"")+'>'+b[en?1:0]+'</option>').join("")+'</select>'
       +ST0.ovs.map(k=>'<span class="c21chip" data-k="'+k+'">'+nm(k)+' <b>✕</b></span>').join("")
@@ -2590,7 +2592,7 @@ function bkSavedHtml() {
   const lastCalc = s.reduce(function (m, p) { return Math.max(m, p.calc || 0); }, 0);
   // 보관 단추 → 그 아래 한 줄에 제목 · 계산 시각 · 새로고침 (사장님 2026-09-24)
   let h = (bkGet().length ? '<div class="cvrow" style="margin:12px 0 4px"><button class="svbtn" style="flex:1;margin:0" onclick="bkStore()">' + KE("＋ 지금 바스켓 보관", "＋ Save current basket") + '</button></div>' : '')
-     + '<div class="svsub" style="margin-top:' + (bkGet().length ? '6' : '12') + 'px;font-size:13px;font-weight:700;color:var(--nm);display:flex;align-items:center;gap:6px">' + KE("보관한 포트폴리오", "Saved portfolios") + '<span onclick="bkTowerInfo(event)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span>'
+     + '<div class="svsub" style="margin-top:' + (bkGet().length ? '6' : '12') + 'px;font-size:13px;font-weight:700;color:var(--nm);display:flex;align-items:center;gap:6px">' + KE("보관한 포트폴리오", "Saved portfolios") + '<span onclick="bkTowerInfo(event)" class="icoi" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span>'
      + '<span style="margin-left:auto"></span>'
      + (lastCalc ? '<span class="dplbl" style="flex:0 0 auto;font-weight:400">' + KE("계산 ", "") + bkAgo(lastCalc) + '</span>' : '')
      + (s.length ? '<button class="svbtn" style="flex:0 0 auto;width:auto;margin:0;padding:3px 9px;font-size:13px;font-weight:700" onclick="bkSavedRefresh()">' + KE("수익률 새로고침", "Refresh") + '</button>' : '')
@@ -3490,7 +3492,7 @@ setInterval(svRegimeTick, 15000);
 window._svInfoOpen = window._svInfoOpen || {};
 function svInfoToggle(id) { var n = document.getElementById(id); if (!n) return; var open = (n.style.display === "none"); n.style.display = open ? "block" : "none"; window._svInfoOpen[id] = open; }   // 다시 그려도 펼침 유지 (사장님 2026-09-22)
 function svInfoDisp(id) { return (window._svInfoOpen && window._svInfoOpen[id]) ? "block" : "none"; }
-function svInfoMark(id) { return ' <span onclick="svInfoToggle(&quot;' + id + '&quot;)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle">i</span>'; }
+function svInfoMark(id) { return ' <span onclick="svInfoToggle(&quot;' + id + '&quot;)" class="icoi" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle">i</span>'; }
 
 </script>
 <script>
