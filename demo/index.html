@@ -4755,7 +4755,7 @@ function recoRender(){
       var _pl = []; try{ _pl = bmPlan(_pfo).rows.filter(function(r){ return r.mk === mk; }); }catch(e){}
       s += '<div class="dpmsg" style="font-weight:700;color:var(--nm)">' + (en ? "Today (profile rule)" : "오늘 살 것·팔 것 — 내 성향 규칙") + '</div>';
       if(!_pl.length) s += '<div class="dpmsg">' + (en ? "Nothing today — classes are near target." : "오늘은 없습니다 — 갈래가 목표 근처입니다.") + '</div>';
-      else { window._RO = window._RO || {}; s += '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th>' + (en ? "20d" : "20일") + '</th><th>' + (en ? "Amount" : "금액·수량") + '</th><th></th></tr>' + _pl.map(function(r){
+      else { window._RO = window._RO || {}; s += '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th>' + (en ? "20d return" : "20일 수익률") + '</th><th>' + (en ? "Amount" : "금액·수량") + '</th><th></th></tr>' + _pl.map(function(r){
           var m20 = r20Of(r.code);
           var key = r.side + ":" + r.mk + ":" + r.code; window._RO[key] = r;
           var go = r.mk === "kr" ? ("pickStock('" + r.code + "','" + String(r.name).replace(/'/g, "") + "')") : ("pickStockUS('" + String(r.code).replace(/\.US$/, "") + ".US','" + String(r.code).replace(/\.US$/, "") + "')");
@@ -4818,16 +4818,16 @@ function recoRender(){
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
   // 🔴 BTC·ETH 는 현물로 본다 (사장님 2026-09-26) — 규칙은 매수/매도, 보유는 현물, 한 칸은 코인 총자산 × 45% ÷ 12
   const co=(has?RL.co:[]).filter(function(p){return p.spot;});
-  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"20d":"20일")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Held":"보유")+'</th><th></th><th></th></tr>';
+  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"20d return":"20일 수익률")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Held":"보유")+'</th><th></th></tr>';
   ["BTC","ETH"].forEach(function(k){
     const z=(R.coin||{})[k]||{}, pos=co.filter(function(p){return String(p.code).indexOf(k+"-")===0;})[0];
     const held=!!(pos&&pos.qty>0), buy=(z.state==="long");
     const now=held?(+pos.qty).toLocaleString(undefined,{maximumFractionDigits:6}):(en?"none":"없음");
     const want='<b class="'+(buy?"up":"dn")+'">'+(buy?(en?"Buy":"매수"):(en?"Sell":"매도"))+'</b>', ok=(buy&&held)||(!buy&&!held);
     const m20=(z.mom20!=null)?+z.mom20:null;
-    c+='<tr><td style="text-align:left;cursor:pointer" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'S\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})"><u>'+k+'</u> <span class="dplbl">'+(en?"spot":"현물")+'</span></td><td>'+(z.price?(+z.price).toLocaleString(undefined,{maximumFractionDigits:2}):"-")+'</td>'
+    c+='<tr><td style="text-align:left;cursor:pointer" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'S\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})"><u>'+k+'</u> <span class="ckind sp">'+(en?"SPOT":"현물")+'</span></td><td>'+(z.price?(+z.price).toLocaleString(undefined,{maximumFractionDigits:2}):"-")+'</td>'
       +'<td class="'+(m20==null?"fl":(m20>=0?"up":"dn"))+'">'+(m20==null?"-":((m20>0?"+":"")+m20.toFixed(1)+"%"))+'</td><td>'+want+'</td>'
-      +'<td>'+now+'</td><td class="'+(ok?"up":"dn")+'">'+(ok?(en?"OK":"맞음"):(en?"Change":"바꿀 것"))+'</td>'
+      +'<td>'+now+'</td>'
       +'<td style="white-space:nowrap"><button class="dpb buy dpsm" style="margin-right:4px" onclick="coinOrd(&quot;'+k+'&quot;,&quot;B&quot;,'+(+coSlotFor(k)||0).toFixed(2)+')">'+(en?"BUY":"매수")+'</button>'
       +'<button class="dpb sell dpsm" onclick="coinOrd(&quot;'+k+'&quot;,&quot;S&quot;,0)">'+(en?"SELL":"매도")+'</button></td></tr>';
   });
@@ -4866,7 +4866,7 @@ function recoRender(){
           var a2='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Altcoins (spot)":"알트 (현물)")+'</div>'
         +ALT_TODAY
         +'<table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th>'
-        +'<th>'+(en?"20d":"20일")+'</th><th>'+(en?"Qty":"수량")+'</th><th></th></tr>';
+        +'<th>'+(en?"20d return":"20일 수익률")+'</th><th>'+(en?"Qty":"수량")+'</th><th></th></tr>';
       alt2.forEach(function(r,i){
         var q=(slotCO>0&&r.z.price>0)?(slotCO/(+r.z.price)):0;
         var qs=q>0?(q>=1?q.toLocaleString(undefined,{maximumFractionDigits:2})
