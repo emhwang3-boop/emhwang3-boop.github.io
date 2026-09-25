@@ -3832,7 +3832,8 @@ function dpRender(){
     if(l.lim&&l.oid&&osoAt<(l.ts||0)+500)return false;
     return true;
   });
-  if(shown.length){
+  // 🔴 주문 내역은 계좌 카드에 안 보인다 — 매매현황 카드와 겹친다 (사장님 2026-09-25 "중복")
+  if(false&&shown.length){
     h+='<div class="dphd" style="margin-top:10px">'+(en?"Order log":"주문 내역")+'</div><div class="dplog"><table class="mhtab">';
     shown.slice(0,40).forEach(function(l){
       const nm={B:(en?"BUY":"매수"),S:(en?"SELL":"매도"),L:(en?"LONG":"롱"),X:(en?"CLOSE":"청산")}[l.side]||l.side;
