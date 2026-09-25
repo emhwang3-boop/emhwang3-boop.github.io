@@ -3491,4 +3491,47 @@ function svInfoDisp(id) { return (window._svInfoOpen && window._svInfoOpen[id]) 
 if (typeof svInfoMark !== "function") window.svInfoMark = function svInfoMark(id) { return ' <span onclick="svInfoToggle(&quot;' + id + '&quot;)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle">i</span>'; }
 
 </script>
+<script>
+// ── 관련 뉴스 카드 (사장님 2026-09-25) — 고른 종목 이름으로 네이버 뉴스 검색(허브 /news) ──────────
+//    제목·언론사·시각·요약 한 줄만 보여 주고, 누르면 언론사 원문이 열린다. AI 는 쓰지 않는다.
+var NW_COIN = {BTC:"비트코인", ETH:"이더리움", XRP:"리플", SOL:"솔라나", DOGE:"도지코인", ADA:"에이다", NEAR:"니어프로토콜",
+  ZEC:"지캐시", TRX:"트론", AVAX:"아발란체", LINK:"체인링크", DOT:"폴카닷", SUI:"수이", TON:"톤코인", BNB:"바이낸스코인",
+  PEPE:"페페", SHIB:"시바이누", ETC:"이더리움클래식", BCH:"비트코인캐시", LTC:"라이트코인", APT:"앱토스", ARB:"아비트럼"};
+function nwAgo(t){ if(!t) return ""; var s=(Date.now()-t)/1000;
+  if(s<3600) return Math.max(1,Math.floor(s/60))+KE("분 전","m ago");
+  if(s<86400) return Math.floor(s/3600)+KE("시간 전","h ago");
+  return Math.floor(s/86400)+KE("일 전","d ago"); }
+function nwName(v, kind){
+  var nm=String(v||"").replace(/\s*\(.*$/,"").trim();
+  if(kind==="coin"){ var s=nm.toUpperCase().replace(/USDT$/,"").replace(/-.*$/,""); return NW_COIN[s] || (s+" 코인"); }
+  return nm; }
+async function nwLoad(id, v, kind){
+  var q=nwName(v,kind), b=document.getElementById("nwb_"+id), t=document.getElementById("nwq_"+id);
+  if(!q) return;
+  if(t) t.textContent=q;
+  if(b) b.innerHTML='<div class="dpmsg">'+KE("불러오는 중…","Loading…")+'</div>';
+  var j=null; try{ j=await fetch(HUB+"/news?q="+encodeURIComponent(q)).then(function(r){return r.json();}); }catch(e){}
+  var it=(j&&j.items)||[], key=q.replace(/\s+/g,"").toLowerCase();
+  var hit=function(x){ return (String(x.title)+String(x.desc)).replace(/\s+/g,"").toLowerCase().indexOf(key)>=0; };
+  it=it.filter(hit).concat(it.filter(function(x){return !hit(x);})).slice(0,8);   // 이름이 든 기사를 앞에
+  if(!b) return;
+  if(!it.length){ b.innerHTML='<div class="dpmsg">'+KE("관련 뉴스를 못 찾았습니다.","No related news found.")+'</div>'; return; }
+  b.innerHTML=it.map(function(x){
+    return '<a href="'+dpEsc(String(x.link).replace(/"/g,"%22"))+'" target="_blank" rel="noopener" style="display:block;padding:8px 2px;border-bottom:1px solid var(--bd);color:var(--nm);text-decoration:none">'
+      +'<div style="font-weight:700;font-size:14px;line-height:1.45">'+dpEsc(x.title)+'</div>'
+      +'<div class="dplbl" style="margin-top:2px">'+dpEsc(x.src||"")+(x.t?' · '+nwAgo(x.t):'')+'</div>'
+      +(x.desc?'<div style="font-size:12px;color:var(--sub);margin-top:2px;line-height:1.5">'+dpEsc(x.desc)+'</div>':'')+'</a>';
+  }).join("")+'<div class="dplbl" style="margin-top:6px">'+KE("출처: 네이버 뉴스 검색 · 제목을 누르면 언론사 원문이 열립니다.","Source: Naver News search · tap a headline for the original article.")+'</div>';
+}
+function nwInit(anchorId, inputId, kind){
+  var a=document.getElementById(anchorId); if(!a || document.getElementById("nw_"+anchorId)) return;
+  a.insertAdjacentHTML("afterend", '<div class="card" id="nw_'+anchorId+'"><h3>'+KE("관련 뉴스","Related news")
+    +' <span class="dplbl" id="nwq_'+anchorId+'"></span></h3><div id="nwb_'+anchorId+'"><div class="dpmsg">'
+    +KE("종목을 고르면 관련 뉴스가 나옵니다.","Pick an item to see related news.")+'</div></div></div>');
+  var last="";
+  setInterval(function(){ var el=document.getElementById(inputId); if(!el) return;
+    var v=String(el.value||"").trim(); if(!v || v===last) return; last=v; nwLoad(anchorId, v, kind); }, 2500);
+}
+setTimeout(function(){ try{ nwInit("stock","stkq","stock"); }catch(e){} try{ nwInit("coin2","coinq","coin"); }catch(e){} }, 1500);
+</script>
 </body></html>
