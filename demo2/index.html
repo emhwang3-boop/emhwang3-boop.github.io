@@ -163,8 +163,8 @@ body.light .dpnote{background:#fff6e0;border-color:#e8c37a;color:#7a5200}
 .dpbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:9px}
 .dpin{width:118px;padding:8px 9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--nm);font-size:13px}
 .dpb{padding:8px 14px;border-radius:9px;border:1px solid var(--bd);font-weight:800;font-size:13px;cursor:pointer;color:#fff}
-.dpb.buy{background:#e03131;border-color:#c92a2a}
-.dpb.sell{background:#1c7ed6;border-color:#1971c2}
+.dpb.buy{background:#00C805;border-color:#00C805}   /* 매수 로빈후드 초록 (2026-09-26) */
+.dpb.sell{background:#FF433D;border-color:#FF433D}   /* 매도 로빈후드 빨강 */
 .dpb.flat{background:#495057;border-color:#343a40}
 .dpmsg{font-size:12.5px;color:var(--sub);margin-top:6px;min-height:15px;white-space:pre-wrap;overflow-wrap:anywhere}   /* 거래소 오류 전문이 잘리지 않게 (2026-09-24) */
 .dplbl{font-size:11.5px;color:var(--sub);font-weight:700}
@@ -4817,76 +4817,27 @@ function recoRender(){
   }
   h+=body;
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
-  // 🔴 BTC·ETH 는 현물로 본다 (사장님 2026-09-26) — 규칙은 매수/매도, 보유는 현물, 한 칸은 코인 총자산 × 45% ÷ 12
-  const co=(has?RL.co:[]).filter(function(p){return p.spot;});
-  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"20d return":"20일 수익률")+'</th><th>'+(en?"Pick":"추천")+'</th><th>'+(en?"Held":"보유")+'</th><th></th></tr>';
-  ["BTC","ETH"].forEach(function(k){
-    const z=(R.coin||{})[k]||{}, pos=co.filter(function(p){return String(p.code).indexOf(k+"-")===0;})[0];
-    const held=!!(pos&&pos.qty>0), buy=(z.state==="long");
-    const now=held?(+pos.qty).toLocaleString(undefined,{maximumFractionDigits:6}):(en?"none":"없음");
-    const want='<b class="'+(buy?"up":"dn")+'">'+(buy?(en?"Buy":"매수"):(en?"Sell":"매도"))+'</b>', ok=(buy&&held)||(!buy&&!held);
-    const m20=(z.mom20!=null)?+z.mom20:null;
-    c+='<tr><td style="text-align:left;cursor:pointer" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'S\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})"><u>'+k+'</u> <span class="ckind sp">'+(en?"SPOT":"현물")+'</span></td><td>'+(z.price?(+z.price).toLocaleString(undefined,{maximumFractionDigits:2}):"-")+'</td>'
-      +'<td class="'+(m20==null?"fl":(m20>=0?"up":"dn"))+'">'+(m20==null?"-":((m20>0?"+":"")+m20.toFixed(1)+"%"))+'</td><td>'+want+'</td>'
-      +'<td>'+now+'</td>'
-      +'<td style="white-space:nowrap"><button class="dpb buy dpsm" style="margin-right:4px" onclick="coinOrd(&quot;'+k+'&quot;,&quot;B&quot;,'+(+coSlotFor(k)||0).toFixed(2)+')">'+(en?"BUY":"매수")+'</button>'
-      +'<button class="dpb sell dpsm" onclick="coinOrd(&quot;'+k+'&quot;,&quot;S&quot;,0)">'+(en?"SELL":"매도")+'</button></td></tr>';
-  });
-  h+=c+'</table>';
   setTimeout(function(){ try{ roFill(); }catch(e){} }, 50);        // 국내·미국 수량 칸 채우기
-  // 알트 — 리본 폭 넓은 순(rank), 현물로 산다 (사장님 2026-09-24)
-  try{
-    var C2=(R.coin||{}), alt2=[];
-    Object.keys(C2).forEach(function(k){
-      if(k==="BTC"||k==="ETH")return;
-      var z=C2[k]||{};
-      if(z["new"]||z.state==="long")alt2.push({k:k, z:z, r:(+z.rank||999), m:(+z.mom20||0), t:(+z.turn||0)});
-    });
-    alt2.sort(function(a,b){ return (a.r-b.r) || (b.t-a.t); });
-    if(alt2.length){
-      // 1칸 = 코인 총자산(현물 + USDT)÷12 — 국내·미국과 같은 방식
-      var co2=(has&&RL.co)?RL.co.filter(function(p){return p.spot;}):[];
-      var coVal=co2.reduce(function(s,p){ return s+(p.qty||0)*(p.cur||0); },0);
-      var totCO=coVal+((cash&&cash.usdt)||0), slotCO=totCO>0?totCO*CO_MIX["알트"]/100/12:0;   // 알트 몫 10% 의 12분의 1 (2026-09-26)
-      // 오늘 살 것 — 말로 한 줄, 제목 바로 아래 (사장님 2026-09-24)
-      var ALT_TODAY="", t1=alt2[0], p1=+((t1.z||{}).price||0);
-      if(slotCO>0&&p1>0){
-        var q1=slotCO/p1;
-        var qs1=q1>=1?q1.toLocaleString(undefined,{maximumFractionDigits:2})
-                     :q1.toLocaleString(undefined,{maximumFractionDigits:6});
-        ALT_TODAY='<div class="dpmsg">'+(en
-          ? ("Today: buy " + t1.k + " with one slot (" + slotCO.toLocaleString(undefined,{maximumFractionDigits:2})
-             + " USDT) — " + qs1 + " " + t1.k + " at " + p1.toLocaleString(undefined,{maximumFractionDigits:4}) + " USDT.")
-          : ("오늘은 1칸 " + slotCO.toLocaleString(undefined,{maximumFractionDigits:2}) + " USDT 로 "
-             + t1.k + " 을(를) " + p1.toLocaleString(undefined,{maximumFractionDigits:4}) + " USDT 에 "
-             + qs1 + " 개 삽니다."))+'</div>';
-      } else {
-        ALT_TODAY='<div class="dpmsg">'+(en?"Load your real account to size the slot."
-                                    :"실계좌를 불러오면 1칸 금액과 살 수량이 나옵니다.")+'</div>';
-      }
-          var a2='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Altcoins (spot)":"알트 (현물)")+'</div>'
-        +ALT_TODAY
-        +'<table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th>'
-        +'<th>'+(en?"20d return":"20일 수익률")+'</th><th>'+(en?"Qty":"수량")+'</th><th></th></tr>';
-      alt2.forEach(function(r,i){
-        var q=(slotCO>0&&r.z.price>0)?(slotCO/(+r.z.price)):0;
-        var qs=q>0?(q>=1?q.toLocaleString(undefined,{maximumFractionDigits:2})
-                        :q.toLocaleString(undefined,{maximumFractionDigits:6})):"-";
-        a2+='<tr'+(i?' style="opacity:.62"':'')+'><td style="text-align:left;cursor:pointer" onclick="pickCoin(&quot;'+r.k+'USDT&quot;,&quot;'+r.k+'&quot;,&quot;S&quot;);E(&quot;coin2&quot;).scrollIntoView({behavior:&quot;smooth&quot;})">'+(i?"":"① ")+'<u>'+r.k+'</u></td>'
-          +'<td>'+(r.z.price?(+r.z.price).toLocaleString(undefined,{maximumFractionDigits:4}):"-")+'</td>'
-          +'<td class="'+(r.m>=0?"up":"dn")+'">'+(r.m>0?"+":"")+r.m.toFixed(1)+'%</td>'
-          +'<td>'+(i?"-":qs)+'</td>'
-          +'<td style="white-space:nowrap"><button class="dpb buy dpsm" style="margin-right:4px" onclick="coinOrd(&quot;'+r.k+'&quot;,&quot;B&quot;,'+(+slotCO||0).toFixed(2)+')">'+(en?"BUY":"매수")+'</button>'
-          +'<button class="dpb sell dpsm" onclick="coinOrd(&quot;'+r.k+'&quot;,&quot;S&quot;,0)">'+(en?"SELL":"매도")+'</button></td></tr>'
-      });
-      h+=a2+'</table>';
-  }else{
-      // 새 알트 후보가 없을 때 — 말없이 비지 않게 (사장님 2026-09-25)
-      h+='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Altcoins (spot)":"알트 (현물)")+'</div>'
-        +'<div class="dpmsg">'+(en?"No new pick today.":"오늘 새 후보 없음.")+'</div>';
+  // 🔴 코인 — 국내·미국처럼 D 규칙 표 (사장님 2026-09-26): 현물 BTC 45 · ETH 45 · 알트 10, 줄 하나 = 오늘 주문 하나
+  h+='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div>';
+  if(!has){ h+='<div class="dpmsg">'+(en?"Load your real account to see today's crypto buys and sells.":"실계좌를 불러오면 오늘 살 것·팔 것이 나옵니다.")+'</div>'; }
+  else{
+    var _cp=[]; try{ _cp=coPlan(R); }catch(e){}
+    h+='<div class="dpmsg" style="font-weight:700;color:var(--nm)">'+(en?"Today (crypto rule)":"오늘 살 것·팔 것 — 코인 규칙")+'</div>';
+    if(!_cp.length) h+='<div class="dpmsg">'+(en?"Nothing today — classes are near target.":"오늘은 없습니다 — 갈래가 목표 근처입니다.")+'</div>';
+    else h+='<table class="mhtab"><tr><th style="text-align:left">'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"20d return":"20일 수익률")+'</th><th>'+(en?"Amount":"금액·수량")+'</th><th></th></tr>'
+      +_cp.map(function(r){
+        var m20=r.m20;
+        return '<tr><td style="text-align:left;cursor:pointer" onclick="pickCoin(&quot;'+r.k+'USDT&quot;,&quot;'+r.k+'&quot;,&quot;S&quot;);E(&quot;coin2&quot;).scrollIntoView({behavior:&quot;smooth&quot;})"><u>'+r.k+'</u> <span class="ckind sp">'+(en?"SPOT":"현물")+'</span><br><span class="dplbl">'+dpEsc(r.why)+'</span></td>'
+          +'<td>'+(r.px?(+r.px).toLocaleString(undefined,{maximumFractionDigits:4}):"-")+'</td>'
+          +'<td class="'+(m20==null?"fl":(m20>=0?"up":"dn"))+'">'+(m20==null?"-":((m20>0?"+":"")+m20.toFixed(1)+"%"))+'</td>'
+          +'<td>'+(r.err?'<span style="color:#ff5c5c;font-size:12px">'+r.err+'</span>'
+               :(r.side==="B"?('<b>'+(+r.amt).toFixed(2)+' USDT</b>'+(r.px?'<br><span class="dplbl">'+(r.amt/r.px).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</span>':''))
+                             :('<b>'+(+r.qty).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</b>')))+'</td>'
+          +'<td>'+(r.err?'':('<button class="dpb '+(r.side==="B"?"buy":"sell")+' dpsm" onclick="coinOrd(&quot;'+r.k+'&quot;,&quot;'+r.side+'&quot;,'+(r.side==="B"?(+r.amt).toFixed(2):(+r.qty))+')">'+(r.side==="B"?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'))+'</td></tr>';
+      }).join("")+'</table>';
   }
-  }catch(e){}
-  h+='<div class="dpmsg" style="margin-top:6px">'+(en?"Measured rules only. Tap View to open the stock and order.":"잰 규칙만 씁니다. [조회]를 누르면 종목이 열리고 바로 주문할 수 있습니다.")+'</div>';
+  h+='<div class="dpmsg" style="margin-top:6px">'+(en?"Measured rules only. Tap a name to open it.":"잰 규칙만 씁니다. 이름을 누르면 종목이 열립니다.")+'</div>';
   card.innerHTML=h;
   try{ bkRender(); }catch(e){}
 }
@@ -6395,6 +6346,38 @@ async function roFill(){
     RO_P.sig = sig; RO_P.at = Date.now(); RO_P.busy = false; roPaint();
   }catch(e){ RO_P.busy = false; }
 }
+// 코인 D 규칙 계획 (사장님 2026-09-26) — PC 자동매매 엔진 buy_d_coin 과 같은 셈
+function coPlan(R){
+  var C=(R&&R.coin)||{}, RU=(typeof AT!=="undefined"&&AT.st&&AT.st.rules)||{item_tp:30,item_sl:-15};
+  var pos=((RL&&RL.co)||[]).filter(function(p){ return p.spot && (p.qty||0)>0; }), cash=(RL.cash&&+RL.cash.usdt)||0;
+  var cls=function(k){ return (k==="BTC"||k==="ETH")?k:"알트"; };
+  var tot=cash, val={}, held={};
+  pos.forEach(function(p){ var k=String(p.code).split("-")[0], v=(p.qty||0)*(p.cur||0); tot+=v; val[cls(k)]=(val[cls(k)]||0)+v; held[k]=p; });
+  var rows=[], m20=function(k){ var z=C[k]; return (z&&z.mom20!=null)?+z.mom20:null; }, pxOf=function(k){ var z=C[k]; return z&&z.price?+z.price:((held[k]&&held[k].cur)||0); };
+  // 팔 것 — 추천이 매도로 바뀐 BTC·ETH 전량 · 종목 익절/손절(자동매매 창 기준)
+  Object.keys(held).forEach(function(k){ var p=held[k], z=C[k], why="";
+    if((+p.rt||0)>=RU.item_tp) why=(LANG==="en"?"Take profit ":"종목 익절 +")+(+p.rt).toFixed(1)+"%";
+    else if((+p.rt||0)<=RU.item_sl) why=(LANG==="en"?"Stop loss ":"종목 손절 ")+(+p.rt).toFixed(1)+"%";
+    if(why) rows.push({side:"S", k:k, qty:+p.qty, px:pxOf(k), m20:m20(k), why:why}); });
+  var alts=Object.keys(C).filter(function(k){ var z=C[k]; return k!=="BTC"&&k!=="ETH"&&z&&(z["new"]||z.state==="long"); })
+    .sort(function(a,b){ return ((+C[a].rank||999)-(+C[b].rank||999)) || ((+C[b].turn||0)-(+C[a].turn||0)); });
+  var trim=false;   // 🔴 갭으로는 팔지 않는다 (사장님 2026-09-26)
+  [["BTC",45],["ETH",45],["알트",10]].forEach(function(m){
+    var c=m[0], budget=tot*m[1]/100, slot=budget/12, have=val[c]||0; if(!(slot>0)) return;
+    if(trim && have>budget+slot){ var over=have-budget;
+      Object.keys(held).forEach(function(k){ var p=held[k]; if(over<=0||cls(k)!==c||!(p.cur>0)) return;
+        if(rows.some(function(r){ return r.side==="S"&&r.k===k; })) return;
+        var q=Math.min(p.qty, over/p.cur); if(q*p.cur>=5){ rows.push({side:"S",k:k,qty:+q.toFixed(8),px:p.cur,m20:m20(k),why:(LANG==="en"?"Over target":"자산배분비율 목표 초과")}); over-=q*p.cur; } }); }
+    var n=Math.min(3, Math.floor((budget-have)/slot+0.5)); if(n<=0) return;
+    var L=[];
+    if(c==="BTC"||c==="ETH"){ if(C[c]&&C[c].state==="long") L.push([c, Math.min(n*slot, budget-have)]); }
+    else alts.forEach(function(k){ if(!held[k]&&L.length<n) L.push([k, slot]); });
+    L.forEach(function(x){ var amt=Math.min(x[1], cash), r={side:"B", k:x[0], amt:amt, px:pxOf(x[0]), m20:m20(x[0]),
+        why:c+" "+(LANG==="en"?"target ":"목표 ")+m[1]+"% · "+(LANG==="en"?"held ":"보유 ")+(tot>0?(have/tot*100).toFixed(1):"0")+"%"};
+      if(amt<5) r.err=(LANG==="en"?"USDT short":"USDT 모자람"); else cash-=amt; rows.push(r); });
+  });
+  return rows;
+}
 // 코인 1칸 = (현물 평가 + USDT) ÷ 12 — 알트 줄과 같은 셈
 function coSlot0(){ try{ var co=(RL.co||[]).filter(function(p){ return p.spot; }), v=co.reduce(function(t,p){ return t+(p.qty||0)*(p.cur||0); },0), c=(RL.cash&&RL.cash.usdt)||0; return (v+c)/12; }catch(e){ return 0; } }
 var CO_MIX = {BTC: 45, ETH: 45, "알트": 10};              // 코인 자산배분 — 코인앱과 같은 45·45·10 (사장님 2026-09-26)
@@ -6409,10 +6392,11 @@ async function coinOrd(k, side, amt){
   var inst = k + "-USDT", live = (typeof rlCanLive === "function") && rlCanLive();
   var held = ((typeof RL !== "undefined" && RL.co) || []).filter(function(p){ return p.spot && p.code === inst; })[0];
   if(side === "S" && !(held && held.qty > 0)){ alert(k + " 현물을 들고 있지 않습니다."); return; }
-  var txt = side === "B" ? ("매수 " + k + " 현물 " + (+amt).toFixed(2) + " USDT (시장가)") : ("매도 " + k + " 현물 " + (+held.qty) + "개 전량 (시장가)");
+  var txt = side === "B" ? ("매수 " + k + " 현물 " + (+amt).toFixed(2) + " USDT (시장가)") : ("매도 " + k + " 현물 " + ((amt > 0 && amt < held.qty) ? (+amt) + "개" : (+held.qty) + "개 전량") + " (시장가)");
   if(!dpAsk((live ? "실주문 · " : "모의 · ") + txt)) return;
   if(!live){ alert("모의 — 실주문 스위치가 꺼져 있어 주문을 내지 않았습니다."); return; }
-  try{ if(side === "B") await rlSpotBuy(inst, amt, 0); else await rlSpotSell(inst, held.qty, 0); alert("주문이 들어갔습니다."); }
+  var sq = (side === "S" && amt > 0) ? Math.min(+amt, held.qty) : (held ? held.qty : 0);
+  try{ if(side === "B") await rlSpotBuy(inst, amt, 0); else await rlSpotSell(inst, sq, 0); alert("주문이 들어갔습니다."); }
   catch(e){ alert("주문 거부: " + (e.message || e)); }
   try{ [3000, 10000, 25000].forEach(function(ms){ setTimeout(function(){ try{ rlLoad(true); ydLoad(true); }catch(e){} }, ms); }); }catch(e){}
 }
@@ -6453,7 +6437,7 @@ function bmPlan(o){
       if(why && (+p.qty || 0) > 0) rows.push({side: "S", mk: p.mk, code: p.code, name: p.name || p.code, cls: pfClassOf(p), qty: Math.floor(+p.qty), why: why});
     });
     if(all) return {rows: rows, fx: fx, cash: cash};          // 전부 파는 날은 사지 않는다
-    var ym = bmToday().slice(0, 7), trimOk = (function(){ try{ return localStorage.getItem("bm_trim_v1") !== ym; }catch(e){ return true; } })();
+    var ym = bmToday().slice(0, 7), trimOk = false;   // 🔴 갭으로는 팔지 않는다 — 파는 건 종목 익절·손절, 바스켓 전체 기준뿐 (사장님 2026-09-26)
     g.mix.forEach(function(m){
       var c = m[0], budget = tot * m[1] / 100, slot = budget / 12, have = val[c] || 0;
       if(c === "예금·MMF" || !(slot > 0)) return;                     // 예수금이 곧 예금·MMF
