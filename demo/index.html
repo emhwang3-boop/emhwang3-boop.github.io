@@ -3378,6 +3378,18 @@ function dpCloseGo(){
 // 보유 표에서 파는 길 — 주식은 수량을 묻고(기본 전량), 코인은 전량 청산
 function dpSellKey(key){
   const p=dpPosOf(key); if(!p)return;
+  if(String(key).indexOf("real:")===0 && typeof bmAddRow==="function"){
+    const q=((typeof rlRows==="function")?rlRows():[])[+String(key).slice(5)];
+    if(q && (q.mk==="kr" || q.mk==="us" || (q.mk==="coin" && q.spot))){
+      const cur=(typeof rlPxKey==="function" && dpPx[rlPxKey(q)]) || q.cur || 0, nm=q.name||q.code;
+      const r={side:"S", mk:q.mk, code:q.mk==="coin"?String(q.code).split("-").slice(0,2).join("-"):q.code,
+               name:q.mk==="coin"?String(q.code).split("-")[0]+" 현물":nm, why:"직접 담음"+(q.mk==="coin"?" · 시장가":"")};
+      if(q.mk==="coin"){ r.qty=+(+q.qty).toFixed(8); r.px=cur; }
+      else { r.qty=Math.floor(+q.qty||0); r.px=cur>0?bmLimit(q.mk,"S",cur,nm):0; }
+      if(!(r.px>0)) r.err="현재가 못 받음"; else if(!(r.qty>0)) r.err="수량 없음";
+      bmAddRow(r); return;
+    }
+  }
   if(p.mk==="coin"){ dpOpenClose(key); } else dpOpenSell(key);
   // 매수처럼 주문 판으로 화면을 옮긴다 (사장님 2026-09-26)
   setTimeout(function(){ try{ const b=E("dpClose"); if(b&&b.scrollIntoView) b.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} }, 60);
@@ -5097,7 +5109,7 @@ function bkClear(){ BK_OUT=""; bkSave([]); bkRender(); }
 // 실전앱 담기 → 바스켓 매매 표에 한 줄 (사장님 2026-09-26 — 가상 바스켓 카드는 숨겨져 있다)
 function bmAddRow(r){
   if(!BM.rows) BM.rows = [];
-  if(BM.rows.some(function(x){ return x.code === r.code && x.side === "B"; })){ BM.msg = r.name + " — 이미 담겨 있습니다."; }
+  if(BM.rows.some(function(x){ return x.code === r.code && x.side === r.side; })){ BM.msg = r.name + " — 이미 담겨 있습니다."; }
   else { BM.rows.push(r); BM.msg = r.name + " 담았습니다."; }
   bmRender(); var c = E("bmCard"); if(c && c.scrollIntoView) c.scrollIntoView({behavior: "smooth", block: "start"});
 }
@@ -6719,7 +6731,7 @@ async function bmRun(){
   for(var i = 0; i < all.length; i++){
     var r = all[i];
     if(!bmCanLive(r.mk)){ r.res = "모의"; continue; }
-    try{ if(r.mk === "coin") await rlSpotBuy(r.code, +(r.qty * r.px).toFixed(2), 0); else await rlStockOrder(r.mk, r.side, r.code, r.qty, r.px); r.res = "주문 들어감"; }
+    try{ if(r.mk === "coin"){ if(r.side === "S") await rlSpotSell(r.code, r.qty, 0); else await rlSpotBuy(r.code, +(r.qty * r.px).toFixed(2), 0); } else await rlStockOrder(r.mk, r.side, r.code, r.qty, r.px); r.res = "주문 들어감"; }
     catch(e){ r.res = "거부 " + String(e.message || e).slice(0, 40); }
     bmRender();
   }
