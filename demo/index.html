@@ -3378,8 +3378,9 @@ function dpCloseGo(){
 // 보유 표에서 파는 길 — 주식은 수량을 묻고(기본 전량), 코인은 전량 청산
 function dpSellKey(key){
   const p=dpPosOf(key); if(!p)return;
-  if(p.mk==="coin"){ dpOpenClose(key); return; }
-  dpOpenSell(key);
+  if(p.mk==="coin"){ dpOpenClose(key); } else dpOpenSell(key);
+  // 매수처럼 주문 판으로 화면을 옮긴다 (사장님 2026-09-26)
+  setTimeout(function(){ try{ const b=E("dpClose"); if(b&&b.scrollIntoView) b.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} }, 60);
 }
 // ── 주식 매도 판 (막대 + 수량 + 호가) ──
 let dpSellCur=null;
@@ -3599,7 +3600,7 @@ function mhGapInfo(e){
                 "🪙 Crypto is separate: within crypto total (USDT + spot), BTC 45 · ETH 45 · Alts 10."]
              : ["📐 Gap = 보유 비율 − 목표 자산배분비율 (%p).",
                 "➕ 총자산 = 예수금 + 평가금액 (코인 제외). 예수금은 예금·MMF로 셉니다.",
-                "🔻 마이너스: 목표보다 모자람 — 바스켓 매매가 이 종류를 삽니다. 🔺 플러스: 목표보다 많음 — 더 사지 않습니다. Gap만으로 팔지는 않습니다.",
+                "🔻 마이너스: 목표보다 모자람 — 바스켓 매매 전략이 이 종류를 삽니다. 🔺 플러스: 목표보다 많음 — 더 사지 않습니다. Gap만으로 팔지는 않습니다.",
                 "( ) 안은 같은 Gap을 금액으로 — 보유 금액 − 목표 금액.",
                 "🪙 코인은 따로: 코인 합계(USDT + 현물) 안에서 BTC 45 · ETH 45 · 알트 10."];
   var d = document.createElement("div"); d.id = "mhGapPop";
@@ -3949,6 +3950,7 @@ async function ydLoad(force){
         rows.push(o); });
     }catch(e){ note.push(KE("코인 ","Crypto ") + e.message); }
     rows.forEach(function(o){ o.auto = auto ? !!auto[o.mk + ":" + o.code + ":" + o.side] : null; });
+    if(isToday) YD.todayRows = rows;                   // 오늘 거래 확인창이 읽는다 (2026-09-26)
     YD.day = ds; YD.at = Date.now(); YD.today = isToday; YD.html = ydHtml(rows, note, auto);
   }finally{ YD.busy = false; }
   var b = E("ydBody"); if(b) b.innerHTML = YD.html;
@@ -4786,7 +4788,7 @@ function recoRender(){
     acct.parentNode.insertBefore(card,acct.nextSibling);
   }
   const en=LANG==="en", R=RECO;
-  let h='<h3>'+(en?"Picks by portfolio":"포트폴리오에 따른 종목 추천")+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
+  let h='<h3>'+(en?"12-slot strategy by portfolio":"포트폴리오에 따른 12칸 매매 전략")+' <span class="c21help" onclick="r12Info(event)">ⓘ</span>'+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
   try{ window._RECO=R; }catch(e){}
   if(!R){ card.innerHTML=h+'<div class="soonrow">'+(en?"Loading…":"불러오는 중…")+'</div>'; return; }
   // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률을 더해 "지금 60일선 대비"를 낸다 (사장님 2026-09-21).
@@ -6627,6 +6629,78 @@ function bmDrop(i){ if(BM.rows){ BM.rows.splice(i, 1); bmRender(); } }
 function bmClear(){ if(!BM.rows || !BM.rows.length) return; if(!confirm("바스켓 종목을 모두 지울까요?")) return; BM.rows = null; BM.msg = ""; bmRender(); }   // 한꺼번에 지우기 (사장님 2026-09-26)
 function bmQty(i, v){ var r = BM.rows && BM.rows[i]; if(!r) return; var f = parseFloat(String(v).replace(/[^0-9.]/g, "")), n = r.mk === "coin" ? +(f || 0).toFixed(6) : Math.floor(f); r.qty = n > 0 ? n : 0; bmRender(); }
 function bmMoney(mk, v){ if(mk === "coin") return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; return mk === "us" ? "$" + (+v).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : Math.round(v).toLocaleString() + "원"; }
+// ── 12칸 매매 전략 ⓘ (사장님 2026-09-26) ──
+function r12Info(e){
+  try{ if(e) e.stopPropagation(); }catch(x){}
+  if(document.getElementById("r12Pop")) return;
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  var L = en ? ["🧩 The 12-slot strategy invests in the assets recommended for your risk profile, split over time.",
+                "💰 One slot = (cash + holdings value) × asset mix ratio ÷ 12. One slot per item, up to 3 slots a day per asset type.",
+                "📅 While a type is below target it buys a little each day; when the 12 slots are filled it reaches the target ratio.",
+                "🧺 The basket strategy invests by the asset allocation for your risk profile — it looks at the Gap to target and orders many items at once.",
+                "🔀 Difference: 12-slot decides when and how much to split (time); the basket decides what to fill and how much (allocation). Today's items and quantities come from the same calculation.",
+                "📉 Selling is the same for both: item +30% / −15%, total +15% / −10%. Gap alone never sells."]
+             : ["🧩 12칸 매매 전략은 성향별 추천 자산을 시간별로 분할해서 하는 투자입니다.",
+                "💰 한 칸 = (예수금 + 평가금액) × 자산배분비율 ÷ 12. 한 종목에 한 칸씩, 한 자산 종류에 하루 최대 3칸까지 삽니다.",
+                "📅 목표에 모자라는 동안 날마다 나눠 삽니다. 12칸이 차면 목표 비율에 닿습니다.",
+                "🧺 바스켓 매매 전략은 성향별 자산배분 전략에 따른 투자입니다. 목표 비율과의 Gap을 보고 여러 종목을 한 번에 담아 주문합니다.",
+                "🔀 차이점: 12칸은 언제·얼마씩 나눠 살지(시간 분할)를, 바스켓은 무엇을 얼마나 채울지(자산배분)를 봅니다. 오늘 살 종목과 수량은 두 곳이 같은 셈으로 나옵니다.",
+                "📉 매도는 두 곳 모두 같습니다. 종목 +30% / −15%, 전체 +15% / −10%에 닿을 때만 팝니다. Gap만으로는 팔지 않습니다."];
+  var d = document.createElement("div"); d.id = "r12Pop";
+  d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
+  d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
+  var close = 'document.getElementById(\'r12Pop\').remove()';
+  d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">' + (en ? "12-slot strategy" : "12칸 매매 전략") + '</div>'
+    + '<span onclick="' + close + '" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
+    + L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + l + '</div>'; }).join("")
+    + '<button onclick="' + close + '" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">' + (en ? "OK" : "확인") + '</button></div>';
+  document.body.appendChild(d);
+}
+// ── 오늘 이미 거래한 종목 — 어디서 주문을 내든 예/아니오로 묻는다 (사장님 2026-09-26) ──
+//   근거: 매매현황의 오늘 체결(자동매매 포함) + 이 폰에서 오늘 낸 주문 기록
+var TD_KEY = "td_ord_v1";
+function tdNorm(mk, code){
+  var c = String(code || "").toUpperCase();
+  if(mk === "coin" || mk === "coinS") return "coin:" + c.split("-")[0].replace(/USDT$/, "");
+  if(mk === "us") return "us:" + c.replace(/\.US$/, "");
+  return "kr:" + c.replace(/^A/, "");
+}
+function tdDay(){ var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+function tdLog(){ try{ var o = JSON.parse(localStorage.getItem(TD_KEY) || "null"); return (o && o.d === tdDay()) ? o : {d: tdDay(), k: {}}; }catch(e){ return {d: tdDay(), k: {}}; } }
+function tdMark(mk, code, side){ try{ var o = tdLog(), n = tdNorm(mk, code); if((o.k[n] || "").indexOf(side) < 0) o.k[n] = (o.k[n] || "") + side; localStorage.setItem(TD_KEY, JSON.stringify(o)); }catch(e){} }
+function tdSides(mk, code){
+  var n = tdNorm(mk, code), sd = tdLog().k[n] || "";
+  try{ if(YD && YD.todayRows) YD.todayRows.forEach(function(r){ if(tdNorm(r.mk, r.code) === n && sd.indexOf(r.side) < 0) sd += r.side; }); }catch(e){}
+  return sd;
+}
+function tdWord(sd){ return (sd.indexOf("B") >= 0 && sd.indexOf("S") >= 0) ? "매수·매도" : (sd.indexOf("B") >= 0 ? "매수" : "매도"); }
+function tdYesNo(msg){
+  return new Promise(function(res){
+    var d = document.createElement("div");
+    d.setAttribute("style", "position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
+    d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:420px;width:100%;padding:22px 20px;box-shadow:0 18px 50px rgba(0,0,0,.45)">'
+      + '<div style="font-size:16px;line-height:1.7;white-space:pre-line">' + msg + '</div>'
+      + '<div style="display:flex;gap:8px;margin-top:16px"><button data-v="1" class="dpb buy" style="flex:1;padding:12px">예</button>'
+      + '<button data-v="0" class="dpb" style="flex:1;padding:12px;background:var(--bg);color:var(--nm)">아니오</button></div></div>';
+    d.addEventListener("click", function(ev){ var v = ev.target && ev.target.getAttribute ? ev.target.getAttribute("data-v") : null; if(v === null) return; d.remove(); res(v === "1"); });
+    document.body.appendChild(d);
+  });
+}
+async function tdGuard(mk, code, name){
+  if(window._tdSkip) return;
+  var sd = tdSides(mk, code); if(!sd) return;
+  var ok = await tdYesNo("[" + (name || String(code).split("-")[0]) + "] 오늘 이미 " + tdWord(sd) + "하였습니다.\n계속 진행하시겠습니까?");
+  if(!ok) throw new Error("취소했습니다 — 오늘 이미 거래한 종목");
+}
+(function(){   // 주문 함수 다섯을 감싼다 — 묻고, 낸 뒤엔 기록
+  var so = rlStockOrder, sb = rlSpotBuy, ss = rlSpotSell, po = rlPerpOpen, pc = rlPerpClose;
+  rlStockOrder = async function(mk, side, code){ await tdGuard(mk, code); var r = await so.apply(this, arguments); tdMark(mk, code, side); return r; };
+  rlSpotBuy = async function(inst){ await tdGuard("coin", inst); var r = await sb.apply(this, arguments); tdMark("coin", inst, "B"); return r; };
+  rlSpotSell = async function(inst){ await tdGuard("coin", inst); var r = await ss.apply(this, arguments); tdMark("coin", inst, "S"); return r; };
+  rlPerpOpen = async function(inst, side){ await tdGuard("coin", inst); var r = await po.apply(this, arguments); tdMark("coin", inst, side === "L" ? "B" : "S"); return r; };
+  rlPerpClose = async function(inst){ await tdGuard("coin", inst); var r = await pc.apply(this, arguments); tdMark("coin", inst, "S"); return r; };
+})();
 function bmCanLive(mk){ try{ return mk === "coin" ? rlCanLive() : rlCanLiveStock(mk); }catch(e){ return false; } }
 async function bmRun(){
   if(!BM.rows || BM.busy) return;
@@ -6637,7 +6711,9 @@ async function bmRun(){
       return (r.side === "B" ? "매수 " : "매도 ") + r.name + " " + r.qty + (r.mk === "coin" ? "개 (시장가 " + bmMoney("coin", r.qty * r.px) + ")" : "주 @ " + bmMoney(r.mk, r.px)); }).join("\n")
     ;
   if(!dpAsk(txt)) return;
-  BM.busy = true; bmRender();
+  var _td = go.filter(function(r){ return tdSides(r.mk, r.code); });
+  if(_td.length && !(await tdYesNo("오늘 이미 거래한 종목이 있습니다.\n" + _td.map(function(r){ return "· " + r.name + " — 오늘 이미 " + tdWord(tdSides(r.mk, r.code)) + "하였습니다."; }).join("\n") + "\n계속 진행하시겠습니까?"))) return;
+  BM.busy = true; bmRender(); window._tdSkip = true;
   var sells = go.filter(function(r){ return r.side === "S"; }), buys = go.filter(function(r){ return r.side === "B"; });
   var all = sells.concat(buys);                                        // 파는 것부터
   for(var i = 0; i < all.length; i++){
@@ -6649,6 +6725,7 @@ async function bmRun(){
   }
   try{ localStorage.setItem("bm_done_v1", bmToday()); }catch(e){}
   if(sells.some(function(r){ return /목표 초과/.test(r.why) && /주문|모의/.test(r.res || ""); })){ try{ localStorage.setItem("bm_trim_v1", bmToday().slice(0, 7)); }catch(e){} }
+  window._tdSkip = false;
   BM.msg = "주문을 냈습니다.";                                   // 자동매매는 쉬지 않는다 (사장님 2026-09-26)
   try{ [3000, 10000, 25000].forEach(function(ms){ setTimeout(function(){ try{ ydLoad(true); if(go.some(function(r){ return r.mk === "coin"; })) rlLoad(true); }catch(e){} }, ms); }); }catch(e){}
   BM.busy = false; bmRender();
@@ -6658,7 +6735,7 @@ function bmRender(){
   if(!card){ var pc = document.getElementById("pfCard"); if(!pc) return;
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
-  var h = '<h3>바스켓 매매</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여 매수·매도할 종목과 수량을 보여 줍니다. '
+  var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여 매수·매도할 종목과 수량을 보여 줍니다. '
         + '매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)입니다. 코인은 [가상 바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
