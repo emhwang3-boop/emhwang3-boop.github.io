@@ -74,6 +74,10 @@ body.light .mk img.lt{display:block}
 .bn{font-size:14px;color:var(--nm);line-height:1.15;word-break:keep-all;overflow-wrap:break-word}
 .bbar{position:relative;height:11px;border-left:1px solid var(--bd)}
 .bp{text-align:right;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+/* 주요자산 전일대비 — 등락률 옆에 현재가 (사장님 2026-09-26). 막대는 좁혀 자리를 낸다 */
+#chgTop .brow{grid-template-columns:78px 1fr 84px 62px}
+#chgTop .bv{text-align:right;font-size:13px;color:var(--nm);font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (max-width:520px){ #chgTop .brow{grid-template-columns:60px 1fr 70px 50px} #chgTop .bv{font-size:11px} }
 .crow{display:flex;align-items:center;gap:7px;padding:5px 2px;border-bottom:1px solid var(--bd);font-size:13px}
 .crow:last-child{border-bottom:none}
 .ct{font-weight:600;font-variant-numeric:tabular-nums;color:var(--nm);min-width:42px}
@@ -535,11 +539,11 @@ function render(d){
       const PICK=[["코스피200 야간선물","g"],["나스닥 선물","g"],["반도체(SOX)","g"],["달러지수","g"],["원/달러","g"],["WTI 원유","g"],["금","g"],
                   ["한국 기준금리","k"],["CD 91일","k"],["미 10년물","y"],["미 30년물","y"]];
       d = Object.assign({}, d, {changes: PICK.map(function(x){
-        if(x[1]==="k"){ const k=kr[x[0]]; return k?{nm:x[0],pct:+k.chg||0,unit:"%p"}:null; }
+        if(x[1]==="k"){ const k=kr[x[0]]; return k?{nm:x[0],pct:+k.chg||0,unit:"%p",val:k.val}:null; }
         const it=byNm[x[0]]; if(!it) return null;
         if(x[1]==="y"){ const v=parseFloat(String(it.val).replace(/,/g,"")), pc=+it.pct||0;   // 수익률 변화율(%) → %p
-          return {nm:x[0], pct: isFinite(v)? +(v - v/(1+pc/100)).toFixed(3) : 0, unit:"%p"}; }
-        return {nm:x[0], pct:+it.pct||0, unit:"%"}; }).filter(Boolean)}); }
+          return {nm:x[0], pct: isFinite(v)? +(v - v/(1+pc/100)).toFixed(3) : 0, unit:"%p", val: it.val + "%"}; }
+        return {nm:x[0], pct:+it.pct||0, unit:"%", val: it.val}; }).filter(Boolean)}); }
     if(d.changes&&d.changes.length){
       const mx=Math.max.apply(null,d.changes.map(c=>Math.abs(c.pct)).concat([1]));
       // 🔴 이 카드는 여러 시장을 한데 모은 것이라 열린 것과 닫힌 것이 섞인다.
@@ -561,7 +565,7 @@ function render(d){
         const up=c.pct>=0,half=Math.abs(c.pct)/mx*50,col=up?"#00c805":"#ff433d";
         const bar=up?'<span style="position:absolute;left:50%;top:0;height:11px;width:'+half+'%;background:'+col+';border-radius:0 3px 3px 0"></span>'
                     :'<span style="position:absolute;right:50%;top:0;height:11px;width:'+half+'%;background:'+col+';border-radius:3px 0 0 3px"></span>';
-        return '<div class="brow"><span class="bn">'+dot+tr(c.nm)+'</span><span class="bbar">'+bar+'</span>'
+        return '<div class="brow"><span class="bn">'+dot+tr(c.nm)+'</span><span class="bbar">'+bar+'</span>'+(c.val!=null?'<span class="bv">'+c.val+'</span>':'')
           +'<span class="bp" style="color:'+col+'">'+(up?"+":"")+c.pct.toFixed(2)+(c.unit||"%")+'</span></div>';}).join("")+'</div>';
     }
     let sSpecial="";
