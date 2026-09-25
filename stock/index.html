@@ -632,7 +632,7 @@ function render(d){
     let sNews="";
     const newsSrc=(LANG==="en"&&d.ennews&&d.ennews.length)?d.ennews:d.news;
     if(newsSrc&&newsSrc.length){
-      sNews='<div class="card"><h3>'+(LANG==="en"?"Headlines":"헤드라인 뉴스")+'</h3>'+newsSrc.map(s=>
+      sNews='<div class="card" style="display:none"><h3>'+(LANG==="en"?"Headlines":"헤드라인 뉴스")+'</h3>'+newsSrc.map(s=>
         '<div class="nhd">'+s.src+'</div>'+(s.items||[]).map(it=>
           '<a class="nrow" href="'+it.u+'" target="_blank" rel="noopener">'+it.t+'</a>').join("")).join("")+'</div>';
     }
