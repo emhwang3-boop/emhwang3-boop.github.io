@@ -267,7 +267,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div id="krstat"></div>
 <div class="gauges" id="gauges"></div>
 <div class="gnote">시장온도 · VIX · 공포·탐욕 — 주식시장 기준</div>
-<div class="card" id="ydCard"><h3>어제 매매 <span class="dplbl" id="ydDate"></span></h3><div id="ydBody"><div class="dpmsg">실계좌를 불러오면 어제(00:00~24:00) 매매를 모아 보여 줍니다.</div></div></div>
+<div class="card" id="ydCard"><h3>매매현황 <span style="display:flex;align-items:center;gap:8px;position:relative"><span class="dplbl" id="ydDate"></span><span id="ydCal" onclick="ydPick()" title="날짜 고르기" style="cursor:pointer;font-size:18px;line-height:1">📅</span><input type="date" id="ydIn" onchange="ydSet(this.value)" style="position:absolute;right:0;top:100%;opacity:0;width:1px;height:1px;border:0;padding:0"></span></h3><div id="ydBody"><div class="dpmsg">실계좌를 불러오면 오늘(00:00부터 지금까지) 매매를 모아 보여 줍니다.</div></div></div>
 <div class="card" id="myhold">
   <h3>내 보유종목 <span class="tag live">● 실시간</span></h3><div class="rlbar"><button class="dpb flat dpsm" onclick="rlLoad()">실계좌 불러오기</button><button class="dpb flat dpsm" onclick="rlClear()">지움</button><button class="dpb flat dpsm" id="atBtn" onclick="atOpen()">자동매매</button><span class="rlmsg" id="rlMsg"></span></div>
   <div id="mhBody"></div>
@@ -3657,7 +3657,21 @@ function atPaint(){
 //    국내 = 매매일지 ka10170(실현손익 pl_amt 그대로) · 휴장이면 '휴장'(쉬는 날 ka10170 은 전날 것을 준다)
 //    미국 = ust21180 체결분 · 코인 = OKX 현물 체결 — 두 곳의 실현손익은 앞선 매수 평균으로 어림한 (추정)
 //    자동/수동 딱지 = 중계기 자동매매 기록(/auto)의 「주문」 줄과 맞춘다. 기록을 못 받으면 딱지 없음.
-var YD = {day: "", busy: false, html: ""};
+var YD = {day: "", busy: false, html: "", sel: ""};      // sel = 고른 날(YYYY-MM-DD) · 빈 값이면 오늘(실시간)
+function ydIso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+// 📅 — 날짜 고르기 (사장님 2026-09-25). 체결 내역은 약 3개월 치만 나와 90일 안으로 막는다
+function ydPick(){
+  var i = E("ydIn"); if(!i) return;
+  var t = new Date(), m = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 90);
+  i.max = ydIso(t); i.min = ydIso(m); i.value = YD.sel || ydIso(t);
+  try{ i.showPicker(); }catch(e){ try{ i.focus(); i.click(); }catch(x){} }
+}
+function ydSet(v){
+  if(!v) return;
+  YD.sel = (v === ydIso(new Date())) ? "" : v;
+  var b = E("ydBody"); if(b) b.innerHTML = '<div class="dpmsg">' + KE("불러오는 중…","Loading…") + '</div>';
+  ydLoad(true);
+}
 function ydYmd(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
 async function ydAutoKeys(md){
   var out = null;
@@ -3676,7 +3690,9 @@ async function ydAutoKeys(md){
   return out;
 }
 async function ydLoad(force){
-  var now = new Date(), y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  // 🔴 오늘은 00:00 ~ 지금(1분마다 다시) · 고른 지난 날은 그날 00:00 ~ 24:00 (사장님 2026-09-25)
+  var now = new Date(), isToday = !YD.sel;
+  var y = isToday ? new Date(now.getFullYear(), now.getMonth(), now.getDate()) : new Date(YD.sel + "T00:00:00");
   var ds = ydYmd(y), md = ds.slice(4,6) + "-" + ds.slice(6,8);
   if(YD.busy || (!force && YD.day === ds)) return;
   YD.busy = true;
@@ -3718,7 +3734,7 @@ async function ydLoad(force){
     }
     // 코인 — 어제 체결 + 앞선 90일 매수로 평균값
     try{
-      var b0 = new Date(y).getTime(), b1 = b0 + 86400000, b90 = b0 - 90 * 86400000;
+      var b0 = new Date(y).getTime(), b1 = isToday ? Date.now() + 60000 : b0 + 86400000, b90 = b0 - 90 * 86400000;
       var f = await rlOkx("/api/v5/trade/fills-history?instType=SPOT&begin=" + b90 + "&end=" + b1);
       var fl = (f && f.data) || [], cavg = {}, cg = {};
       fl.forEach(function(r){ var t = +r.ts, k = r.instId, q = rlNum(r.fillSz), px = rlNum(r.fillPx);
@@ -3730,10 +3746,10 @@ async function ydLoad(force){
         rows.push(o); });
     }catch(e){ note.push(KE("코인 ","Crypto ") + e.message); }
     rows.forEach(function(o){ o.auto = auto ? !!auto[o.mk + ":" + o.code + ":" + o.side] : null; });
-    YD.day = ds; YD.html = ydHtml(rows, note, auto);
+    YD.day = ds; YD.at = Date.now(); YD.today = isToday; YD.html = ydHtml(rows, note, auto);
   }finally{ YD.busy = false; }
   var b = E("ydBody"); if(b) b.innerHTML = YD.html;
-  var t = E("ydDate"); if(t) t.textContent = ds.slice(0,4) + "-" + md;
+  var t = E("ydDate"); if(t) t.textContent = isToday ? (KE("오늘 ","Today ") + new Date().toTimeString().slice(0,5) + KE(" 기준"," as of")) : (ds.slice(0,4) + "-" + md);
 }
 function ydHtml(rows, note, auto){
   var en = LANG === "en", fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 0;
@@ -3741,7 +3757,7 @@ function ydHtml(rows, note, auto){
     : (mk === "us" ? "$" + (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) : (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"); };
   var MK = {kr: KE("국내","KR"), us: KE("미국","US"), coin: KE("코인","Crypto")};
   var h = "";
-  if(!rows.length) h += '<div class="dpmsg">' + KE("어제 매매 없음.", "No trades yesterday.") + '</div>';
+  if(!rows.length) h += '<div class="dpmsg">' + (YD.today ? KE("오늘 매매 없음.", "No trades today.") : KE("그날 매매 없음.", "No trades that day.")) + '</div>';
   else{
     h += '<table class="mhtab"><tr><th>' + KE("종목","Item") + '</th><th>' + KE("매매","Side") + '</th><th>' + KE("금액","Amount") + '</th><th>' + KE("실현손익","Realized") + '</th></tr>';
     var ord = {kr:0, us:1, coin:2};
@@ -3769,7 +3785,7 @@ function ydHtml(rows, note, auto){
   return h;
 }
 // 계좌를 불러온 뒤 하루 한 번 (날이 바뀌면 다시)
-setInterval(function(){ try{ if(typeof RL !== "undefined" && RL.at && !YD.busy) ydLoad(false); }catch(e){} }, 20000);
+setInterval(function(){ try{ if(typeof RL !== "undefined" && RL.at && !YD.busy && (!YD.day || (!YD.sel && Date.now() - (YD.at || 0) > 60000))) ydLoad(true); }catch(e){} }, 20000);   // 지난 날을 보고 있으면 안 바꾼다
 
 function holdTower3D(){
   const a=dpHoldItems(); if(!a.length)return;
