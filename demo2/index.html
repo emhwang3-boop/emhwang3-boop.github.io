@@ -5347,11 +5347,43 @@ document.addEventListener("click", function (e) {
   else bkGoChart({code: el.getAttribute("data-code"), name: el.getAttribute("data-nm") || "",
                   mk: el.getAttribute("data-mk") || "", spot: el.getAttribute("data-spot") === "1"});
 });
+// 가상 바스켓 ⓘ → 팝업 — 주식앱과 같은 모양, 글은 이 앱 규칙대로 (사장님 2026-09-25)
+function bkInfoPop(e){
+  try{ if(e)e.stopPropagation(); }catch(x){}
+  if(document.getElementById("bkInfoPop"))return;
+  var en=(typeof LANG!=="undefined"&&LANG==="en");
+  var L=en?["🧩 Look up a stock or coin and tap Add to virtual basket — up to 12 items.",
+            "💰 Amounts default to one slot (that market's total ÷ 12). You can edit them.",
+            "⚡ Crypto perpetuals take a leverage value; touching the liquidation line counts as −100%.",
+            "📈 Tap 3 months · 6 months · 1 year to see the past return as if bought in equal weights.",
+            "📦 Save current basket keeps tracking its return from the day you saved it.",
+            "🎮 All figures are virtual and not a recommendation to buy."]
+          :["🧩 조회한 종목·코인을 [＋ 가상 바스켓 담기]로 열두 개까지 담습니다.",
+            "💰 금액은 추천 1칸 금액(그 시장 총자산 ÷ 12)으로 채워지며, 직접 고칠 수 있습니다.",
+            "⚡ 코인 선물은 배수를 넣을 수 있고, 청산선에 닿으면 −100%로 셉니다.",
+            "📈 [3개월]·[6개월]·[1년]을 누르면 담긴 종목을 같은 비중으로 샀다고 치고 과거 수익률을 계산합니다.",
+            "📦 [＋ 지금 바스켓 보관]을 누르면 보관한 날부터 지금까지의 수익률을 지켜봅니다.",
+            "🎮 모두 가상 계산이며 실제 매수를 권하는 값이 아닙니다."];
+  var d=document.createElement("div"); d.id="bkInfoPop";
+  d.setAttribute("style","position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
+  d.addEventListener("click",function(ev){ if(ev.target===d)d.remove(); });
+  var close='document.getElementById(\'bkInfoPop\').remove()';
+  d.innerHTML='<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;'
+    +'padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+    +'<div style="font-size:19px;font-weight:800">'+(en?"Virtual basket":"가상 바스켓")+'</div>'
+    +'<span onclick="'+close+'" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
+    +L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">'+l+'</div>'; }).join("")
+    +'<button onclick="'+close+'" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;'
+    +'border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">'
+    +(en?"Got it":"알겠습니다")+'</button></div>';
+  document.body.appendChild(d);
+}
 function bkRender(){
   var card=E("bkCard");
   if(!card){ var rc=E("recoCard"); if(!rc)return; card=document.createElement("div"); card.className="card"; card.id="bkCard"; rc.parentNode.insertBefore(card,rc.nextSibling); }
   var a=bkGet();
-  var h='<h3>'+KE("가상 바스켓","Virtual basket")+(a.length?' <span style="color:var(--nm);font-weight:800">'+a.length+'</span>':'')+'</h3>';
+  var h='<h3>'+KE("가상 바스켓","Virtual basket")+'<span onclick="bkInfoPop(event)" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle;margin-left:6px">i</span>'+(a.length?' <span style="color:var(--nm);font-weight:800">'+a.length+'</span>':'')+'</h3>';
   h+='<div class="dpmsg">'+KE("추천 종목을 [조회]한 뒤 [＋ 가상 바스켓에 담기]를 누르면, 담긴 종목 전체의 3·6·12개월 과거 수익률을 함께 계산합니다.","Look up a pick, tap Add to virtual basket, then we compute the whole basket's past 3/6/12-month return.")+'</div>';
   if(!a.length){ h+='<div class="mhempty">'+KE("아직 담긴 종목이 없습니다.","No items yet.")+'</div>'+bkSavedHtml(); card.innerHTML=h; return; }
   var AM=bkAmtOf(a), TOT={};
