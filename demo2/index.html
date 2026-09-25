@@ -273,7 +273,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
    <button class="tgl" id="lng" onclick="toggleLang()">EN</button>
    <button class="tgl" id="tg" onclick="toggle()">🌙</button></div>
 </div>
-<div class="dpnote" id="dpNote"><span id="dpNoteTxt">⚠모의(시늉) 주문 판 — 실제 주문은 나가지 않습니다 · 심사·시연용</span><label class="dplive"><input type="checkbox" id="dpLiveCb" onchange="dpLiveTgl(this.checked)"> 실주문</label><button class="dpreset" onclick="dpReset()">초기화</button></div>
+<div class="dpnote" id="dpNote"><span id="dpNoteTxt">🧪 모의 판 — 가상머니(국내 1,000만원 · $10,000 · 10,000 USDT)로만 거래합니다 · 실계좌는 보이지 않습니다</span><label class="dplive"><input type="checkbox" id="dpLiveCb" onchange="dpLiveTgl(this.checked)"> 실주문</label><button class="dpreset" onclick="dpReset()">초기화</button></div>
 <div class="asof" id="asof">불러오는 중…</div>
 <div class="ophrs" id="ophrs">실시간 운영 05:00 ~ 익일 02:00 (KST) · 그 밖의 시간은 마지막 값</div>
 <div id="installBar" hidden><span id="installTxt">📲 홈 화면에 앱으로 추가하고 바로 여세요</span><button id="installBtn" onclick="doInstall()">앱설치</button><span class="ix" onclick="dismissInstall()">✕</span></div>
@@ -2480,6 +2480,7 @@ function dingDong() {
 }
 async function rlLoad(auto) {
   if (RL.busy) return;
+  if (typeof mkIsMock === "function" && mkIsMock()) { mockLoad(); return; }   // 모의 판 (2026-09-26)
   RL.busy = true;
   const en = LANG === "en";
   if (!auto) rlSay(en ? "Loading…" : "불러오는 중…");
@@ -2631,7 +2632,7 @@ async function rlLoad(auto) {
 function rlHas() { return (RL.kr.length + RL.us.length + RL.co.length) > 0; }
 // 앱을 켜면 실계좌를 저절로 불러온다 — [실계좌 불러오기]를 누른 것과 같다 (사장님 2026-09-26)
 setTimeout(function () {
-  try { if (!RL.at && !RL.busy && typeof ST !== "undefined" && ST && ((ST.kr && ST.kr.broker) || (ST.co && ST.co.broker))) rlLoad(); } catch (e) {}
+  try { if (!RL.at && !RL.busy && ((typeof mkIsMock === "function" && mkIsMock()) || (typeof ST !== "undefined" && ST && ((ST.kr && ST.kr.broker) || (ST.co && ST.co.broker))))) rlLoad(); } catch (e) {}
 }, 1500);
 function rlRows() { return RL.kr.concat(RL.us).concat(RL.co); }
 // 🔴 시세는 앱이 이미 받는 통로로 받는다 — OKX 이름을 바이낸스 심볼로 바꾼다
@@ -2864,6 +2865,12 @@ async function rlHoldSinceUS() {
 }
 // 산 날부터 오늘까지 영업일 수(주말 뺌) — 못 찾았으면 null
 function rlHeldDays(code) {
+  if (typeof mkIsMock === "function" && mkIsMock()) {
+    const c0 = String(code).replace(/\.US$/i, "").toUpperCase();
+    const r0 = rlRows().filter(function (x) { return String(x.code).toUpperCase() === c0; })[0];
+    if (!r0 || !r0.since) return null;
+    return {days: Math.max(1, Math.floor((Date.now() - new Date(r0.since + "T00:00:00").getTime()) / 86400000) + 1), since: r0.since};
+  }
   const _hs = rlHsGet();
   const h = _hs[code] || _hs["US:" + String(code).replace(/\.US$/, "").toUpperCase()];
   if (!h || !h.d) {
@@ -2925,7 +2932,8 @@ function dpLoad(){ try{ DP=JSON.parse(localStorage.getItem(DP_KEY)||"null"); }ca
   if(DP.krw==null){ DP.krw=(DP.cash!=null?DP.cash:10000000); delete DP.cash; }   // 옛 저장본
   if(DP.usdt==null)DP.usdt=10000;
   if(DP.usd==null)DP.usd=10000; }
-function dpSave(){ try{ localStorage.setItem(DP_KEY,JSON.stringify(DP)); }catch(e){} }
+function dpSave(){ try{ localStorage.setItem(DP_KEY,JSON.stringify(DP)); }catch(e){}
+  try{ if(typeof mkIsMock==="function" && mkIsMock()){ clearTimeout(window._mkT); window._mkT=setTimeout(function(){ try{ mockLoad(); }catch(e){} },80); } }catch(e){} }
 function dpNum(v){ v=parseFloat(String(v).replace(/,/g,"")); return isFinite(v)?v:0; }
 function dpNow(){ const d=new Date(),p=n=>String(n).padStart(2,"0");
   return p(d.getMonth()+1)+"/"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds()); }
@@ -3066,6 +3074,7 @@ function dpLiveTgl(on){
   dpBarCoin="";                       // 주문칸을 다시 그려 딱지를 바꾼다
   try{ dpShowCoinBar(); }catch(e){}
   dpNoteSync();
+  try{ mkSwitch(); }catch(e){}                                // 모의 ↔ 실계좌 판 바꾸기 (2026-09-26)
 }
 // 맨 위 띠 — 실주문이면 빨갛게, 아니면 모의 안내 그대로
 function dpNoteSync(){
@@ -3077,8 +3086,8 @@ function dpNoteSync(){
   if(t)t.textContent = on
     ? (en?"REAL ORDERS — stock (Kiwoom) and coin (OKX) orders go out with real money"
         :"⚠ 실주문 — 주식(키움)·코인(OKX) 주문이 실제로 나갑니다")
-    : (en?"Demo orders — nothing is sent to the exchange"
-        :"⚠ 모의(시늉) 주문 판 — 실제 주문은 나가지 않습니다 · 심사·시연용");
+    : (en?"MOCK MODE — virtual money only (₩10M · $10,000 · 10,000 USDT) · real account hidden"
+        :"🧪 모의 판 — 가상머니(국내 1,000만원 · $10,000 · 10,000 USDT)로만 거래합니다 · 실계좌는 보이지 않습니다");
 }
 
 // ── 주문(시늉) ──
@@ -3381,7 +3390,9 @@ function dpSellKey(key){
       bmAddRow(r); return;
     }
   }
-  if(p.mk==="coin"){ dpOpenClose(key); } else dpOpenSell(key);
+  if(mkIsMock() && String(key).indexOf("real:")===0){ const q3=rlRows()[+String(key).slice(5)]; if(q3 && q3._dk && DP.pos[q3._dk]) key=q3._dk; }   // 모의 판 — 모의 장부 열쇠로
+  const p2=dpPosOf(key)||p;
+  if(p2.mk==="coin"){ dpOpenClose(key); } else dpOpenSell(key);
   // 매수처럼 주문 판으로 화면을 옮긴다 (사장님 2026-09-26)
   setTimeout(function(){ try{ const b=E("dpClose"); if(b&&b.scrollIntoView) b.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} }, 60);
 }
@@ -3621,7 +3632,7 @@ function dpHoldRender(){
   const en=LANG==="en", box=E("mhBody"); if(!box)return;
   // 🔴 매도·청산 판이 열려 있으면 표를 다시 그리지 않는다 — 그리면 판이 사라진다(10초 갱신)
   if(dpCloseCur||dpSellCur)return;
-  const keys=Object.keys(DP.pos);
+  const keys=[];                                  // 모의·실계좌를 섞지 않는다 — 모의 판이면 아래 real 줄이 모의 계좌다 (2026-09-26)
   const real=(typeof rlRows==="function")?rlRows():[];
   if(!keys.length && !real.length){ box.innerHTML='<div class="mhempty">'+(en
     ?"Buy a stock or coin below, or load your real account above."
@@ -3671,7 +3682,7 @@ function dpHoldRender(){
      +'<span class="mhnm" style="cursor:pointer" onclick="mhGo(&quot;'+dpEsc(String(p.code||"")).replace(/"/g,"")+'&quot;,&quot;'
        +dpEsc(String(p.name||p.code||"")).replace(/"/g,"")+'&quot;,&quot;'+(p.mk||"kr")+'&quot;,'+(p.spot?1:0)+')">'
        +dpEsc(p.name||p.code)+'</span>'+' <span class="mkt'+tagc+'">'+tag+'</span>'
-     +'<span class="rlb">'+(en?"REAL":"실계좌")+'</span>'
+     +'<span class="rlb">'+(mkIsMock()?(en?"MOCK":"모의"):(en?"REAL":"실계좌"))+'</span>'
      +(((p.mk==="kr"||p.mk==="coin"||p.mk==="us")&&typeof rlHeldDays==="function"&&rlHeldDays(p.code))
         ?'<br><span class="dplbl">'+(en?"day ":"")+rlHeldDays(p.code).days+(en?"":"일째")+'</span>':'')+'</td>'
      +'<td>'+qtx+'</td><td>'+mny(p.avg)+'</td><td>'+mny(cur)+'</td>'
@@ -3904,6 +3915,13 @@ async function ydLoad(force){
   var ds = ydYmd(y), md = ds.slice(4,6) + "-" + ds.slice(6,8);
   if(YD.busy || (!force && YD.day === ds)) return;
   YD.busy = true;
+  if(typeof mkIsMock === "function" && mkIsMock()){
+    try{ var mrows = mkYdRows(md); if(isToday) YD.todayRows = mrows; YD.day = ds; YD.at = Date.now(); YD.today = isToday; YD.html = ydHtml(mrows, [KE("모의 계좌","Mock account")], null); }catch(e){}
+    YD.busy = false;
+    var mb = E("ydBody"); if(mb) mb.innerHTML = YD.html;
+    var mt = E("ydDate"); if(mt) mt.textContent = isToday ? (KE("오늘 ","Today ") + new Date().toTimeString().slice(0,5) + KE(" 기준"," as of")) : (ds.slice(0,4) + "-" + md);
+    return;
+  }
   var en = LANG === "en", rows = [], note = [];
   try{
     var auto = await ydAutoKeys(md);
@@ -4018,7 +4036,7 @@ function dpRender(){
   const en=LANG==="en", box=E("dpBody"); if(!box)return;
   // 🔴 설정에서 고른 거래소 이름을 쓴다 — OKX 를 골랐는데 바이낸스라 적히면 안 된다
   // 🔴 실계좌를 불러왔으면 그 값으로 바꾼다. 못 받은 칸만 모의 값이 남는다.
-  const rc=(typeof rlCash==="function")?rlCash():null;
+  const rc=(!mkIsMock()&&typeof rlCash==="function")?rlCash():null;   // 모의 판이면 실계좌를 안 섞는다
   const kr=(rc&&rc.krw!==null)?rc.krw:DP.krw;
   const us=(rc&&rc.usd!==null)?rc.usd:DP.usd;
   const ut=(rc&&rc.usdt!==null)?rc.usdt:DP.usdt;
@@ -4120,6 +4138,7 @@ async function dpTick(){
     }catch(e){}
   }));
   dpRender();
+  try{ if(mkIsMock()) mockLoad(true); }catch(e){}
 }
 
 // ── 데모: [내 보유종목] 카드는 **모의 매수로 산 것**을 보여준다(손으로 넣는 칸은 없앴다) ──
@@ -5752,8 +5771,8 @@ setInterval(dpRegimeTick,15000);
     "공유": "Share", "● 실시간": "● Live", "실시간": "Live", "설정": "Settings", "초기화": "Reset", "실주문": "Live orders",
     "실시간 운영 05:00 ~ 익일 02:00 (KST) · 그 밖의 시간은 마지막 값": "Live 05:00–02:00 next day (KST) · outside these hours, last values",
     "시장온도 · VIX · 공포·탐욕 — 주식시장 기준": "Market temp · VIX · Fear & Greed — stock market basis",
-    "⚠모의(시늉) 주문 판 — 실제 주문은 나가지 않습니다 · 심사·시연용": "⚠ Mock order board — no real orders are sent · for review/demo",
-    "⚠ 모의(시늉) 주문 판 — 실제 주문은 나가지 않습니다 · 심사·시연용": "⚠ Mock order board — no real orders are sent · for review/demo",
+    "🧪 모의 판 — 가상머니(국내 1,000만원 · $10,000 · 10,000 USDT)로만 거래합니다 · 실계좌는 보이지 않습니다": "⚠ Mock order board — no real orders are sent · for review/demo",
+    "🧪 모의 판 — 가상머니(국내 1,000만원 · $10,000 · 10,000 USDT)로만 거래합니다 · 실계좌는 보이지 않습니다": "⚠ Mock order board — no real orders are sent · for review/demo",
     "⚠ 실주문 — 주식(키움)·코인(OKX) 주문이 실제로 나갑니다": "⚠ LIVE — stock (Kiwoom) and coin (OKX) orders are really sent",
     "3분": "3m", "5분": "5m", "15분": "15m", "30분": "30m", "60분": "60m", "일": "D", "주": "W",
     // ── 카드 제목·조회 ──
@@ -6405,6 +6424,7 @@ function pfAcctRender(o){
   try{ if(ST && ST.us && ST.us.broker==="korea_inv" && ST.us.acct) rows.push([pfBrokerNm("korea_inv")+" (미국)", pfMask(ST.us.acct)]); }catch(e){}
   try{ if(ST && ST.co && ST.co.broker){ if(ST.co.broker==="okx" && !PF_UID) pfUidLoad();
     rows.push([pfBrokerNm(ST.co.broker||"okx")+" (코인)", (ST.co.broker==="okx") ? (PF_UID ? "UID "+pfMask(PF_UID) : '<span class="dplbl">불러오는 중…</span>') : '<span class="dplbl">—</span>']); } }catch(e){}
+  if(mkIsMock()) rows = [[(LANG==="en"?"Mock account (virtual money)":"모의 계좌 (가상머니)"), '<span class="dplbl">—</span>']];
   if(!rows.length) rows.push(['<span class="dplbl">설정에 계좌 키가 없습니다</span>', '—']);
   box.innerHTML = '<h3>증권사 &amp; 거래소</h3><table class="mhtab"><tr><th style="text-align:left"></th><th>계좌번호</th><th>성명</th></tr>'
     + rows.map(function(r){ return '<tr><td style="text-align:left">'+r[0]+'</td><td>'+r[1]+'</td><td>'+nm+'</td></tr>'; }).join("") + '</table>';
@@ -6526,7 +6546,14 @@ async function coinOrd(k, side, amt){
   if(side === "S" && !(held && held.qty > 0)){ alert(k + " 현물을 들고 있지 않습니다."); return; }
   var txt = side === "B" ? ("매수 " + k + " 현물 " + (+amt).toFixed(2) + " USDT (시장가)") : ("매도 " + k + " 현물 " + ((amt > 0 && amt < held.qty) ? (+amt) + "개" : (+held.qty) + "개 전량") + " (시장가)");
   if(!dpAsk((live ? "실주문 · " : "모의 · ") + txt)) return;
-  if(!live){ alert("모의 — 실주문 스위치가 꺼져 있어 주문을 내지 않았습니다."); return; }
+  if(!live){
+    if(mkIsMock()){ try{ var cp = 0; try{ var tj = await (await fetch("https://www.okx.com/api/v5/market/ticker?instId=" + inst)).json(); cp = +((tj.data || [{}])[0].last) || 0; }catch(e){}
+        if(!(cp > 0)) throw new Error("현재가를 못 받았습니다");
+        var mq = side === "B" ? (+amt) / cp : ((amt > 0 && amt < held.qty) ? +amt : held.qty);
+        await mockFill("coin", side, inst, k, +mq.toFixed(8), cp);
+        alert("모의 체결 — " + k + " " + (side === "B" ? "매수 " : "매도 ") + (+mq.toFixed(6)) + "개 @ " + cp); }
+      catch(e){ alert("모의 주문 거부: " + (e.message || e)); } return; }
+    alert("모의 — 실주문 스위치가 꺼져 있어 주문을 내지 않았습니다."); return; }
   var sq = (side === "S" && amt > 0) ? Math.min(+amt, held.qty) : (held ? held.qty : 0);
   try{ if(side === "B") await rlSpotBuy(inst, amt, 0); else await rlSpotSell(inst, sq, 0); alert("주문이 들어갔습니다."); }
   catch(e){ alert("주문 거부: " + (e.message || e)); }
@@ -6542,7 +6569,10 @@ async function recoOrd(key){
   if(r.side === "B"){ q = Math.floor((r.mk === "us" ? r.amt / fx : r.amt) / px); if(q < 1) q = 1; }
   var live = rlCanLiveStock(r.mk);
   if(!dpAsk((live ? "실주문 · " : "모의 · ") + (r.side === "B" ? "매수 " : "매도 ") + r.name + " " + q + "주 @ " + bmMoney(r.mk, px))) return;
-  if(!live){ alert("모의 — 실주문 스위치가 꺼져 있어 주문을 내지 않았습니다."); return; }
+  if(!live){
+    if(mkIsMock()){ try{ await mockFill(r.mk, r.side, r.code, r.name, q, px); alert("모의 체결 — " + r.name + " " + (r.side === "B" ? "매수 " : "매도 ") + q + "주 @ " + bmMoney(r.mk, px)); }
+      catch(e){ alert("모의 주문 거부: " + (e.message || e)); } return; }
+    alert("모의 — 실주문 스위치가 꺼져 있어 주문을 내지 않았습니다."); return; }
   try{ await rlStockOrder(r.mk, r.side, r.code, q, px); alert("주문이 들어갔습니다."); }
   catch(e){ alert("주문 거부: " + (e.message || e)); }
   try{ [3000, 10000, 25000].forEach(function(ms){ setTimeout(function(){ try{ ydLoad(true); }catch(e){} }, ms); }); }catch(e){}
@@ -6635,6 +6665,106 @@ function bmDrop(i){ if(BM.rows){ BM.rows.splice(i, 1); bmRender(); } }
 function bmClear(){ if(!BM.rows || !BM.rows.length) return; if(!confirm("바스켓 종목을 모두 지울까요?")) return; BM.rows = null; BM.msg = ""; bmRender(); }   // 한꺼번에 지우기 (사장님 2026-09-26)
 function bmQty(i, v){ var r = BM.rows && BM.rows[i]; if(!r) return; var f = parseFloat(String(v).replace(/[^0-9.]/g, "")), n = r.mk === "coin" ? +(f || 0).toFixed(6) : Math.floor(f); r.qty = n > 0 ? n : 0; bmRender(); }
 function bmMoney(mk, v){ if(mk === "coin") return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; return mk === "us" ? "$" + (+v).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : Math.round(v).toLocaleString() + "원"; }
+// ── 모의 판 (사장님 2026-09-26) ──────────────────────────────────────────────
+//   실주문 스위치가 꺼지면 앱 전체가 모의 계좌(DP) 하나만 본다 — 실계좌 값은 한 칸도 섞지 않는다.
+//   RL(계좌·보유·예수금)을 DP 로 채워, 12칸·바스켓·Gap·코인 추천·매매현황이 그대로 모의를 읽게 한다.
+//   주문은 그 자리에서 현재가로 체결된 것으로 치고 DP 의 돈·보유를 움직인다.
+function mkIsMock(){ return !(typeof rlLiveOn === "function" && rlLiveOn()); }
+function mkToday(){ var d = new Date(), p = function(n){ return String(n).padStart(2, "0"); }; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+function mockLoad(quiet){
+  if(!DP) return;
+  var kr = [], us = [], co = [], dirty = false, today = mkToday();
+  Object.keys(DP.pos).forEach(function(k){
+    var p = DP.pos[k]; if(!p) return;
+    if(!p.since){ p.since = today; dirty = true; }
+    if(p.mk === "kr" || p.mk === "us"){
+      var code = p.mk === "us" ? String(p.code).replace(/\.US$/i, "").toUpperCase() : String(p.code);
+      var cur = dpPx[k] || dpPx[p.mk + ":" + code] || p.avg, evl = p.qty * cur, pl = (cur - p.avg) * p.qty;
+      dpPx[p.mk + ":" + code] = cur;
+      (p.mk === "kr" ? kr : us).push({mk: p.mk, code: code, name: p.name || code, qty: p.qty, avg: p.avg, cur: cur, evl: evl, pl: pl,
+        rt: (p.avg * p.qty) ? pl / (p.avg * p.qty) * 100 : 0, _dk: k, since: p.since});
+    } else if(p.mk === "coinS"){
+      var b = String(p.code).toUpperCase().replace(/USDT$/, ""), c2 = dpPx[k] || dpPx["coin:" + b + "USDT"] || p.avg, e2 = p.qty * c2, l2 = (c2 - p.avg) * p.qty;
+      dpPx["coinS:" + b + "USDT"] = c2;
+      co.push({mk: "coin", spot: true, code: b + "-USDT", name: b, qty: p.qty, avg: p.avg, cur: c2, evl: e2, pl: l2,
+        rt: (p.avg * p.qty) ? l2 / (p.avg * p.qty) * 100 : 0, _dk: k, since: p.since});
+    } else if(p.mk === "coin"){
+      var b3 = String(p.code).toUpperCase().replace(/USDT$/, ""), c3 = dpPx[k] || p.entry;
+      var pnl = (p.side === "L" ? 1 : -1) * (c3 / p.entry - 1) * p.lev * p.margin, q3 = p.margin * p.lev / p.entry;
+      co.push({mk: "coin", spot: false, code: b3 + "-USDT-SWAP", name: b3, side: p.side, lev: p.lev, qty: q3, ctr: q3, avg: p.entry, cur: c3,
+        evl: p.margin, pl: pnl, rt: p.margin ? pnl / p.margin * 100 : 0, _dk: k, since: p.since});
+    }
+  });
+  if(dirty){ try{ localStorage.setItem(DP_KEY, JSON.stringify(DP)); }catch(e){} }
+  RL.kr = kr; RL.us = us; RL.co = co; RL.cash = {krw: DP.krw, usd: DP.usd, usdt: DP.usdt}; RL.sum = null;
+  RL.at = Date.now(); RL.busy = false; RL.mock = true;
+  try{ dpHoldRender(); }catch(e){}
+  if(quiet) return;
+  try{ dpRender(); }catch(e){}
+  try{ recoRender(); }catch(e){}
+  try{ pfRender(); }catch(e){}
+  try{ rlSay(new Date().toTimeString().slice(0, 5) + (LANG === "en" ? " · mock account · " : " 모의 계좌 · ") + (kr.length + us.length + co.length) + (LANG === "en" ? " positions" : "건")); }catch(e){}
+}
+// 모의 체결 — 어디서 주문을 내든 이 하나로 (현재가로 바로 체결)
+async function mockFill(mk, side, code, name, qty, px){
+  qty = +qty || 0; px = +px || 0;
+  if(!(qty > 0) || !(px > 0)) throw new Error("수량·가격이 없습니다");
+  await tdGuard(mk, code, name);
+  var isC = (mk === "coin"), n = tdNorm(mk, code), key = null;
+  Object.keys(DP.pos).forEach(function(k){ var p = DP.pos[k]; if(!p || p.mk === "coin") return;
+    if(tdNorm(p.mk === "coinS" ? "coin" : p.mk, p.code) === n) key = k; });
+  var base = String(code).toUpperCase().split("-")[0].replace(/USDT$/, "");
+  var ncode = isC ? base + "USDT" : (mk === "us" ? String(code).toUpperCase().replace(/\.US$/, "") : String(code).replace(/^A/, ""));
+  if(!key) key = (isC ? "coinS:" : mk + ":") + ncode;
+  var p = DP.pos[key] || {mk: isC ? "coinS" : mk, code: ncode, name: isC ? base : (name || ncode), qty: 0, avg: 0, since: mkToday()};
+  var amt = qty * px, pnl = null, cashNm = isC ? "USDT" : (mk === "kr" ? "원화 예수금" : "달러 예수금");
+  if(side === "B"){
+    var bal = isC ? DP.usdt : (mk === "kr" ? DP.krw : DP.usd);
+    if(amt > bal + 1e-9) throw new Error("모의 계좌 " + cashNm + " 부족");
+    p.avg = (p.avg * p.qty + amt) / (p.qty + qty); p.qty += qty; if(!p.since) p.since = mkToday();
+    if(isC) DP.usdt -= amt; else if(mk === "kr") DP.krw -= amt; else DP.usd -= amt;
+  } else {
+    if(p.qty < qty - 1e-9) throw new Error("보유 수량이 모자랍니다");
+    pnl = (px - p.avg) * qty; p.qty -= qty;
+    if(isC) DP.usdt += amt; else if(mk === "kr") DP.krw += amt; else DP.usd += amt;
+  }
+  if(p.qty <= 1e-12) delete DP.pos[key]; else DP.pos[key] = p;
+  dpPx[key] = px;
+  DP.log.unshift({ts: Date.now(), t: dpNow(), kind: isC ? "coinS" : mk, code: p.code, name: p.name, side: side, qty: qty, px: px,
+                  how: (LANG === "en" ? "mock" : "모의"), pnl: pnl});
+  DP.log = DP.log.slice(0, 200);
+  tdMark(mk, code, side); dpSave();
+  return {qty: qty, px: px};
+}
+// 모의 매매현황 — 그날 모의 체결만 (실주문 기록은 뺀다)
+function mkYdRows(md){
+  var mmdd = String(md).replace("-", "/"), rows = [], g = {};
+  (DP.log || []).forEach(function(r){
+    if(!r || String(r.t || "").slice(0, 5) !== mmdd) return;
+    if(/실주문|REAL/.test(r.how || "")) return;
+    var mk = (r.kind === "coin" || r.kind === "coinS") ? "coin" : r.kind;
+    var sd = (r.side === "B" || r.side === "L") ? "B" : "S";
+    var amt = (r.kind === "coin") ? +r.qty : (+r.qty) * (+r.px);
+    var code = mk === "coin" ? String(r.code).toUpperCase().replace(/USDT$/, "") + "-USDT" : r.code;
+    var k = mk + ":" + code + ":" + sd;
+    g[k] = g[k] || {mk: mk, code: code, name: mk === "coin" ? String(code).split("-")[0] : (r.name || code), side: sd, qty: 0, amt: 0, pl: sd === "S" ? 0 : null, est: false};
+    g[k].qty += (+r.qty || 0); g[k].amt += amt; if(sd === "S" && r.pnl != null) g[k].pl += (+r.pnl || 0);
+  });
+  Object.keys(g).forEach(function(k){ rows.push(g[k]); });
+  return rows;
+}
+// 판 바꾸기 — 모의 ↔ 실계좌. 남은 계산·표를 비우고 새 판으로 다시 읽는다
+function mkSwitch(){
+  try{ BM.rows = null; BM.msg = ""; bmRender(); }catch(e){}
+  try{ RO_P.sig = ""; RO_P.map = {}; }catch(e){}
+  try{ YD.day = ""; YD.todayRows = null; }catch(e){}
+  try{ if(RL.auto){ clearInterval(RL.auto); RL.auto = 0; } }catch(e){}
+  RL.kr = []; RL.us = []; RL.co = []; RL.cash = null; RL.sum = null; RL.at = 0; RL.busy = false; RL.mock = false; RL.qtySig = undefined;
+  try{ dpHoldRender(); }catch(e){}
+  try{ dpRender(); }catch(e){}
+  try{ rlLoad(); }catch(e){}
+  setTimeout(function(){ try{ ydLoad(true); }catch(e){} }, 900);
+}
 // ── 12칸 현황 ⓘ — 예수금 부족 · 1주 미달 · 매도 버튼 (사장님 2026-09-26) ──
 function s12Info(e){
   try{ if(e) e.stopPropagation(); }catch(x){}
@@ -6701,8 +6831,9 @@ function tdNorm(mk, code){
   return "kr:" + c.replace(/^A/, "");
 }
 function tdDay(){ var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
-function tdLog(){ try{ var o = JSON.parse(localStorage.getItem(TD_KEY) || "null"); return (o && o.d === tdDay()) ? o : {d: tdDay(), k: {}}; }catch(e){ return {d: tdDay(), k: {}}; } }
-function tdMark(mk, code, side){ try{ var o = tdLog(), n = tdNorm(mk, code); if((o.k[n] || "").indexOf(side) < 0) o.k[n] = (o.k[n] || "") + side; localStorage.setItem(TD_KEY, JSON.stringify(o)); }catch(e){} }
+function tdKeyNm(){ return (typeof mkIsMock === "function" && mkIsMock()) ? "td_ord_mock_v1" : TD_KEY; }
+function tdLog(){ try{ var o = JSON.parse(localStorage.getItem(tdKeyNm()) || "null"); return (o && o.d === tdDay()) ? o : {d: tdDay(), k: {}}; }catch(e){ return {d: tdDay(), k: {}}; } }
+function tdMark(mk, code, side){ try{ var o = tdLog(), n = tdNorm(mk, code); if((o.k[n] || "").indexOf(side) < 0) o.k[n] = (o.k[n] || "") + side; localStorage.setItem(tdKeyNm(), JSON.stringify(o)); }catch(e){} }
 function tdSides(mk, code){
   var n = tdNorm(mk, code), sd = tdLog().k[n] || "";
   try{ if(YD && YD.todayRows) YD.todayRows.forEach(function(r){ if(tdNorm(r.mk, r.code) === n && sd.indexOf(r.side) < 0) sd += r.side; }); }catch(e){}
@@ -6752,7 +6883,9 @@ async function bmRun(){
   var all = sells.concat(buys);                                        // 파는 것부터
   for(var i = 0; i < all.length; i++){
     var r = all[i];
-    if(!bmCanLive(r.mk)){ r.res = "모의"; continue; }
+    if(!bmCanLive(r.mk)){
+      if(mkIsMock()){ try{ await mockFill(r.mk, r.side, r.code, r.name, r.qty, r.px); r.res = "모의 체결"; }catch(e){ r.res = "모의 거부 " + String(e.message || e).slice(0, 40); } bmRender(); continue; }
+      r.res = "모의"; continue; }
     try{ if(r.mk === "coin"){ if(r.side === "S") await rlSpotSell(r.code, r.qty, 0); else await rlSpotBuy(r.code, +(r.qty * r.px).toFixed(2), 0); } else await rlStockOrder(r.mk, r.side, r.code, r.qty, r.px); r.res = "주문 들어감"; }
     catch(e){ r.res = "거부 " + String(e.message || e).slice(0, 40); }
     bmRender();
