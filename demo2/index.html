@@ -3530,26 +3530,52 @@ function mhGroups(real, rh, en){
   order.forEach(function(c){ if(c.indexOf("C:") !== 0 && keys.indexOf(c) < 0) keys.push(c); });
   var CT = {"C:BTC": 45, "C:ETH": 45}; CT["C:" + (en ? "Alts" : "알트")] = 10;
   var ckeys = Object.keys(CT);
-  var hd = function(name, have, all, tg, money){
+  var hd = function(name, have, all, tg, money, key){
     var now = all > 0 ? have / all * 100 : 0, d = now - tg, amt = have - all * tg / 100;
     return '<tr class="mhgrp"><td colspan="7" style="text-align:left;background:rgba(127,127,127,.10);padding:6px 6px">'
       + '<b>' + name + '</b> <span class="dplbl">' + (en ? "held " : "보유 ") + now.toFixed(1) + '% · ' + (en ? "target " : "목표 ") + tg + '%</span>'
       + ' <b class="' + (d < -0.05 ? "dn" : (d > 0.05 ? "up" : "fl")) + '" style="float:right">Gap ' + (d > 0 ? "+" : (d < 0 ? "−" : "")) + Math.abs(d).toFixed(1) + '%p'
-      + ' <span style="font-weight:400">(' + (amt > 0 ? "+" : (amt < 0 ? "−" : "")) + money(Math.abs(amt)) + ')</span></b></td></tr>'; };
+      + ' <span style="font-weight:400">(' + (amt > 0 ? "+" : (amt < 0 ? "−" : "")) + money(Math.abs(amt)) + ')</span>'
+      + (d < -0.05 && key !== "예금·MMF" ? ' <button class="dpb buy dpsm" style="margin-left:4px" onclick="mhGapBuy(event,&quot;' + String(key || name).replace(/"/g, "") + '&quot;)">' + (en ? "BUY" : "매수") + '</button>' : '')
+      + '</b></td></tr>'; };
   var won = function(v){ return Math.round(v).toLocaleString() + (en ? " KRW" : "원"); }, usdt = function(v){ return v.toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; };
   var h = '<tr><td colspan="7" style="text-align:left;padding:4px 2px"><span class="dplbl">' + (en ? "Grouped by asset type · " : "자산 종류별 묶음 · ") + pfEsc(g.nm)
         + ' · Gap</span> <span class="c21help" onclick="mhGapInfo(event)">ⓘ</span></td></tr>';
   keys.forEach(function(c){
-    h += hd(c, val[c] || 0, tot, TGT[c] || 0, won);
+    h += hd(c, val[c] || 0, tot, TGT[c] || 0, won, c);
     if(c === "예금·MMF") h += '<tr><td colspan="7" style="text-align:left" class="dplbl">' + (en ? "Cash " : "예수금 ") + won(+cash.krw || 0) + ((+cash.usd || 0) ? ' · $' + (+cash.usd).toLocaleString(undefined, {maximumFractionDigits: 2}) : '') + '</td></tr>';
     h += (rows[c] || []).join("");
   });
   var hasCoin = ctot > 0 || ckeys.some(function(c){ return rows[c]; });
   if(hasCoin){
     h += '<tr><td colspan="7" style="text-align:left;padding:8px 2px 2px"><span class="dplbl">' + (en ? "Crypto (outside the asset mix) · BTC 45 · ETH 45 · Alts 10" : "코인 (자산배분비율 밖) · BTC 45 · ETH 45 · 알트 10") + '</span></td></tr>';
-    ckeys.forEach(function(c){ h += hd(c.slice(2), cval[c] || 0, ctot, CT[c], usdt); h += (rows[c] || []).join(""); });
+    ckeys.forEach(function(c){ h += hd(c.slice(2), cval[c] || 0, ctot, CT[c], usdt, c); h += (rows[c] || []).join(""); });
   }
   return h;
+}
+// Gap 빨강 줄 [매수] → 그 자산 종류의 오늘 살 줄을 바스켓 매매 표에 담는다 (사장님 2026-09-26) — 추천 표·바스켓 매매와 같은 셈
+async function mhGapBuy(e, key){
+  try{ if(e) e.stopPropagation(); }catch(x){}
+  var o = pfGet(); if(!o){ alert("먼저 투자성향 분석을 해 주세요."); return; }
+  var add = [];
+  try{
+    if(key.indexOf("C:") === 0){
+      var k0 = key.slice(2), alt = !(k0 === "BTC" || k0 === "ETH");
+      coPlan(RECO).filter(function(r){ return r.side === "B" && !r.info && (alt ? (r.k !== "BTC" && r.k !== "ETH") : r.k === k0); }).forEach(function(r){
+        var x = {side: "B", mk: "coin", code: r.k + "-USDT", name: r.k + " 현물", px: +r.px || 0, why: r.why + " · 시장가"};
+        if(r.err) x.err = r.err; else if(x.px > 0) x.qty = +(r.amt / x.px).toFixed(6); else x.err = "현재가 못 받음";
+        add.push(x); });
+    } else {
+      var P = bmPlan(o), L = P.rows.filter(function(r){ return r.side === "B" && r.cls === key; });
+      if(L.length) await bmPrice(L, P.fx, P.cash);
+      add = L;
+    }
+  }catch(err){ alert("오늘 살 줄을 못 만들었습니다: " + (err.message || err)); return; }
+  if(!add.length){ alert(key.replace(/^C:/, "") + " — 오늘 이 종류에서 살 추천이 없습니다."); return; }
+  if(!BM.rows) BM.rows = [];
+  var n = 0; add.forEach(function(r){ if(!BM.rows.some(function(x){ return x.code === r.code && x.side === "B"; })){ BM.rows.push(r); n++; } });
+  BM.msg = key.replace(/^C:/, "") + " — " + n + "줄 담았습니다." + (n < add.length ? " (이미 담긴 " + (add.length - n) + "줄은 건너뜀)" : "");
+  bmRender(); var c = E("bmCard"); if(c && c.scrollIntoView) c.scrollIntoView({behavior: "smooth", block: "start"});
 }
 function mhGapInfo(e){
   try{ if(e) e.stopPropagation(); }catch(x){}
