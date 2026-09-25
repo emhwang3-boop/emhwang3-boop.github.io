@@ -1923,7 +1923,7 @@ function svRender() {
         + 'You can change it at any time.') + '</div>';
   SV_GRADE.forEach(function (g, i) {
     const on = (i === cur);
-    h += '<button class="svbtn' + (on ? ' svgo' : '') + '" onclick="svPick(' + i + ')">'
+    h += '<button class="svbtn' + (on ? ' svgo' : '') + '" style="text-align:left !important" onclick="svPick(' + i + ')">'   // 줄 맞춤 — 왼쪽 (사장님 2026-09-25)
        + (on ? "✓ " : "") + svPortNm(i)
        + ' <span class="dplbl">' + g.mix.map(function (m) { return KN(m[0]) + " " + m[1] + "%"; }).join(" · ") + '</span>'
        + '</button>';
