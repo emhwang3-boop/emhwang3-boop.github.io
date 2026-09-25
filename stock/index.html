@@ -365,7 +365,7 @@ function svOpenApp(a){
   return true;
 }
 </script>
-<div class="card discCard"><div class="discNote"><span class="kko"><b>앱 로직</b> — ① 자산 종류별 비중은 고객님이 고르신 포트폴리오에 따라 <b>미리 정해져</b> 있습니다. ② <b>국내·해외 주식</b>은 <b>일봉</b>을 기준으로, 추세선이 상승 중이고 가격이 기준선 위에 있으며 추세의 <b>상승 각도</b>가 일정 수준 이상인 종목 가운데, <b>최근 3거래일 안에</b> 그 조건을 새로 충족한 것만 고릅니다. ③ 그중 <b>상승 각도가 가파른 순서</b>로 보여 드립니다. ④ <b>해외 ETF(원화)</b>도 같은 방법으로 고르되, 시가총액 상위 종목 안에서 고르며 최근 3거래일 조건은 적용하지 않습니다. <b>레버리지 ETF</b>도 같은 방법으로 고르며, <b>공격투자 포트폴리오에만</b> 들어갑니다. <b>국내 ETF와 예금은 대표 상품을 미리 정해 두고 바꾸지 않습니다.</b> ⑤ 주식 추천의 대상은 국내 상장 종목과 미국 S&amp;P 500 구성 종목입니다. ⑥ 모든 이용자에게 <b>같은 규칙·같은 결과</b>가 적용되며, 개별 상담이나 맞춤 조언이 아닙니다.</span><span class="ken"><b>App logic</b> — ① The weight of each asset class is <b>fixed in advance</b> according to the portfolio you choose. ② For <b>Korean and US stocks</b>, using <b>daily charts</b>, we select stocks whose trend line is rising, whose price is above the baseline, and whose trend has an <b>upward angle</b> above a set level — and only those that <b>newly met</b> these conditions <b>within the last 3 trading days</b>. ③ Among them, the <b>steepest upward angle</b> is shown first. ④ <b>Overseas ETFs (KRW)</b> are selected the same way from the largest ETFs by market cap, without the 3-day condition. <b>Leveraged ETFs</b> are selected the same way and appear <b>only in the Aggressive portfolio</b>. <b>Korean ETFs and deposits use fixed representative products that do not change.</b> ⑤ Stock picks are drawn from Korean-listed stocks and the constituents of the US S&amp;P 500. ⑥ The <b>same rules and the same results</b> apply to every user; this is not individual consultation or personalized advice.</span></div></div>
+<div class="card discCard"><div class="discNote"><span class="kko"><b>앱 로직</b> — ① 자산 종류별 비중은 고객님이 고르신 포트폴리오에 따라 <b>미리 정해져</b> 있습니다. ② <b>국내·해외 주식</b>은 <b>일봉</b>을 기준으로, 추세선이 상승 중이고 가격이 기준선 위에 있으며 추세의 <b>상승 각도</b>가 일정 수준 이상인 종목 가운데, <b>최근 3거래일 안에</b> 그 조건을 새로 충족한 것만 고릅니다. ③ 그중 <b>상승 각도가 가파른 순서</b>로 보여 드립니다. ④ <b>해외(원화) 주식형 ETF</b>도 같은 방법으로 고르되, 시가총액 상위 종목 안에서 고르며 최근 3거래일 조건은 적용하지 않습니다. <b>주식형 레버리지 ETF</b>도 같은 방법으로 고르며, <b>적극투자(원화)·공격투자 포트폴리오에만</b> 들어갑니다. <b>예금·MMF와 지수형·채권형 ETF는 대표 상품을 미리 정해 두고 바꾸지 않습니다.</b> ⑤ 주식 추천의 대상은 국내 상장 종목과 미국 S&amp;P 500 구성 종목입니다. ⑥ 모든 이용자에게 <b>같은 규칙·같은 결과</b>가 적용되며, 개별 상담이나 맞춤 조언이 아닙니다.</span><span class="ken"><b>App logic</b> — ① The weight of each asset class is <b>fixed in advance</b> according to the portfolio you choose. ② For <b>Korean and US stocks</b>, using <b>daily charts</b>, we select stocks whose trend line is rising, whose price is above the baseline, and whose trend has an <b>upward angle</b> above a set level — and only those that <b>newly met</b> these conditions <b>within the last 3 trading days</b>. ③ Among them, the <b>steepest upward angle</b> is shown first. ④ <b>Overseas equity ETFs (KRW)</b> are selected the same way from the largest ETFs by market cap, without the 3-day condition. <b>Leveraged equity ETFs</b> are selected the same way and appear <b>only in the Growth (KRW) and Aggressive portfolios</b>. <b>Deposits · MMF and index/bond ETFs use fixed representative products that do not change.</b> ⑤ Stock picks are drawn from Korean-listed stocks and the constituents of the US S&amp;P 500. ⑥ The <b>same rules and the same results</b> apply to every user; this is not individual consultation or personalized advice.</span></div></div>
 
 <div class="card discCard">
   <h3><span class="kko">투자 유의사항</span><span class="ken">Investment Notice</span></h3>
@@ -1710,6 +1710,14 @@ var KE_NM = {
   "해외 ETF(달러)": "Overseas ETFs (USD)", "레버리지 ETF(원화)": "Leveraged ETFs (KRW)",
   "레버리지 ETF(달러)": "Leveraged ETFs (USD)", "국내 주식": "Korean Stocks", "해외 주식": "US Stocks",
   "알트": "Alts", "현금(USDT)": "Cash (USDT)",
+  // 성향별 자산배분 최종안 갈래 (사장님 2026-09-25)
+  "예금·MMF": "Deposits · MMF", "국내 지수형 ETF": "KR index ETFs", "국내 채권형 ETF": "KR bond ETFs",
+  "국내 원화 ETF": "KRW-listed index ETFs", "해외 원화표시 채권형 ETF": "KRW-listed foreign bond ETFs",
+  "미국 달러 지수형 ETF": "US index ETFs (USD)", "미국 달러표시 채권형 ETF": "US bond ETFs (USD)",
+  "해외(원화) 주식형 ETF": "Overseas equity ETFs (KRW)", "원화 주식형 레버리지 ETF": "Leveraged equity ETFs (KRW)",
+  "미국 달러 주식형 ETF": "US equity ETFs (USD)", "달러 주식형 레버리지 ETF": "Leveraged equity ETFs (USD)",
+  "KODEX 머니마켓액티브": "KODEX Money Market Active", "KODEX 국고채3년": "KODEX KTB 3Y",
+  "TIGER 미국채10년선물": "TIGER US Treasury 10Y Futures",
   "안정형": "Conservative", "안정추구형": "Moderately Conservative", "위험중립형": "Balanced",
   "적극투자형": "Growth", "공격투자형": "Aggressive",
   "은행 정기예금": "Bank time deposit", "KODEX 국고채30년액티브": "KODEX KTB 30Y Active",
@@ -1866,21 +1874,23 @@ const SV_KEY = "sv_pick_v1";         // {at:"YYYY-MM-DD", pick:i}  — 고른 �
 const SV_KRW = 100000000;            // 원화 1억
 const SV_USD = 100000;               // 미화 10만 달러
 // 🔴 원화 계좌와 달러 계좌를 **따로** 본다(사장님 "1-가"). 환율로 섞지 않는다.
-const SV_USD_CLS = {"해외 ETF(달러)": 1, "레버리지 ETF(달러)": 1, "해외 주식": 1};
+// 🔴 가상 계좌는 원화 1억 하나다 (사장님 2026-09-25 「나」). 달러 자산은 그날 환율로 원화 환산해서 보여 준다.
+const SV_USD_CLS = {"미국 달러 지수형 ETF": 1, "미국 달러표시 채권형 ETF": 1, "해외 주식": 1, "미국 달러 주식형 ETF": 1, "달러 주식형 레버리지 ETF": 1};
 
+// 🔴 성향별 자산배분 최종안 (사장님 확정 2026-09-25 · C:\kiwoom_work\성향별_자산배분_최종안.md)
+//    상품 위험등급: 초저(예금·MMF) · 저(국내 지수형·채권형 ETF) · 중(국내 원화 ETF·해외 원화표시 채권형·미국 달러 지수형·미국 달러표시 채권형)
+//    · 고(국내 주식·해외(원화) 주식형·원화 주식형 레버리지) · 초고(해외 주식·미국 달러 주식형·달러 주식형 레버리지). 성향은 자기 등급 이하만.
 const SV_GRADE = [
-  {nm: "안정형", mix: [["예금", 70], ["국내 ETF", 25], ["해외 ETF(원화)", 5]]},
-  {nm: "안정추구형", mix: [["예금", 50], ["국내 ETF", 30], ["해외 ETF(원화)", 15], ["국내 주식", 5]]},
-  {nm: "위험중립형", mix: [["예금", 30], ["국내 ETF", 25], ["해외 ETF(원화)", 15], ["해외 ETF(달러)", 10],
-                          ["국내 주식", 10], ["해외 주식", 10]]},
-  {nm: "적극투자형", mix: [["예금", 10], ["국내 ETF", 20], ["해외 ETF(원화)", 10], ["해외 ETF(달러)", 15],
-                          ["국내 주식", 20], ["해외 주식", 25]]},
-  // 🔴 레버리지 ETF 10%는 **공격투자 포트폴리오에만** 둔다 (사장님 2026-09-20).
-  //    해외 ETF(달러) 15% 에서 10% 를 떼어 왔다. 원화 밑에 5%, 달러 밑에 5% (사장님 지시).
-  //    그 결과 원화:달러가 45:55 → 50:50 이 된다.
-  {nm: "공격투자형", mix: [["국내 ETF", 10], ["해외 ETF(원화)", 5], ["레버리지 ETF(원화)", 5],
-                          ["해외 ETF(달러)", 5], ["레버리지 ETF(달러)", 5],
-                          ["국내 주식", 30], ["해외 주식", 40]]},
+  {nm: "안정형", mix: [["예금·MMF", 100]]},
+  {nm: "안정추구형", mix: [["예금·MMF", 60], ["국내 지수형 ETF", 20], ["국내 채권형 ETF", 20]]},
+  {nm: "위험중립형", mix: [["예금·MMF", 30], ["국내 지수형 ETF", 15], ["국내 채권형 ETF", 15], ["국내 원화 ETF", 10],
+                          ["해외 원화표시 채권형 ETF", 10], ["미국 달러 지수형 ETF", 10], ["미국 달러표시 채권형 ETF", 10]]},
+  {nm: "적극투자형", mix: [["예금·MMF", 10], ["국내 지수형 ETF", 10], ["국내 채권형 ETF", 10], ["국내 원화 ETF", 10],
+                          ["해외 원화표시 채권형 ETF", 5], ["미국 달러 지수형 ETF", 10], ["미국 달러표시 채권형 ETF", 5],
+                          ["국내 주식", 25], ["해외(원화) 주식형 ETF", 10], ["원화 주식형 레버리지 ETF", 5]]},
+  {nm: "공격투자형", mix: [["국내 지수형 ETF", 5], ["국내 채권형 ETF", 5], ["국내 원화 ETF", 5], ["미국 달러 지수형 ETF", 5],
+                          ["국내 주식", 30], ["해외(원화) 주식형 ETF", 5], ["원화 주식형 레버리지 ETF", 5],
+                          ["해외 주식", 30], ["미국 달러 주식형 ETF", 5], ["달러 주식형 레버리지 ETF", 5]]},
 ];
 // 색은 무지개로 흩뿌리지 않는다. 배분은 안전한 쪽 → 위험한 쪽 차례라서
 // 차가운 남색에서 따뜻한 테라코타로 이어지는 한 줄기 색띠로 둔다(채도 낮춤).
@@ -1892,6 +1902,10 @@ const SV_COLOR = {
   "예금": "#20C4B8", "국내 ETF": "#3AA6F0", "해외 ETF(원화)": "#37D67A", "해외 ETF(달러)": "#8FD14F",
   "국내 주식": "#FFC93C", "해외 주식": "#FF8A5B", "레버리지 ETF(원화)": "#FF6BB3", "레버리지 ETF(달러)": "#9B7BFF",
   "BTC": "#FFB020", "ETH": "#5B8DEF", "알트": "#FF6BB3", "현금(USDT)": "#A8B8C8",
+  "예금·MMF": "#20C4B8", "국내 지수형 ETF": "#3AA6F0", "국내 채권형 ETF": "#6FB7E8", "국내 원화 ETF": "#37D67A",
+  "해외 원화표시 채권형 ETF": "#7FDCA4", "미국 달러 지수형 ETF": "#8FD14F", "미국 달러표시 채권형 ETF": "#B5E07A",
+  "해외(원화) 주식형 ETF": "#FFB347", "원화 주식형 레버리지 ETF": "#FF6BB3", "미국 달러 주식형 ETF": "#FF7A7A",
+  "달러 주식형 레버리지 ETF": "#9B7BFF",
 };
 function svColor(nm, i) { return SV_COLOR[nm] || SV_PAL[i % SV_PAL.length]; }
 
@@ -2121,7 +2135,13 @@ function bkAmtLive(el) {
   const tail = dot ? raw.replace(/,/g, "").split(".")[1] : null;
   el.value = Math.floor(n).toLocaleString() + (dot ? ("." + (tail || "")) : "");
 }
-function bkCcy(it) { return (it && it.mk === "us") ? "USD" : "KRW"; }
+// 🔴 가상 계좌는 원화 1억 하나다 (사장님 2026-09-25 「나」) — 미국 종목도 원화로 담는다
+function bkCcy(it) { return "KRW"; }
+function bkToKrw(v, ccy) {                    // 옛 보관분(달러로 적힌 것)은 그날 환율로 원화 환산
+  if (ccy !== "USD") return v;
+  var f = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350;
+  return v * f;
+}
 function bkMoney(v, ccy) {
   return ccy === "USD" ? ("$" + (+v).toLocaleString(undefined, {maximumFractionDigits: 2}))
                        : (Math.round(v).toLocaleString() + KE("원", ""));
@@ -2156,18 +2176,18 @@ function bkOldest() {                       // 보관한 포트폴리오가 여�
 }
 function bkSlotInfo() {
   const p = bkOldest();
-  let useK = 0, useU = 0, nK = 0, nU = 0, evK = 0, evU = 0;
+  let useK = 0, nK = 0, evK = 0;
   if (p) {
     const er = p.erows || [];
     (p.items || []).forEach(function (x, i) {
-      const v = +x.amt || 0, e = er[i] || {};
-      const pl = (typeof e.pl === "number") ? e.pl : 0;           // 수익금(계산 전이면 0)
-      if ((x.ccy || bkCcy(x)) === "USD") { useU += v; nU++; evU += v + pl; }
-      else { useK += v; nK++; evK += v + pl; }
+      const c = x.ccy || "KRW", e = er[i] || {};
+      const v = bkToKrw(+x.amt || 0, c);
+      const pl = bkToKrw((typeof e.pl === "number") ? e.pl : 0, c);   // 수익금(계산 전이면 0)
+      useK += v; nK++; evK += v + pl;
     });
   }
-  return {useK: useK, useU: useU, nK: nK, nU: nU, evalK: evK, evalU: evU,
-          leftK: SV_KRW - useK, leftU: SV_USD - useU, old: p};
+  return {useK: useK, useU: 0, nK: nK, nU: 0, evalK: evK, evalU: 0,
+          leftK: SV_KRW - useK, leftU: 0, old: p};
 }
 function bkAcctPaint() {
   // 담은 게 있으면 원금 줄은 감춘다 — 잔고·평가금액·합계로 갈음 (사장님 2026-09-24)
@@ -2182,14 +2202,9 @@ function bkAcctPaint() {
     return '<div class="svacct"' + (big ? ' style="border-top:1px solid var(--bd);margin-top:2px;padding-top:4px"' : '')
          + '><span>' + a + '</span><b' + (big ? ' style="color:var(--nm)"' : '') + '>' + b + '</b></div>'; };
   n.innerHTML =
-      '<div class="svgrpt" style="margin-top:8px">' + KE("원화", "KRW") + '</div>'
-    + row(KE("현재 잔고", "Cash"), won(s.leftK))
+      row(KE("현재 잔고", "Cash"), won(s.leftK))
     + row(KE("평가금액", "Holdings"), won(s.evalK))
     + row(KE("합계", "Total"), won(s.leftK + s.evalK), true)
-    + '<div class="svgrpt" style="margin-top:8px">' + KE("미화", "USD") + '</div>'
-    + row(KE("현재 잔고", "Cash"), usd(s.leftU))
-    + row(KE("평가금액", "Holdings"), usd(s.evalU))
-    + row(KE("합계", "Total"), usd(s.leftU + s.evalU), true)
     + '<div id="svEvalMsg" class="svsub"></div>'
 
     + '<div style="display:flex;gap:6px;margin-top:6px">'
@@ -2197,8 +2212,8 @@ function bkAcctPaint() {
     + '<button class="dppct" style="flex:0 0 auto;border-radius:10px;background:var(--bg);color:var(--nm);border:1px solid var(--bd);font-weight:700;padding:5px 10px;cursor:pointer;" onclick="bkAcctReset()">' + KE("초기화", "Reset") + '</button></div>';
   // 설명은 ⓘ 안으로 몰아 둔다 (사장님 2026-09-24)
   const inf = document.getElementById("svAcctInfo");
-  if (inf) { inf.style.whiteSpace = "pre-line"; inf.textContent = KE("🧩 원화 자산과 달러 자산을 각각 12칸으로 나눠, 하루에 한 칸씩 투자합니다.\n🎯 칸마다 들어갈 종목은 추천 종목에서 고객님이 직접 고릅니다.\n💰 한 칸 금액 = 가상 계좌 합계 ÷ 12. 그래서 평가금액이 불어나면 한 칸이 현재 잔고보다 커질 수도 있어요!\n📦 평가금액은 보관한 포트폴리오에서 가져오며, 여럿이면 가장 오래된 것을 씁니다. [평가금액 업데이트] 를 누르면 다시 셉니다 🔄\n➕ 합계 = 현재 잔고 + 평가금액입니다. [초기화] 를 누르면 처음으로 돌아갑니다 ⏪\n🎮 모두 가상 금액이며 실제 매수를 권하는 값이 아닙니다.",
-      "🧩 KRW and USD assets are each split into 12 slots — invest one slot a day.\n🎯 You pick each slot's item from the recommended list.\n💰 One slot = account total ÷ 12, so if holdings grow, a slot can be larger than your cash!\n📦 Holdings come from a saved portfolio (the oldest if several). Tap Update holdings to recount 🔄\n➕ Total = cash + holdings. Reset takes you back to the start ⏪\n🎮 All amounts are virtual and not a recommendation to buy.");
+  if (inf) { inf.style.whiteSpace = "pre-line"; inf.textContent = KE("🧩 가상 계좌 1억원을 12칸으로 나눠, 하루에 한 칸씩 투자합니다. 달러 자산은 그날 환율로 원화 환산합니다.\n🎯 칸마다 들어갈 종목은 추천 종목에서 고객님이 직접 고릅니다.\n💰 한 칸 금액 = 가상 계좌 합계 ÷ 12. 그래서 평가금액이 불어나면 한 칸이 현재 잔고보다 커질 수도 있어요!\n📦 평가금액은 보관한 포트폴리오에서 가져오며, 여럿이면 가장 오래된 것을 씁니다. [평가금액 업데이트] 를 누르면 다시 셉니다 🔄\n➕ 합계 = 현재 잔고 + 평가금액입니다. [초기화] 를 누르면 처음으로 돌아갑니다 ⏪\n🎮 모두 가상 금액이며 실제 매수를 권하는 값이 아닙니다.",
+      "🧩 The ₩100M virtual account is split into 12 slots — invest one slot a day. USD assets are converted at today's rate.\n🎯 You pick each slot's item from the recommended list.\n💰 One slot = account total ÷ 12, so if holdings grow, a slot can be larger than your cash!\n📦 Holdings come from a saved portfolio (the oldest if several). Tap Update holdings to recount 🔄\n➕ Total = cash + holdings. Reset takes you back to the start ⏪\n🎮 All amounts are virtual and not a recommendation to buy.");
              inf.style.display = "none"; }   // 이제 팝업(svAcctPop)으로 연다 (2026-09-25)
 }
 // ── 가상 계좌 — 굴러가는 잔고 (사장님 2026-09-24) ─────────────────────────────
@@ -2232,14 +2247,14 @@ function bkAcctReset() {                          // 처음으로 되돌린다
 // 한 칸 = 가상 계좌 합계(현재 잔고 + 평가금액) ÷ 12 (사장님 2026-09-24)
 function bkSlotAmt(ccy) {
   const s = bkSlotInfo();
-  return ccy === "USD" ? (s.leftU + s.evalU) / 12 : (s.leftK + s.evalK) / 12;
+  return (s.leftK + s.evalK) / 12;               // 한 계좌 (2026-09-25)
 }
 function bkAutoAmt(list) {
   // 12칸 — 가상 계좌를 열둘로 나눈 한 칸씩 (사장님 2026-09-24, 데모앱과 같은 방식)
   //   🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
   const out = {};
-  const sK = bkSlotAmt("KRW"), sU = bkSlotAmt("USD");
-  list.forEach(function (x) { out[x.code] = (bkCcy(x) === "USD") ? sU : sK; });
+  const sK = bkSlotAmt("KRW");
+  list.forEach(function (x) { out[x.code] = sK; });
   return out;
 }
 function bkAmtOf(list) {
@@ -2291,8 +2306,7 @@ function bkRender() {
   {
     const si = bkSlotInfo(), en2 = (typeof LANG !== "undefined" && LANG === "en");
     h += '<div class="slbox">'
-       + slotBars(KE("국내 주식", "KR stocks"), Math.round(bkSlotAmt("KRW")).toLocaleString() + (en2 ? "" : "원"), si.nK)
-       + slotBars(KE("미국 주식", "US stocks"), "$" + Math.round(bkSlotAmt("USD")).toLocaleString(), si.nU)
+       + slotBars(KE("가상 계좌", "Account"), Math.round(bkSlotAmt("KRW")).toLocaleString() + (en2 ? " KRW" : "원"), si.nK)
        + '</div>';
   }
   if (!a.length) {
@@ -2586,41 +2600,50 @@ var TOWER_URL = "https://emhwang3-boop.github.io/tower/";
 
 // ── 성향(자산군) 순위 — 안전 0 … 위험. 3D 타워가 아래→위로 쌓는 차례 (사장님: 안전할수록 아래, 위험할수록 위) ──
 //    앱 배분표(SV_GRADE)와 같은 차례. 코드가 대표상품·추천표에 있으면 그 자산군, 없으면 국내/해외 주식.
-var BK_CLS_ORDER = ["예금", "국내 ETF", "해외 ETF(원화)", "해외 ETF(달러)", "국내 주식", "해외 주식", "레버리지 ETF(원화)", "레버리지 ETF(달러)"];
+var BK_CLS_ORDER = ["예금·MMF", "국내 지수형 ETF", "국내 채권형 ETF", "국내 원화 ETF", "해외 원화표시 채권형 ETF", "미국 달러 지수형 ETF",
+  "미국 달러표시 채권형 ETF", "국내 주식", "해외(원화) 주식형 ETF", "원화 주식형 레버리지 ETF", "해외 주식", "미국 달러 주식형 ETF", "달러 주식형 레버리지 ETF"];
+// 옛 갈래 이름(보관한 바스켓에 남아 있을 수 있다) → 새 이름 (2026-09-25)
+var BK_CLS_OLD = {"예금": "예금·MMF", "국내 ETF": "국내 지수형 ETF", "해외 ETF(원화)": "해외(원화) 주식형 ETF", "해외 ETF(달러)": "미국 달러 주식형 ETF",
+  "레버리지 ETF(원화)": "원화 주식형 레버리지 ETF", "레버리지 ETF(달러)": "달러 주식형 레버리지 ETF"};
 function bkClassOf(it) {
   var code = String(it.code || ""), nm = String(it.name || "");
   if (it.mk === "coin") { var c = code.replace(/-?USDT$/i, "").replace(/-.*$/, "").toUpperCase(); return c === "BTC" ? "BTC" : (c === "ETH" ? "ETH" : "알트"); }
   // 1) 대표상품·오늘 추천 목록에 있으면 그 자산군 (가장 정확하다)
   try {
-    if (typeof SV_PROD !== "undefined") for (var k in SV_PROD) if ((SV_PROD[k] || []).some(function (x) { return x[1] && x[1] === code; })) return k;
+    if (typeof SV_PROD !== "undefined") for (var k in SV_PROD) if (!BK_CLS_OLD[k] && (SV_PROD[k] || []).some(function (x) { return x[1] && x[1] === code; })) return k;
     if (typeof SVR !== "undefined" && SVR) {
-      var M = [["etfw", "해외 ETF(원화)"], ["etfu", "해외 ETF(달러)"], ["levw", "레버리지 ETF(원화)"], ["levu", "레버리지 ETF(달러)"]];
+      var M = [["etfw", "해외(원화) 주식형 ETF"], ["etfu", "미국 달러 주식형 ETF"], ["levw", "원화 주식형 레버리지 ETF"], ["levu", "달러 주식형 레버리지 ETF"]];
       for (var i = 0; i < M.length; i++) { var L = SVR[M[i][0]] && SVR[M[i][0]].buy; if (L && L.some(function (r) { return String(r.code) === code; })) return M[i][1]; }
     }
   } catch (e) {}
   // 2) 이름으로 가른다 — 국내 상장 ETF 는 운용사 이름이 앞에 붙는다
-  if (/예금|정기예금|MMF|파킹/.test(nm)) return "예금";
+  if (/예금|정기예금|MMF|머니마켓|파킹/.test(nm)) return "예금·MMF";
   var us = (it.mk === "us") || /\.US$/i.test(code) || /^[A-Z.]{1,6}$/.test(code) && it.mk !== "kr";
   var KETF = /^(KODEX|TIGER|ACE|PLUS|RISE|SOL|KoAct|KOACT|HANARO|TIME|KBSTAR|ARIRANG|KIWOOM|TREX|FOCUS|HK|마이다스|히어로즈|파워|한투|삼성|미래에셋)\b/i;
   var OVERSEA = /미국|나스닥|S&P|s&p|필라델피아|다우|러셀|글로벌|해외|차이나|중국|홍콩|일본|인도|베트남|유럽|선진|신흥|월드|AI|반도체TOP|빅테크/;
   if (!us) {
-    if (/레버리지|2X|3X|2배|3배/i.test(nm)) return "레버리지 ETF(원화)";
-    if (KETF.test(nm) || /\bETF\b|\bETN\b/i.test(nm)) return OVERSEA.test(nm) ? "해외 ETF(원화)" : "국내 ETF";
+    if (/레버리지|2X|3X|2배|3배/i.test(nm)) return "원화 주식형 레버리지 ETF";
+    if (KETF.test(nm) || /\bETF\b|\bETN\b/i.test(nm)) {
+      if (/국고채|국채|채권|회사채|미국채|국공채|단기채|통안채/.test(nm)) return OVERSEA.test(nm) ? "해외 원화표시 채권형 ETF" : "국내 채권형 ETF";
+      return OVERSEA.test(nm) ? "해외(원화) 주식형 ETF" : "국내 지수형 ETF";
+    }
     return "국내 주식";
   }
   // 3) 미국 상장 — 널리 알려진 지수·업종 ETF 와 배수 ETF 만 ETF 로 본다. 나머지는 주식.
   var tk = code.replace(/\.US$/i, "").toUpperCase() || nm.split(" ")[0].toUpperCase();
   var USLEV = ["TQQQ", "SQQQ", "SOXL", "SOXS", "UPRO", "SPXL", "QLD", "SSO", "UDOW", "TNA", "FNGU", "BULZ", "LABU", "FAS", "TECL", "NAIL", "DFEN", "NUGT", "JNUG", "YINN", "INDL", "EDC", "BRZU", "KORU", "MEXX", "EURL", "DPST", "CURE", "RETL", "WANT", "DRN", "UTSL", "MIDU", "HIBL", "UWM", "DDM", "ROM", "USD", "UYG", "RXL", "ERX", "GUSH", "DIG", "URE", "UPW", "UCC", "UGE", "UXI", "UYM", "TPOR", "EFO", "EET"];
   var USETF = ["SPY", "VOO", "IVV", "VTI", "QQQ", "DIA", "IWM", "RSP", "VUG", "VTV", "MGK", "SCHG", "SCHD", "VIG", "VYM", "DGRO", "XLK", "XLF", "XLV", "XLE", "XLI", "XLY", "XLP", "XLU", "XLB", "SOXX", "SMH", "VGT", "IGV", "VEA", "IEFA", "VWO", "IEMG", "EFA", "ARKK", "BOTZ", "ICLN", "GLD", "SLV", "TLT", "IEF", "HYG", "LQD", "AGG", "BND", "VNQ", "JEPI", "JEPQ", "SCHF", "VXUS"];
-  if (USLEV.indexOf(tk) >= 0 || /\b(2X|3X)\b/i.test(nm)) return "레버리지 ETF(달러)";
-  if (USETF.indexOf(tk) >= 0) return "해외 ETF(달러)";
+  if (USLEV.indexOf(tk) >= 0 || /\b(2X|3X)\b/i.test(nm)) return "달러 주식형 레버리지 ETF";
+  if (["TLT", "IEF", "SHY", "HYG", "LQD", "AGG", "BND", "TIP", "GOVT", "VGIT", "VGLT", "BIL", "SGOV"].indexOf(tk) >= 0) return "미국 달러표시 채권형 ETF";
+  if (["SPY", "VOO", "IVV", "VTI", "QQQ", "DIA", "IWM", "RSP"].indexOf(tk) >= 0) return "미국 달러 지수형 ETF";
+  if (USETF.indexOf(tk) >= 0) return "미국 달러 주식형 ETF";
   return "해외 주식";
 }
 function bkClassRank(it) {
-  var c = it.cls || bkClassOf(it);
+  var c = it.cls || bkClassOf(it); if (BK_CLS_OLD[c]) c = BK_CLS_OLD[c];
   // 코인은 주식 자산군 전부보다 위 (사장님 2026-09-22 "비트코인이 젤로 위험한 자산"). 코인끼리는 BTC < ETH < 알트.
-  if (it.mk === "coin") return 8 + (c === "BTC" ? 0 : (c === "ETH" ? 1 : 2));
-  var i = BK_CLS_ORDER.indexOf(c); return i < 0 ? 4 : i;
+  if (it.mk === "coin") return BK_CLS_ORDER.length + (c === "BTC" ? 0 : (c === "ETH" ? 1 : 2));
+  var i = BK_CLS_ORDER.indexOf(c); return i < 0 ? 7 : i;
 }
 
 
@@ -2851,6 +2874,14 @@ const SV_PROD = {
   //    배당(미국배당다우존스)은 덜 흔들리지만 3.1년 연수익이 13.6% 대 22.2% 로 크게 뒤진다.
   "해외 ETF(원화)": [["TIGER 미국S&P500", "360750"], ["TIGER 미국나스닥100", "133690"]],
   "해외 ETF(달러)": [["SPY (S&P500)", ""], ["QQQ (나스닥100)", ""]],
+  // 최종안 갈래 대표상품 — 종목코드는 네이버 금융에서 확인 (2026-09-25)
+  "예금·MMF": [["은행 정기예금", "은행별 금리를 비교해 고르십니다"], ["KODEX 머니마켓액티브", "488770"]],
+  "국내 지수형 ETF": [["KODEX 200", "069500"], ["TIGER 200", "102110"]],
+  "국내 채권형 ETF": [["KODEX 국고채3년", "114260"], ["KODEX 국고채30년액티브", "439870"]],
+  "국내 원화 ETF": [["TIGER 미국S&P500", "360750"], ["TIGER 미국나스닥100", "133690"]],
+  "해외 원화표시 채권형 ETF": [["TIGER 미국채10년선물", "305080"]],
+  "미국 달러 지수형 ETF": [["SPY (S&P500)", ""], ["QQQ (나스닥100)", ""]],
+  "미국 달러표시 채권형 ETF": [["TLT (미국 장기국채)", ""], ["IEF (미국 7-10년 국채)", ""]],
 };
 
 // 🔴 보유부·현금 입력은 통째로 들어냈다 (사장님 2026-09-20, 변호사 지적).
@@ -3018,7 +3049,9 @@ function svPuz(parts){
     if(!list.length||w<=0||h<=0)return;
     if(list.length===1){ box.push({p:list[0],x:x,y:y,w:w,h:h}); return; }
     const t=list.reduce(function(s,i){return s+i[1];},0); let acc=0,i=0;
-    for(;i<list.length-1;i++){ if(i>0&&acc+list[i][1]>t/2)break; acc+=list[i][1]; }
+    // 큰 조각(40% 이상)은 혼자 떼어 낸다 — 작은 조각이 큰 조각 옆에 끼어 가느다란 기둥이 되면 이름을 못 쓴다 (2026-09-25)
+    if(list[0][1]>=t*0.4){ i=1; acc=list[0][1]; }
+    else for(;i<list.length-1;i++){ if(i>0&&acc+list[i][1]>t/2)break; acc+=list[i][1]; }
     const f=acc/t;
     if(w>=h){ cut(list.slice(0,i),x,y,w*f,h); cut(list.slice(i),x+w*f,y,w*(1-f),h); }
     else { cut(list.slice(0,i),x,y,w,h*f); cut(list.slice(i),x,y+h*f,w,h*(1-f)); }
@@ -3155,61 +3188,33 @@ function svRecoRender() {
                                    "Choose a portfolio above to see the asset allocation.") + '</div>'; return; }
   const g = SV_GRADE[p.pick];
 
-  // 🔴 원화 계좌와 달러 계좌를 따로 본다 (사장님 2026-09-20 "1-가"). 환율로 섞지 않는다.
-  //    각 통화 안에서 그 통화에 속한 자산군끼리 비중을 다시 100 으로 맞춘다.
-  const krw = g.mix.filter(function (m) { return !SV_USD_CLS[m[0]]; });
-  const usd = g.mix.filter(function (m) { return !!SV_USD_CLS[m[0]]; });
-  const sum = function (a) { return a.reduce(function (t, m) { return t + m[1]; }, 0); };
-  const kS = sum(krw), uS = sum(usd);
-
+  // 🔴 가상 계좌는 원화 1억 하나 (사장님 2026-09-25 「나」). 달러 자산은 그날 환율로 원화 환산해 보여 준다.
+  //    원형 그래프는 하나 — 최종안 비율 그대로. 그래프 구석에 환율을 적는다.
+  const fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 0;
   let h = '<div class="svsub">' + KE('<b>' + svPortNm(p.pick) + '</b>에 맞춘 자산 배분입니다. '
         + '아래 금액은 모든 이용자에게 똑같이 주어지는 가상 금액입니다.',
         'Asset allocation for the <b>' + svPortNm(p.pick) + '</b>. '
         + 'The amounts below are virtual amounts given equally to every user.') + '</div>';
-
-  // ── 원화 계좌 ──────────────────────────────────────────
-  // 🔴 계좌 머리줄은 크게, 금액은 줄이지 않고 전부 적는다 (사장님 2026-09-22)
-  // 잔액을 함께 적는다 — 담은 만큼 줄어든다 (사장님 2026-09-24)
-  const _si = (typeof bkSlotInfo === "function") ? bkSlotInfo() : {leftK: SV_KRW, leftU: SV_USD};
-  h += '<div class="svgrpt svacct2" style="margin-top:10px">' + KE("원화 계좌", "KRW Account")
+  const _si = (typeof bkSlotInfo === "function") ? bkSlotInfo() : {leftK: SV_KRW};
+  h += '<div class="svgrpt svacct2" style="margin-top:10px">' + KE("가상 계좌", "Virtual account")
      + ' <b>' + KE(Math.round(_si.leftK).toLocaleString() + "원", "₩" + Math.round(_si.leftK).toLocaleString()) + '</b></div>';
-  if (kS > 0) {
-    h += svPie(krw.map(function (m) { return [m[0], m[1]]; }));
-    h += '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("목표 비중", "Target %")
-       + '</th><th>' + KE("목표 금액", "Target amount") + '</th></tr>';
-    krw.forEach(function (m) {
-      const pc = m[1] / kS * 100;
-      h += '<tr><td style="text-align:left">' + KN(m[0]) + '</td>'
-         + '<td>' + pc.toFixed(1) + '%</td><td>' + svWon(SV_KRW * pc / 100) + '</td></tr>';
-    });
-    // 합계 줄 (사장님 2026-09-23)
-    h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
-       + '<td>100.0%</td><td>' + svWon(SV_KRW) + '</td></tr>';
-    h += '</table>';
-  }
-
-  // ── 달러 계좌 ──────────────────────────────────────────
-  const usdFmt = function (v) { return "$" + Math.round(v).toLocaleString(); };
-  h += '<div class="svgrpt svacct2" style="margin-top:12px">' + KE("달러 계좌", "USD Account")
-     + ' <b>' + usdFmt(_si.leftU) + '</b></div>';
-  if (uS > 0) {
-    h += svPie(usd.map(function (m) { return [m[0], m[1]]; }));
-    h += '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("목표 비중", "Target %")
-       + '</th><th>' + KE("목표 금액", "Target amount") + '</th></tr>';
-    usd.forEach(function (m) {
-      const pc = m[1] / uS * 100;
-      h += '<tr><td style="text-align:left">' + KN(m[0]) + '</td>'
-         + '<td>' + pc.toFixed(1) + '%</td><td>' + usdFmt(SV_USD * pc / 100) + '</td></tr>';
-    });
-    h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
-       + '<td>100.0%</td><td>' + usdFmt(SV_USD) + '</td></tr>';
-    h += '</table>';
-  } else {
-    // 🔴 안정·안정추구 포트폴리오에는 달러 자산군이 없다. 달러는 통째로 남는다.
-    h += '<div class="svsub">' + KE('이 포트폴리오에는 달러 자산이 들어가지 않습니다. '
-       + '달러 ' + usdFmt(SV_USD) + '는 예수금으로 남습니다.',
-       'This portfolio holds no USD assets. The ' + usdFmt(SV_USD) + ' stays as cash.') + '</div>';
-  }
+  h += '<div style="position:relative">' + svPie(g.mix.map(function (m) { return [m[0], m[1]]; }))
+     + (fx ? '<span style="position:absolute;top:0;right:2px;font-size:11px;color:var(--sub);background:var(--card);padding:1px 5px;border:1px solid var(--bd);border-radius:6px">'
+           + KE("환율 ", "USD/KRW ") + fx.toLocaleString(undefined, {maximumFractionDigits: 2}) + KE("원", "") + '</span>' : '')
+     + '</div>';
+  h += '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("목표 비중", "Target %")
+     + '</th><th>' + KE("목표 금액", "Target amount") + '</th></tr>';
+  g.mix.forEach(function (m) {
+    const won = SV_KRW * m[1] / 100;
+    const usdTxt = (SV_USD_CLS[m[0]] && fx) ? '<br><span class="dplbl">≈ $' + Math.round(won / fx).toLocaleString() + '</span>' : '';
+    h += '<tr><td style="text-align:left">' + KN(m[0]) + '</td>'
+       + '<td>' + m[1].toFixed(1) + '%</td><td>' + svWon(won) + usdTxt + '</td></tr>';
+  });
+  h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
+     + '<td>100.0%</td><td>' + svWon(SV_KRW) + '</td></tr>';
+  h += '</table>';
+  if (g.mix.some(function (m) { return SV_USD_CLS[m[0]]; }))
+    h += '<div class="svsub">' + KE("달러 자산은 그날 환율로 원화 환산한 금액입니다.", "USD assets are shown in KRW at today's exchange rate.") + '</div>';
 
   // ③ 자산군별 종목 — **비중 없이** 이름만
   // ③ 자산군 퍼즐 — 조각을 누르면 뒤집혀 그 자산군 추천 종목이 나온다 (사장님 2026-09-23)
@@ -3242,13 +3247,13 @@ function svRecoRender() {
       cand = SVR.kr.buy12.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
     } else if (cls === "해외 주식" && SVR && SVR.us && SVR.us.buy12) {
       cand = SVR.us.buy12.map(function (r) { return {name: r.code, code: r.code}; });
-    } else if (cls === "레버리지 ETF(원화)" && SVR && SVR.levw && SVR.levw.buy) {
+    } else if (cls === "원화 주식형 레버리지 ETF" && SVR && SVR.levw && SVR.levw.buy) {
       cand = SVR.levw.buy.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
-    } else if (cls === "레버리지 ETF(달러)" && SVR && SVR.levu && SVR.levu.buy) {
+    } else if (cls === "달러 주식형 레버리지 ETF" && SVR && SVR.levu && SVR.levu.buy) {
       cand = SVR.levu.buy.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
-    } else if (cls === "해외 ETF(달러)" && SVR && SVR.etfu && SVR.etfu.buy && SVR.etfu.buy.length) {
+    } else if (cls === "미국 달러 주식형 ETF" && SVR && SVR.etfu && SVR.etfu.buy && SVR.etfu.buy.length) {
       cand = SVR.etfu.buy.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
-    } else if (cls === "해외 ETF(원화)" && SVR && SVR.etfw && SVR.etfw.buy && SVR.etfw.buy.length) {
+    } else if (cls === "해외(원화) 주식형 ETF" && SVR && SVR.etfw && SVR.etfw.buy && SVR.etfw.buy.length) {
       cand = SVR.etfw.buy.map(function (r) { return {name: r.name, code: r.code, en: r.en}; });
     } else {
       cand = (SV_PROD[cls] || []).map(function (x) { return {name: x[0], code: x[1]}; });
@@ -3258,8 +3263,7 @@ function svRecoRender() {
     window._SVPICK[cls] = cand.map(function (c) {
       return {name: svNm(c), code: c.code || (isUs ? String(c.name).split(" ")[0] : ""), mk: isUs ? "us" : "kr"};
     });
-    const base = SV_USD_CLS[cls] ? uS : kS;
-    const pcs = base > 0 ? (m[1] / base * 100) : 0;
+    const pcs = m[1];                              // 한 계좌(원화 1억) 기준 비중 그대로 (2026-09-25)
     if (pcs > 0) PZP.push([KN(cls), pcs, "cls", 0, cls, 0, null]);
   });
   try { h += svPuz(PZP) + pzDraftHtml(); }
