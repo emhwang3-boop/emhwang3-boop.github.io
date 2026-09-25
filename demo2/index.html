@@ -5941,4 +5941,296 @@ function discShow(){
   document.body.appendChild(d);
 }
 </script>
+<script>
+// ══ 투자성향 분석 (사장님 2026-09-25) ═══════════════════════════════════════════════
+//   · 팝업 설문 — 금융투자협회 표준투자권유준칙 투자자정보 확인서 7문항 · 배점(합 32점 → 100점 환산)
+//     등급: 20 이하 안정형 · 40 이하 안정추구형 · 60 이하 위험중립형 · 80 이하 적극투자형 · 그 위 공격투자형
+//   · 결과는 [내 보유종목] 위 카드에 이름·생년월일과 함께 · [보기]로 다시 꺼내 본다
+//   · 계좌 카드 아래에 증권사명·계좌번호(가운데 가림)·성명
+//   · 내 성향 목표 배분(주식앱 최종안과 같은 표) 원형 그래프 + 실계좌 보유와의 차이. 코인은 「성향 밖 자산」 줄로 따로.
+//   🔴 이 폰에만 저장한다. 허브·중계기 어디로도 보내지 않는다.
+var PF_KEY = "pf_profile_key_v1";   // 지인용은 성향 저장 열쇠를 가른다 (2026-09-25)
+const PF_GRADE = [
+  {nm: "안정형", mix: [["예금·MMF", 100]]},
+  {nm: "안정추구형", mix: [["예금·MMF", 60], ["국내 지수형 ETF", 20], ["국내 채권형 ETF", 20]]},
+  {nm: "위험중립형", mix: [["예금·MMF", 30], ["국내 지수형 ETF", 15], ["국내 채권형 ETF", 15], ["국내 원화 ETF", 10],
+                          ["해외 원화표시 채권형 ETF", 10], ["미국 달러 지수형 ETF", 10], ["미국 달러표시 채권형 ETF", 10]]},
+  {nm: "적극투자형", mix: [["예금·MMF", 10], ["국내 지수형 ETF", 10], ["국내 채권형 ETF", 10], ["국내 원화 ETF", 10],
+                          ["해외 원화표시 채권형 ETF", 5], ["미국 달러 지수형 ETF", 10], ["미국 달러표시 채권형 ETF", 5],
+                          ["국내 주식", 25], ["해외(원화) 주식형 ETF", 10], ["원화 주식형 레버리지 ETF", 5]]},
+  {nm: "공격투자형", mix: [["국내 지수형 ETF", 5], ["국내 채권형 ETF", 5], ["국내 원화 ETF", 5], ["미국 달러 지수형 ETF", 5],
+                          ["국내 주식", 30], ["해외(원화) 주식형 ETF", 5], ["원화 주식형 레버리지 ETF", 5],
+                          ["해외 주식", 30], ["미국 달러 주식형 ETF", 5], ["달러 주식형 레버리지 ETF", 5]]},
+];
+const PF_COLOR = {
+  "예금": "#20C4B8", "국내 ETF": "#3AA6F0", "해외 ETF(원화)": "#37D67A", "해외 ETF(달러)": "#8FD14F",
+  "국내 주식": "#FFC93C", "해외 주식": "#FF8A5B", "레버리지 ETF(원화)": "#FF6BB3", "레버리지 ETF(달러)": "#9B7BFF",
+  "BTC": "#FFB020", "ETH": "#5B8DEF", "알트": "#FF6BB3", "현금(USDT)": "#A8B8C8",
+  "예금·MMF": "#20C4B8", "국내 지수형 ETF": "#3AA6F0", "국내 채권형 ETF": "#6FB7E8", "국내 원화 ETF": "#37D67A",
+  "해외 원화표시 채권형 ETF": "#7FDCA4", "미국 달러 지수형 ETF": "#8FD14F", "미국 달러표시 채권형 ETF": "#B5E07A",
+  "해외(원화) 주식형 ETF": "#FFB347", "원화 주식형 레버리지 ETF": "#FF6BB3", "미국 달러 주식형 ETF": "#FF7A7A",
+  "달러 주식형 레버리지 ETF": "#9B7BFF",
+};
+const PF_DESC = [
+  ["예금 또는 적금 수준의 수익률을 기대하며, 투자원금에 손실이 발생하는 것을 원하지 않는 유형",
+   "Expects returns at the level of deposits or savings and does not want any loss of principal."],
+  ["투자원금의 손실위험을 최소화하고, 이자소득이나 배당소득 수준의 안정적인 투자를 목표로 함. 다만, 수익을 위해 단기적인 손실을 수용할 수 있으며, 예·적금보다 높은 수익을 위해 자산 중 일부를 변동성 높은 상품에 투자할 의향이 있는 유형",
+   "Aims for stable income-level returns with minimal risk to principal, but accepts short-term losses and is willing to put part of the assets in more volatile products for higher returns than deposits."],
+  ["투자에는 그에 상응하는 투자위험이 있음을 충분히 인식하고 있으며, 예·적금보다 높은 수익을 기대할 수 있다면 일정수준의 손실위험을 감수할 수 있는 유형",
+   "Fully aware that investing carries matching risk, and willing to accept some risk of loss for returns higher than deposits."],
+  ["투자원금의 보전보다는 위험을 감내하더라도 높은 수준의 투자수익 실현을 추구함. 투자원금의 상당부분을 주식, 주식형펀드 또는 파생상품 등의 위험자산에 투자할 의향이 있는 유형",
+   "Seeks high returns rather than preserving principal, and is willing to invest a large share in risky assets such as stocks, equity funds or derivatives."],
+  ["시장평균 수익률을 훨씬 넘어서는 높은 수준의 투자수익을 추구하며, 이를 위해 자산가치의 변동에 따른 손실 위험을 적극 수용. 투자자금 대부분을 주식, 주식형펀드 또는 파생상품 등의 위험자산에 투자할 의향이 있는 유형",
+   "Seeks returns far above the market average, actively accepting the risk of loss from swings in asset value, and willing to invest most funds in risky assets such as stocks, equity funds or derivatives."],
+];
+var PF_Q = [
+  {q: "고객님의 연령대는 어떻게 됩니까?", a: ["19세 이하", "20세~40세", "41세~50세", "51세~60세", "61세 이상"], s: [4, 4, 3, 2, 1]},
+  {q: "투자하고자 하는 자금의 투자 가능 기간은 얼마나 됩니까?", a: ["6개월 이내", "6개월 이상~1년 이내", "1년 이상~2년 이내", "2년 이상~3년 이내", "3년 이상"], s: [1, 2, 3, 4, 5]},
+  {q: "다음 중 투자경험과 가장 가까운 것은 어느 것입니까? (중복 가능)", multi: true,
+   a: ["은행의 예·적금, 국채, 지방채, 보증채, MMF, CMA 등", "금융채, 신용도가 높은 회사채, 채권형펀드, 원금보장형 ELS 등",
+       "신용도 중간 등급의 회사채, 원금의 일부만 보장되는 ELS, 혼합형펀드 등",
+       "신용도가 낮은 회사채, 주식, 원금이 보장되지 않는 ELS, 시장수익률 수준의 수익을 추구하는 주식형펀드 등",
+       "ELW, 선물옵션, 시장수익률 이상의 수익을 추구하는 주식형펀드, 파생상품에 투자하는 펀드, 주식 신용거래 등"], s: [1, 2, 3, 4, 5]},
+  {q: "금융상품 투자에 대한 본인의 지식수준은 어느 정도라고 생각하십니까?",
+   a: ["[매우 낮은 수준] 투자의사 결정을 스스로 내려본 경험이 없는 정도", "[낮은 수준] 주식과 채권의 차이를 구별할 수 있는 정도",
+       "[높은 수준] 투자할 수 있는 대부분의 금융상품의 차이를 구별할 수 있는 정도", "[매우 높은 수준] 금융상품을 비롯하여 모든 투자대상 상품의 차이를 이해할 수 있는 정도"], s: [1, 2, 3, 4]},
+  {q: "현재 투자하고자 하는 자금은 전체 금융자산(부동산 등을 제외) 중 어느 정도의 비중을 차지합니까?",
+   a: ["10% 이내", "10% 이상~20% 이내", "20% 이상~30% 이내", "30% 이상~40% 이내", "40% 이상"], s: [5, 4, 3, 2, 1]},
+  {q: "다음 중 당신의 수입원을 가장 잘 나타내고 있는 것은 어느 것입니까?",
+   a: ["현재 일정한 수입이 발생하고 있으며, 향후 현재 수준을 유지하거나 증가할 것으로 예상된다.",
+       "현재 일정한 수입이 발생하고 있으나, 향후 감소하거나 불안정할 것으로 예상된다.", "현재 일정한 수입이 없으며, 연금이 주수입원이다."], s: [3, 2, 1]},
+  {q: "만약 투자원금에 손실이 발생할 경우 다음 중 감수할 수 있는 손실 수준은 어느 것입니까?",
+   a: ["무슨 일이 있어도 투자원금은 보전되어야 한다.", "10% 미만까지는 손실을 감수할 수 있을 것 같다.",
+       "20% 미만까지는 손실을 감수할 수 있을 것 같다.", "기대수익이 높다면 위험이 높아도 상관하지 않겠다."], s: [-2, 2, 4, 6]},
+];
+var PF_USD_CLS = {"미국 달러 지수형 ETF": 1, "미국 달러표시 채권형 ETF": 1, "해외 주식": 1, "미국 달러 주식형 ETF": 1, "달러 주식형 레버리지 ETF": 1};
+function pfKN(k){ return k; }
+function pfColor(nm, i){ return PF_COLOR[nm] || ["#3AA6F0","#20C4B8","#37D67A","#FFC93C","#FF8A5B","#FF6BB3","#9B7BFF"][i % 7]; }
+function pfShade(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const m = function (v) { return Math.max(0, Math.min(255, Math.round(f < 1 ? v * f : v + (255 - v) * (f - 1)))); };
+  return "#" + ((1 << 24) + (m(r) << 16) + (m(g) << 8) + m(b)).toString(16).slice(1);
+}
+
+function pfPie(mix) {
+  const tot = mix.reduce(function (s, m) { return s + m[1]; }, 0) || 1;
+  const cx = 130, cy = 92, rx = 112, ry = 64, dep = 24;
+  const seg = mix.map(function (m, i) { return {nm: m[0], v: m[1], c: m[2] || pfColor(m[0], i)}; });
+  let a = -Math.PI / 2;
+  seg.forEach(function (s) { s.a0 = a; a += (s.v / tot) * 2 * Math.PI; s.a1 = a; });
+  const one = (seg.length === 1);
+  // 🔴 한 화면에 그래프가 둘 이상이면 id 가 겹쳐 앞 그래프 색을 따라간다 — 부를 때마다 다른 이름을 준다.
+  const uid = "sv" + (pfPie.n = (pfPie.n || 0) + 1) + "_";
+
+  function wedge(a0, a1, dy) {
+    const x0 = cx + rx * Math.cos(a0), y0 = cy + ry * Math.sin(a0) + dy;
+    const x1 = cx + rx * Math.cos(a1), y1 = cy + ry * Math.sin(a1) + dy;
+    return 'M' + cx + ',' + (cy + dy) + ' L' + x0.toFixed(2) + ',' + y0.toFixed(2)
+         + ' A' + rx + ',' + ry + ' 0 ' + ((a1 - a0) > Math.PI ? 1 : 0) + ',1 ' + x1.toFixed(2) + ',' + y1.toFixed(2) + ' Z';
+  }
+  function disc(dy) { return '<ellipse cx="' + cx + '" cy="' + (cy + dy) + '" rx="' + rx + '" ry="' + ry + '"'; }
+
+  let defs = "", sides = "", tops = "", labels = "";
+  seg.forEach(function (s, i) {
+    defs += '<linearGradient id="' + uid + i + '" x1="0.1" y1="0" x2="0.5" y2="1">'
+          + '<stop offset="0" stop-color="' + pfShade(s.c, 1.3) + '"/>'
+          + '<stop offset="0.5" stop-color="' + s.c + '"/>'
+          + '<stop offset="1" stop-color="' + pfShade(s.c, 0.85) + '"/></linearGradient>';
+  });
+  for (let d = dep; d >= 1; d--) {
+    const t = 1 - d / dep;                                  // 아래로 갈수록 어둡게
+    seg.forEach(function (s) {
+      sides += one ? (disc(d) + ' fill="' + pfShade(s.c, 0.64 + 0.16 * t) + '"/>')
+                   : ('<path d="' + wedge(s.a0, s.a1, d) + '" fill="' + pfShade(s.c, 0.64 + 0.16 * t) + '"/>');
+    });
+  }
+  seg.forEach(function (s, i) {
+    tops += one ? (disc(0) + ' fill="url(#' + uid + i + ')" stroke="rgba(255,255,255,.5)" stroke-width="0.9"/>')
+                : ('<path d="' + wedge(s.a0, s.a1, 0) + '" fill="url(#' + uid + i + ')" stroke="rgba(255,255,255,.5)" stroke-width="0.9"/>');
+    const f = s.v / tot;
+    if (f >= 0.04) {
+      const am = one ? -Math.PI / 2 : (s.a0 + s.a1) / 2, k = one ? 0 : 0.64;
+      labels += '<text x="' + (cx + rx * k * Math.cos(am)).toFixed(1) + '" y="' + (cy + ry * k * Math.sin(am) + 4.5).toFixed(1)
+             + '" font-size="' + (f >= 0.06 ? 13 : 11) + '" font-weight="800" text-anchor="middle" fill="#fff"'
+             + ' stroke="rgba(0,0,0,.30)" stroke-width="2.6" style="paint-order:stroke">' + Math.round(f * 100) + '%</text>';
+    }
+  });
+  return '<div style="text-align:center;margin:2px 0 8px">'
+    + '<svg viewBox="0 0 260 186" width="100%" style="max-width:300px">'
+    + '<defs>' + defs
+    + '<radialGradient id="' + uid + 'sh"><stop offset="0.35" stop-color="rgba(0,0,0,.26)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/></radialGradient>'
+    + '</defs>'
+    + '<ellipse cx="' + cx + '" cy="' + (cy + dep + 14) + '" rx="' + (rx * 0.95) + '" ry="' + (ry * 0.28) + '" fill="url(#' + uid + 'sh)"/>'
+    + sides + tops + labels + '</svg></div>'
+    + '<div class="svleg">' + seg.map(function (s) {
+        return '<span><i style="background:linear-gradient(145deg,' + pfShade(s.c, 1.24) + ',' + pfShade(s.c, 0.8) + ')"></i>'
+             + pfKN(s.nm) + ' ' + (s.v / tot * 100).toFixed(1) + '%</span>';
+      }).join("") + '</div>';
+}
+
+function pfGet(){ try{ return JSON.parse(localStorage.getItem(PF_KEY)||"null"); }catch(e){ return null; } }
+function pfSave(o){ try{ localStorage.setItem(PF_KEY, JSON.stringify(o)); }catch(e){} }
+function pfScore(ans){
+  var raw = 0;
+  PF_Q.forEach(function(q, i){ var v = ans[i];
+    if(q.multi){ var m = 0; (v||[]).forEach(function(k){ m = Math.max(m, q.s[k]); }); raw += m; }
+    else if(typeof v === "number") raw += q.s[v]; });
+  var sc = Math.round(raw / 32 * 1000) / 10;
+  var gi = sc <= 20 ? 0 : (sc <= 40 ? 1 : (sc <= 60 ? 2 : (sc <= 80 ? 3 : 4)));
+  return {raw: raw, score: sc, gi: gi};
+}
+function pfEsc(t){ return String(t==null?"":t).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+function pfClose(){ var d=document.getElementById("pfPop"); if(d)d.remove(); }
+function pfShell(inner){
+  pfClose();
+  var d=document.createElement("div"); d.id="pfPop";
+  d.setAttribute("style","position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:14px");
+  d.innerHTML='<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:480px;width:100%;padding:20px 18px calc(16px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:90vh;overflow:auto">'+inner+'</div>';
+  document.body.appendChild(d);
+}
+// 설문 팝업 — 이름·생년월일 + 7문항
+function pfOpen(){
+  var o = pfGet() || {}, A = o.ans || [];
+  var h = '<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:19px;font-weight:800">투자성향 분석</div>'
+    + '<span onclick="pfClose()" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
+    + '<div class="dpmsg" style="margin:4px 0 10px">금융투자협회 표준투자권유준칙의 투자자정보 확인서 문항입니다. 결과는 이 폰에만 저장됩니다.</div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:10px"><input id="pfName" class="dpin" placeholder="성명" value="'+pfEsc(o.name||"")+'" style="flex:1">'
+    + '<input id="pfBirth" class="dpin" type="date" value="'+pfEsc(o.birth||"")+'" style="flex:1"></div>';
+  PF_Q.forEach(function(q, i){
+    h += '<div style="margin:12px 0 4px;font-weight:800;font-size:14px">'+(i+1)+'. '+q.q+'</div>';
+    q.a.forEach(function(t, k){
+      var on = q.multi ? ((A[i]||[]).indexOf(k) >= 0) : (A[i] === k);
+      h += '<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;font-size:13.5px;line-height:1.5;cursor:pointer">'
+        + '<input type="'+(q.multi?"checkbox":"radio")+'" name="pfq'+i+'" value="'+k+'"'+(on?" checked":"")+' style="margin-top:3px">'
+        + '<span>'+t+'</span></label>'; });
+  });
+  h += '<div id="pfErr" class="dpmsg" style="color:#ff5c5c"></div>'
+    + '<button onclick="pfSubmit()" style="display:block;width:100%;margin-top:12px;padding:13px;border:0;border-radius:12px;background:#1c7ed6;color:#fff;font-size:15px;font-weight:800;cursor:pointer">결과 보기</button>';
+  pfShell(h);
+}
+function pfSubmit(){
+  var nm = (document.getElementById("pfName").value||"").trim(), bd = document.getElementById("pfBirth").value||"";
+  var ans = [], miss = [];
+  PF_Q.forEach(function(q, i){
+    var els = [].slice.call(document.querySelectorAll('input[name="pfq'+i+'"]:checked')).map(function(e){ return +e.value; });
+    if(q.multi) ans.push(els); else ans.push(els.length ? els[0] : null);
+    if(!els.length) miss.push(i+1); });
+  var err = document.getElementById("pfErr");
+  if(!nm || !bd){ err.textContent = "성명과 생년월일을 넣어 주십시오."; return; }
+  if(miss.length){ err.textContent = miss.join(", ") + "번 문항에 답해 주십시오."; return; }
+  var r = pfScore(ans);
+  pfSave({name: nm, birth: bd, ans: ans, raw: r.raw, score: r.score, gi: r.gi, at: new Date().toISOString().slice(0,10)});
+  pfView(); pfRender();
+}
+// 결과 카드 — 다시 꺼내 볼 수 있다
+function pfView(){
+  var o = pfGet(); if(!o){ pfOpen(); return; }
+  var g = PF_GRADE[o.gi];
+  var h = '<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:19px;font-weight:800">투자성향 분석 결과</div>'
+    + '<span onclick="pfClose()" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
+    + '<div style="margin:10px 0 4px;font-size:14px">'+pfEsc(o.name)+' · '+pfEsc(o.birth)+' · 분석일 '+pfEsc(o.at)+'</div>'
+    + '<div style="font-size:24px;font-weight:900;color:#1c7ed6;margin:6px 0">'+g.nm+' <span style="font-size:15px;color:var(--sub)">'+o.score+'점</span></div>'
+    + '<div class="dpmsg" style="font-size:13px;line-height:1.6">'+PF_DESC[o.gi][0]+'</div>'
+    + '<div style="margin:12px 0 4px;font-weight:800">답한 내용</div>';
+  PF_Q.forEach(function(q, i){ var v = o.ans[i];
+    var t = q.multi ? (v||[]).map(function(k){ return q.a[k]; }).join(" / ") : q.a[v];
+    h += '<div style="font-size:12.5px;margin:6px 0;line-height:1.5"><b>'+(i+1)+'.</b> '+q.q+'<br><span style="color:var(--sub)">→ '+pfEsc(t)+'</span></div>'; });
+  var old = (Date.now() - new Date(o.at).getTime()) > 365*86400000;
+  if(old) h += '<div class="dpmsg" style="color:#e8590c">분석한 지 1년이 지났습니다. 다시 해 주십시오.</div>';
+  h += '<div style="display:flex;gap:8px;margin-top:14px"><button onclick="pfOpen()" style="flex:1;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--nm);font-weight:800;cursor:pointer">다시 하기</button>'
+    + '<button onclick="pfClose()" style="flex:1;padding:12px;border:0;border-radius:12px;background:#1c7ed6;color:#fff;font-weight:800;cursor:pointer">확인</button></div>';
+  pfShell(h);
+}
+// 실계좌 보유를 자산 갈래로 — 주식앱 최종안 갈래 이름 그대로
+function pfClassOf(p){
+  var code = String(p.code||"").replace(/\.US$/i,""), nm = String(p.name||"");
+  try{ if(typeof RECO!=="undefined"&&RECO){ var M=[["etfw","해외(원화) 주식형 ETF"],["etfu","미국 달러 주식형 ETF"],["levw","원화 주식형 레버리지 ETF"],["levu","달러 주식형 레버리지 ETF"]];
+    for(var i=0;i<M.length;i++){ var L=RECO[M[i][0]]&&RECO[M[i][0]].buy; if(L&&L.some(function(r){ return String(r.code)===code; })) return M[i][1]; } } }catch(e){}
+  if(/MMF|머니마켓|CD금리|파킹/.test(nm)) return "예금·MMF";
+  var OVERSEA=/미국|나스닥|S&P|필라델피아|다우|러셀|글로벌|해외|차이나|중국|홍콩|일본|인도|베트남|유럽|선진|신흥|월드|반도체TOP|빅테크/;
+  if(p.mk==="kr"){
+    if(/레버리지|2X|3X/i.test(nm)) return "원화 주식형 레버리지 ETF";
+    if(/^(KODEX|TIGER|ACE|PLUS|RISE|SOL|KoAct|HANARO|TIME|KBSTAR|ARIRANG|KIWOOM|1Q|WON|BNK|파워|마이다스|히어로즈)\b/i.test(nm)){
+      if(/국고채|국채|채권|회사채|미국채|통안채|단기채/.test(nm)) return OVERSEA.test(nm) ? "해외 원화표시 채권형 ETF" : "국내 채권형 ETF";
+      if(/미국S&P500$|미국나스닥100$|S&P500$|나스닥100$/.test(nm.replace(/\s/g,""))) return "국내 원화 ETF";
+      return OVERSEA.test(nm) ? "해외(원화) 주식형 ETF" : "국내 지수형 ETF"; }
+    return "국내 주식"; }
+  var tk = code.toUpperCase();
+  if(["TQQQ","SQQQ","SOXL","SOXS","UPRO","SPXL","QLD","SSO","UDOW","TNA","FNGU","BULZ","TECL","NVDL","TSLL"].indexOf(tk)>=0) return "달러 주식형 레버리지 ETF";
+  if(["TLT","IEF","SHY","HYG","LQD","AGG","BND","TIP","GOVT","BIL","SGOV"].indexOf(tk)>=0) return "미국 달러표시 채권형 ETF";
+  if(["SPY","VOO","IVV","VTI","QQQ","DIA","IWM","RSP"].indexOf(tk)>=0) return "미국 달러 지수형 ETF";
+  if(["SOXX","SMH","XLK","XLF","XLV","XLE","VGT","ARKK","SCHD","JEPI","JEPQ","GLD","VNQ"].indexOf(tk)>=0) return "미국 달러 주식형 ETF";
+  return "해외 주식";
+}
+function pfMask(a){ a=String(a||"").replace(/[^0-9]/g,""); if(a.length<6) return a; return a.slice(0,4)+"-"+"*".repeat(Math.max(2,a.length-6))+"-"+a.slice(-2); }
+var PF_ACCT = null, PF_ACCT_BUSY = false;
+async function pfAcctLoad(){
+  if(PF_ACCT_BUSY || PF_ACCT) return; PF_ACCT_BUSY = true;
+  try{ var tok = await rlToken(); var j = await rlKiwoom(tok, "/api/dostk/acnt", "ka00001", {});
+       if(j && j.acctNo) PF_ACCT = String(j.acctNo); }catch(e){}
+  PF_ACCT_BUSY = false; pfRender();
+}
+function pfBrokerNm(b){ return ({kiwoom:"키움증권", korea_inv:"한국투자증권", okx:"OKX", binance:"바이낸스", upbit:"업비트"})[b] || (b||""); }
+function pfRender(){
+  var o = pfGet(), en = (typeof LANG!=="undefined"&&LANG==="en");
+  // ① 내 보유종목 위 — 성향 카드
+  var card = document.getElementById("pfCard");
+  if(!card){ var mh=document.getElementById("myhold"); if(!mh) return;
+    card=document.createElement("div"); card.className="card"; card.id="pfCard"; mh.parentNode.insertBefore(card, mh); }
+  var h = '<h3>내 투자성향</h3>';
+  if(!o){ h += '<div class="dpmsg">아직 투자성향 분석을 하지 않았습니다.</div>'
+          + '<button class="dpb flat dpsm" onclick="pfOpen()" style="margin-top:6px">성향 분석하기</button>'; card.innerHTML=h; pfAcctRender(null); return; }
+  var g = PF_GRADE[o.gi];
+  h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer" onclick="pfView()">'
+     + '<b style="font-size:15px">'+pfEsc(o.name)+'</b><span class="dplbl">'+pfEsc(o.birth)+'</span>'
+     + '<span style="font-weight:900;color:#1c7ed6">'+g.nm+' ('+o.score+'점)</span><span class="dplbl">'+pfEsc(o.at)+' 분석 · 누르면 결과</span></div>';
+  // ② 목표 배분 원형 그래프 + 실계좌와의 차이
+  var fx = (typeof fxKrw==="function"&&fxKrw()>0)?fxKrw():0;
+  h += '<div style="position:relative;margin-top:6px">' + pfPie(g.mix.map(function(m){ return [m[0], m[1]]; }))
+     + (fx?'<span style="position:absolute;top:0;right:2px;font-size:11px;color:var(--sub);background:var(--card);padding:1px 5px;border:1px solid var(--bd);border-radius:6px">환율 '+fx.toLocaleString(undefined,{maximumFractionDigits:2})+'원</span>':'')
+     + '</div>';
+  var has = (typeof RL!=="undefined") && RL.at;
+  if(!has){ h += '<div class="dpmsg">실계좌를 불러오면 목표 비중과의 차이를 보여 드립니다.</div>'; card.innerHTML=h; pfAcctRender(o); return; }
+  var f = fx || 1350, val = {}, coin = 0, cash = RL.cash || {};
+  (RL.kr||[]).forEach(function(p){ var c=pfClassOf(p); val[c]=(val[c]||0)+(+p.evl||0); });
+  (RL.us||[]).forEach(function(p){ var c=pfClassOf(p); val[c]=(val[c]||0)+(+p.evl||0)*f; });
+  (RL.co||[]).forEach(function(q){ coin += (q.spot?((+q.qty||0)*(+q.cur||0)):(+q.evl||0)) * f; });
+  coin += (+cash.usdt||0) * f;
+  val["예금·MMF"] = (val["예금·MMF"]||0) + (+cash.krw||0) + (+cash.usd||0)*f;     // 예수금은 예금·MMF 로 본다
+  var tot = coin; Object.keys(val).forEach(function(k){ tot += val[k]; });
+  var TGT = {}; g.mix.forEach(function(m){ TGT[m[0]] = m[1]; });
+  var keys = g.mix.map(function(m){ return m[0]; }); Object.keys(val).forEach(function(k){ if(keys.indexOf(k)<0 && val[k]>0) keys.push(k); });
+  h += '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">목표와의 차이 <span class="dplbl">실계좌 합계 '+Math.round(tot).toLocaleString()+'원</span></div>'
+     + '<table class="mhtab"><tr><th>자산 종류</th><th>지금</th><th>목표</th><th>차이</th></tr>';
+  var row = function(k, now, tg){ var d = now - tg;
+    return '<tr><td style="text-align:left">'+k+'</td><td>'+now.toFixed(1)+'%</td><td>'+(tg==null?'—':tg.toFixed(1)+'%')+'</td>'
+      +'<td class="'+(d<-0.05?"dn":(d>0.05?"up":"fl"))+'">'+(d>0?"+":(d<0?"−":""))+Math.abs(d).toFixed(1)+'%p</td></tr>'; };
+  keys.forEach(function(k){ h += row(k, tot>0?(val[k]||0)/tot*100:0, TGT[k]||0); });
+  if(coin>0) h += row("성향 밖 자산(코인)", tot>0?coin/tot*100:0, 0);
+  h += '</table><div class="dpmsg">예수금은 예금·MMF로, 달러·코인은 그날 환율로 원화 환산해 셉니다.</div>';
+  card.innerHTML = h;
+  pfAcctRender(o);
+}
+// ③ 계좌 카드 아래 — 증권사명 · 계좌번호(가운데 가림) · 성명
+function pfAcctRender(o){
+  var box = document.getElementById("pfAcct");
+  if(!box){ var ac=document.getElementById("demoacct"); if(!ac) return;
+    box=document.createElement("div"); box.id="pfAcct"; box.className="card"; ac.parentNode.insertBefore(box, ac.nextSibling); }
+  if(!PF_ACCT && typeof ST!=="undefined" && ST && ST.kr && ST.kr.broker) pfAcctLoad();   // 키는 보지 않는다 — 열쇠판은 키가 중계기에 있다
+  var nm = o ? pfEsc(o.name) : '<span class="dplbl">성향 분석 후 표시</span>';
+  var rows = [];
+  try{ if(ST && ST.kr && ST.kr.broker) rows.push([pfBrokerNm(ST.kr.broker||"kiwoom")+" (국내·미국)", PF_ACCT?pfMask(PF_ACCT):'<span class="dplbl">불러오는 중…</span>']); }catch(e){}
+  try{ if(ST && ST.us && ST.us.broker==="korea_inv" && ST.us.acct) rows.push([pfBrokerNm("korea_inv")+" (미국)", pfMask(ST.us.acct)]); }catch(e){}
+  try{ if(ST && ST.co && ST.co.broker) rows.push([pfBrokerNm(ST.co.broker||"okx")+" (코인)", '<span class="dplbl">—</span>']); }catch(e){}
+  if(!rows.length) rows.push(['<span class="dplbl">설정에 계좌 키가 없습니다</span>', '—']);
+  box.innerHTML = '<table class="mhtab"><tr><th style="text-align:left">증권사</th><th>계좌번호</th><th>성명</th></tr>'
+    + rows.map(function(r){ return '<tr><td style="text-align:left">'+r[0]+'</td><td>'+r[1]+'</td><td>'+nm+'</td></tr>'; }).join("") + '</table>';
+}
+(function(){
+  var lastAt = -1;
+  setTimeout(function(){ try{ pfRender(); if(!pfGet()) pfOpen(); }catch(e){} }, 1800);   // 처음이면 설문 팝업
+  setInterval(function(){ try{ var a=(typeof RL!=="undefined"&&RL.at)||0; if(a!==lastAt){ lastAt=a; pfRender(); } }catch(e){} }, 4000);
+})();
+</script>
 </body></html>
