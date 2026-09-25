@@ -1892,6 +1892,20 @@ const SV_GRADE = [
                           ["국내 주식", 30], ["해외(원화) 주식형 ETF", 5], ["원화 주식형 레버리지 ETF", 5],
                           ["해외 주식", 30], ["미국 달러 주식형 ETF", 5], ["달러 주식형 레버리지 ETF", 5]]},
 ];
+// 성향별 설명 — 은행·증권사가 공통으로 쓰는 투자자 유형 설명 그대로 (iM뱅크 「투자자유형 및 유형별 적합상품 안내」, 2026-09-25)
+//    포트폴리오 선택 단추에 비율 대신 적는다 (비율은 아래 원형 그래프에 나온다).
+const SV_DESC = [
+  ["예금 또는 적금 수준의 수익률을 기대하며, 투자원금에 손실이 발생하는 것을 원하지 않는 유형",
+   "Expects returns at the level of deposits or savings and does not want any loss of principal."],
+  ["투자원금의 손실위험을 최소화하고, 이자소득이나 배당소득 수준의 안정적인 투자를 목표로 함. 다만, 수익을 위해 단기적인 손실을 수용할 수 있으며, 예·적금보다 높은 수익을 위해 자산 중 일부를 변동성 높은 상품에 투자할 의향이 있는 유형",
+   "Aims for stable income-level returns with minimal risk to principal, but accepts short-term losses and is willing to put part of the assets in more volatile products for higher returns than deposits."],
+  ["투자에는 그에 상응하는 투자위험이 있음을 충분히 인식하고 있으며, 예·적금보다 높은 수익을 기대할 수 있다면 일정수준의 손실위험을 감수할 수 있는 유형",
+   "Fully aware that investing carries matching risk, and willing to accept some risk of loss for returns higher than deposits."],
+  ["투자원금의 보전보다는 위험을 감내하더라도 높은 수준의 투자수익 실현을 추구함. 투자원금의 상당부분을 주식, 주식형펀드 또는 파생상품 등의 위험자산에 투자할 의향이 있는 유형",
+   "Seeks high returns rather than preserving principal, and is willing to invest a large share in risky assets such as stocks, equity funds or derivatives."],
+  ["시장평균 수익률을 훨씬 넘어서는 높은 수준의 투자수익을 추구하며, 이를 위해 자산가치의 변동에 따른 손실 위험을 적극 수용. 투자자금 대부분을 주식, 주식형펀드 또는 파생상품 등의 위험자산에 투자할 의향이 있는 유형",
+   "Seeks returns far above the market average, actively accepting the risk of loss from swings in asset value, and willing to invest most funds in risky assets such as stocks, equity funds or derivatives."],
+];
 // 색은 무지개로 흩뿌리지 않는다. 배분은 안전한 쪽 → 위험한 쪽 차례라서
 // 차가운 남색에서 따뜻한 테라코타로 이어지는 한 줄기 색띠로 둔다(채도 낮춤).
 const SV_PAL = ["#3AA6F0", "#20C4B8", "#37D67A", "#FFC93C", "#FF8A5B", "#FF6BB3", "#9B7BFF"];
@@ -1941,7 +1955,7 @@ function svRender() {
     const on = (i === cur);
     h += '<button class="svbtn' + (on ? ' svgo' : '') + '" style="text-align:left !important" onclick="svPick(' + i + ')">'   // 줄 맞춤 — 왼쪽 (사장님 2026-09-25)
        + (on ? "✓ " : "") + svPortNm(i)
-       + ' <span class="dplbl">' + g.mix.map(function (m) { return KN(m[0]) + " " + m[1] + "%"; }).join(" · ") + '</span>'
+       + ' <span class="dplbl">' + KE(SV_DESC[i][0], SV_DESC[i][1]) + '</span>'
        + '</button>';
   });
   box.innerHTML = h;
@@ -3128,43 +3142,78 @@ function svPuz(parts){
       +dpEsc(full)+'</title></path>';
     if(w>34&&hh>24){
       // 글자는 조각 크기를 따라간다 — 커도 12.5 를 넘지 않는다(크면 촌스럽다, 사장님 2026-09-23)
-      const fs=Math.max(6.5,Math.min(10.5,Math.min(w/6.4,hh/4.8)));   // 두 단계 줄임 (사장님 2026-09-23)
+      let fs=Math.max(6.5,Math.min(10.5,Math.min(w/6.4,hh/4.8)));   // 두 단계 줄임 (사장님 2026-09-23)
+      const tag=null, showPct=hh>40;
+      const maxL0=Math.max(1,Math.floor((hh-6-(showPct?fs*0.86*1.1:0))/(fs*1.12)));
+      let L=wrap(p[0],w,fs,Math.min(2,maxL0));
+      // 「…」로 잘리면 글자를 줄이고 3~4줄까지 늘려 이름을 다 담는다 (사장님 2026-09-25)
+      if(L.some(function(q){ return /…$/.test(q); })){
+        const uwid=function(q){ let u=0; for(let k=0;k<q.length;k++)u+=wide(q[k]); return u; };
+        const words=String(p[0]).trim().split(/\s+/);
+        for(let f=fs; f>=5.5; f-=0.25){
+          const lim=(w-7)/f, out=[]; let cur="";
+          words.forEach(function(wd){ const t2=cur?cur+" "+wd:wd; if(uwid(t2)<=lim)cur=t2; else { if(cur)out.push(cur); cur=wd; } });
+          if(cur)out.push(cur);
+          const need=out.length*f*1.12+(showPct?f*0.86*1.1:0);
+          if(out.length<=4&&out.every(function(q){ return uwid(q)<=lim; })&&need<=hh-4){ L=out; fs=f; break; }
+        }
+      }
       const tagS=fs*0.72, pctS=fs*0.86;                      // 추천 딱지는 본글자보다 작게
-      const tag=null;
-      const lh=fs*1.12, showPct=hh>40;
+      const lh=fs*1.12;
       const extra=(showPct?pctS*1.1:0)+(tag?tagS*1.25:0);
-      const maxL=Math.max(1,Math.floor((hh-6-extra)/lh));
-      const L=wrap(p[0],w,fs,Math.min(2,maxL));
       const blockH=L.length*lh+extra;
       let ty=y+hh/2-blockH/2+lh*0.62;
       const T=function(s,size,fill,op,yy){ return '<text x="'+(x+w/2).toFixed(1)+'" y="'+yy.toFixed(1)+'" text-anchor="middle" '
         +'font-size="'+size.toFixed(1)+'" font-weight="800" fill="'+fill+'"'+(op?' opacity="'+op+'"':'')
         +' stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke">'+dpEsc(s)+'</text>'; };
       if(flipped){                       // 뒤집힌 현금 조각 — 그 돈으로 살 추천 종목 (사장님 2026-09-23)
-        const room=Math.max(1,Math.floor((hh-10)/(fs*1.18))-1);
-        const items=picks.slice(0,room);
-        let fy=y+hh/2-(items.length+1)*fs*1.18/2+fs*0.9;
-        g+=T((en?"Picks":"추천 종목"),fs*0.8,"#FFD43B",0,fy); fy+=fs*1.18;
-        if(!items.length)g+=T((en?"none":"없음"),fs*0.9,"#fff",".85",fy);
-        items.forEach(function(it2,ix2){
-          const on=pzHas(it2.code);
-          const txt=(on?"✓ ":"")+fit1(String(it2.name),w,fs*0.92);
-          const rh=fs*1.12, ry=fy-fs*0.82;
-          // 글자 획만 누르면 잘 안 눌린다 — 줄 전체를 누르는 자리로 깐다 (사장님 2026-09-23)
-          g+='<rect x="'+(x+3).toFixed(1)+'" y="'+ry.toFixed(1)+'" width="'+(w-6).toFixed(1)+'" height="'+rh.toFixed(1)
-            +'" rx="4" fill="'+(on?"rgba(43,255,134,.18)":"rgba(255,255,255,0)")+'" style="cursor:pointer;pointer-events:all"'
-            +' onclick="pzPick(event,&quot;'+pmk+'&quot;,'+ix2+')"></rect>';
-          // 종목 로고 — 이름 앞에 (사장님 2026-09-23)
+        // 종목명도 「…」로 자르지 않는다 — 글자를 줄이고 3줄까지 나눠 다 담는다 (사장님 2026-09-25)
+        const uwid=function(q){ let u=0; for(let k=0;k<q.length;k++)u+=wide(q[k]); return u; };
+        const lay=function(name,hasLogo){
+          // 1차: 낱말은 쪼개지 않고 글자만 줄인다 · 2차(그래도 안 되면): 긴 낱말 안에서 끊는다
+          for(let pass=0; pass<2; pass++) for(let f=fs*0.92; f>=5; f-=0.25){
+            const lim=(w-8-(hasLogo?f*1.2:0))/f;
+            if(uwid(name)<=lim) return {f:f,L:[name]};
+            const out=[]; let cur="";
+            name.split(/\s+/).forEach(function(wd){
+              const t2=cur?cur+" "+wd:wd;
+              if(uwid(t2)<=lim){ cur=t2; return; }
+              if(cur)out.push(cur); cur="";
+              if(pass===0||uwid(wd)<=lim){ cur=wd; return; }
+              for(let c=0;c<wd.length;c++){ if(uwid(cur+wd[c])>lim){ out.push(cur); cur=""; } cur+=wd[c]; } });
+            if(cur)out.push(cur);
+            if(out.length<=(pass===0?3:4)&&out.every(function(q){ return q&&uwid(q)<=lim; })) return {f:f,L:out};
+          }
+          return {f:5,L:[fit1(name,w,5)]};
+        };
+        const head=fs*1.18, rows=[]; let used=head;
+        for(let k=0;k<picks.length;k++){
+          const it2=picks[k], on=pzHas(it2.code);
           const lg=(function(){ try{ return stkLogoUrl(it2.code, it2.mk); }catch(e){ return ""; } })();
-          const f3=fs*0.92, iw3=lg?f3*1.2:0;
-          let nw3=0; for(let q=0;q<txt.length;q++)nw3+=wide(txt[q])*f3;
-          const sx3=x+w/2-(iw3+nw3)/2;
-          if(lg)g+='<image href="'+lg+'" x="'+sx3.toFixed(1)+'" y="'+(fy-f3*0.8).toFixed(1)
-            +'" width="'+(f3*1.02).toFixed(1)+'" height="'+(f3*1.02).toFixed(1)+'" style="pointer-events:none"></image>';
-          g+='<text x="'+(sx3+iw3).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="start" font-size="'+f3.toFixed(1)
-            +'" font-weight="800" fill="'+(on?"#2bff86":"#fff")+'" stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke"'
-            +' style="pointer-events:none">'+dpEsc(txt)+'</text>';
-          fy+=fs*1.28; });
+          const o=lay((on?"✓ ":"")+String(it2.name),!!lg), rh=o.L.length*o.f*1.12+o.f*0.3;
+          if(used+rh>hh-8)break;
+          rows.push({it:it2,ix:k,on:on,lg:lg,f:o.f,L:o.L,rh:rh}); used+=rh;
+        }
+        let fy=y+hh/2-used/2+fs*0.9;
+        g+=T((en?"Picks":"추천 종목"),fs*0.8,"#FFD43B",0,fy); fy+=head;
+        if(!rows.length)g+=T((en?"none":"없음"),fs*0.9,"#fff",".85",fy);
+        rows.forEach(function(r){
+          const f3=r.f, iw3=r.lg?f3*1.2:0, ry=fy-f3*0.82;
+          // 글자 획만 누르면 잘 안 눌린다 — 줄 전체를 누르는 자리로 깐다 (사장님 2026-09-23)
+          g+='<rect x="'+(x+3).toFixed(1)+'" y="'+ry.toFixed(1)+'" width="'+(w-6).toFixed(1)+'" height="'+(r.L.length*f3*1.12).toFixed(1)
+            +'" rx="4" fill="'+(r.on?"rgba(43,255,134,.18)":"rgba(255,255,255,0)")+'" style="cursor:pointer;pointer-events:all"'
+            +' onclick="pzPick(event,&quot;'+pmk+'&quot;,'+r.ix+')"></rect>';
+          r.L.forEach(function(line,li){
+            const lw=uwid(line)*f3, withLg=(li===0&&r.lg);
+            const sx3=x+w/2-((withLg?iw3:0)+lw)/2;
+            // 종목 로고 — 첫 줄 이름 앞에 (사장님 2026-09-23)
+            if(withLg)g+='<image href="'+r.lg+'" x="'+sx3.toFixed(1)+'" y="'+(fy-f3*0.8).toFixed(1)
+              +'" width="'+(f3*1.02).toFixed(1)+'" height="'+(f3*1.02).toFixed(1)+'" style="pointer-events:none"></image>';
+            g+='<text x="'+(sx3+(withLg?iw3:0)).toFixed(1)+'" y="'+fy.toFixed(1)+'" text-anchor="start" font-size="'+f3.toFixed(1)
+              +'" font-weight="800" fill="'+(r.on?"#2bff86":"#fff")+'" stroke="rgba(0,0,0,.35)" stroke-width="2.2" paint-order="stroke"'
+              +' style="pointer-events:none">'+dpEsc(line)+'</text>';
+            fy+=f3*1.12; });
+          fy+=f3*0.3; });
       } else {
       if(tag){ g+=T(tag,tagS,"#FFD43B",0,ty-lh*0.18); ty+=tagS*1.25; }
       L.forEach(function(s){ g+=T(s,fs,"#fff",0,ty); ty+=lh; });
