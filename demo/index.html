@@ -284,6 +284,8 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   <h3>계좌 <span class="tag live">● 실시간</span></h3>
   <div id="dpBody"></div>
 </div>
+<div id="recoSlot"></div>
+<!-- ↑ 계좌 카드를 위로 옮겨도 「포트폴리오 추천」 카드는 이 자리에 붙는다 (2026-09-25) -->
 
 <div class="card" id="stock">
   <h3>주식 조회 <span class="tag live" id="stkTag">● 실시간</span></h3>
@@ -4643,7 +4645,7 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
 function recoRender(){
   let card=E("recoCard");
   if(!card){
-    const acct=E("demoacct"); if(!acct)return;
+    const acct=E("recoSlot")||E("demoacct"); if(!acct)return;   // 원래 자리 표시 뒤에 붙인다 — 계좌 카드를 옮겨도 안 따라간다
     card=document.createElement("div"); card.className="card"; card.id="recoCard";
     acct.parentNode.insertBefore(card,acct.nextSibling);
   }
