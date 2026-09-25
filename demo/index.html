@@ -5739,4 +5739,36 @@ function nwInit(anchorId, inputId, kind){
 }
 setTimeout(function(){ try{ nwInit("stock","stkq","stock"); }catch(e){} try{ nwInit("coin2","coinq","coin"); }catch(e){} }, 1500);
 </script>
+<script>
+// ── 공시 카드 (사장님 2026-09-25) — 「관련 뉴스」 바로 위 · 국내 종목만 · 허브 /disc (DART + 공시 종류 쉬운 말 표) ──
+//    풀이는 '이 공시가 무엇인지'만 적는다. 호재·악재 판단은 하지 않는다.
+async function dcLoad(code){
+  var b=document.getElementById("dcb"), t=document.getElementById("dcq");
+  if(t) t.textContent=code;
+  if(b) b.innerHTML='<div class="dpmsg">'+KE("불러오는 중…","Loading…")+'</div>';
+  var j=null; try{ j=await fetch(HUB+"/disc?code="+encodeURIComponent(code)).then(function(r){return r.json();}); }catch(e){}
+  var it=(j&&j.items)||[];
+  if(!b) return;
+  if(!it.length){ b.innerHTML='<div class="dpmsg">'+KE("최근 3개월 공시가 없습니다.","No filings in the last 3 months.")+'</div>'; return; }
+  b.innerHTML=it.map(function(x){
+    var d=String(x.dt||""); d=d.length===8?d.slice(0,4)+"."+d.slice(4,6)+"."+d.slice(6,8):d;
+    return '<a href="'+dpEsc(String(x.link).replace(/"/g,"%22"))+'" target="_blank" rel="noopener" style="display:block;padding:8px 2px;border-bottom:1px solid var(--bd);color:var(--nm);text-decoration:none">'
+      +'<div style="font-weight:700;font-size:14px;line-height:1.45">'+dpEsc(x.title)+'</div>'
+      +'<div class="dplbl" style="margin-top:2px">'+d+(x.filer?' · '+dpEsc(x.filer):'')+'</div>'
+      +(x.note?'<div style="font-size:12.5px;color:var(--sub);margin-top:3px;line-height:1.5">💬 '+dpEsc(x.note)+'</div>':'')+'</a>';
+  }).join("")+'<div class="dplbl" style="margin-top:6px">'+KE("출처: 금융감독원 DART · 💬는 공시 종류 설명이며 투자 판단이 아닙니다. 누르면 공시 원문이 열립니다.","Source: FSS DART · 💬 explains the filing type only, not investment advice.")+'</div>';
+}
+function dcInit(){
+  var nw=document.getElementById("nw_stock"); if(!nw || document.getElementById("dcCard")) return !!nw;
+  nw.insertAdjacentHTML("beforebegin", '<div class="card" id="dcCard" style="display:none"><h3>'+KE("공시","Filings")
+    +' <span class="dplbl" id="dcq"></span></h3><div id="dcb"></div></div>');
+  var last="";
+  setInterval(function(){ var el=document.getElementById("stkq"), c=document.getElementById("dcCard"); if(!el||!c) return;
+    var v=String(el.value||""), m=/\((\d{6})\)/.exec(v) || /^(\d{6})$/.exec(v.trim()), code=m?m[1]:"";
+    c.style.display=code?"":"none";                          // 국내 종목일 때만
+    if(!code || code===last) return; last=code; dcLoad(code); }, 2500);
+  return true;
+}
+(function tryInit(n){ if(!dcInit() && n>0) setTimeout(function(){ tryInit(n-1); }, 1000); })(15);
+</script>
 </body></html>
