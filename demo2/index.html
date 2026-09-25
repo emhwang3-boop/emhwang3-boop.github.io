@@ -4763,7 +4763,7 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
       [(en?"US stocks":"미국 주식"), totUS, days(us), usd],
       [(en?"Crypto (spot)":"코인 (현물)"), totCO, days(co), tet],
     ];
-    let t = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"12-slot status":"12칸 현황")+'</div>'
+    let t = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"12-slot status":"12칸 현황")+' <span class="c21help" onclick="s12Info(event)">i</span></div>'
       + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
       + '<th>'+(en?"Filled":"채운 칸")+'</th><th>'+(en?"Empty":"빈 칸")+'</th></tr>';
     rows.forEach(function(r){
@@ -6635,6 +6635,34 @@ function bmDrop(i){ if(BM.rows){ BM.rows.splice(i, 1); bmRender(); } }
 function bmClear(){ if(!BM.rows || !BM.rows.length) return; if(!confirm("바스켓 종목을 모두 지울까요?")) return; BM.rows = null; BM.msg = ""; bmRender(); }   // 한꺼번에 지우기 (사장님 2026-09-26)
 function bmQty(i, v){ var r = BM.rows && BM.rows[i]; if(!r) return; var f = parseFloat(String(v).replace(/[^0-9.]/g, "")), n = r.mk === "coin" ? +(f || 0).toFixed(6) : Math.floor(f); r.qty = n > 0 ? n : 0; bmRender(); }
 function bmMoney(mk, v){ if(mk === "coin") return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; return mk === "us" ? "$" + (+v).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : Math.round(v).toLocaleString() + "원"; }
+// ── 12칸 현황 ⓘ — 예수금 부족 · 1주 미달 · 매도 버튼 (사장님 2026-09-26) ──
+function s12Info(e){
+  try{ if(e) e.stopPropagation(); }catch(x){}
+  if(document.getElementById("s12Pop")) return;
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  var L = en ? ["💰 One slot = (cash + holdings value) × asset mix ratio ÷ 12.",
+                "🔸 <b>Below 1 share</b>: one slot is smaller than the price of one share. Adding cash grows your total, so the slot grows and this goes away.",
+                "🔸 <b>Cash short</b>: the slot is big enough, but after the rows above use your cash, what is left can't buy one share. KRW and USD cash are counted separately.",
+                "🥇 If a slot is too small, only the #1 pick of that type still buys 1 share — if the cash for that 1 share is missing, it shows Cash short.",
+                "🔴 <b>SELL button</b> shows up, regardless of whether the 12 slots are full, when: an item hits +30% or −15%; or the total (KR+US) hits +15% or −10% — then everything is sold and nothing is bought that day. Crypto: item +30% / −15%.",
+                "🚫 Being above target (Gap) alone never shows a sell."]
+             : ["💰 한 칸 = (예수금 + 평가금액) × 자산배분비율 ÷ 12.",
+                "🔸 <b>1주 미달</b>: 한 칸 금액이 1주 값보다 작습니다. 예수금을 넣으면 총자산이 커져 한 칸도 커지므로 풀립니다.",
+                "🔸 <b>예수금 부족</b>: 한 칸은 충분한데, 위쪽 줄부터 예수금을 쓰고 나니 남은 돈이 1주 값도 안 됩니다. 원화·달러 예수금은 따로 봅니다. 예수금을 넣으면 풀립니다.",
+                "🥇 한 칸이 모자라도 그 자산 종류의 추천 1순위는 1주만 삽니다. 그 1주를 살 돈이 없으면 「예수금 부족」으로 뜹니다.",
+                "🔴 <b>매도 버튼</b>은 12칸이 다 찼는지와 상관없이, 날마다 아래에 닿으면 나옵니다. 종목 +30% 익절·−15% 손절 / 전체(국내+미국) +15% 익절·−10% 손절 — 이때는 전부 팔고 그날은 사지 않습니다. 코인은 종목 +30%·−15%.",
+                "🚫 목표보다 많다(Gap 플러스)는 것만으로는 매도가 나오지 않습니다."];
+  var d = document.createElement("div"); d.id = "s12Pop";
+  d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
+  d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
+  var close = 'document.getElementById(\'s12Pop\').remove()';
+  d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">' + (en ? "12-slot status" : "12칸 현황") + '</div>'
+    + '<span onclick="' + close + '" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
+    + L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + l + '</div>'; }).join("")
+    + '<button onclick="' + close + '" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">' + (en ? "OK" : "확인") + '</button></div>';
+  document.body.appendChild(d);
+}
 // ── 12칸 매매 전략 ⓘ (사장님 2026-09-26) ──
 function r12Info(e){
   try{ if(e) e.stopPropagation(); }catch(x){}
