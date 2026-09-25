@@ -6249,7 +6249,9 @@ function pfRender(){
 function pfAcctRender(o){
   var box = document.getElementById("pfAcct");
   if(!box){ var ac=document.getElementById("demoacct"); if(!ac) return;
-    box=document.createElement("div"); box.id="pfAcct"; box.className="card"; ac.parentNode.insertBefore(box, ac); }   // 계좌 카드 바로 위 (사장님 2026-09-25)
+    // 증권사 카드·계좌 카드를 게이지 바로 아래, 매매현황 위로 옮긴다 (사장님 2026-09-25)
+    var yd=document.getElementById("ydCard"); if(yd && yd.parentNode){ yd.parentNode.insertBefore(ac, yd); }
+    box=document.createElement("div"); box.id="pfAcct"; box.className="card"; ac.parentNode.insertBefore(box, ac); }   // 계좌 카드 바로 위
   if(!PF_ACCT && typeof ST!=="undefined" && ST && ST.kr && ST.kr.broker) pfAcctLoad();   // 키는 보지 않는다 — 열쇠판은 키가 중계기에 있다
   var nm = o ? pfEsc(o.name) : '<span class="dplbl">성향 분석 후 표시</span>';
   var rows = [];
@@ -6364,7 +6366,7 @@ async function bmBuild(){
       rows.forEach(function(r){ if(r.mk === mk && r.side === "S" && r.px) sell += 0; });    // 판 돈은 체결 뒤에야 들어온다 — 한도에 넣지 않는다
       var use = 0;
       rows.forEach(function(r){ if(r.mk !== mk || r.side !== "B" || r.err) return; var c = r.qty * r.px;
-        if(use + c > have){ var q = Math.floor((have - use) / r.px); if(q > 0){ r.qty = q; use += q * r.px; } else r.err = "예수금 모자람"; }
+        if(use + c > have){ var q = Math.floor((have - use) / r.px); if(q > 0){ r.qty = q; use += q * r.px; } else { r.err = "예수금 모자람"; r.qty = 0; } }
         else use += c; });
     });
     BM.rows = rows; BM.msg = rows.length ? "" : "오늘 사고팔 것이 없습니다 — 모든 갈래가 목표 근처입니다.";
@@ -6405,7 +6407,7 @@ function bmRender(){
   if(!card){ var pc = document.getElementById("pfCard"); if(!pc) return;
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = bmDoneGet() === bmToday();
-  var h = '<h3>바스켓 매매</h3><div class="dpmsg">위 「목표와의 차이」에 D 규칙(갈래 한도 · 갈래마다 하루 최대 3칸)을 걸어 오늘 사고팔 것을 만듭니다. '
+  var h = '<h3>바스켓 매매</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여 매수·매도할 종목과 수량을 보여 줍니다. '
         + '사기는 현재가 +1호가, 팔기는 현재가 −1호가 지정가입니다. 코인은 따로 다룹니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button></div>';
   if(done) h += '<div class="dpmsg" style="color:#e8590c">오늘은 바스켓 매매를 했습니다 — 자동 사기는 쉬는 중입니다.</div>';
@@ -6413,14 +6415,23 @@ function bmRender(){
   if(BM.rows && BM.rows.length){
     h += '<table class="mhtab"><tr><th style="text-align:left">종목</th><th>수량</th><th>지정가</th><th>금액</th><th></th></tr>';
     BM.rows.forEach(function(r, i){
-      var amt = (r.qty || 0) * (r.px || 0);
-      h += '<tr><td style="text-align:left"><b class="'+(r.side==="B"?"up":"dn")+'">'+(r.side==="B"?"매수":"매도")+'</b> '+pfEsc(r.name)
+      var amt = r.err ? 0 : (r.qty || 0) * (r.px || 0);     // 주문이 실제로 나갈 줄만 금액을 찍는다 (2026-09-25)
+      h += '<tr'+(r.err?' style="opacity:.45"':'')+'><td style="text-align:left"><b class="'+(r.side==="B"?"up":"dn")+'">'+(r.side==="B"?"매수":"매도")+'</b> '+pfEsc(r.name)
         + '<br><span class="dplbl">'+pfEsc(r.why)+(r.err?' · <span style="color:#ff5c5c">'+pfEsc(r.err)+'</span>':'')+(r.res?' · <b>'+pfEsc(r.res)+'</b>':'')+'</span></td>'
         + '<td><input class="dpin" inputmode="numeric" value="'+(r.qty||0)+'" onchange="bmQty('+i+',this.value)" style="width:56px;text-align:right;font:inherit;font-size:13px"></td>'
         + '<td>'+(r.px?bmMoney(r.mk, r.px):'—')+'</td><td>'+(amt?bmMoney(r.mk, amt):'—')+'</td>'
         + '<td><span class="mhx" onclick="bmDrop('+i+')">✕</span></td></tr>';
     });
     h += '</table>';
+    // 합계 · 남는 예수금 — 국내 원화 · 미국 달러 따로
+    var cs = (typeof RL !== "undefined" && RL.cash) || {};
+    ["kr", "us"].forEach(function(mk){
+      var b = 0, sl = 0; BM.rows.forEach(function(r){ if(r.mk !== mk || r.err) return; var a = (r.qty||0)*(r.px||0); if(r.side === "B") b += a; else sl += a; });
+      if(!b && !sl) return;
+      var have = mk === "kr" ? (+cs.krw||0) : (+cs.usd||0);
+      h += '<div class="dpmsg" style="font-weight:700;color:var(--nm)">' + (mk === "kr" ? "국내" : "미국") + ' — 매수 ' + bmMoney(mk, b)
+         + (sl ? ' · 매도 ' + bmMoney(mk, sl) : '') + ' · 남는 예수금 ' + bmMoney(mk, Math.max(0, have - b)) + '</div>';
+    });
     var live = BM.rows.some(function(r){ return typeof rlCanLiveStock === "function" && rlCanLiveStock(r.mk); });
     h += '<button onclick="bmRun()"'+(BM.busy||done?" disabled":"")+' style="display:block;width:100%;margin-top:10px;padding:13px;border:0;border-radius:12px;background:'+(live?"#e03131":"#1c7ed6")+';color:#fff;font-size:15px;font-weight:800;cursor:pointer;opacity:'+(BM.busy||done?".5":"1")+'">'
        + (live ? "바스켓 실주문 실행" : "바스켓 모의 실행") + '</button>';
