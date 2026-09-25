@@ -2402,7 +2402,7 @@ function bkGapHtml() {
   var TGT = {}; CV_MIX.forEach(function (m) { TGT[m[0]] = m[1]; });
   var hd = '<div class="svsub svacct2" style="margin-top:12px;font-weight:800;color:var(--sub)">' + KE("목표와의 차이", "Gap to target") + '</div>';
   var old = bkOldest();
-  if (!old) return hd + '<div class="svsub">' + KE("바스켓을 보관하면 지금 포트폴리오와 목표 비중의 차이를 여기에 보여 드립니다.",
+  if (!old) return hd + '<div class="svsub">' + KE("바스켓을 보관하면 보유 포트폴리오와 목표 비중의 차이를 여기에 보여 드립니다.",
                                           "Save a basket to see the gap between your portfolio and the target here.") + '</div>';
   var er = old.erows || [], val = {};
   (old.items || []).forEach(function (x, i) {
@@ -2413,7 +2413,7 @@ function bkGapHtml() {
 
   // 지금 = 가상 계좌(잔고+평가금액) 안에서 그 갈래가 차지하는 몫 · 목표 = 고른 성향 비율 · 차이 = 지금 − 목표
   var keys = Object.keys(TGT); Object.keys(val).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
-  var h = hd + '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("지금", "Now")
+  var h = hd + '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("보유", "Held")
         + '</th><th>' + KE("목표", "Target") + '</th><th>' + KE("차이", "Gap") + '</th></tr>';
   keys.forEach(function (k) {
     var now = acct > 0 ? (val[k] || 0) / acct * 100 : 0, tg = TGT[k] || 0, d = now - tg;
