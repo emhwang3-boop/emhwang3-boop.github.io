@@ -6282,7 +6282,7 @@ function pfAcctRender(o){
   var box = document.getElementById("pfAcct");
   if(!box){ var ac=document.getElementById("demoacct"); if(!ac) return;
     // 증권사 카드·계좌 카드를 게이지 바로 아래, 매매현황 위로 옮긴다 (사장님 2026-09-25)
-    var yd=document.getElementById("ydCard"); if(yd && yd.parentNode){ yd.parentNode.insertBefore(ac, yd); }
+    var yd=document.getElementById("gauges"); if(yd && yd.parentNode){ yd.parentNode.insertBefore(ac, yd); }   // 게이지 위로 (사장님 2026-09-26)
     box=document.createElement("div"); box.id="pfAcct"; box.className="card"; ac.parentNode.insertBefore(box, ac); }   // 계좌 카드 바로 위
   if(!PF_ACCT && typeof ST!=="undefined" && ST && ST.kr && ST.kr.broker) pfAcctLoad();   // 키는 보지 않는다 — 열쇠판은 키가 중계기에 있다
   var nm = o ? pfEsc(o.name) : '<span class="dplbl">성향 분석 후 표시</span>';
@@ -6292,7 +6292,7 @@ function pfAcctRender(o){
   try{ if(ST && ST.co && ST.co.broker){ if(ST.co.broker==="okx" && !PF_UID) pfUidLoad();
     rows.push([pfBrokerNm(ST.co.broker||"okx")+" (코인)", (ST.co.broker==="okx") ? (PF_UID ? "UID "+pfMask(PF_UID) : '<span class="dplbl">불러오는 중…</span>') : '<span class="dplbl">—</span>']); } }catch(e){}
   if(!rows.length) rows.push(['<span class="dplbl">설정에 계좌 키가 없습니다</span>', '—']);
-  box.innerHTML = '<table class="mhtab"><tr><th style="text-align:left">증권사</th><th>계좌번호</th><th>성명</th></tr>'
+  box.innerHTML = '<h3>증권사</h3><table class="mhtab"><tr><th style="text-align:left"></th><th>계좌번호</th><th>성명</th></tr>'
     + rows.map(function(r){ return '<tr><td style="text-align:left">'+r[0]+'</td><td>'+r[1]+'</td><td>'+nm+'</td></tr>'; }).join("") + '</table>';
 }
 (function(){
