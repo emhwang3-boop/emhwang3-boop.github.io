@@ -3825,26 +3825,29 @@ function ydHtml(rows, note, auto){
   var h = "";
   if(!rows.length) h += '<div class="dpmsg">' + (YD.today ? KE("오늘 매매 없음.", "No trades today.") : KE("그날 매매 없음.", "No trades that day.")) + '</div>';
   else{
-    h += '<table class="mhtab"><tr><th>' + KE("종목","Item") + '</th><th>' + KE("매매","Side") + '</th><th>' + KE("금액","Amount") + '</th><th>' + KE("실현손익","Realized") + '</th></tr>';
+    h += '<table class="mhtab"><tr><th>' + KE("종목","Item") + '</th><th>' + KE("매매","Side") + '</th><th>' + KE("금액","Amount") + '</th><th>' + KE("미실현손익","Unrealized") + '</th></tr>';   // 당일 매매라 실현손익 대신 미실현 (사장님 2026-09-25)
     var ord = {kr:0, us:1, coin:2};
     rows.sort(function(a, b){ return (ord[a.mk] - ord[b.mk]) || (a.side < b.side ? -1 : 1); });
-    var buyK = 0, sellK = 0, plK = 0, plEst = false;
+    var buyK = 0, sellK = 0, plK = 0, plN = 0;
+    // 산 것의 지금 값 — 실계좌 보유 줄의 현재가(cur)로 센다. 이미 판 것은 셀 수 없다(—)
+    var curOf = function(o){ try{ var h = rlRows().filter(function(q){ return q.mk === o.mk && String(q.code).toUpperCase() === String(o.code).toUpperCase() && (o.mk !== "coin" || q.spot); })[0];
+      return (h && +h.cur > 0) ? +h.cur : 0; }catch(e){ return 0; } };
     rows.forEach(function(o){
       var k = o.mk === "kr" ? 1 : fx;
       if(o.side === "B") buyK += o.amt * k; else sellK += o.amt * k;
-      if(o.pl != null){ plK += o.pl * k; if(o.est) plEst = true; }
+      var ur = null; if(o.side === "B"){ var c = curOf(o); if(c > 0) ur = c * o.qty - o.amt; }
+      if(ur != null){ plK += ur * k; plN++; }
       var tag = o.auto === null ? "" : (o.auto ? ' <span class="tag" style="background:#1c7ed6;color:#fff">' + KE("자동","Auto") + '</span>'
                                                 : ' <span class="tag" style="background:#868e96;color:#fff">' + KE("수동","Manual") + '</span>');
-      var pl = o.pl == null ? "" : ((o.est ? "(" : "") + (o.pl > 0 ? "+" : "") + money(o.mk, o.pl) + (o.est ? ")" : ""));
+      var pl = ur == null ? '<span class="dplbl">—</span>' : ((ur > 0 ? "+" : "") + money(o.mk, ur));
       h += '<tr><td style="text-align:left">' + dpEsc(o.name) + ' <span class="dplbl">' + MK[o.mk] + '</span>' + tag + '</td>'
         + '<td class="' + (o.side === "B" ? "up" : "dn") + '">' + (o.side === "B" ? KE("매수","Buy") : KE("매도","Sell")) + ' ' + (+o.qty).toLocaleString(undefined, {maximumFractionDigits: 6}) + '</td>'
-        + '<td>' + money(o.mk, o.amt) + '</td><td class="' + (o.pl > 0 ? "up" : (o.pl < 0 ? "dn" : "fl")) + '">' + pl + '</td></tr>';
+        + '<td>' + money(o.mk, o.amt) + '</td><td class="' + (ur > 0 ? "up" : (ur < 0 ? "dn" : "fl")) + '">' + pl + '</td></tr>';
     });
     h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계(원화)","Total (KRW)") + '</td><td colspan="3" style="text-align:right">'
       + KE("매수 ","Buy ") + Math.round(buyK).toLocaleString() + ' · ' + KE("매도 ","Sell ") + Math.round(sellK).toLocaleString()
-      + ' · ' + KE("실현 ","Realized ") + (plEst ? "(" : "") + (plK > 0 ? "+" : "") + Math.round(plK).toLocaleString() + (plEst ? ")" : "") + '</td></tr></table>';
-    h += '<div class="dpmsg">' + KE("( ) 안은 추정값입니다 — 미국 주식·코인의 실현손익은 앞선 매수 평균값으로 어림했습니다.",
-      "( ) = estimate — US stock and crypto realized P/L use the average of earlier buys.") + (fx ? "" : KE(" 환율을 못 받아 합계는 국내만입니다."," FX not loaded; total is KR only.")) + '</div>';
+      + ' · ' + KE("미실현 ","Unrealized ") + (plN ? ((plK > 0 ? "+" : "") + Math.round(plK).toLocaleString()) : "—") + '</td></tr></table>';
+    if(!fx) h += '<div class="dpmsg">' + KE("환율을 못 받아 합계는 국내만입니다.","FX not loaded; total is KR only.") + '</div>';
   }
   if(note.length) h += '<div class="dpmsg">' + dpEsc(note.join(" · ")) + '</div>';
   if(auto === null) h += '<div class="dpmsg">' + KE("자동매매 기록을 못 받아 자동·수동 딱지를 붙이지 못했습니다.","Auto-trading log unavailable — no Auto/Manual tags.") + '</div>';
