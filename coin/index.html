@@ -2037,7 +2037,7 @@ function svRender() {
     const on = (i === cur);
     h += '<button class="svbtn' + (on ? ' svgo' : '') + '" style="text-align:left !important" onclick="svPick(' + i + ')">'
        + (on ? "✓ " : "") + svPortNm(i)
-       + ' <span class="dplbl" style="color:' + (on ? '#fff' : '#ff5c5c') + '">' + KE(SV_DESC[i][0], SV_DESC[i][1]) + '</span>'
+       + ' <span class="dplbl"' + ((i === SV_COIN_PRO && !on) ? ' style="color:#ff5c5c"' : '') + '>' + KE(SV_DESC[i][0], SV_DESC[i][1]) + '</span>'
        + '</button>';
   });
   // 배분표(가상 계좌·파이·표)는 뺐다 — 성향 고르는 단추만 남긴다 (사장님 2026-09-23)
@@ -2306,7 +2306,7 @@ function slotBars(name, slotTxt, filled) {
   const en = (typeof LANG !== "undefined" && LANG === "en");
   return '<div class="slrow"><div class="slhd"><b>' + name + '</b>'
        + (slotTxt ? '<span>' + (en ? "slot " : "1칸 ") + slotTxt + '</span>' : '')
-       + '<span class="sn">' + n + (en ? " items / 12 slots" : " 종목 / 12 칸") + '</span></div>' + b + '</div>';
+       + '<span class="sn">' + n + (en ? " / 12 slots" : " / 12 칸") + '</span></div>' + b + '</div>';
 }
 function bkOldest() {                       // 보관한 포트폴리오가 여럿이면 **가장 오래된 것** (사장님 2026-09-24)
   const sv = (typeof bkSaveGet === "function") ? bkSaveGet() : [];
@@ -2386,12 +2386,41 @@ function bkSlotAmt() {
   return (s.left + s.eval) / 12;
 }
 function bkAutoAmt(list) {
-  // 12칸 — 가상 계좌를 열둘로 나눈 한 칸씩 (사장님 2026-09-24, 데모앱과 같은 방식)
-  //   🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
-  const out = {};
-  const sA = bkSlotAmt();
-  list.forEach(function (x) { out[x.code] = sA; });
+  // 🔴 하루 예산은 한 칸(가상 계좌 ÷ 12)뿐이다 (사장님 2026-09-25). 담은 코인이 몇 개든 합계가 한 칸을 넘지 않는다.
+  //    그 한 칸을 목표 비중(BTC 45 · ETH 45 · 알트 10)대로 나눈다 — 담긴 갈래끼리 다시 100 으로, 같은 갈래가 여럿이면 똑같이.
+  //    🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
+  const out = {}, D = bkSlotAmt(), W = {};
+  CV_MIX.forEach(function (m) { W[m[0]] = m[1]; });
+  const clsOf = function (x) { return String(x.cls || bkClassOf(x)).replace(/ (현물|선물)$/, ""); };   // 「BTC 현물」 → BTC
+  const cnt = {}; list.forEach(function (x) { const c = clsOf(x); cnt[c] = (cnt[c] || 0) + 1; });
+  const sumW = Object.keys(cnt).reduce(function (t, c) { return t + (W[c] || 10); }, 0) || 1;
+  list.forEach(function (x) { const c = clsOf(x); out[x.code] = D * (W[c] || 10) / sumW / cnt[c]; });
   return out;
+}
+// 목표와의 차이 — 보관한 포트폴리오(가상 계좌가 세는 것)와 BTC 45 · ETH 45 · 알트 10 을 견준다 (사장님 2026-09-25, 퍼즐맵 앞)
+function bkGapHtml() {
+  var TGT = {}; CV_MIX.forEach(function (m) { TGT[m[0]] = m[1]; });
+  var hd = '<div class="svsub svacct2" style="margin-top:12px;font-weight:800;color:var(--sub)">' + KE("목표와의 차이", "Gap to target") + '</div>';
+  var old = bkOldest();
+  if (!old) return hd + '<div class="svsub">' + KE("바스켓을 보관하면 지금 포트폴리오와 목표 비중의 차이를 여기에 보여 드립니다.",
+                                          "Save a basket to see the gap between your portfolio and the target here.") + '</div>';
+  var er = old.erows || [], val = {};
+  (old.items || []).forEach(function (x, i) {
+    var c = String(x.cls || bkClassOf(x)).replace(/ (현물|선물)$/, ""), e = er[i] || {};
+    var v = (+x.amt || 0) + ((typeof e.pl === "number") ? e.pl : 0);
+    val[c] = (val[c] || 0) + v; });
+  var si = bkSlotInfo(), acct = si.left + si.eval;
+
+  // 지금 = 가상 계좌(잔고+평가금액) 안에서 그 갈래가 차지하는 몫 · 목표 = 고른 성향 비율 · 차이 = 지금 − 목표
+  var keys = Object.keys(TGT); Object.keys(val).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
+  var h = hd + '<table class="mhtab"><tr><th>' + KE("자산 종류", "Asset class") + '</th><th>' + KE("지금", "Now")
+        + '</th><th>' + KE("목표", "Target") + '</th><th>' + KE("차이", "Gap") + '</th></tr>';
+  keys.forEach(function (k) {
+    var now = acct > 0 ? (val[k] || 0) / acct * 100 : 0, tg = TGT[k] || 0, d = now - tg;
+    h += '<tr><td style="text-align:left">' + KN(k) + '</td><td>' + now.toFixed(1) + '%</td><td>' + tg.toFixed(1) + '%</td>'
+       + '<td class="' + (d < -0.05 ? "dn" : (d > 0.05 ? "up" : "fl")) + '">' + (d > 0 ? "+" : (d < 0 ? "−" : "")) + Math.abs(d).toFixed(1) + '%p</td></tr>';
+  });
+  return h + '</table>';
 }
 function bkAmtOf(list) {
   const auto = bkAutoAmt(list), out = {};
@@ -2454,7 +2483,7 @@ function bkRender() {
   {
     const si = bkSlotInfo();
     h += '<div class="slbox">'
-       + slotBars(KE("코인", "Crypto"), Math.round(bkSlotAmt()).toLocaleString() + " USDT", si.n)
+       + slotBars(KE("코인", "Crypto"), Math.round(bkSlotAmt()).toLocaleString() + " USDT", Math.round(si.use / (CV_USDT / 12)))      // 켜진 칸 = 쓴 돈 ÷ 한 칸 (2026-09-25)
        + '</div>';
   }
   if (!a.length) {
@@ -2482,10 +2511,10 @@ function bkRender() {
   if (tAll > 0) h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
        + '<td colspan="4" style="text-align:right">' + bkMoney(tAll, "USDT") + '</td></tr>';
   h += '</table>';
-  h += '<div class="svsub">' + KE("금액은 가상 계좌를 열두 칸으로 나눈 한 칸씩으로 채워집니다. 직접 고치셔도 됩니다.",
-       "Amounts are one of twelve equal slots of the virtual account. You can edit them.")
+  h += '<div class="svsub">' + KE("하루에 쓰는 돈은 한 칸(가상 계좌 ÷ 12)뿐이며, 그 안에서 목표 비중대로 나눠 채웁니다. 직접 고치셔도 됩니다.",
+       "You spend one slot (account ÷ 12) a day, split by the target weights. You can edit them.")
      + ' <span class="dplbl" style="cursor:pointer;text-decoration:underline" onclick="bkAmtReset()">'
-     + KE("1칸으로 되돌리기", "Reset to one slot") + '</span></div>';
+     + KE("하루 몫으로 되돌리기", "Reset to today's slot") + '</span></div>';
   h += '<div class="cvrow">' + BK_SPANS.map(function (s) {
       return '<button class="svbtn" style="flex:1;text-align:center;margin:0" onclick="bkRun(' + s[0] + ')">' + KE(s[1], s[2]) + '</button>';
     }).join("") + '<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="bkClear()">' + KE("비우기", "Clear") + '</button></div>';
@@ -3418,6 +3447,7 @@ function cvRecoRender() {
   //    주식앱과 같은 꼴로 간다 — 자산군과 이름뿐, 방향도 매매 말도 쓰지 않는다.
   // 🔴 제목 뒤에 붙던 설명 줄은 뺐다 (사장님 2026-09-20) — 판정을 가리키는 말을 화면에 쓰지 않는다.
   // 자산군 퍼즐 — 조각을 누르면 뒤집혀 그 자산군 추천 코인이 나온다 (사장님 2026-09-23)
+  try { h += bkGapHtml(); } catch (e) {}      // 목표와의 차이 — 퍼즐맵 앞 (사장님 2026-09-25)
   h += '<div class="svsub svacct2" style="margin-top:12px;font-weight:800;color:var(--sub)">' + KE("자산 종류별 추천 코인", "Picks by asset class")
      + ' <span class="dplbl" style="font-size:12px;font-weight:600">' + KE("조각을 누르면 뒤집힙니다", "Tap a piece to flip") + '</span></div>';
   window._SVPICK = {};
