@@ -259,6 +259,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 .svleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}   /* 성향 원형 그래프 범례 — 주식앱과 같게 (2026-09-25) */
 #recoCard .dpb.buy{background:#00C805 !important;border-color:#00C805 !important;color:#fff !important}
 #recoCard .dpb.sell{background:#FF433D !important;border-color:#FF433D !important;color:#fff !important}   /* 추천 카드 단추 — 매수 로빈후드 초록 · 매도 로빈후드 빨강 (사장님 2026-09-26) */
+#recoCard td,#bmCard td{word-break:keep-all}   /* 「예수금 부족」「1주 미달」은 낱말 사이에서만 줄을 바꾼다 (2026-09-26) */
 </style></head><body>
 <div class="top">
   <h1 id="ttl"></h1>
@@ -2626,6 +2627,10 @@ async function rlLoad(auto) {
   }
 }
 function rlHas() { return (RL.kr.length + RL.us.length + RL.co.length) > 0; }
+// 앱을 켜면 실계좌를 저절로 불러온다 — [실계좌 불러오기]를 누른 것과 같다 (사장님 2026-09-26)
+setTimeout(function () {
+  try { if (!RL.at && !RL.busy && typeof ST !== "undefined" && ST && ((ST.kr && ST.kr.broker) || (ST.co && ST.co.broker))) rlLoad(); } catch (e) {}
+}, 1500);
 function rlRows() { return RL.kr.concat(RL.us).concat(RL.co); }
 // 🔴 시세는 앱이 이미 받는 통로로 받는다 — OKX 이름을 바이낸스 심볼로 바꾼다
 function rlBn(instId) { return String(instId || "").split("-").slice(0, 2).join(""); }
@@ -6374,7 +6379,7 @@ function coPlan(R){
     else alts.forEach(function(k){ if(!held[k]&&L.length<n) L.push([k, slot]); });
     L.forEach(function(x){ var amt=Math.min(x[1], cash), r={side:"B", k:x[0], amt:amt, px:pxOf(x[0]), m20:m20(x[0]),
         why:c+" "+(LANG==="en"?"target ":"목표 ")+m[1]+"% · "+(LANG==="en"?"held ":"보유 ")+(tot>0?(have/tot*100).toFixed(1):"0")+"%"};
-      if(amt<5) r.err=(LANG==="en"?"USDT short":"USDT 모자람"); else cash-=amt; rows.push(r); });
+      if(amt<5) r.err=(LANG==="en"?"USDT short":"USDT 부족"); else cash-=amt; rows.push(r); });
   });
   return rows;
 }
@@ -6473,7 +6478,7 @@ async function bmPrice(rows, fx, cash){
       if(r.side === "B") r.qty = Math.floor((r.mk === "us" ? r.amt / fx : r.amt) / r.px);
       // 두 갈래 (사장님 2026-09-26): 한 칸으로 1주가 안 되면 그 갈래 추천 1순위만 1주 — 예수금이 되면 산다(아래 예수금 한도에서 가린다)
       if(r.side === "B" && !(r.qty > 0) && r.first){ r.qty = 1; r.why += " · 칸이 작아 1순위 1주"; }
-      if(!(r.qty > 0)) r.err = "1주도 못 삼";
+      if(!(r.qty > 0)) r.err = "1주 미달";
     }
     // 현금 한도 — 국내 원화 · 미국 달러 따로. 넘으면 뒤에서부터 뺀다
     ["kr", "us"].forEach(function(mk){
@@ -6481,7 +6486,7 @@ async function bmPrice(rows, fx, cash){
       rows.forEach(function(r){ if(r.mk === mk && r.side === "S" && r.px) sell += 0; });    // 판 돈은 체결 뒤에야 들어온다 — 한도에 넣지 않는다
       var use = 0;
       rows.forEach(function(r){ if(r.mk !== mk || r.side !== "B" || r.err) return; var c = r.qty * r.px;
-        if(use + c > have){ var q = Math.floor((have - use) / r.px); if(q > 0){ r.qty = q; use += q * r.px; } else { r.err = "예수금 모자람"; r.qty = 0; } }
+        if(use + c > have){ var q = Math.floor((have - use) / r.px); if(q > 0){ r.qty = q; use += q * r.px; } else { r.err = "예수금 부족"; r.qty = 0; } }
         else use += c; });
     });
 }
