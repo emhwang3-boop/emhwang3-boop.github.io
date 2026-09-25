@@ -3521,6 +3521,72 @@ function mhGo(code, name, mk, spot){
     }
   }catch(e){}
 }
+// 내 보유종목 — 자산 종류별 묶음 + 추천 포트폴리오와의 Gap (사장님 2026-09-26)
+//   Gap = 보유 비율 − 목표 자산배분비율 (%p). 바스켓 매매와 같은 셈: 총자산 = 예수금 + 평가금액(코인 제외), 예수금은 예금·MMF
+//   코인은 따로: 코인 합계(USDT + 현물) 안에서 BTC 45 · ETH 45 · 알트 10
+function mhGroups(real, rh, en){
+  var o = (typeof pfGet === "function") ? pfGet() : null;
+  if(!o || !(typeof RL !== "undefined" && RL.at) || typeof PF_GRADE === "undefined") return rh.join("");
+  var g = PF_GRADE[o.gi], fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350, cash = RL.cash || {};
+  var val = {}, tot = 0, cval = {}, ctot = +cash.usdt || 0, rows = {}, order = [];
+  var coinCls = function(p){ var k = String(p.code).split("-")[0].toUpperCase(); return (k === "BTC" || k === "ETH") ? k : (en ? "Alts" : "알트"); };
+  real.forEach(function(p, ri){
+    var c;
+    if(p.mk === "coin"){ c = "C:" + coinCls(p); if(p.spot){ var v = (+p.qty || 0) * (+p.cur || 0); cval[c] = (cval[c] || 0) + v; ctot += v; } }
+    else { c = pfClassOf(p); var v2 = (+p.evl || 0) * (p.mk === "us" ? fx : 1); val[c] = (val[c] || 0) + v2; tot += v2; }
+    (rows[c] = rows[c] || []).push(rh[ri]); if(order.indexOf(c) < 0) order.push(c);
+  });
+  var dep = (+cash.krw || 0) + (+cash.usd || 0) * fx; val["예금·MMF"] = (val["예금·MMF"] || 0) + dep; tot += dep;
+  var TGT = {}, keys = []; g.mix.forEach(function(m){ TGT[m[0]] = m[1]; keys.push(m[0]); });
+  order.forEach(function(c){ if(c.indexOf("C:") !== 0 && keys.indexOf(c) < 0) keys.push(c); });
+  var CT = {"C:BTC": 45, "C:ETH": 45}; CT["C:" + (en ? "Alts" : "알트")] = 10;
+  var ckeys = Object.keys(CT);
+  var hd = function(name, have, all, tg, money){
+    var now = all > 0 ? have / all * 100 : 0, d = now - tg, amt = have - all * tg / 100;
+    return '<tr class="mhgrp"><td colspan="7" style="text-align:left;background:rgba(127,127,127,.10);padding:6px 6px">'
+      + '<b>' + name + '</b> <span class="dplbl">' + (en ? "held " : "보유 ") + now.toFixed(1) + '% · ' + (en ? "target " : "목표 ") + tg + '%</span>'
+      + ' <b class="' + (d < -0.05 ? "dn" : (d > 0.05 ? "up" : "fl")) + '" style="float:right">Gap ' + (d > 0 ? "+" : (d < 0 ? "−" : "")) + Math.abs(d).toFixed(1) + '%p'
+      + ' <span style="font-weight:400">(' + (amt > 0 ? "+" : (amt < 0 ? "−" : "")) + money(Math.abs(amt)) + ')</span></b></td></tr>'; };
+  var won = function(v){ return Math.round(v).toLocaleString() + (en ? " KRW" : "원"); }, usdt = function(v){ return v.toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; };
+  var h = '<tr><td colspan="7" style="text-align:left;padding:4px 2px"><span class="dplbl">' + (en ? "Grouped by asset type · " : "자산 종류별 묶음 · ") + pfEsc(g.nm)
+        + ' · Gap</span> <span class="c21help" onclick="mhGapInfo(event)">ⓘ</span></td></tr>';
+  keys.forEach(function(c){
+    h += hd(c, val[c] || 0, tot, TGT[c] || 0, won);
+    if(c === "예금·MMF") h += '<tr><td colspan="7" style="text-align:left" class="dplbl">' + (en ? "Cash " : "예수금 ") + won(+cash.krw || 0) + ((+cash.usd || 0) ? ' · $' + (+cash.usd).toLocaleString(undefined, {maximumFractionDigits: 2}) : '') + '</td></tr>';
+    h += (rows[c] || []).join("");
+  });
+  var hasCoin = ctot > 0 || ckeys.some(function(c){ return rows[c]; });
+  if(hasCoin){
+    h += '<tr><td colspan="7" style="text-align:left;padding:8px 2px 2px"><span class="dplbl">' + (en ? "Crypto (outside the asset mix) · BTC 45 · ETH 45 · Alts 10" : "코인 (자산배분비율 밖) · BTC 45 · ETH 45 · 알트 10") + '</span></td></tr>';
+    ckeys.forEach(function(c){ h += hd(c.slice(2), cval[c] || 0, ctot, CT[c], usdt); h += (rows[c] || []).join(""); });
+  }
+  return h;
+}
+function mhGapInfo(e){
+  try{ if(e) e.stopPropagation(); }catch(x){}
+  if(document.getElementById("mhGapPop")) return;
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  var L = en ? ["📐 Gap = your held share − target share (asset mix ratio), in %p.",
+                "➕ Total = cash + holdings value (crypto excluded). Cash counts as Deposit·MMF.",
+                "🔻 Minus: below target — the basket buys this type. 🔺 Plus: above target — no extra buys (Gap alone never sells).",
+                "( ) is the same Gap in money: held amount − target amount.",
+                "🪙 Crypto is separate: within crypto total (USDT + spot), BTC 45 · ETH 45 · Alts 10."]
+             : ["📐 Gap = 보유 비율 − 목표 자산배분비율 (%p).",
+                "➕ 총자산 = 예수금 + 평가금액 (코인 제외). 예수금은 예금·MMF로 셉니다.",
+                "🔻 마이너스: 목표보다 모자람 — 바스켓 매매가 이 종류를 삽니다. 🔺 플러스: 목표보다 많음 — 더 사지 않습니다. Gap만으로 팔지는 않습니다.",
+                "( ) 안은 같은 Gap을 금액으로 — 보유 금액 − 목표 금액.",
+                "🪙 코인은 따로: 코인 합계(USDT + 현물) 안에서 BTC 45 · ETH 45 · 알트 10."];
+  var d = document.createElement("div"); d.id = "mhGapPop";
+  d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
+  d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
+  var close = 'document.getElementById(\'mhGapPop\').remove()';
+  d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">Gap</div>'
+    + '<span onclick="' + close + '" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
+    + L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + l + '</div>'; }).join("")
+    + '<button onclick="' + close + '" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">' + (en ? "OK" : "확인") + '</button></div>';
+  document.body.appendChild(d);
+}
 function dpHoldRender(){
   const en=LANG==="en", box=E("mhBody"); if(!box)return;
   // 🔴 매도·청산 판이 열려 있으면 표를 다시 그리지 않는다 — 그리면 판이 사라진다(10초 갱신)
@@ -3536,6 +3602,7 @@ function dpHoldRender(){
    +'</th><th>'+(en?"P/L amt<br>P/L %":"손익금<br>손익률")+'</th><th></th></tr>';
   // 🔴 실계좌 줄이 먼저 — 증권사·거래소에서 그대로 받은 값이다.
   //    단위가 셋 다 달라 여기서 한 표로 맞춘다(원/달러/USDT, 주/계약).
+  const _rh=[];                                   // 줄마다 그려 두고 자산 종류별로 묶어 낸다 (사장님 2026-09-26)
   real.forEach(function(p,ri){
     // 🔴 증권사 손익금엔 수수료·세금이 들어 있다. 다시 곱하지 말고 **차이만 더한다**.
     //    그래야 값이 안 튀고, 새 시세가 아직 없으면 받은 값 그대로 남는다.
@@ -3570,7 +3637,7 @@ function dpHoldRender(){
       :p.spot?(en?"SPOT":"현물")
       :((en?"PERP ":"선물 ")+(p.side==="L"?(en?"LONG":"롱"):(en?"SHORT":"숏"))+" "+p.lev+"x");
     const tagc=(p.mk==="coin")?(p.spot?" sp":" fu"):"";
-    h+='<tr><td>'+anyLogo(p.code,p.mk)
+    _rh[ri]='<tr><td>'+anyLogo(p.code,p.mk)
      +'<span style="cursor:pointer" onclick="mhGo(&quot;'+dpEsc(String(p.code||"")).replace(/"/g,"")+'&quot;,&quot;'
        +dpEsc(String(p.name||p.code||"")).replace(/"/g,"")+'&quot;,&quot;'+(p.mk||"kr")+'&quot;,'+(p.spot?1:0)+')">'
        +dpEsc(p.name||p.code)+'</span>'+' <span class="mkt'+tagc+'">'+tag+'</span>'
@@ -3584,6 +3651,7 @@ function dpHoldRender(){
      +'<td><button class="dpb '+((p.mk==="coin"&&!p.spot)?"flat":"sell")+' dpsm" onclick="dpSellKey(\'real:'
      +ri+'\')">'+((p.mk==="coin"&&!p.spot)?(en?"CLOSE":"청산"):(en?"SELL":"매도"))+'</button></td></tr>';
   });
+  h+=mhGroups(real,_rh,en);
   keys.forEach(function(k){
     const p=DP.pos[k], cur=dpPx[k]||0;
     if(p.mk==="coin"){
@@ -6275,17 +6343,17 @@ function pfRender(){
   (RL.co||[]).forEach(function(q){ coin += (q.spot?((+q.qty||0)*(+q.cur||0)):(+q.evl||0)) * f; });
   coin += (+cash.usdt||0) * f;
   val["예금·MMF"] = (val["예금·MMF"]||0) + (+cash.krw||0) + (+cash.usd||0)*f;     // 예수금은 예금·MMF 로 본다
-  var tot = coin; Object.keys(val).forEach(function(k){ tot += val[k]; });
+  var tot = 0; Object.keys(val).forEach(function(k){ tot += val[k]; });   // 코인은 빼고 센다 — 바스켓 매매·보유종목 Gap 과 같은 셈 (사장님 2026-09-26)
   var TGT = {}; g.mix.forEach(function(m){ TGT[m[0]] = m[1]; });
   var keys = g.mix.map(function(m){ return m[0]; }); Object.keys(val).forEach(function(k){ if(keys.indexOf(k)<0 && val[k]>0) keys.push(k); });
-  h += '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">목표와의 차이 <span class="dplbl">실계좌 합계 '+Math.round(tot).toLocaleString()+'원</span></div>'
+  h += '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">목표와의 차이 <span class="dplbl">총자산(코인 제외) '+Math.round(tot).toLocaleString()+'원</span></div>'
      + '<table class="mhtab"><tr><th>자산 종류</th><th>보유</th><th>목표</th><th>차이</th></tr>';
   var row = function(k, now, tg){ var d = now - tg;
     return '<tr><td style="text-align:left">'+k+'</td><td>'+now.toFixed(1)+'%</td><td>'+(tg==null?'—':tg.toFixed(1)+'%')+'</td>'
       +'<td class="'+(d<-0.05?"dn":(d>0.05?"up":"fl"))+'">'+(d>0?"+":(d<0?"−":""))+Math.abs(d).toFixed(1)+'%p</td></tr>'; };
   keys.forEach(function(k){ h += row(k, tot>0?(val[k]||0)/tot*100:0, TGT[k]||0); });
-  if(coin>0) h += row("성향 밖 자산(코인)", tot>0?coin/tot*100:0, 0);
-  h += '</table><div class="dpmsg">예수금은 예금·MMF로, 달러·코인은 그날 환율로 원화 환산해 셉니다.</div>';
+  h += '</table><div class="dpmsg">총자산 = 예수금 + 평가금액(코인 제외). 예수금은 예금·MMF로, 달러는 그날 환율로 원화 환산해 셉니다.'
+     + (coin>0 ? ' 코인 '+Math.round(coin).toLocaleString()+'원은 따로 봅니다(BTC 45 · ETH 45 · 알트 10).' : '') + '</div>';
   card.innerHTML = h;
   pfAcctRender(o);
 }
