@@ -1045,8 +1045,13 @@ function makeChart(cid,opt){
     const x0=4,x1=W-4,y0=10,yP=PH-18,X=i=>x0+(x1-x0)*(cnt<=1?0.5:(i-start+0.5)/cnt);
     GEO={x0,x1,y0,yEnd:H-4,start,cnt,N};
     const cw=Math.max(1,(x1-x0)/cnt*0.66),base=ST0.base;
+    // 이름표끼리 겹치면 한 줄씩 비켜 찍는다 — 목표 두 개가 같은 자리에 겹쳐 이중으로 보였다 (사장님 2026-09-25)
+    const _lbx=[];
     const lbl=(t,x,y,col,al)=>{ctx.font="10px sans-serif";const w=ctx.measureText(t).width;ctx.textAlign="left";
-      const xx=al==="r"?x-w-4:x;ctx.fillStyle="rgba(128,138,152,.16)";ctx.fillRect(xx-2,y-10,w+6,13);ctx.fillStyle=col;ctx.fillText(t,xx+1,y);};
+      const xx=al==="r"?x-w-4:x;
+      for(let n=0;n<8&&_lbx.some(b=>xx-2<b[0]+b[2]&&b[0]<xx-2+w+6&&y-10<b[1]+13&&b[1]<y+3);n++)y+=14;
+      _lbx.push([xx-2,y-10,w+6]);
+      ctx.fillStyle="rgba(128,138,152,.16)";ctx.fillRect(xx-2,y-10,w+6,13);ctx.fillStyle=col;ctx.fillText(t,xx+1,y);};
     // ── 렌코 기본판 — 시간축이 아니다 ──
     if(base===4){const cs=bars.slice(start,end).map(b=>b[4]),a=c21Atr(bars,14),box=(a[end-1]||cur*0.01)||1,bk=[];let bs=cs[0];
       for(const p of cs){while(p>=bs+box){bk.push([bs,bs+box,1]);bs+=box;}while(p<=bs-box){bk.push([bs,bs-box,0]);bs-=box;}}
