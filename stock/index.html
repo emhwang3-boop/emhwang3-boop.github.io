@@ -3236,6 +3236,9 @@ function svRecoRender() {
   if (!p) { box.innerHTML = '<div class="soonrow">' + KE("위에서 포트폴리오를 고르시면 자산 배분을 보여 드립니다.",
                                    "Choose a portfolio above to see the asset allocation.") + '</div>'; return; }
   const g = SV_GRADE[p.pick];
+  // 코인앱에서 고른 코인전문투자형(6번째)은 주식앱에 없다 — 두 앱이 성향 번호를 함께 쓴다 (2026-09-25)
+  if (!g) { box.innerHTML = '<div class="soonrow">' + KE("코인전문투자 포트폴리오는 코인앱에서 보실 수 있습니다. 주식 자산배분은 위에서 포트폴리오를 골라 주십시오.",
+                              "The Crypto Expert portfolio is in the coin app. Choose a portfolio above for stock allocation.") + '</div>'; return; }
 
   // 🔴 가상 계좌는 원화 1억 하나 (사장님 2026-09-25 「나」). 달러 자산은 그날 환율로 원화 환산해 보여 준다.
   //    원형 그래프는 하나 — 최종안 비율 그대로. 그래프 구석에 환율을 적는다.
