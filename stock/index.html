@@ -588,8 +588,9 @@ function render(d){
       const stx=en?(wk?st.en:(openNow?"Open (trading hours)":"Closed (after hours)"))
                   :(wk?st.ko:(openNow?"개장 중":"장 마감 (오늘 거래일)"));
       const col=wk?"#ff433d":(openNow?"#00c805":"var(--sub)");
-      let h='<div class="card injh"><h3>'+(en?"Korea Market Status":"국내 증시 현황")+'</h3>';
-      h+='<div class="srow" style="font-weight:700;color:'+col+'">'+icon+' '+stx+'</div>';
+      let h='<div class="card injh"><h3>'+(en?"Market Status":"증시 현황")+'</h3>';
+      window._mkSt=st;                                 // 국내·미국 두 칸 (사장님 2026-09-25)
+      h+='<div id="mkSess">'+mkSessHtml(st)+'</div>';
       h+='<div class="srow" style="font-size:11px;color:var(--soon)">'+(en?"Business hours 08:00 – 20:00 (KST)":"운영시간 08:00 – 20:00 (KST)")+'</div>';
       if(st.today_exp)h+='<div class="srow" style="font-weight:700;color:#e0a020">⚠ '+(en?(st.today_quad?"Quadruple witching today":"Options expiry today"):(st.today_quad?"오늘 네 마녀(동시만기)":"오늘 옵션 만기"))+'</div>';
       else if(st.next_exp)h+='<div class="srow" style="color:var(--sub)">'+(en?("Next expiry "+st.next_exp+(st.next_quad?" (quad witching)":" (options)")):("다음 만기 "+st.next_exp+(st.next_quad?" (네 마녀)":" (옵션)")))+'</div>';
@@ -1391,6 +1392,50 @@ function asiaLiveNow(){       // 한국시각 평일 09:00~19:00 (니케이·호
   const m=k.getHours()*60+k.getMinutes();
   return m>=540&&m<1140;
 }
+// ── 증시 현황 두 칸 — 국내·미국 · 프리 🌅 / 본장 🟢 / 애프터 🌙 / 마감·휴장 🔴 (사장님 2026-09-25) ──
+//    국내 휴장은 허브(kr_status) · 미국 휴장·조기폐장은 NYSE 공식 발표(2026~2028)
+var US_HOL={"2026-01-01":1,"2026-01-19":1,"2026-02-16":1,"2026-04-03":1,"2026-05-25":1,"2026-06-19":1,"2026-07-03":1,
+  "2026-09-07":1,"2026-11-26":1,"2026-12-25":1,"2027-01-01":1,"2027-01-18":1,"2027-02-15":1,"2027-03-26":1,"2027-05-31":1,
+  "2027-06-18":1,"2027-07-05":1,"2027-09-06":1,"2027-11-25":1,"2027-12-24":1,"2028-01-17":1,"2028-02-21":1,"2028-04-14":1,
+  "2028-05-29":1,"2028-06-19":1,"2028-07-04":1,"2028-09-04":1,"2028-11-23":1,"2028-12-25":1};
+var US_EARLY={"2026-11-27":1,"2026-12-24":1,"2027-11-26":1,"2028-07-03":1,"2028-11-24":1};   // 오후 1시 폐장
+function mkSessKR(st){
+  var k=new Date(Date.now()+new Date().getTimezoneOffset()*60000+324e5), m=k.getHours()*60+k.getMinutes();
+  if(!st.open) return {s:"hol", note:String((LANG==="en"?st.en:st.ko)||"").replace(/^.*?—\s*/,"")};   // "휴장 — 추석" → "추석"
+  if(m>=480&&m<540) return {s:"pre"};             // 08:00~09:00 (NXT 프리)
+  if(m>=540&&m<930) return {s:"reg"};             // 09:00~15:30
+  if(m>=930&&m<1200) return {s:"aft"};            // 15:30~20:00 (NXT·KRX 애프터)
+  return {s:"cls"};
+}
+function mkSessUS(){
+  var p={}; new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",
+    weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date()).forEach(function(x){p[x.type]=x.value;});
+  var ds=p.year+"-"+p.month+"-"+p.day, wd={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[p.weekday];
+  var hh=parseInt(p.hour,10); if(hh>=24)hh-=24; var m=hh*60+parseInt(p.minute,10);
+  if(wd===0||wd===6) return {s:"cls"};
+  if(US_HOL[ds]) return {s:"hol"};
+  var cl=US_EARLY[ds]?780:960;
+  if(m>=240&&m<570) return {s:"pre"};             // 04:00~09:30 ET
+  if(m>=570&&m<cl) return {s:"reg"};              // 09:30~16:00 ET (조기폐장 13:00)
+  if(m>=cl&&m<1200) return {s:"aft"};             // ~20:00 ET
+  return {s:"cls"};
+}
+function mkSessHtml(st){
+  var en=LANG==="en";
+  var SV_PRE='<svg width="34" height="30" viewBox="0 0 34 30"><defs><radialGradient id="mkS" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff3b0"/><stop offset=".55" stop-color="#ffc83d"/><stop offset="1" stop-color="#f59e0b"/></radialGradient></defs><g stroke="#ffb020" stroke-width="2.2" stroke-linecap="round"><line x1="27.14" y1="19.28" x2="31.01" y2="18.25"/><line x1="24.42" y1="14.58" x2="27.25" y2="11.75"/><line x1="19.72" y1="11.86" x2="20.75" y2="7.99"/><line x1="14.28" y1="11.86" x2="13.25" y2="7.99"/><line x1="9.58" y1="14.58" x2="6.75" y2="11.75"/><line x1="6.86" y1="19.28" x2="2.99" y2="18.25"/></g><path d="M8 22a9 9 0 0 1 18 0z" fill="url(#mkS)"/><line x1="3" y1="22.6" x2="31" y2="22.6" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/></svg>', SV_SUN='<svg width="30" height="30" viewBox="0 0 30 30"><defs><radialGradient id="mkS" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff3b0"/><stop offset=".55" stop-color="#ffc83d"/><stop offset="1" stop-color="#f59e0b"/></radialGradient></defs><g stroke="#ffb020" stroke-width="2.2" stroke-linecap="round"><line x1="25.00" y1="15.00" x2="28.50" y2="15.00"/><line x1="22.07" y1="7.93" x2="24.55" y2="5.45"/><line x1="15.00" y1="5.00" x2="15.00" y2="1.50"/><line x1="7.93" y1="7.93" x2="5.45" y2="5.45"/><line x1="5.00" y1="15.00" x2="1.50" y2="15.00"/><line x1="7.93" y1="22.07" x2="5.45" y2="24.55"/><line x1="15.00" y1="25.00" x2="15.00" y2="28.50"/><line x1="22.07" y1="22.07" x2="24.55" y2="24.55"/></g><circle cx="15" cy="15" r="7.5" fill="url(#mkS)"/></svg>', SV_MOON='<svg width="30" height="30" viewBox="0 0 30 30"><defs><linearGradient id="mkM" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset="1" stop-color="#f2c14e"/></linearGradient></defs><path d="M18.5 3.5a11.5 11.5 0 1 0 9 17.5A9.5 9.5 0 0 1 18.5 3.5z" fill="url(#mkM)"/><circle cx="11" cy="13" r="1.3" fill="#e0ad3a" opacity=".55"/><circle cx="14" cy="20" r="1.8" fill="#e0ad3a" opacity=".45"/></svg>', SV_RED='<svg width="30" height="30" viewBox="0 0 30 30"><defs><radialGradient id="mkR" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#ff9a9a"/><stop offset=".45" stop-color="#ff4d4d"/><stop offset="1" stop-color="#c81e2a"/></radialGradient></defs><circle cx="15" cy="15" r="10" fill="url(#mkR)"/></svg>';   // 그림으로 그린다 — 폰마다 이모지가 달라서
+  var IC={pre:[SV_PRE,en?"Pre-market":"프리장","#e0a020"], reg:[SV_SUN,en?"Regular":"본장","#00c805"],
+          aft:[SV_MOON,en?"After-hours":"애프터마켓","#8b9cff"], cls:[SV_RED,en?"Closed":"장 마감","#ff433d"],
+          hol:[SV_RED,en?"Holiday":"휴장","#ff433d"]};
+  function box(title,x){ var c=IC[x.s];
+    return '<div style="flex:1;text-align:center;padding:6px 4px;border:1px solid var(--bd);border-radius:10px">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--sub)">'+title+'</div>'
+      +'<div style="height:30px;margin-top:4px;display:flex;justify-content:center">'+c[0]+'</div>'
+      +'<div style="font-size:13px;font-weight:800;color:'+c[2]+'">'+c[1]+'</div>'
+      +(x.note?'<div style="font-size:11px;color:'+c[2]+'">'+x.note+'</div>':'')+'</div>'; }
+  return '<div style="display:flex;gap:8px;margin:4px 0 8px">'
+    +box(en?"Korea":"국내 증시",mkSessKR(st))+box(en?"US":"미국 증시",mkSessUS())+'</div>';
+}
+setInterval(function(){ try{ var n=document.getElementById("mkSess"); if(n&&window._mkSt) n.innerHTML=mkSessHtml(window._mkSt); }catch(e){} }, 60000);
 function krLiveNow(){const k=new Date(Date.now()+new Date().getTimezoneOffset()*60000+324e5);
   const m=k.getHours()*60+k.getMinutes();return k.getDay()>=1&&k.getDay()<=5&&m>=480&&m<1200;} // 평일 08:00~20:00
 // 미국 동부시간(서머타임 자동) → {요일, 분}
