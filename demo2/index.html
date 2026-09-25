@@ -2454,7 +2454,8 @@ async function rlCoinSpotSince() {
 // ── 체결 딩동 (사장님 2026-09-21) ── 보유 수량이 바뀌면 소리. 파일 없이 Web Audio 합성 ──
 let _dingCtx = null;
 function _dingAC() { try { if (!_dingCtx) _dingCtx = new (window.AudioContext || window.webkitAudioContext)(); if (_dingCtx.state === "suspended") _dingCtx.resume(); return _dingCtx; } catch (e) { return null; } }
-try { document.addEventListener("click", function () { _dingAC(); }, false); } catch (e) {}   // 사용자 제스처로 오디오 잠금 해제
+try { ["click", "touchstart", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () { _dingAC(); }, {passive: true}); }); } catch (e) {}
+try { document.addEventListener("visibilitychange", function () { if (!document.hidden) _dingAC(); }); } catch (e) {}   // 앱으로 돌아오면 소리를 다시 깨운다   // 사용자 제스처로 오디오 잠금 해제
 function dingDong() {
   const ctx = _dingAC(); if (!ctx) return;
   const now = ctx.currentTime;
@@ -2584,7 +2585,11 @@ async function rlLoad(auto) {
     // 🔴 체결 감지 — 보유 수량 묶음이 바뀌면 체결된 것 → 딩동 (첫 로드는 소리 안 냄) (사장님 2026-09-21)
     try {
       var _qsig = RL.kr.concat(RL.us).concat(RL.co).map(function (p) { return p.code + ":" + p.qty; }).sort().join("|");
-      if (RL.qtySig !== undefined && RL.qtySig !== _qsig) { try { dingDong(); } catch (e) {} }
+      if (RL.qtySig !== undefined && RL.qtySig !== _qsig) {
+        try { dingDong(); } catch (e) {}
+        try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch (e) {}          // 소리가 막혀도 떨림은 온다
+        try { ydLoad(true); } catch (e) {}                                                      // 매매현황도 바로 새로 (2026-09-26)
+      }
       RL.qtySig = _qsig;
     } catch (e) {}
     // 🔴 재조회가 TR 한도 등으로 예수금을 못 받으면(null) 직전 값을 지킨다 — 추천이 0원으로 깜빡이지 않게 (2026-09-21)
@@ -3801,10 +3806,12 @@ async function ydLoad(force){
         var u = await rlKiwoom(tok, "/api/us/acnt", "ust21180", {strt_dt: ydYmd(st), end_dt: ds, slby_tp: "", stex_tp: "", stk_cd: "", oppo_trde_tp: ""});
         var ul = ((u && u.result_list) || []).filter(function(r){ return rlNum(r.cntr_qty) > 0; });
         var avg = {};
-        ul.filter(function(r){ return String(r.ord_dt) < ds && /매수/.test(r.slby_tp_nm||""); }).forEach(function(r){
+        ul.filter(function(r){ return String(r.ord_dt) < ds && !(isToday && String(r.ord_dt) === nyDsEarly()) && /매수/.test(r.slby_tp_nm||""); }).forEach(function(r){
           var k = String(r.stk_cd).toUpperCase(); avg[k] = avg[k] || {q:0, a:0}; avg[k].q += rlNum(r.cntr_qty); avg[k].a += rlNum(r.cntr_amt); });
         var g = {};
-        ul.filter(function(r){ return String(r.ord_dt) === ds; }).forEach(function(r){
+        // 🔴 미국 체결은 뉴욕 날짜로 적힌다 — 한국 새벽(뉴욕 전날)에 산 것이 빠졌다(09-26 SPY). 오늘 보기면 뉴욕 오늘도 넣는다
+        var nyDs = ""; try{ var _p = {}; new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date()).forEach(function(x){ _p[x.type]=x.value; }); nyDs = _p.year+_p.month+_p.day; }catch(e){}
+        ul.filter(function(r){ return String(r.ord_dt) === ds || (isToday && nyDs && String(r.ord_dt) === nyDs); }).forEach(function(r){
           var k = String(r.stk_cd).toUpperCase(), sd = /매수/.test(r.slby_tp_nm||"") ? "B" : "S", key = k + ":" + sd;
           g[key] = g[key] || {mk:"us", code:k, name:k, side:sd, qty:0, amt:0}; g[key].qty += rlNum(r.cntr_qty); g[key].amt += rlNum(r.cntr_amt); });
         Object.keys(g).forEach(function(k){ var o = g[k];
@@ -3831,6 +3838,7 @@ async function ydLoad(force){
   var b = E("ydBody"); if(b) b.innerHTML = YD.html;
   var t = E("ydDate"); if(t) t.textContent = isToday ? (KE("오늘 ","Today ") + new Date().toTimeString().slice(0,5) + KE(" 기준"," as of")) : (ds.slice(0,4) + "-" + md);
 }
+function nyDsEarly(){ try{ var p = {}; new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date()).forEach(function(x){ p[x.type]=x.value; }); return p.year+p.month+p.day; }catch(e){ return ""; } }
 function ydHtml(rows, note, auto){
   var en = LANG === "en", fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 0;
   var money = function(mk, v){ return mk === "kr" ? Math.round(v).toLocaleString() + (en ? " KRW" : "원")
@@ -4619,10 +4627,12 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
     const usd = function(v){ return "$"+(+v).toLocaleString(undefined,{maximumFractionDigits:2}); };
     const tet = function(v){ return (+v).toLocaleString(undefined,{maximumFractionDigits:2})+" USDT"; };
     // 채운 칸 — 주식은 종목 수, 코인은 든 돈을 칸으로 나눈 값
+    // 🔴 채운 칸 = 들고 있는 종목을 산 날이 며칠인가 — 하루에 몇 종목을 샀든 1칸 (사장님 2026-09-26 시간 배분)
+    const days = function(list){ const seen = {}; list.forEach(function(p){ var h = null; try{ h = rlHeldDays(p.code); }catch(e){} seen[(h && h.since) ? h.since : ("?" + p.code)] = 1; }); return Math.min(12, Object.keys(seen).length); };
     const rows = [
-      [(en?"KR stocks":"국내 주식"), totKR, kr.length, won],
-      [(en?"US stocks":"미국 주식"), totUS, us.length, usd],
-      [(en?"Crypto (spot)":"코인 (현물)"), totCO, (totCO>0?Math.round(coVal/(totCO/12)):0), tet],
+      [(en?"KR stocks":"국내 주식"), totKR, days(kr), won],
+      [(en?"US stocks":"미국 주식"), totUS, days(us), usd],
+      [(en?"Crypto (spot)":"코인 (현물)"), totCO, days(co), tet],
     ];
     let t = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"12-slot status":"12칸 현황")+'</div>'
       + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
@@ -4655,7 +4665,7 @@ function recoRender(){
     acct.parentNode.insertBefore(card,acct.nextSibling);
   }
   const en=LANG==="en", R=RECO;
-  let h='<h3>'+(en?"Portfolio picks":"포트폴리오 추천")+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
+  let h='<h3>'+(en?"Picks by portfolio":"포트폴리오에 따른 종목 추천")+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
   try{ window._RECO=R; }catch(e){}
   if(!R){ card.innerHTML=h+'<div class="soonrow">'+(en?"Loading…":"불러오는 중…")+'</div>'; return; }
   // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률을 더해 "지금 60일선 대비"를 낸다 (사장님 2026-09-21).
@@ -4720,7 +4730,7 @@ function recoRender(){
                            :("bkAdd('"+r.code+".US','"+r.code+"','us')");
         t+='<tr'+(mode==="next"?' style="opacity:.55"':'')+'><td style="text-align:left">'+(mode==="today"?"① ":"")+dpEsc(r.name)+(r.name!==r.code?' <span class="dplbl">'+r.code+'</span>':'')
           +'<br><span class="dplbl">'+dpEsc(r.why)+'</span></td><td>'+(mk==="kr"?Math.round(r.close).toLocaleString():money(r.close))+'</td><td>'+(q?q.toLocaleString():"-")+'</td>'
-          +'<td style="white-space:nowrap"><button class="dpb dpsm" style="background:#2f9e44;border-color:#2b8a3e;margin-right:4px" onclick="'+add+'">'+(en?"+Cart":"담기")+'</button><button class="dpb buy dpsm" onclick="'+go+';E(\'stock\').scrollIntoView({behavior:\'smooth\'})">'+(en?"View":"조회")+'</button></td></tr>';
+          +'<td style="white-space:nowrap"><button class="dpb buy dpsm" onclick="'+go+';E(\'stock\').scrollIntoView({behavior:\'smooth\'})">'+(en?"View":"조회")+'</button></td></tr>';
       });
       return t+'</table>';
     };
@@ -4730,10 +4740,12 @@ function recoRender(){
       var _pl = []; try{ _pl = bmPlan(_pfo).rows.filter(function(r){ return r.mk === mk; }); }catch(e){}
       s += '<div class="dpmsg" style="font-weight:700;color:var(--nm)">' + (en ? "Today (profile rule)" : "오늘 살 것·팔 것 — 내 성향 규칙") + '</div>';
       if(!_pl.length) s += '<div class="dpmsg">' + (en ? "Nothing today — classes are near target." : "오늘은 없습니다 — 갈래가 목표 근처입니다.") + '</div>';
-      else s += '<table class="mhtab">' + _pl.map(function(r){
-          return '<tr><td style="text-align:left"><b class="' + (r.side === "B" ? "up" : "dn") + '">' + (r.side === "B" ? (en ? "Buy" : "매수") : (en ? "Sell" : "매도")) + '</b> '
-            + dpEsc(r.name) + '<br><span class="dplbl">' + dpEsc(r.why) + '</span></td><td>' + (r.side === "B" ? money(r.mk === "us" ? r.amt / fx : r.amt) : (r.qty + (en ? " sh" : "주"))) + '</td></tr>'; }).join("") + '</table>';
-      s += '<div class="dpmsg">' + (en ? "Amounts are one slot; the basket card below sets qty and price." : "금액은 한 칸 기준입니다. 수량·값은 아래 「바스켓 매매」가 정합니다.") + '</div>';
+      else { window._RO = window._RO || {}; s += '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th>' + (en ? "Amount" : "금액·수량") + '</th><th></th></tr>' + _pl.map(function(r){
+          var key = r.side + ":" + r.mk + ":" + r.code; window._RO[key] = r;
+          var go = r.mk === "kr" ? ("pickStock('" + r.code + "','" + String(r.name).replace(/'/g, "") + "')") : ("pickStockUS('" + String(r.code).replace(/\.US$/, "") + ".US','" + String(r.code).replace(/\.US$/, "") + "')");
+          return '<tr><td style="text-align:left;cursor:pointer" onclick="' + go + ';E(\'stock\').scrollIntoView({behavior:\'smooth\'})"><u>' + dpEsc(r.name) + '</u><br><span class="dplbl">' + dpEsc(r.why) + '</span></td>'
+            + '<td>' + (r.side === "B" ? money(r.mk === "us" ? r.amt / fx : r.amt) : (r.qty + (en ? " sh" : "주"))) + '</td>'
+            + '<td><button class="dpb ' + (r.side === "B" ? "buy" : "sell") + ' dpsm" onclick="recoOrd(&quot;' + key + '&quot;)">' + (r.side === "B" ? (en ? "BUY" : "매수") : (en ? "SELL" : "매도")) + '</button></td></tr>'; }).join("") + '</table>'; }
     }
     else if(empty>0||!has){
       // 🔴 1칸(과 남은 현금)으로 1주라도 살 수 있는 첫 후보가 '오늘 살 것' — 원형 그래프와 같은 순서 (2026-09-19)
@@ -4795,7 +4807,7 @@ function recoRender(){
     const want=cs(z), ok=(!pos&&z.state==="cash")||(pos&&((pos.side==="L"&&z.state==="long")||(pos.side==="S"&&z.state==="short")));
     c+='<tr><td style="text-align:left">'+k+'</td><td>'+(z.price?(+z.price).toLocaleString(undefined,{maximumFractionDigits:2}):"-")+'</td><td>'+want+'<br><span class="dplbl">'+(z.width!==undefined?(en?"width ":"폭 ")+z.width+"%":"")+'</span></td>'
       +'<td>'+now+'</td><td class="'+(ok?"up":"dn")+'">'+(ok?(en?"OK":"맞음"):(en?"Change":"바꿀 것"))+'</td>'
-      +'<td style="white-space:nowrap"><button class="dpb dpsm" style="background:#2f9e44;border-color:#2b8a3e;margin-right:4px" onclick="bkAdd(\''+k+'\',\''+k+'\',\'coin\')">'+(en?"+Cart":"담기")+'</button>'
+      +'<td style="white-space:nowrap">'
       +'<button class="dpb buy dpsm" onclick="pickCoin(\''+k+'USDT\',\''+k+'\',\'F\');E(\'coin2\').scrollIntoView({behavior:\'smooth\'})">'+(en?"View":"조회")+'</button></td></tr>';
   });
   h+=c+'</table>';
@@ -6267,7 +6279,7 @@ function pfRender(){
   var TGT = {}; g.mix.forEach(function(m){ TGT[m[0]] = m[1]; });
   var keys = g.mix.map(function(m){ return m[0]; }); Object.keys(val).forEach(function(k){ if(keys.indexOf(k)<0 && val[k]>0) keys.push(k); });
   h += '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">목표와의 차이 <span class="dplbl">실계좌 합계 '+Math.round(tot).toLocaleString()+'원</span></div>'
-     + '<table class="mhtab"><tr><th>자산 종류</th><th>지금</th><th>목표</th><th>차이</th></tr>';
+     + '<table class="mhtab"><tr><th>자산 종류</th><th>보유</th><th>목표</th><th>차이</th></tr>';
   var row = function(k, now, tg){ var d = now - tg;
     return '<tr><td style="text-align:left">'+k+'</td><td>'+now.toFixed(1)+'%</td><td>'+(tg==null?'—':tg.toFixed(1)+'%')+'</td>'
       +'<td class="'+(d<-0.05?"dn":(d>0.05?"up":"fl"))+'">'+(d>0?"+":(d<0?"−":""))+Math.abs(d).toFixed(1)+'%p</td></tr>'; };
@@ -6340,6 +6352,21 @@ function bmLimit(mk, side, cur, nm){
   if(mk === "kr"){ var t = bmKrTick(cur, bmIsEtfNm(nm)); return side === "B" ? Math.round(cur / t) * t + t : Math.max(t, Math.round(cur / t) * t - t); }
   var st = cur >= 1 ? 0.01 : 0.0001; return side === "B" ? cur + st : Math.max(st, cur - st);
 }
+// 추천 표 한 줄 주문 (사장님 2026-09-26) — 바스켓 매매와 같은 값: 사기 +1호가 · 팔기 −1호가 지정가
+async function recoOrd(key){
+  var r = (window._RO || {})[key]; if(!r) return;
+  var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350;
+  var cur = 0; try{ cur = await bmCur(r.mk, r.code); }catch(e){}
+  if(!(cur > 0)){ alert("현재가를 못 받았습니다."); return; }
+  var px = bmLimit(r.mk, r.side, cur, r.name), q = r.qty || 0;
+  if(r.side === "B"){ q = Math.floor((r.mk === "us" ? r.amt / fx : r.amt) / px); if(q < 1) q = 1; }
+  var live = rlCanLiveStock(r.mk);
+  if(!dpAsk((live ? "실주문 · " : "모의 · ") + (r.side === "B" ? "매수 " : "매도 ") + r.name + " " + q + "주 @ " + bmMoney(r.mk, px))) return;
+  if(!live){ alert("모의 — 실주문 스위치가 꺼져 있어 주문을 내지 않았습니다."); return; }
+  try{ await rlStockOrder(r.mk, r.side, r.code, q, px); alert("주문이 들어갔습니다."); }
+  catch(e){ alert("주문 거부: " + (e.message || e)); }
+  try{ [3000, 10000, 25000].forEach(function(ms){ setTimeout(function(){ try{ ydLoad(true); }catch(e){} }, ms); }); }catch(e){}
+}
 // 바스켓 계획(값 받기 전) — 바스켓 매매와 추천 카드 「오늘 살 것」이 같이 쓴다 (사장님 2026-09-26)
 function bmPlan(o){
     var g = PF_GRADE[o.gi], fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350, cash = RL.cash || {};
@@ -6383,7 +6410,7 @@ function bmPlan(o){
           if(!held[k] && L.length < n) L.push({mk: mk, code: r.code, name: r.name || r.code, amt: slot}); }); }
       else if(BM_REP[c]){ var rp = BM_REP[c]; L.push({mk: rp[2], code: rp[0], name: rp[1], amt: Math.min(n * slot, budget - have)}); }
       L.forEach(function(x, k){ rows.push({side: "B", mk: x.mk, code: x.code, name: x.name, cls: c, amt: x.amt, first: k === 0,
-        why: c + " 목표 " + m[1] + "% · 지금 " + (tot > 0 ? (have / tot * 100).toFixed(1) : "0") + "%"}); });
+        why: c + " 목표 " + m[1] + "% · 보유 " + (tot > 0 ? (have / tot * 100).toFixed(1) : "0") + "%"}); });
     });
     return {rows: rows, fx: fx, cash: cash};
 }
@@ -6427,11 +6454,10 @@ async function bmRun(){
   if(!BM.rows || BM.busy) return;
   var go = BM.rows.filter(function(r){ return !r.err && r.qty > 0; });
   if(!go.length){ BM.msg = "낼 주문이 없습니다."; bmRender(); return; }
-  if(bmDoneGet() === bmToday()){ BM.msg = "오늘은 이미 바스켓 매매를 했습니다(갈래마다 하루 최대 3칸)."; bmRender(); return; }
   var live = go.some(function(r){ return rlCanLiveStock(r.mk); });
   var txt = (live ? "실주문 · " : "모의 · ") + "바스켓 " + go.length + "건\n" + go.map(function(r){
       return (r.side === "B" ? "매수 " : "매도 ") + r.name + " " + r.qty + "주 @ " + bmMoney(r.mk, r.px); }).join("\n")
-    + "\n\n오늘은 중계기 자동 사기를 쉽니다.";
+    ;
   if(!dpAsk(txt)) return;
   BM.busy = true; bmRender();
   var sells = go.filter(function(r){ return r.side === "S"; }), buys = go.filter(function(r){ return r.side === "B"; });
@@ -6445,19 +6471,18 @@ async function bmRun(){
   }
   try{ localStorage.setItem("bm_done_v1", bmToday()); }catch(e){}
   if(sells.some(function(r){ return /목표 초과/.test(r.why) && /주문|모의/.test(r.res || ""); })){ try{ localStorage.setItem("bm_trim_v1", bmToday().slice(0, 7)); }catch(e){} }
-  try{ await atCall({rest: true}); BM.msg = "주문을 냈습니다. 오늘은 자동 사기를 쉽니다."; }
-  catch(e){ BM.msg = "주문을 냈습니다. 중계기에 「오늘 쉼」을 못 알렸습니다: " + (e.message || e); }
+  BM.msg = "주문을 냈습니다.";                                   // 자동매매는 쉬지 않는다 (사장님 2026-09-26)
+  try{ [3000, 10000, 25000].forEach(function(ms){ setTimeout(function(){ try{ ydLoad(true); }catch(e){} }, ms); }); }catch(e){}
   BM.busy = false; bmRender();
 }
 function bmRender(){
   var card = document.getElementById("bmCard");
   if(!card){ var pc = document.getElementById("pfCard"); if(!pc) return;
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
-  var done = bmDoneGet() === bmToday();
+  var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
   var h = '<h3>바스켓 매매</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여 매수·매도할 종목과 수량을 보여 줍니다. '
         + '사기는 현재가 +1호가, 팔기는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)입니다. 코인은 따로 다룹니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button></div>';
-  if(done) h += '<div class="dpmsg" style="color:#e8590c">오늘은 바스켓 매매를 했습니다 — 자동 사기는 쉬는 중입니다.</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
     h += '<table class="mhtab"><tr><th style="text-align:left">종목</th><th>수량</th><th>지정가</th><th>금액</th><th></th></tr>';
