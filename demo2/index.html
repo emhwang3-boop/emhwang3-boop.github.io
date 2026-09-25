@@ -6184,8 +6184,14 @@ function pfClassOf(p){
   if(["SOXX","SMH","XLK","XLF","XLV","XLE","VGT","ARKK","SCHD","JEPI","JEPQ","GLD","VNQ"].indexOf(tk)>=0) return "미국 달러 주식형 ETF";
   return "해외 주식";
 }
-function pfMask(a){ a=String(a||"").replace(/[^0-9]/g,""); if(a.length<6) return a; return a.slice(0,4)+"-"+"*".repeat(Math.max(2,a.length-6))+"-"+a.slice(-2); }
-var PF_ACCT = null, PF_ACCT_BUSY = false;
+function pfMask(a){ a=String(a||"").replace(/[^0-9]/g,""); if(a.length<6) return a; return a.slice(0,4)+"-****-"+a.slice(-2); }   // 가운데는 늘 **** (2026-09-25)
+var PF_ACCT = null, PF_ACCT_BUSY = false, PF_UID = null, PF_UID_BUSY = false;
+// OKX 는 계좌번호가 없다 — 계정 고유번호(UID)를 계정 설정 조회로 받는다 (사장님 2026-09-25)
+async function pfUidLoad(){
+  if(PF_UID_BUSY || PF_UID) return; PF_UID_BUSY = true;
+  try{ var j = await rlOkx("/api/v5/account/config"); var d = j && j.data && j.data[0]; if(d && d.uid) PF_UID = String(d.uid); }catch(e){}
+  PF_UID_BUSY = false; pfRender();
+}
 async function pfAcctLoad(){
   if(PF_ACCT_BUSY || PF_ACCT) return; PF_ACCT_BUSY = true;
   try{ var tok = await rlToken(); var j = await rlKiwoom(tok, "/api/dostk/acnt", "ka00001", {});
@@ -6243,7 +6249,8 @@ function pfAcctRender(o){
   var rows = [];
   try{ if(ST && ST.kr && ST.kr.broker) rows.push([pfBrokerNm(ST.kr.broker||"kiwoom")+" (국내·미국)", PF_ACCT?pfMask(PF_ACCT):'<span class="dplbl">불러오는 중…</span>']); }catch(e){}
   try{ if(ST && ST.us && ST.us.broker==="korea_inv" && ST.us.acct) rows.push([pfBrokerNm("korea_inv")+" (미국)", pfMask(ST.us.acct)]); }catch(e){}
-  try{ if(ST && ST.co && ST.co.broker) rows.push([pfBrokerNm(ST.co.broker||"okx")+" (코인)", '<span class="dplbl">—</span>']); }catch(e){}
+  try{ if(ST && ST.co && ST.co.broker){ if(ST.co.broker==="okx" && !PF_UID) pfUidLoad();
+    rows.push([pfBrokerNm(ST.co.broker||"okx")+" (코인)", (ST.co.broker==="okx") ? (PF_UID ? "UID "+pfMask(PF_UID) : '<span class="dplbl">불러오는 중…</span>') : '<span class="dplbl">—</span>']); } }catch(e){}
   if(!rows.length) rows.push(['<span class="dplbl">설정에 계좌 키가 없습니다</span>', '—']);
   box.innerHTML = '<table class="mhtab"><tr><th style="text-align:left">증권사</th><th>계좌번호</th><th>성명</th></tr>'
     + rows.map(function(r){ return '<tr><td style="text-align:left">'+r[0]+'</td><td>'+r[1]+'</td><td>'+nm+'</td></tr>'; }).join("") + '</table>';
