@@ -4652,8 +4652,8 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
         + '<td>'+fill+'</td><td'+(empty>0?' style="color:#00c805;font-weight:800"':'')+'>'+empty+'</td></tr>';
     });
     t += '</table><div class="dpmsg">'
-      + (en ? "Total assets are split into twelve slots; one slot is bought per day while slots are empty. Crypto counts slots by amount (spot only)."
-            : "총자산을 열두 칸으로 나누고, 빈 칸이 있는 날에만 한 칸씩 삽니다. 코인은 현물만 보며 칸을 금액으로 셉니다.")
+      + (en ? "Total assets (cash + holdings) are split into twelve slots; one slot is bought per day while slots are empty. Crypto counts slots by amount (spot only)."
+            : "총자산(예수금+평가금액)을 열두 칸으로 나누고, 빈 칸이 있는 날에만 한 칸씩 삽니다. 코인은 현물만 보며 칸을 금액으로 셉니다.")
       + '</div>';
     return t;
   }catch(e){ return ""; }
