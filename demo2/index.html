@@ -246,6 +246,10 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 .stktf{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
 .stktf button{flex:1;min-width:42px;background:var(--bg);border:1px solid var(--bd);color:var(--sub);border-radius:7px;padding:5px 0;font-size:12px;cursor:pointer}
 .stktf button.on{background:#1b3a5a;color:#5db4ff;border-color:#2a5580}
+.ken{display:none} body.lang-en .kko{display:none} body.lang-en .ken{display:inline}
+.discCard .discList{margin:0;padding-left:16px}
+.discCard .discList li{font-size:12.5px;color:var(--sub);line-height:1.65;margin:6px 0}
+.discNote{margin-top:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;font-size:11.5px;color:var(--sub);line-height:1.6}
 </style></head><body>
 <div class="top">
   <h1 id="ttl"></h1>
@@ -321,9 +325,25 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div id="news"></div>
 <!-- 고객의 소리 (사장님 2026-09-19) — 허브 /voice 로 보낸다. 본앱·데모를 app 으로 가른다. 개인정보 없음 -->
 <div class="card" id="voice"><h3 id="vcH">고객의 소리</h3>
-<textarea id="vcTxt" maxlength="300" rows="3" style="width:100%;box-sizing:border-box;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;resize:vertical" placeholder="바라는 기능, 불편한 점을 적어 주세요"></textarea>
+<textarea id="vcTxt" maxlength="200" rows="3" style="width:100%;box-sizing:border-box;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;resize:vertical" placeholder="시스템 오류 내용을 적어 주세요"></textarea>
 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px"><span id="vcMsg" style="font-size:12px;color:var(--sub)"></span>
-<button id="vcBtn" onclick="vcSend()" style="border:0;border-radius:9px;padding:7px 16px;background:#1c7ed6;color:#fff;font-weight:700;cursor:pointer">보내기</button></div></div>
+<button id="vcBtn" onclick="vcSend()" style="border:0;border-radius:9px;padding:7px 16px;background:#1c7ed6;color:#fff;font-weight:700;cursor:pointer">보내기</button></div><div class="discNote"><span class="kko">본 창구는 앱 오류(버그) 제보 및 기능 건의 전용 공간입니다. 개별 종목 추천이나 투자 상담 등 금융 관련 질문에는 답변을 드리지 않으며, 접수된 문의에 대한 별도의 회신(답변) 기능은 제공되지 않습니다.</span><span class="ken">This channel is only for reporting app errors (bugs) and suggesting features. We do not answer financial questions such as individual stock recommendations or investment consultation, and no reply function is provided for submitted messages.</span></div></div>
+
+<!-- 앱 로직 · 투자 유의사항 — 주식앱과 같게 (사장님 2026-09-25) -->
+<div class="card discCard"><div class="discNote"><span class="kko"><b>앱 로직</b> — ① 자산 종류별 비중은 고객님이 고르신 포트폴리오에 따라 <b>미리 정해져</b> 있습니다. ② <b>국내·해외 주식</b>은 <b>일봉</b>을 기준으로, 추세선이 상승 중이고 가격이 기준선 위에 있으며 추세의 <b>상승 각도</b>가 일정 수준 이상인 종목 가운데, <b>최근 3거래일 안에</b> 그 조건을 새로 충족한 것만 고릅니다. ③ 그중 <b>상승 각도가 가파른 순서</b>로 보여 드립니다. ④ <b>해외 ETF(원화)</b>도 같은 방법으로 고르되, 시가총액 상위 종목 안에서 고르며 최근 3거래일 조건은 적용하지 않습니다. <b>레버리지 ETF</b>도 같은 방법으로 고르며, <b>공격투자 포트폴리오에만</b> 들어갑니다. <b>국내 ETF와 예금은 대표 상품을 미리 정해 두고 바꾸지 않습니다.</b> ⑤ 주식 추천의 대상은 국내 상장 종목과 미국 S&amp;P 500 구성 종목입니다. ⑥ 모든 이용자에게 <b>같은 규칙·같은 결과</b>가 적용되며, 개별 상담이나 맞춤 조언이 아닙니다.</span><span class="ken"><b>App logic</b> — ① The weight of each asset class is <b>fixed in advance</b> according to the portfolio you choose. ② For <b>Korean and US stocks</b>, using <b>daily charts</b>, we select stocks whose trend line is rising, whose price is above the baseline, and whose trend has an <b>upward angle</b> above a set level — and only those that <b>newly met</b> these conditions <b>within the last 3 trading days</b>. ③ Among them, the <b>steepest upward angle</b> is shown first. ④ <b>Overseas ETFs (KRW)</b> are selected the same way from the largest ETFs by market cap, without the 3-day condition. <b>Leveraged ETFs</b> are selected the same way and appear <b>only in the Aggressive portfolio</b>. <b>Korean ETFs and deposits use fixed representative products that do not change.</b> ⑤ Stock picks are drawn from Korean-listed stocks and the constituents of the US S&amp;P 500. ⑥ The <b>same rules and the same results</b> apply to every user; this is not individual consultation or personalized advice.</span></div></div>
+
+<div class="card discCard">
+  <h3><span class="kko">투자 유의사항</span><span class="ken">Investment Notice</span></h3>
+  <ul class="discList">
+    <li><span class="kko">본 서비스는 특정 종목의 매수·매도를 권유하지 않으며, 투자 판단의 책임은 본인에게 있습니다.</span><span class="ken">This service does not recommend buying or selling any specific security; responsibility for investment decisions rests with you.</span></li>
+    <li><span class="kko">과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.</span><span class="ken">Past performance does not guarantee future returns, and this service carries the possibility of loss of principal.</span></li>
+    <li><span class="kko">본 서비스는 1:1 개별 투자 상담을 진행하지 않는 단방향 정보 제공 서비스입니다.</span><span class="ken">This service is a one-way information service and does not provide one-on-one individual investment consultation.</span></li>
+    <li><span class="kko">이 앱은 단기 트레이딩용으로 사용하기에는 적합하지 않으며, 일봉 기준으로 중장기 포트폴리오 투자를 지원하기 위해 설계되었습니다.</span><span class="ken">This app is not suitable for short-term trading; it is designed to support medium- to long-term portfolio investing based on daily charts.</span></li>
+    <li><span class="kko">가상포트폴리오 기능은 고객님이 선택한 종목의 과거 데이터 기반 단순 시뮬레이션 결과이며, 어떠한 투자 권유나 수익 보장도 하지 않습니다.</span><span class="ken">The virtual portfolio feature is a simple simulation based on past data for the securities you selected; it is neither an investment recommendation nor a guarantee of returns.</span></li>
+    <li><span class="kko">당사는 정식 금융투자업자가 아닌 유사투자자문업자이며, 개별적인 투자 상담과 자금 운용이 불가능합니다.</span><span class="ken">We are not a licensed financial investment business but a quasi-investment advisory business, and cannot provide individual investment consultation or manage funds.</span></li>
+  </ul>
+  <button onclick="discShow()" style="display:block;width:100%;margin:5px 0;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--nm);font-size:13px;cursor:pointer"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
+</div>
 
 <div class="foot" id="foot"></div>
 
@@ -5352,18 +5372,8 @@ function bkInfoPop(e){
   try{ if(e)e.stopPropagation(); }catch(x){}
   if(document.getElementById("bkInfoPop"))return;
   var en=(typeof LANG!=="undefined"&&LANG==="en");
-  var L=en?["🧩 Look up a stock or coin and tap Add to virtual basket — up to 12 items.",
-            "💰 Amounts default to one slot (that market's total ÷ 12). You can edit them.",
-            "⚡ Crypto perpetuals take a leverage value; touching the liquidation line counts as −100%.",
-            "📈 Tap 3 months · 6 months · 1 year to see the past return as if bought in equal weights.",
-            "📦 Save current basket keeps tracking its return from the day you saved it.",
-            "🎮 All figures are virtual and not a recommendation to buy."]
-          :["🧩 조회한 종목·코인을 [＋ 가상 바스켓 담기]로 열두 개까지 담습니다.",
-            "💰 금액은 추천 1칸 금액(그 시장 총자산 ÷ 12)으로 채워지며, 직접 고칠 수 있습니다.",
-            "⚡ 코인 선물은 배수를 넣을 수 있고, 청산선에 닿으면 −100%로 셉니다.",
-            "📈 [3개월]·[6개월]·[1년]을 누르면 담긴 종목을 같은 비중으로 샀다고 치고 과거 수익률을 계산합니다.",
-            "📦 [＋ 지금 바스켓 보관]을 누르면 보관한 날부터 지금까지의 수익률을 지켜봅니다.",
-            "🎮 모두 가상 계산이며 실제 매수를 권하는 값이 아닙니다."];
+  var L=en?["🧩 KRW and USD assets are each split into 12 slots — invest one slot a day.", "🎯 You pick each slot's item from the recommended list.", "💰 One slot = account total ÷ 12, so if holdings grow, a slot can be larger than your cash!", "📦 Holdings come from a saved portfolio (the oldest if several). Tap Update holdings to recount 🔄", "➕ Total = cash + holdings. Reset takes you back to the start ⏪", "🎮 All amounts are virtual and not a recommendation to buy."]
+          :["🧩 원화 자산과 달러 자산을 각각 12칸으로 나눠, 하루에 한 칸씩 투자합니다.", "🎯 칸마다 들어갈 종목은 추천 종목에서 고객님이 직접 고릅니다.", "💰 한 칸 금액 = 가상 계좌 합계 ÷ 12. 그래서 평가금액이 불어나면 한 칸이 현재 잔고보다 커질 수도 있어요!", "📦 평가금액은 보관한 포트폴리오에서 가져오며, 여럿이면 가장 오래된 것을 씁니다. [평가금액 업데이트] 를 누르면 다시 셉니다 🔄", "➕ 합계 = 현재 잔고 + 평가금액입니다. [초기화] 를 누르면 처음으로 돌아갑니다 ⏪", "🎮 모두 가상 금액이며 실제 매수를 권하는 값이 아닙니다."];   // 주식앱 ⓘ 글 그대로 (사장님 2026-09-25)
   var d=document.createElement("div"); d.id="bkInfoPop";
   d.setAttribute("style","position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
   d.addEventListener("click",function(ev){ if(ev.target===d)d.remove(); });
@@ -5526,7 +5536,7 @@ function vcSend(){
   function lang(){ var en=(typeof LANG!=="undefined"&&LANG==="en");
     var h=document.getElementById("vcH"); if(h)h.textContent=en?"Feedback":"고객의 소리";
     var b=document.getElementById("vcBtn"); if(b)b.textContent=en?"Send":"보내기";
-    var t=document.getElementById("vcTxt"); if(t)t.placeholder=en?"Features you want, problems, or brokers you use":"바라는 기능, 불편한 점을 적어 주세요"; }
+    var t=document.getElementById("vcTxt"); if(t)t.placeholder=en?"Describe the system error":"시스템 오류 내용을 적어 주세요"; }
   lang(); var lb=document.getElementById("lng"); if(lb)lb.addEventListener("click",function(){setTimeout(lang,50);});
 })();
 </script>
@@ -5901,5 +5911,30 @@ function tkPaint(d){
   if(typeof render==="function"){ var _r=render; render=function(d){ _r(d); try{ tkPaint(d); }catch(e){} }; }
   try{ tkPaint(window._lastD||window.SNAP); }catch(e){}
 })();
+</script>
+<script>
+// 유의사항 카드 한/영 · [다시 보기] 팝업 (사장님 2026-09-25) — 🔴 실전앱은 주문을 내므로 '주문을 내지 않습니다' 줄은 뺐다
+(function(){ function ke(){ try{ document.body.classList.toggle("lang-en",typeof LANG!=="undefined"&&LANG==="en"); }catch(e){} }
+  try{ var o=window.applyLang; if(typeof o==="function"&&!o._ke){ window.applyLang=function(){ var r=o.apply(this,arguments); ke(); return r; }; window.applyLang._ke=1; } }catch(e){}
+  ke(); var lb=document.getElementById("lng"); if(lb)lb.addEventListener("click",function(){ setTimeout(ke,60); }); })();
+function discShow(){
+  if(document.getElementById("discGate"))return;
+  var en=(typeof LANG!=="undefined"&&LANG==="en");
+  var li=[].slice.call(document.querySelectorAll(".discList li")).map(function(x){
+    var k=x.querySelector(en?".ken":".kko"); return (k||x).textContent; });
+  var d=document.createElement("div"); d.id="discGate";
+  d.setAttribute("style","position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:18px");
+  d.addEventListener("click",function(ev){ if(ev.target===d)d.remove(); });
+  d.innerHTML='<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:420px;width:100%;'
+    +'padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.4);max-height:86vh;overflow:auto">'
+    +'<div style="font-size:17px;font-weight:800;margin-bottom:4px">'+(en?"Investment Notice":"투자 유의사항")+'</div>'
+    +'<div style="font-size:12.5px;color:var(--sub);margin-bottom:14px">'+(en?"Please read the following before you start.":"시작하기 전에 아래를 꼭 읽어 주십시오.")+'</div>'
+    +li.map(function(t){ return '<div style="display:flex;gap:8px;margin:11px 0;font-size:13.5px;line-height:1.62">'
+      +'<span style="color:var(--tint,#1c7ed6);font-weight:900">·</span><span>'+dpEsc(t)+'</span></div>'; }).join("")
+    +'<button onclick="document.getElementById(\'discGate\').remove()" style="display:block;width:100%;margin-top:18px;padding:13px;border:0;'
+    +'border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">'
+    +(en?"I have read this":"확인했습니다")+'</button></div>';
+  document.body.appendChild(d);
+}
 </script>
 </body></html>
