@@ -4812,7 +4812,7 @@ function recoRender(){
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
   // 🔴 BTC·ETH 는 현물로 본다 (사장님 2026-09-26) — 규칙은 매수/매도, 보유는 현물, 한 칸은 코인 총자산 × 45% ÷ 12
   const co=(has?RL.co:[]).filter(function(p){return p.spot;});
-  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"20d return":"20일 수익률")+'</th><th>'+(en?"Rule":"규칙")+'</th><th>'+(en?"Held":"보유")+'</th><th></th></tr>';
+  let c='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div><table class="mhtab"><tr><th>'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"20d return":"20일 수익률")+'</th><th>'+(en?"Pick":"추천")+'</th><th>'+(en?"Held":"보유")+'</th><th></th></tr>';
   ["BTC","ETH"].forEach(function(k){
     const z=(R.coin||{})[k]||{}, pos=co.filter(function(p){return String(p.code).indexOf(k+"-")===0;})[0];
     const held=!!(pos&&pos.qty>0), buy=(z.state==="long");
