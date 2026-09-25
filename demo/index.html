@@ -4879,6 +4879,14 @@ function bkAmtOf(list){ var o={}; list.forEach(function(x){ o[x.code]=(typeof x.
 function bkSetAmt(i,v){ var a=bkGet(); if(!a[i])return; var n=parseFloat(String(v).replace(/[^0-9.]/g,""));
   a[i].amt=isFinite(n)?n:0; bkSave(a); bkRender(); }
 function bkAmtReset(){ var a=bkGet(); a.forEach(function(x){ delete x.amt; }); bkSave(a); bkRender(); }
+// 선물 레버리지·청산 — 코인앱과 같게 (사장님 2026-09-25). 청산되면 원금이 다 날아간다(-100%)
+function bkIsPerp(it){ return !!(it&&it.mk==="coin"&&!it.spot); }
+function bkLev(it){ var v=+(it&&it.lev); return (isFinite(v)&&v>=1)?v:1; }
+function bkSetLev(i,v){ var a=bkGet(); if(!a[i])return; var n=parseFloat(String(v).replace(/[^0-9.]/g,""));
+  a[i].lev=(isFinite(n)&&n>=1)?Math.min(n,125):1; BK_OUT=""; bkSave(a); bkRender(); }
+// 청산선 — 진입가 대비 이만큼 떨어지면 청산 (유지증거금 0.4% 실측)
+function bkLiqDrop(lev){ return Math.max(0.005,1/lev-0.004); }
+async function bkLows(x){ var ks=await okxKlines(x.code,x.spot?"S":"F","1d",120); return (ks&&ks.length>=5)?ks.map(function(b){ return +b[3]; }):null; }
 
 function bkGet(){ try{ return JSON.parse(localStorage.getItem(BK_KEY)||"[]")||[]; }catch(e){ return []; } }
 function bkSave(a){ try{ localStorage.setItem(BK_KEY,JSON.stringify(a)); }catch(e){} try{ sySoon(); }catch(e){} }
@@ -5176,7 +5184,7 @@ async function bkAddToSaved(i){
   var cs=null; try{ cs=await bkBars(it); }catch(e){ cs=null; }
   var AMT=bkAmtOf(a);
   var row={code:it.code, name:it.name, mk:it.mk, spot:it.spot, base:(cs&&cs.length)?cs[cs.length-1]:0,
-           cls:it.cls||bkClassOf(it), amt:AMT[it.code]||0, ccy:bkCcy(it)};
+           cls:it.cls||bkClassOf(it), amt:AMT[it.code]||0, ccy:bkCcy(it), lev:bkLev(it)};
   var msg;
   if(!p||(p.items||[]).length>=12){
     saved.unshift({id:"p"+Date.now(), at:Date.now(), items:[row], er:null, erows:null, calc:0});
@@ -5206,7 +5214,16 @@ async function bkSavedRefresh(){
       var it=p.items[j], cs=null;
       try{ cs=await bkBars(it); }catch(e){ cs=null; }
       var cur=(cs&&cs.length)?cs[cs.length-1]:0;
-      if(cur>0&&it.base>0){ var r=cur/it.base-1; rows.push({nm:it.name, r:r, amt:(it.amt||0), pl:(it.amt||0)*r, ccy:it.ccy||bkCcy(it)}); sum+=r; ok++; }
+      if(cur>0&&it.base>0){
+        var lev=bkIsPerp(it)?bkLev(it):1, r=(cur/it.base-1)*lev, liq=false;
+        if(lev>1){   // 보관한 날부터 지금까지 한 번이라도 청산선을 스쳤으면 원금이 다 날아간다
+          var days=Math.max(1,Math.round((Date.now()-(p.at||Date.now()))/86400000)+1);
+          var lows=null; try{ lows=await bkLows(it); }catch(e){ lows=null; }
+          var src=lows||cs, seg=src.slice(Math.max(0,src.length-days));
+          var low=seg.length?Math.min.apply(null,seg):cur;
+          if((low/it.base-1)<=-bkLiqDrop(lev)){ r=-1; liq=true; }
+        }
+        rows.push({nm:it.name, r:r, amt:(it.amt||0), pl:(it.amt||0)*r, ccy:it.ccy||bkCcy(it), lev:lev, liq:liq}); sum+=r; ok++; }
       else rows.push({nm:it.name, err:true});
     }
     p.erows=rows; p.er=ok?sum/ok:null; p.calc=Date.now();
@@ -5248,12 +5265,13 @@ function bkSavedHtml(){
         var it=p.items[ix]||{};
         var c=r.ccy||it.ccy||bkCcy(it), amt=(typeof r.amt==="number")?r.amt:(it.amt||0);
         var val=r.err?('<span class="fl">'+KE("자료 없음","No data")+'</span>')
-                     :(r.pending?'<span class="dplbl">—</span>':('<span class="'+cls(r.r)+'">'+pc(r.r)+'</span>'));
+                     :(r.pending?'<span class="dplbl">—</span>':('<span class="'+cls(r.r)+'">'+pc(r.r)+'</span>'
+                       +(r.liq?' <span class="dn" style="font-size:10.5px;font-weight:800">'+KE("청산","Liq.")+'</span>':'')));
         var plT=(r.err||r.pending||typeof r.pl!=="number")?'<span class="dplbl">—</span>'
                :('<span class="'+cls(r.pl)+'">'+(r.pl>=0?"+":"-")+bkMoney(Math.abs(r.pl),c)+'</span>');
         if(!r.err&&!r.pending){ SUM[c]=SUM[c]||{c:0,p:0}; SUM[c].c+=amt; SUM[c].p+=(r.pl||0); }
         h+='<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="'+dpEsc(it.code||"")+'" data-mk="'+dpEsc(it.mk||"")
-          +'" data-nm="'+dpEsc(it.name||r.nm)+'" data-spot="'+(it.spot?1:0)+'">'+anyLogo(it.code,it.mk)+dpEsc(r.nm)+'</td>'
+          +'" data-nm="'+dpEsc(it.name||r.nm)+'" data-spot="'+(it.spot?1:0)+'">'+anyLogo(it.code,it.mk)+dpEsc(r.nm)+((r.lev>1)?' <span class="dplbl">'+r.lev+'×</span>':'')+'</td>'
           +'<td>'+(amt>0?bkMoney(amt,c):'<span class="dplbl">—</span>')+'</td>'
           +'<td>'+plT+'</td><td>'+val+'</td></tr>';
       });
@@ -5304,7 +5322,8 @@ function bkRender(){
   if(!a.length){ h+='<div class="mhempty">'+KE("아직 담긴 종목이 없습니다.","No items yet.")+'</div>'+bkSavedHtml(); card.innerHTML=h; return; }
   var AM=bkAmtOf(a), TOT={};
   a.forEach(function(x){ var c=bkCcy(x); TOT[c]=(TOT[c]||0)+(AM[x.code]||0); });
-  h+='<table class="mhtab"><tr><th>'+KE("종목","Item")+'</th><th>'+KE("투자금액","Amount")+'</th><th>'+KE("비중","Weight")+'</th><th></th></tr>';
+  var hasPerp=a.some(bkIsPerp);
+  h+='<table class="mhtab"><tr><th>'+KE("종목","Item")+'</th><th>'+KE("투자금액","Amount")+'</th>'+(hasPerp?'<th>'+KE("배수","Lev")+'</th>':'')+'<th>'+KE("비중","Weight")+'</th><th></th></tr>';
   a.forEach(function(x,i){
     var c=bkCcy(x), amt=AM[x.code]||0, w=(TOT[c]>0)?(amt/TOT[c]*100):0;
     h+='<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-i="'+i+'">'+anyLogo(x.code,x.mk)+dpEsc(x.name)
@@ -5312,12 +5331,16 @@ function bkRender(){
       +'</td><td><input class="bkamt" type="text" inputmode="decimal" value="'+bkNum(amt,c)
       +'" oninput="bkAmtLive(this)" onchange="bkSetAmt('+i+',this.value)" style="width:96px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 6px;font-size:12px">'
       +' <span class="dplbl">'+(c==="KRW"?KE("원","KRW"):(c==="USD"?"$":"USDT"))+'</span></td>'
+      +(hasPerp?('<td>'+(bkIsPerp(x)
+          ?('<input type="text" inputmode="decimal" value="'+bkLev(x)+'" onchange="bkSetLev('+i+',this.value)"'
+            +' style="width:44px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 5px;font-size:12px"> ×')
+          :'<span class="dplbl">—</span>')+'</td>'):'')
       +'<td>'+w.toFixed(1)+'%</td>'
       +'<td style="white-space:nowrap"><span class="mhx" onclick="bkDel('+i+')">✕</span>'
       +' <span class="mhx" style="color:#16a34a;font-weight:700;font-size:22px;line-height:12px;vertical-align:-3px" onclick="bkAddToSaved('+i+')">＋</span></td></tr>';
   });
   var tl=[]; Object.keys(TOT).forEach(function(c){ if(TOT[c]>0)tl.push(bkMoney(TOT[c],c)); });
-  if(tl.length)h+='<tr style="font-weight:800"><td style="text-align:left">'+KE("합계","Total")+'</td><td colspan="3" style="text-align:right">'+tl.join(" · ")+'</td></tr>';
+  if(tl.length)h+='<tr style="font-weight:800"><td style="text-align:left">'+KE("합계","Total")+'</td><td colspan="'+(hasPerp?4:3)+'" style="text-align:right">'+tl.join(" · ")+'</td></tr>';
   h+='</table>';
   h+='<div class="dpmsg">'+KE("금액은 추천 1칸 금액(총자산÷12)으로 채워집니다. 직접 고치셔도 됩니다.","Amounts default to one slot (total ÷ 12). You can edit them.")
     +' <span class="dplbl" style="cursor:pointer;text-decoration:underline" onclick="bkAmtReset()">'+KE("되돌리기","Reset")+'</span></div>';
@@ -5338,7 +5361,18 @@ async function bkRun(days){
     var n=Math.min(days,cs.length-1);
     var from=cs[cs.length-1-n], to=cs[cs.length-1];
     if(!(from>0)){ rows.push({nm:a[i].name,err:true}); continue; }
-    rows.push({nm:a[i].name,r:to/from-1,n:n,cs:cs.slice(cs.length-1-n)});
+    // 선물이면 배수와 청산을 함께 본다 (코인앱과 같게)
+    var lev=bkIsPerp(a[i])?bkLev(a[i]):1, r=(to/from-1)*lev, liq=false, seg=cs.slice(cs.length-1-n);
+    if(lev>1){
+      var lows=null; try{ lows=await bkLows(a[i]); }catch(e){ lows=null; }
+      var src=lows||cs, lseg=src.slice(Math.max(0,src.length-n));
+      var low=lseg.length?Math.min.apply(null,lseg):to;
+      if((low/from-1)<=-bkLiqDrop(lev)){ r=-1; liq=true; }
+      if(liq){ var hit=false; seg=seg.map(function(v){ if(!hit&&(v/from-1)<=-bkLiqDrop(lev))hit=true;
+          return hit?from*0.0001:from*(1+(v/from-1)*lev); }); }
+      else seg=seg.map(function(v){ return from*(1+(v/from-1)*lev); });
+    }
+    rows.push({nm:a[i].name,r:r,n:n,cs:seg,lev:lev,liq:liq});
   }
   var ok=rows.filter(function(x){ return !x.err; });
   if(!ok.length){ bkMsg(KE("자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요.","Could not load data. Please try again shortly.")); return; }
@@ -5353,7 +5387,8 @@ async function bkRun(days){
   var cls=function(v){ return v>0?"up":(v<0?"dn":"fl"); };
   var h='<table class="mhtab"><tr><th>'+KE("종목","Item")+'</th><th>'+(L2-1)+KE("일 수익률","-day return")+'</th></tr>';
   h+='<tr class="mhsum"><td style="text-align:left"><b>'+KE("바스켓(균등)","Basket (equal)")+'</b></td><td class="'+cls(eq-1)+'"><b>'+pc(eq-1)+'</b></td></tr>';
-  ok.slice().sort(function(p,q){ return q.r-p.r; }).forEach(function(x){ h+='<tr><td style="text-align:left">'+dpEsc(x.nm)+'</td><td class="'+cls(x.r)+'">'+pc(x.r)+'</td></tr>'; });
+  ok.slice().sort(function(p,q){ return q.r-p.r; }).forEach(function(x){ h+='<tr><td style="text-align:left">'+dpEsc(x.nm)+((x.lev>1)?' <span class="dplbl">'+x.lev+'×</span>':'')+'</td><td class="'+cls(x.r)+'">'+pc(x.r)
+    +(x.liq?' <span class="dn" style="font-size:10.5px;font-weight:800">'+KE("청산","Liq.")+'</span>':'')+'</td></tr>'; });
   rows.filter(function(x){ return x.err; }).forEach(function(x){ h+='<tr><td style="text-align:left">'+dpEsc(x.nm)+'</td><td class="fl">'+KE("자료 없음","No data")+'</td></tr>'; });
   h+='</table>';
   h+='<div class="dpmsg">'+KE("제일 좋았던 것 ","Best: ")+dpEsc(best.nm)+' '+pc(best.r)+KE(' \u00b7 제일 나빴던 것 '," \u00b7 Worst: ")+dpEsc(worst.nm)+' '+pc(worst.r)+'</div>';
