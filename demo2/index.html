@@ -6123,8 +6123,10 @@ async function cpLoad(mk, code, name){
   b.innerHTML=h;
 }
 function cpInit(){
-  var nw=document.getElementById("nw_stock"); if(!nw) return false; if(document.getElementById("cpCard")) return true;
-  nw.insertAdjacentHTML("afterend", '<div class="card" id="cpCard" style="display:none"><h3>'+KE("기업 정보","Company")
+  // 순서: 조회 → 기업 정보 → 공시 → 뉴스 (2026-09-27) — 뉴스 카드가 생긴 뒤, 공시(있으면)나 뉴스 바로 앞에 끼운다
+  if(!document.getElementById("nw_stock")) return false; if(document.getElementById("cpCard")) return true;
+  var nw=document.getElementById("dcCard")||document.getElementById("nw_stock");
+  nw.insertAdjacentHTML("beforebegin", '<div class="card" id="cpCard" style="display:none"><h3>'+KE("기업 정보","Company")
     +' <span class="dplbl" id="cpq"></span></h3><div id="cpb"></div></div>');
   var last="";
   setInterval(function(){ var el=document.getElementById("stkq"), c=document.getElementById("cpCard"); if(!el||!c) return;
@@ -6163,8 +6165,8 @@ async function ciLoad(sym){
   b.innerHTML=h;
 }
 function ciInit(){
-  var nw=document.getElementById("nw_coin2"); if(!nw) return false; if(document.getElementById("ciCard")) return true;
-  nw.insertAdjacentHTML("afterend", '<div class="card" id="ciCard" style="display:none"><h3>'+KE("코인 정보","Coin info")
+  var nw=document.getElementById("nw_coin2"); if(!nw) return false; if(document.getElementById("ciCard")) return true;   // 순서: 조회 → 코인 정보 → 뉴스
+  nw.insertAdjacentHTML("beforebegin", '<div class="card" id="ciCard" style="display:none"><h3>'+KE("코인 정보","Coin info")
     +' <span class="dplbl" id="ciq"></span></h3><div id="cib"></div></div>');
   var last="";
   setInterval(function(){ var c=document.getElementById("ciCard"); if(!c) return;
