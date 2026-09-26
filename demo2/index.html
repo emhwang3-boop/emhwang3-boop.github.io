@@ -3769,20 +3769,7 @@ function dpHoldItems(){
     out.push({code:code,name:p.name||code,mk:p.mk,spot:!!p.spot,base:p.avg,ret:ret,
               cost:cost,val:cost?(cost+pl):0,ccy:(p.mk==="kr")?"KRW":"USD"});
   });
-  Object.keys(DP.pos).forEach(function(k){
-    const p=DP.pos[k], cur=dpPx[k]||0;
-    if(p.mk==="coin"){
-      const pnl=cur?((p.side==="L"?1:-1)*(cur/p.entry-1)*p.lev*p.margin):0;
-      out.push({code:p.code,name:p.code,mk:"coin",spot:false,base:p.entry,ret:p.margin?(pnl/p.margin):0,
-                cost:cur?p.margin:0,val:cur?(p.margin+pnl):0,ccy:"USD"});
-    }else if(p.mk==="coinS"){
-      out.push({code:p.code,name:p.code,mk:"coin",spot:true,base:p.avg,ret:(cur&&p.avg)?(cur/p.avg-1):0,
-                cost:cur?(p.avg*p.qty):0,val:cur?(cur*p.qty):0,ccy:"USD"});
-    }else{
-      out.push({code:p.code,name:p.name||p.code,mk:p.mk,spot:false,base:p.avg,ret:(cur&&p.avg)?(cur/p.avg-1):0,
-                cost:cur?(p.avg*p.qty):0,val:cur?(cur*p.qty):0,ccy:(p.mk==="kr")?"KRW":"USD"});
-    }
-  });
+  // 🔴 모의 장부(DP.pos)는 따로 더하지 않는다 — 모의 판이면 위 rlRows 가 곧 모의 계좌다. 더하면 두 번 세고, 실계좌 판엔 옛 모의가 섞였다 (2026-09-26)
   return out;
 }
 // 합계 수익률 = Σ평가 ÷ Σ산 돈 − 1. 달러 통은 원/달러(fxKrw)로 원화 환산 — 환율이 없으면 1:1(통화별 값 그대로 합침).
