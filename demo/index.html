@@ -6085,15 +6085,16 @@ async function cpLoad(mk, code, name){
   b.innerHTML='<div class="dpmsg">'+KE("불러오는 중…","Loading…")+'</div>';
   var j=null; try{ j=await fetch(HUB+"/corp?mk="+mk+"&code="+encodeURIComponent(code)+"&name="+encodeURIComponent(name||"")).then(function(r){ return r.json(); }); }catch(e){}
   j=j||{};
-  var ind=j.ind||{}, kw=null;
-  if(mk==="kr"){ try{ if(ST&&ST.kr&&ST.kr.broker){ var tok=await rlToken(); var r=await rlKiwoom(tok,"/api/dostk/stkinfo","ka10001",{stk_cd:code});
-      if(r&&String(r.return_code)==="0") kw={per:+r.per||null, pbr:+r.pbr||null, roe:+r.roe||null, eps:+r.eps||null, mcap:(+r.mac||0)*1e8}; } }catch(e){} }
-  var per=kw?kw.per:ind.per, pbr=kw?kw.pbr:ind.pbr, roe=kw?kw.roe:null, mcap=kw&&kw.mcap?kw.mcap:ind.mcap, est=false;
-  // 키움 키가 없으면(모의 판·지인판) — 시가총액 ÷ 최근 연도 순이익·자본총계로 어림 (국내)
-  if(mk==="kr" && !kw && j.fin && j.fin.years && j.fin.years.length && mcap){ var ly=j.fin.years[j.fin.years.length-1];
-    if(per==null && ly["순이익"]>0){ per=mcap/ly["순이익"]; est=true; }
-    if(pbr==null && j.fin.equity>0){ pbr=mcap/j.fin.equity; est=true; }
-    if(roe==null && j.fin.equity>0 && ly["순이익"]!=null){ roe=ly["순이익"]/j.fin.equity*100; est=true; } }
+  var ind=j.ind||{}, di=(j.fin&&j.fin.ind)||null;
+  // 국내 — 금감원 DART 가 원본: PER = 현재가 ÷ EPS · PBR = 현재가 ÷ 주당순자산 · 시가총액 = 현재가 × 보통주 발행주식수 (키움 안 씀, 2026-09-27)
+  var per=ind.per, pbr=ind.pbr, roe=null, debt=null, opm=null, mcap=ind.mcap, cur=0;
+  if(mk==="kr"){
+    try{ var q=await krFetch("stock","code="+code,3); cur=q&&q.cur?+q.cur:0; }catch(e){}
+    per=null; pbr=null; mcap=null;
+    if(di){ if(cur>0&&di.eps>0) per=cur/di.eps; if(cur>0&&di.bps>0) pbr=cur/di.bps; if(cur>0&&(di.sharesCommon||di.shares)>0) mcap=cur*(di.sharesCommon||di.shares); roe=di.roe; debt=di.debt; }
+    var _ly=(j.fin&&j.fin.years&&j.fin.years.length)?j.fin.years[j.fin.years.length-1]:null;
+    if(_ly&&_ly["매출"]>0&&_ly["영업이익"]!=null) opm=_ly["영업이익"]/_ly["매출"]*100;
+  }
   var unit=mk==="kr"?"원":"USD";
   var h='';
   // 무엇을 하는 회사인가 — 백과사전 첫 문장(굵게) + 전문 링크, 그 아래 사업 설명 요약
@@ -6103,11 +6104,12 @@ async function cpLoad(mk, code, name){
      +'<div class="dplbl" style="margin-top:3px">'+dpEsc(j.desc.src||"")+'</div>';
   else if(!(j.enc&&j.enc.lead)) h+='<div class="dpmsg">'+KE("회사 설명을 찾지 못했습니다.","No company description found.")+'</div>';
   // 지표
-  var chip=function(k,v){ return '<div style="flex:1 1 22%;min-width:70px;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:7px 8px;text-align:center">'
+  var chip=function(k,v){ return '<div style="flex:1 1 30%;min-width:70px;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:7px 8px;text-align:center">'
      +'<div class="dplbl">'+k+'</div><div style="font-weight:800;font-size:15px;margin-top:2px">'+v+'</div></div>'; };
   var f2=function(v){ return (v==null||!isFinite(v)||v===0)?"—":(+v).toFixed(2); };
+  var pc=function(v){ return (v==null||!isFinite(v))?"—":(+v).toFixed(1)+"%"; };
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+chip("PER",f2(per))+chip("PBR",f2(pbr))
-     +(mk==="kr"?chip("ROE",roe!=null?(+roe).toFixed(1)+"%":"—"):chip(KE("예상 PER","Fwd PER"),f2(ind.fper)))
+     +(mk==="kr"?chip("ROE",pc(roe))+chip(KE("부채비율","Debt ratio"),pc(debt))+chip(KE("영업이익률","Op. margin"),pc(opm)):chip(KE("예상 PER","Fwd PER"),f2(ind.fper)))
      +chip(KE("시가총액","Mkt cap"),cpMoney(mcap,unit))+'</div>';
   // 최근 3년 영업이익 막대
   var F=j.fin, Y=(F&&F.years)||[];
@@ -6130,7 +6132,7 @@ async function cpLoad(mk, code, name){
           +Y.map(function(y){ return '<td>'+cpMoney(y[k],unit)+'</td>'; }).join("")+'</tr>'; }).join("")+'</table>'
       +'<div class="dplbl" style="margin-top:4px">'+dpEsc(F.src||"")+'</div>';
   } else h+='<div class="dpmsg" style="margin-top:10px">'+KE("최근 3년 실적 자료가 없습니다 (ETF 등).","No 3-year results (e.g. ETFs).")+'</div>';
-  h+='<div class="dplbl" style="margin-top:6px">'+KE("지표: ","Metrics: ")+(kw?KE("키움증권 종목정보","Kiwoom"):(est?KE("시가총액 ÷ DART 순이익·자본총계로 어림","Estimated from market cap and DART"):dpEsc(ind.src||"—")))+KE(" · 투자 판단이 아닌 참고 정보입니다."," · For reference only, not investment advice.")+'</div>';
+  h+='<div class="dplbl" style="margin-top:6px">'+KE("지표: ","Metrics: ")+(mk==="kr"?(di?KE("금융감독원 DART ("+di.year+" 사업보고서) · PER·PBR·시가총액은 현재가 기준","FSS DART ("+di.year+") · PER/PBR at current price"):KE("DART 자료 없음 (ETF 등)","No DART data")):dpEsc(ind.src||"—"))+KE(" · 투자 판단이 아닌 참고 정보입니다."," · For reference only, not investment advice.")+'</div>';
   b.innerHTML=h;
 }
 function cpInit(){
