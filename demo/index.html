@@ -323,7 +323,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   </div>
   <canvas id="stkChart" class="stkchart" hidden></canvas>
   <div id="stkChartLbl" class="stkcl" hidden></div>
-  <button id="bkAddBtn" class="dppct" style="width:100%;margin-top:8px" hidden onclick="bkAddCurrent()">＋ 가상 바스켓 담기</button>
+  <button id="bkAddBtn" class="dppct" style="width:100%;margin-top:8px" hidden onclick="bkAddCurrent()">＋ 바스켓 담기</button>
 </div>
 
 <div class="card" id="coin2">
@@ -339,7 +339,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
   </div>
   <canvas id="coinChart" class="stkchart" hidden></canvas>
   <div id="coinChartLbl" class="stkcl" hidden></div>
-  <button id="bkAddBtnCo" class="dppct" style="width:100%;margin-top:8px" hidden onclick="bkAddCoin()">＋ 가상 바스켓 담기</button>
+  <button id="bkAddBtnCo" class="dppct" style="width:100%;margin-top:8px" hidden onclick="bkAddCoin()">＋ 바스켓 담기</button>
 </div>
 
 <div id="ordHead"></div>
@@ -5703,7 +5703,7 @@ function applyLang(){
   updStkTag();
   if(window._lastD)render(window._lastD);
   if(stkCode)loadStock();
-  var _ba=E("bkAddBtn"); if(_ba){ var _bt=KE("＋ 가상 바스켓 담기","＋ Add to virtual basket"); if(_bt) _ba.textContent=_bt; }   // 빈 글자로 덮어 단추가 납작해졌다 (2026-09-24)
+  var _ba=E("bkAddBtn"); if(_ba){ var _bt=KE("＋ 바스켓 담기","＋ Add to basket"); if(_bt) _ba.textContent=_bt; }   // 빈 글자로 덮어 단추가 납작해졌다 (2026-09-24)
   try{ bkRender(); }catch(e){}
   if(coinSym)loadCoinDetail();
 }
@@ -5889,7 +5889,7 @@ setInterval(dpRegimeTick,15000);
     "실계좌를 불러오면 칸 금액이 나옵니다.": "Load the real account to see slot amounts.", "+15% 도달": "+15% reached", "60일 ·": "60 days ·",
     "장세 무너짐(과매도 주머니)": "Market broke (oversold pocket)", "— 1칸에 모자랍니다. 남은 현금만큼의 수량입니다.": "— short of one slot; qty limited to remaining cash.",
     "3개월": "3 mo", "6개월": "6 mo", "1년": "1 yr", "이미 담겨 있습니다.": "Already in the basket.", "한 번에 열두 개까지 담을 수 있습니다.": "Up to ten items at once.",
-    "먼저 종목을 [조회]해 주세요.": "Look up a stock first.", "＋ 가상 바스켓에 담기": "＋ Add to virtual basket", "가상 바스켓": "Virtual basket",
+    "먼저 종목을 [조회]해 주세요.": "Look up a stock first.", "＋ 가상 바스켓에 담기": "＋ Add to basket", "가상 바스켓": "Virtual basket",
     "받는 중… 종목마다 몇 초 걸립니다": "Loading… a few seconds per item", "자료를 못 받았습니다. 잠시 뒤 다시 눌러 주세요.": "Could not load. Try again shortly.",
     "· 제일 나빴던 것": "· Worst", "3D 준비 중…": "Preparing 3D…", "불러오는 중…": "Loading…", "자료 없음": "No data", "결과 없음": "No match",
     "한도": "Limit", "자": "", "줄": "rows", "개": "", "건": "", "칸 없음": "No slots",
@@ -6943,7 +6943,7 @@ function bmRender(){
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
   var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여 매수·매도할 종목과 수량을 보여 줍니다. '
-        + '매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)입니다. 코인은 [가상 바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
+        + '매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)입니다. 코인은 [바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
