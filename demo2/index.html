@@ -6131,6 +6131,42 @@ function cpInit(){
   return true;
 }
 (function tryCp(n){ if(!cpInit() && n>0) setTimeout(function(){ tryCp(n-1); }, 1000); })(20);
+// ── 코인 정보 카드 (사장님 2026-09-27) — 무엇을 하는 코인인지 · 출시일 · 종류 · 분야 · 공식 링크 ──
+//    허브 /coininfo: CMC(출시일·종류·링크) + 코인게코(소개글 → AI 한국어 요약·분야·순위) + 네이버 백과(큰 코인). 12시간 저장.
+async function ciLoad(sym){
+  var b=document.getElementById("cib"), t=document.getElementById("ciq"); if(!b) return;
+  var ko=(typeof NW_COIN!=="undefined"&&NW_COIN[sym])||"";
+  if(t) t.textContent=sym+(ko?" · "+ko:"");
+  b.innerHTML='<div class="dpmsg">'+KE("불러오는 중…","Loading…")+'</div>';
+  var j=null; try{ j=await fetch(HUB+"/coininfo?sym="+encodeURIComponent(sym)+"&ko="+encodeURIComponent(ko)).then(function(r){ return r.json(); }); }catch(e){}
+  j=j||{}; var c=j.cmc||{}, g=j.gecko||{}, h='';
+  if(j.enc&&j.enc.lead) h+='<div style="font-weight:800;font-size:14.5px;line-height:1.6;color:var(--nm);margin-bottom:6px">'+dpEsc(j.enc.lead)
+     +(j.enc.link?' <a href="'+dpEsc(String(j.enc.link).replace(/"/g,"%22"))+'" target="_blank" rel="noopener" style="font-weight:600;font-size:12.5px;color:#2ee6c0;white-space:nowrap">'+KE("네이버 지식백과에서 전문 보기 ›","Full article on Naver ›")+'</a>':'')+'</div>';
+  if(j.desc&&j.desc.text) h+='<div style="font-size:14px;line-height:1.7;color:var(--nm)">'+dpEsc(j.desc.text)+'</div><div class="dplbl" style="margin-top:3px">'+dpEsc(j.desc.src||"")+'</div>';
+  else if(!(j.enc&&j.enc.lead)) h+='<div class="dpmsg">'+KE("코인 설명을 찾지 못했습니다.","No description found.")+'</div>';
+  var chip=function(k,v){ return '<div style="flex:1 1 30%;min-width:88px;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:7px 8px;text-align:center">'
+     +'<div class="dplbl">'+k+'</div><div style="font-weight:800;font-size:14px;margin-top:2px">'+v+'</div></div>'; };
+  var kind=c.category==="token"?(KE("토큰","Token")+(c.platform?" · "+dpEsc(c.platform):"")):(c.category?KE("자체 체인","Own chain"):"—");
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+chip(KE("출시일","Launched"),dpEsc(c.launched||g.genesis||"—"))+chip(KE("종류","Type"),kind)
+     +chip(KE("시가총액 순위","Mkt cap rank"),g.rank?g.rank+KE("위",""):"—")+'</div>';
+  var cats=((g.cats&&g.cats.length)?g.cats:(c.tags||[])).filter(function(x){ return !/Index$|GMCI/i.test(x); });
+  if(cats.length) h+='<div style="margin-top:9px;display:flex;gap:5px;flex-wrap:wrap">'+cats.map(function(x){ return '<span style="font-size:11.5px;border:1px solid var(--bd);border-radius:12px;padding:2px 8px;color:var(--sub)">'+dpEsc(x)+'</span>'; }).join("")+'</div>';
+  var L=[[KE("공식 홈페이지","Website"),c.web],[KE("백서","Whitepaper"),c.paper],[KE("소스 코드","Source code"),c.code]].filter(function(x){ return x[1]; });
+  if(L.length) h+='<div style="margin-top:9px;display:flex;gap:12px;flex-wrap:wrap">'+L.map(function(x){ return '<a href="'+dpEsc(String(x[1]).replace(/"/g,"%22"))+'" target="_blank" rel="noopener" style="color:#2ee6c0;font-size:13px;font-weight:700">'+x[0]+' ›</a>'; }).join("")+'</div>';
+  h+='<div class="dplbl" style="margin-top:8px">'+KE("출처: CoinMarketCap · CoinGecko · 투자 판단이 아닌 참고 정보입니다.","Sources: CoinMarketCap · CoinGecko · for reference only.")+'</div>';
+  b.innerHTML=h;
+}
+function ciInit(){
+  var nw=document.getElementById("nw_coin2"); if(!nw) return false; if(document.getElementById("ciCard")) return true;
+  nw.insertAdjacentHTML("afterend", '<div class="card" id="ciCard" style="display:none"><h3>'+KE("코인 정보","Coin info")
+    +' <span class="dplbl" id="ciq"></span></h3><div id="cib"></div></div>');
+  var last="";
+  setInterval(function(){ var c=document.getElementById("ciCard"); if(!c) return;
+    var sym=String((typeof coinSym!=="undefined"&&coinSym)||"").toUpperCase().replace(/USDT$/,"").replace(/-.*$/,"");
+    c.style.display=sym?"":"none"; if(!sym||sym===last) return; last=sym; ciLoad(sym); }, 2500);
+  return true;
+}
+(function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 function dcInit(){
   var nw=document.getElementById("nw_stock"); if(!nw || document.getElementById("dcCard")) return !!nw;
   nw.insertAdjacentHTML("beforebegin", '<div class="card" id="dcCard" style="display:none"><h3>'+KE("공시","Filings")
