@@ -6355,16 +6355,20 @@ function pfClassOf(p){
 function pfMask(a){ a=String(a||"").replace(/[^0-9]/g,""); if(a.length<6) return a; return a.slice(0,4)+"-****-"+a.slice(-2); }   // 가운데는 늘 **** (2026-09-25)
 var PF_ACCT = null, PF_ACCT_BUSY = false, PF_UID = null, PF_UID_BUSY = false;
 // OKX 는 계좌번호가 없다 — 계정 고유번호(UID)를 계정 설정 조회로 받는다 (사장님 2026-09-25)
+// 🔴 실패하면 1분 동안 다시 받지 않는다 — 키가 없으면 곧바로 실패해 pfRender → 또 받기 → … 로 앱이 통째로 멈췄다 (2026-09-26)
+var PF_UID_NEXT = 0, PF_ACCT_NEXT = 0;
 async function pfUidLoad(){
-  if(PF_UID_BUSY || PF_UID) return; PF_UID_BUSY = true;
+  if(PF_UID_BUSY || PF_UID || Date.now() < PF_UID_NEXT) return; PF_UID_BUSY = true;
   try{ var j = await rlOkx("/api/v5/account/config"); var d = j && j.data && j.data[0]; if(d && d.uid) PF_UID = String(d.uid); }catch(e){}
-  PF_UID_BUSY = false; pfRender();
+  PF_UID_BUSY = false;
+  if(PF_UID) pfRender(); else PF_UID_NEXT = Date.now() + 60000;
 }
 async function pfAcctLoad(){
-  if(PF_ACCT_BUSY || PF_ACCT) return; PF_ACCT_BUSY = true;
+  if(PF_ACCT_BUSY || PF_ACCT || Date.now() < PF_ACCT_NEXT) return; PF_ACCT_BUSY = true;
   try{ var tok = await rlToken(); var j = await rlKiwoom(tok, "/api/dostk/acnt", "ka00001", {});
        if(j && j.acctNo) PF_ACCT = String(j.acctNo); }catch(e){}
-  PF_ACCT_BUSY = false; pfRender();
+  PF_ACCT_BUSY = false;
+  if(PF_ACCT) pfRender(); else PF_ACCT_NEXT = Date.now() + 60000;
 }
 function pfBrokerNm(b){ return ({kiwoom:"키움증권", korea_inv:"한국투자증권", okx:"OKX", binance:"바이낸스", upbit:"업비트"})[b] || (b||""); }
 function pfRender(){
