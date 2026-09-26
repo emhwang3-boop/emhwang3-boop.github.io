@@ -4961,8 +4961,7 @@ function recoRender(){
       }
     }
     if(has&&empty===0)s+='<div class="dpmsg">'+(en?"All 12 slots full — wait for exits.":"12칸이 다 찼습니다 — 익절·만기로 빈 칸이 나면 삽니다.")+'</div>';
-    if((x.oversold||[]).length)s+=blk((en?"Oversold rebound (weak regime)":"과매도 반등 (하락장)"),x.oversold);
-    if(x.panic&&x.panic.on&&(x.panic.list||[]).length)s+=blk((en?"Crash button":"폭락 단추")+" ("+x.panic.idx3d+"%)",x.panic.list);
+    // 과매도 반등·폭락 단추 옛 표는 뺐다 — 자산배분비율 12칸과 섞여 헷갈렸다 (사장님 2026-09-26)
     return s;
   };
   const body=sec("kr",R.kr,totKR,kr)+sec("us",R.us,totUS,us);
