@@ -3927,7 +3927,7 @@ async function ydLoad(force){
   if(YD.busy || (!force && YD.day === ds)) return;
   YD.busy = true;
   if(typeof mkIsMock === "function" && mkIsMock()){
-    try{ var mrows = mkYdRows(md); if(isToday) YD.todayRows = mrows; YD.day = ds; YD.at = Date.now(); YD.today = isToday; YD.html = ydHtml(mrows, [KE("모의 계좌","Mock account")], null); }catch(e){}
+    try{ var mrows = mkYdRows(md); if(isToday) YD.todayRows = mrows; YD.day = ds; YD.at = Date.now(); YD.today = isToday; mrows.forEach(function(o){ o.auto = null; }); YD.html = ydHtml(mrows, [KE("모의 계좌","Mock account")], undefined); }catch(e){}   // 모의 판엔 자동매매 기록이 없다 — 딱지·안내문 없이
     YD.busy = false;
     var mb = E("ydBody"); if(mb) mb.innerHTML = YD.html;
     var mt = E("ydDate"); if(mt) mt.textContent = isToday ? (KE("오늘 ","Today ") + new Date().toTimeString().slice(0,5) + KE(" 기준"," as of")) : (ds.slice(0,4) + "-" + md);
