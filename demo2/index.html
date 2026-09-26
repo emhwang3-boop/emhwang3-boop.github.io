@@ -6118,7 +6118,7 @@ async function cpLoad(mk, code, name){
             +'<div class="dplbl" style="margin-top:4px">'+y.y+'</div></div>'; }).join("")+'</div>'
       +'<table class="mhtab" style="margin-top:6px"><tr><th style="text-align:left">'+KE("구분","Item")+'</th>'+Y.map(function(y){ return '<th>'+y.y+'</th>'; }).join("")+'</tr>'
       +["매출","영업이익","순이익"].map(function(k){ return '<tr><td style="text-align:left">'+KE(k,{"매출":"Revenue","영업이익":"Op. income","순이익":"Net income"}[k])+'</td>'
-          +Y.map(function(y){ return '<td>'+cpMoney(y[k],unit)+'</td>'; }).join("")+'</tr>'; }).join("")+'</table>'
+          +Y.map(function(y){ return '<td>'+cpMoney(y[k],unit)+'</td>'; }).join("")+'</tr>'; }).join("")+'</table>'+(mk==="kr"?'<div class="dplbl" style="margin-top:3px;font-size:11px">'+KE("※ PER은 지배주주 순이익 기준","※ PER uses net income attributable to owners")+'</div>':'')
       ;
   } else h+='<div class="dpmsg" style="margin-top:10px">'+KE("최근 3년 실적 자료가 없습니다 (ETF 등).","No 3-year results (e.g. ETFs).")+'</div>';
   h+='<div class="dplbl" style="margin-top:6px">'+KE("투자 판단이 아닌 참고 정보입니다.","For reference only, not investment advice.")+'</div>';
