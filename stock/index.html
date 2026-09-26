@@ -3700,7 +3700,7 @@ async function cpLoad(mk, code, name){
      +'<div class="dplbl">'+k+'</div><div style="font-weight:800;font-size:15px;margin-top:2px">'+v+'</div></div>'; };
   var f2=function(v){ return (v==null||!isFinite(v)||v===0)?"—":(+v).toFixed(2); };
   var pc=function(v){ return (v==null||!isFinite(v))?"—":(+v).toFixed(1)+"%"; };
-  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+chip("PER",f2(per))+chip("PBR",f2(pbr))
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+chip("PER",(mk==="kr"&&di&&di.eps<0)?'<span style="color:#ff433d">'+KE("적자","Loss")+'</span>':f2(per))+chip("PBR",f2(pbr))
      +(mk==="kr"?chip("ROE",pc(roe))+chip(KE("부채비율","Debt ratio"),pc(debt))+chip(KE("영업이익률","Op. margin"),pc(opm)):chip(KE("예상 PER","Fwd PER"),f2(ind.fper)))
      +chip(KE("시가총액","Mkt cap"),cpMoney(mcap,unit))+'</div>';
   // 최근 3년 영업이익 막대
