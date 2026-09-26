@@ -3666,6 +3666,82 @@ async function dcLoad(code){
       +(x.note?'<div style="font-size:12.5px;color:var(--sub);margin-top:3px;line-height:1.5">💬 '+dpEsc(x.note)+'</div>':'')+'</a>';
   }).join("")+'<div class="dplbl" style="margin-top:6px">'+KE("출처: 금융감독원 DART · 💬는 공시 종류 설명이며 투자 판단이 아닙니다. 누르면 공시 원문이 열립니다.","Source: FSS DART · 💬 explains the filing type only, not investment advice.")+'</div>';
 }
+// ── 기업 정보 카드 (사장님 2026-09-27) — 무엇을 하는 회사인지 · PER·PBR 등 · 최근 3년 영업이익 ──
+//    허브 /corp 가 그때그때 받아 12시간 저장한다. 국내 PER·PBR·ROE 는 키움 종목정보(ka10001)로 직접.
+function cpMoney(v, unit){ if(v==null||!isFinite(v)) return "—"; var a=Math.abs(v), sg=v<0?"−":"";
+  if(unit==="원"){ if(a>=1e12) return sg+(a/1e12).toFixed(1)+"조"; if(a>=1e8) return sg+Math.round(a/1e8).toLocaleString()+"억"; return sg+Math.round(a).toLocaleString()+"원"; }
+  if(a>=1e9) return sg+"$"+(a/1e9).toFixed(1)+"B"; if(a>=1e6) return sg+"$"+(a/1e6).toFixed(0)+"M"; return sg+"$"+Math.round(a).toLocaleString(); }
+async function cpLoad(mk, code, name){
+  var b=document.getElementById("cpb"), t=document.getElementById("cpq"); if(!b) return;
+  if(t) t.textContent=name||code;
+  b.innerHTML='<div class="dpmsg">'+KE("불러오는 중…","Loading…")+'</div>';
+  var j=null; try{ j=await fetch(HUB+"/corp?mk="+mk+"&code="+encodeURIComponent(code)+"&name="+encodeURIComponent(name||"")).then(function(r){ return r.json(); }); }catch(e){}
+  j=j||{};
+  var ind=j.ind||{}, kw=null;
+  if(mk==="kr"){ try{ if(ST&&ST.kr&&ST.kr.broker){ var tok=await rlToken(); var r=await rlKiwoom(tok,"/api/dostk/stkinfo","ka10001",{stk_cd:code});
+      if(r&&String(r.return_code)==="0") kw={per:+r.per||null, pbr:+r.pbr||null, roe:+r.roe||null, eps:+r.eps||null, mcap:(+r.mac||0)*1e8}; } }catch(e){} }
+  var per=kw?kw.per:ind.per, pbr=kw?kw.pbr:ind.pbr, roe=kw?kw.roe:null, mcap=kw&&kw.mcap?kw.mcap:ind.mcap, est=false;
+  // 키움 키가 없으면(모의 판·지인판) — 시가총액 ÷ 최근 연도 순이익·자본총계로 어림 (국내)
+  if(mk==="kr" && !kw && j.fin && j.fin.years && j.fin.years.length && mcap){ var ly=j.fin.years[j.fin.years.length-1];
+    if(per==null && ly["순이익"]>0){ per=mcap/ly["순이익"]; est=true; }
+    if(pbr==null && j.fin.equity>0){ pbr=mcap/j.fin.equity; est=true; }
+    if(roe==null && j.fin.equity>0 && ly["순이익"]!=null){ roe=ly["순이익"]/j.fin.equity*100; est=true; } }
+  var unit=mk==="kr"?"원":"USD";
+  var h='';
+  // 무엇을 하는 회사인가 — 백과사전 첫 문장(굵게) + 전문 링크, 그 아래 사업 설명 요약
+  if(j.enc&&j.enc.lead) h+='<div style="font-weight:800;font-size:14.5px;line-height:1.6;color:var(--nm);margin-bottom:6px">'+dpEsc(j.enc.lead)
+     +(j.enc.link?' <a href="'+dpEsc(String(j.enc.link).replace(/"/g,"%22"))+'" target="_blank" rel="noopener" style="font-weight:600;font-size:12.5px;color:#2ee6c0;white-space:nowrap">'+KE("네이버 지식백과에서 전문 보기 ›","Full article on Naver ›")+'</a>':'')+'</div>';
+  if(j.desc&&j.desc.text) h+='<div style="font-size:14px;line-height:1.7;color:var(--nm)">'+dpEsc(j.desc.text)+'</div>'
+     +'<div class="dplbl" style="margin-top:3px">'+dpEsc(j.desc.src||"")+'</div>';
+  else if(!(j.enc&&j.enc.lead)) h+='<div class="dpmsg">'+KE("회사 설명을 찾지 못했습니다.","No company description found.")+'</div>';
+  // 지표
+  var chip=function(k,v){ return '<div style="flex:1 1 22%;min-width:70px;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:7px 8px;text-align:center">'
+     +'<div class="dplbl">'+k+'</div><div style="font-weight:800;font-size:15px;margin-top:2px">'+v+'</div></div>'; };
+  var f2=function(v){ return (v==null||!isFinite(v)||v===0)?"—":(+v).toFixed(2); };
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+chip("PER",f2(per))+chip("PBR",f2(pbr))
+     +(mk==="kr"?chip("ROE",roe!=null?(+roe).toFixed(1)+"%":"—"):chip(KE("예상 PER","Fwd PER"),f2(ind.fper)))
+     +chip(KE("시가총액","Mkt cap"),cpMoney(mcap,unit))+'</div>';
+  // 최근 3년 영업이익 막대
+  var F=j.fin, Y=(F&&F.years)||[];
+  if(Y.length){
+    // 기준선 위는 흑자, 아래는 적자 — 위아래 높이는 가장 큰 흑자·적자 크기에 맞춰 나눈다
+    var vals=Y.map(function(y){ return y["영업이익"]||0; }), pmax=Math.max(0,Math.max.apply(null,vals)), nmax=Math.max(0,-Math.min.apply(null,vals)), tot=(pmax+nmax)||1, PH=110;
+    var up=pmax?Math.round(PH*pmax/tot)+22:0, dn=nmax?Math.round(PH*nmax/tot)+22:0;   // 숫자 자리 22px 를 더 준다
+    h+='<div style="font-weight:800;margin-top:12px">'+KE("최근 3년 영업이익","Operating income, last 3 years")+' <span class="dplbl">'+(F.fs||"")+'</span></div>'
+      +'<div style="display:flex;gap:10px;margin-top:22px">'
+      +Y.map(function(y){ var v=y["영업이익"], a=v==null?0:Math.max(3,Math.round(Math.abs(v)/tot*PH)), pos=(v||0)>=0;
+          var lab='<div style="flex:0 0 auto;font-size:12px;font-weight:800;color:'+(pos?'#00c805':'#ff433d')+';white-space:nowrap">'+cpMoney(v,unit)+'</div>';
+          var bar='<div style="flex:0 0 auto;height:'+a+'px;width:30%;margin:0 auto;border-radius:0;background:'+(pos?'#00c805':'#ff433d')+'"></div>';
+          return '<div style="flex:1;text-align:center">'
+            +'<div style="height:'+up+'px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center">'+(pos&&v!=null?lab+'<div style="height:3px"></div>'+bar:'')+'</div>'
+            +'<div style="border-top:1.5px solid var(--sub);opacity:.7"></div>'
+            +'<div style="height:'+dn+'px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center">'+(!pos?bar+'<div style="height:3px"></div>'+lab:'')+'</div>'
+            +'<div class="dplbl" style="margin-top:4px">'+y.y+'</div></div>'; }).join("")+'</div>'
+      +'<table class="mhtab" style="margin-top:6px"><tr><th style="text-align:left">'+KE("구분","Item")+'</th>'+Y.map(function(y){ return '<th>'+y.y+'</th>'; }).join("")+'</tr>'
+      +["매출","영업이익","순이익"].map(function(k){ return '<tr><td style="text-align:left">'+KE(k,{"매출":"Revenue","영업이익":"Op. income","순이익":"Net income"}[k])+'</td>'
+          +Y.map(function(y){ return '<td>'+cpMoney(y[k],unit)+'</td>'; }).join("")+'</tr>'; }).join("")+'</table>'
+      +'<div class="dplbl" style="margin-top:4px">'+dpEsc(F.src||"")+'</div>';
+  } else h+='<div class="dpmsg" style="margin-top:10px">'+KE("최근 3년 실적 자료가 없습니다 (ETF 등).","No 3-year results (e.g. ETFs).")+'</div>';
+  h+='<div class="dplbl" style="margin-top:6px">'+KE("지표: ","Metrics: ")+(kw?KE("키움증권 종목정보","Kiwoom"):(est?KE("시가총액 ÷ DART 순이익·자본총계로 어림","Estimated from market cap and DART"):dpEsc(ind.src||"—")))+KE(" · 투자 판단이 아닌 참고 정보입니다."," · For reference only, not investment advice.")+'</div>';
+  b.innerHTML=h;
+}
+function cpInit(){
+  // 순서: 조회 → 기업 정보 → 공시 → 뉴스 (2026-09-27) — 뉴스 카드가 생긴 뒤, 공시(있으면)나 뉴스 바로 앞에 끼운다
+  if(!document.getElementById("nw_stock")) return false; if(document.getElementById("cpCard")) return true;
+  var nw=document.getElementById("dcCard")||document.getElementById("nw_stock");
+  nw.insertAdjacentHTML("beforebegin", '<div class="card" id="cpCard" style="display:none"><h3>'+KE("기업 정보","Company")
+    +' <span class="dplbl" id="cpq"></span></h3><div id="cpb"></div></div>');
+  var last="";
+  setInterval(function(){ var el=document.getElementById("stkq"), c=document.getElementById("cpCard"); if(!el||!c) return;
+    var v=String(el.value||"").trim(); if(!v){ c.style.display="none"; return; }
+    var us=(typeof stkMarket!=="undefined"&&stkMarket==="us"), code="", name=v.replace(/\s*\(.*$/,"").trim();
+    if(us) code=String((typeof stkCode!=="undefined"&&stkCode)||"").replace(/\.US$/i,"").toUpperCase();
+    else { var m=/\((\d{6})\)/.exec(v)||/^(\d{6})$/.exec(v); code=m?m[1]:""; }
+    c.style.display=code?"":"none";
+    var k=(us?"us:":"kr:")+code; if(!code||k===last) return; last=k; cpLoad(us?"us":"kr", code, name); }, 2500);
+  return true;
+}
+(function tryCp(n){ if(!cpInit() && n>0) setTimeout(function(){ tryCp(n-1); }, 1000); })(20);
 function dcInit(){
   var nw=document.getElementById("nw_stock"); if(!nw || document.getElementById("dcCard")) return !!nw;
   nw.insertAdjacentHTML("beforebegin", '<div class="card" id="dcCard" style="display:none"><h3>'+KE("공시","Filings")
