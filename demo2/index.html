@@ -130,6 +130,16 @@ img.fl{width:20px;height:15px;border:1px solid var(--bd);border-radius:2px;flex:
 .mhtab td{white-space:nowrap}
 .mhnote{color:var(--sub);font-size:10.5px;margin:5px 2px 0}
 .mhtab td:first-child{white-space:normal}
+@media(max-width:520px){   /* 바스켓 매매 전략 표 — 폰에서 오른쪽으로 튀어나오던 것 (사장님 2026-09-26) */
+  #bmCard .mhtab{table-layout:fixed}
+  #bmCard .mhtab th:nth-child(1){width:40%} #bmCard .mhtab th:nth-child(2){width:15%}
+  #bmCard .mhtab th:nth-child(3){width:20%} #bmCard .mhtab th:nth-child(4){width:18%} #bmCard .mhtab th:nth-child(5){width:7%}
+  #bmCard .mhtab th{white-space:nowrap;font-size:10.5px}
+  #bmCard .mhtab td{font-size:11px;padding-left:2px;padding-right:2px;overflow:hidden}
+  #bmCard .mhtab td:first-child{white-space:normal;word-break:keep-all}
+  #bmCard .mhtab td .dpin{width:100% !important;box-sizing:border-box;padding:5px 3px}
+  #bmCard .mhtab .mhx{display:inline-block;padding:4px 0}
+}
 @media(max-width:520px){
   .mhtab td,.mhtab th{white-space:normal;font-size:12px;padding:5px 3px}
   .mhtab .dpsm{padding:5px 6px;font-size:10.5px;min-width:0}
