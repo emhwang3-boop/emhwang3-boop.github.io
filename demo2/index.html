@@ -6085,10 +6085,12 @@ async function cpLoad(mk, code, name){
     if(roe==null && j.fin.equity>0 && ly["순이익"]!=null){ roe=ly["순이익"]/j.fin.equity*100; est=true; } }
   var unit=mk==="kr"?"원":"USD";
   var h='';
-  // 무엇을 하는 회사인가
+  // 무엇을 하는 회사인가 — 백과사전 첫 문장(굵게) + 전문 링크, 그 아래 사업 설명 요약
+  if(j.enc&&j.enc.lead) h+='<div style="font-weight:800;font-size:14.5px;line-height:1.6;color:var(--nm);margin-bottom:6px">'+dpEsc(j.enc.lead)
+     +(j.enc.link?' <a href="'+dpEsc(String(j.enc.link).replace(/"/g,"%22"))+'" target="_blank" rel="noopener" style="font-weight:600;font-size:12.5px;color:#2ee6c0;white-space:nowrap">'+KE("네이버 지식백과에서 전문 보기 ›","Full article on Naver ›")+'</a>':'')+'</div>';
   if(j.desc&&j.desc.text) h+='<div style="font-size:14px;line-height:1.7;color:var(--nm)">'+dpEsc(j.desc.text)+'</div>'
      +'<div class="dplbl" style="margin-top:3px">'+dpEsc(j.desc.src||"")+'</div>';
-  else h+='<div class="dpmsg">'+KE("회사 설명을 찾지 못했습니다.","No company description found.")+'</div>';
+  else if(!(j.enc&&j.enc.lead)) h+='<div class="dpmsg">'+KE("회사 설명을 찾지 못했습니다.","No company description found.")+'</div>';
   // 지표
   var chip=function(k,v){ return '<div style="flex:1 1 22%;min-width:70px;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:7px 8px;text-align:center">'
      +'<div class="dplbl">'+k+'</div><div style="font-weight:800;font-size:15px;margin-top:2px">'+v+'</div></div>'; };
