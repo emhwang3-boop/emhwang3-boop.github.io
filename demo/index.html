@@ -300,12 +300,12 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div id="chgTop"></div>   <!-- 주요자산 전일대비 — 게이지 바로 아래 (2026-09-25) -->
 <div class="card" id="ydCard"><h3>매매현황 <span style="display:flex;align-items:center;gap:8px;position:relative"><span class="dplbl" id="ydDate"></span><span id="ydCal" onclick="ydPick()" title="날짜 고르기" style="cursor:pointer;line-height:1"><svg width="22" height="22" viewBox="0 0 22 22" style="display:block"><rect x="1" y="2" width="20" height="19" rx="4" fill="#f4f6fb"/><path d="M1 6a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v1.5H1z" fill="#3b82f6"/><rect x="4.5" y="10.5" width="3.2" height="3" rx="0.6" fill="#8e97aa"/><rect x="9.5" y="10.5" width="3.2" height="3" rx="0.6" fill="#8e97aa"/><rect x="14.5" y="10.5" width="3.2" height="3" rx="0.6" fill="#8e97aa"/><rect x="4.5" y="15.5" width="3.2" height="3" rx="0.6" fill="#8e97aa"/><rect x="9.5" y="15.5" width="3.2" height="3" rx="0.6" fill="#8e97aa"/><rect x="14.5" y="15.5" width="3.2" height="3" rx="0.6" fill="#8e97aa"/></svg></span><input type="date" id="ydIn" onchange="ydSet(this.value)" style="position:absolute;right:0;top:100%;opacity:0;width:1px;height:1px;border:0;padding:0"></span></h3><div id="ydBody"><div class="dpmsg">실계좌를 불러오면 오늘(00:00부터 지금까지) 매매를 모아 보여 줍니다.</div></div></div>
 <div class="card" id="myhold">
-  <h3>내 보유종목 <span class="tag live">● 실시간</span></h3><div class="rlbar"><button class="dpb flat dpsm" onclick="rlLoad()">실계좌 불러오기</button><button class="dpb flat dpsm" onclick="rlClear()">지움</button><button class="dpb flat dpsm" id="atBtn" onclick="atOpen()">자동매매</button><span class="rlmsg" id="rlMsg"></span></div>
+  <h3>내 보유종목 <span class="tag live">● 실시간</span></h3><div class="rlbar"><button class="dpb flat dpsm" onclick="rlClear()" style="display:none">지움</button><span class="rlmsg" id="rlMsg"></span></div>
   <div id="mhBody"></div>
 </div>
 
 <div class="card" id="demoacct">
-  <h3>계좌 <span class="tag live">● 실시간</span></h3>
+  <h3>계좌 <button class="dpb flat dpsm" style="margin-left:6px;vertical-align:middle" onclick="event.stopPropagation();rlLoad()">실계좌 불러오기</button> <span class="tag live">● 실시간</span></h3>
   <div id="dpBody"></div>
 </div>
 <div id="recoSlot"></div>
@@ -4802,7 +4802,7 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
       [(en?"US stocks":"미국 주식"), totUS, days(us), usd],
       [(en?"Crypto (spot)":"코인 (현물)"), totCO, days(co), tet],
     ];
-    let t = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"12-slot status":"12칸 현황")+' <span class="c21help" onclick="s12Info(event)">i</span></div>'
+    let t = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"12-slot status":"12칸 현황")+' <span class="c21help" onclick="s12Info(event)">i</span> <button class="dpb flat dpsm" id="atBtn" style="margin-left:6px;vertical-align:middle" onclick="event.stopPropagation();atOpen()">'+(en?"Auto trading":"자동매매")+'</button></div>'
       + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
       + '<th>'+(en?"Filled":"채운 칸")+'</th><th>'+(en?"Empty":"빈 칸")+'</th></tr>';
     rows.forEach(function(r){
