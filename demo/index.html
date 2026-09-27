@@ -3977,7 +3977,10 @@ async function ydLoad(force){
         var nyDs = ""; try{ var _p = {}; new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date()).forEach(function(x){ _p[x.type]=x.value; }); nyDs = _p.year+_p.month+_p.day; }catch(e){}
         ul.filter(function(r){ return String(r.ord_dt) === ds || (isToday && nyDs && String(r.ord_dt) === nyDs); }).forEach(function(r){
           var k = String(r.stk_cd).toUpperCase(), sd = /매수/.test(r.slby_tp_nm||"") ? "B" : "S", key = k + ":" + sd;
-          g[key] = g[key] || {mk:"us", code:k, name:k, side:sd, qty:0, amt:0}; g[key].qty += rlNum(r.cntr_qty); g[key].amt += rlNum(r.cntr_amt); });
+          g[key] = g[key] || {mk:"us", code:k, name:k, side:sd, qty:0, amt:0, t:0}; g[key].qty += rlNum(r.cntr_qty); g[key].amt += rlNum(r.cntr_amt);
+          var od = String(r.ord_dt || ""), ot = String(r.ord_time || "000000").padStart(6, "0");   // 한국 시각
+          var tt = od.length === 8 ? new Date(+od.slice(0,4), +od.slice(4,6) - 1, +od.slice(6,8), +ot.slice(0,2), +ot.slice(2,4), +ot.slice(4,6)).getTime() : 0;
+          if(tt > g[key].t) g[key].t = tt; });
         Object.keys(g).forEach(function(k){ var o = g[k];
           if(o.side === "S"){ var a = avg[o.code]; o.pl = (a && a.q) ? o.amt - o.qty * (a.a / a.q) : null; o.est = true; } else o.pl = null;
           rows.push(o); });
@@ -3991,7 +3994,7 @@ async function ydLoad(force){
       fl.forEach(function(r){ var t = +r.ts, k = r.instId, q = rlNum(r.fillSz), px = rlNum(r.fillPx);
         if(t < b0 && r.side === "buy"){ cavg[k] = cavg[k] || {q:0, a:0}; cavg[k].q += q; cavg[k].a += q * px; }
         if(t >= b0 && t < b1){ var sd = r.side === "buy" ? "B" : "S", key = k + ":" + sd;
-          cg[key] = cg[key] || {mk:"coin", code:k, name:String(k).split("-")[0], side:sd, qty:0, amt:0}; cg[key].qty += q; cg[key].amt += q * px; } });
+          cg[key] = cg[key] || {mk:"coin", code:k, name:String(k).split("-")[0], side:sd, qty:0, amt:0, t:0}; cg[key].qty += q; cg[key].amt += q * px; if(t > cg[key].t) cg[key].t = t; } });
       Object.keys(cg).forEach(function(k){ var o = cg[k];
         if(o.side === "S"){ var a = cavg[o.code]; o.pl = (a && a.q) ? o.amt - o.qty * (a.a / a.q) : null; o.est = true; } else o.pl = null;
         rows.push(o); });
@@ -4014,7 +4017,7 @@ function ydHtml(rows, note, auto){
   else{
     h += '<table class="mhtab"><tr><th>' + KE("종목","Item") + '</th><th>' + KE("매매","Side") + '</th><th>' + KE("금액","Amount") + '</th><th>' + KE("손익","P/L") + '</th></tr>';   // 매수 = 미실현 · 매도 = 실현 (사장님 2026-09-26)   // 당일 매매라 실현손익 대신 미실현 (사장님 2026-09-25)
     var ord = {kr:0, us:1, coin:2};
-    rows.sort(function(a, b){ return (ord[a.mk] - ord[b.mk]) || (a.side < b.side ? -1 : 1); });
+    rows.sort(function(a, b){ return ((b.t || 0) - (a.t || 0)) || (ord[a.mk] - ord[b.mk]) || (a.side < b.side ? -1 : 1); });   // 최근 체결이 위 (사장님 2026-09-27)
     var buyK = 0, sellK = 0, plK = 0, plN = 0, rzK = 0, rzN = 0;
     // 산 것의 지금 값 — 실계좌 보유 줄의 현재가(cur)로 센다. 이미 판 것은 셀 수 없다(—)
     var curOf = function(o){ try{ var h = rlRows().filter(function(q){ return q.mk === o.mk && String(q.code).toUpperCase() === String(o.code).toUpperCase() && (o.mk !== "coin" || q.spot); })[0];
@@ -6913,6 +6916,7 @@ function mkYdRows(md){
     var k = mk + ":" + code + ":" + sd;
     g[k] = g[k] || {mk: mk, code: code, name: mk === "coin" ? String(code).split("-")[0] : (r.name || code), side: sd, qty: 0, amt: 0, pl: sd === "S" ? 0 : null, est: false};
     g[k].qty += (+r.qty || 0); g[k].amt += amt; if(sd === "S" && r.pnl != null) g[k].pl += (+r.pnl || 0);
+    if((+r.ts || 0) > (g[k].t || 0)) g[k].t = +r.ts;
   });
   Object.keys(g).forEach(function(k){ rows.push(g[k]); });
   return rows;
