@@ -862,6 +862,8 @@ async function usKwFetch(op,qs){
   if(out) US_KW_C[ck]={at:now,d:out};
   return out;
 }
+// 앱을 열면 미국 목록을 미리 받아 둔다 — 첫 검색이 2~3초 늦던 것 (사장님 2026-09-27 「애플」)
+setTimeout(function(){ try{ usKwTok().then(function(t){ if(t) usKwList(t); }); }catch(e){} }, 8000);
 const usFetchHub=usFetch;
 usFetch=async function(op,qs){ const k=await usKwFetch(op,qs); return k||usFetchHub(op,qs); };
 const US_KT={"D":8,"W":9,"60":5,"30":4,"15":3,"5":2,"3":1};
