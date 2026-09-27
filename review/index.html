@@ -4580,11 +4580,17 @@ function obKrRow(r,side,i){                 // ka10004: 1호가만 fpr, 2~10 은
 }
 async function obKr(code){
   const tok=await rlToken();
-  const r=await rlKiwoom(tok,"/api/dostk/mrkcond","ka10004",{stk_cd:String(code)});
-  if(!r||String(r.return_code)!=="0")return null;
-  const a=[],b=[];
-  for(let i=1;i<=10;i++){ a.push(obKrRow(r,"sel",i)); b.push(obKrRow(r,"buy",i)); }
-  return {a:a,b:b};
+  // 🔴 _AL(KRX+NXT 통합) 먼저 — 그냥 코드는 KRX 호가만이라 09:00 전 프리장엔 비어 있다(실측 09-28 08:43 삼성전자). 비면 그냥 코드로.
+  let last=null;
+  for(const cd of [String(code)+"_AL", String(code)]){
+    const r=await rlKiwoom(tok,"/api/dostk/mrkcond","ka10004",{stk_cd:cd});
+    if(!r||String(r.return_code)!=="0")continue;
+    const a=[],b=[];
+    for(let i=1;i<=10;i++){ a.push(obKrRow(r,"sel",i)); b.push(obKrRow(r,"buy",i)); }
+    last={a:a,b:b};
+    if(a.some(x=>x[0]>0)||b.some(x=>x[0]>0))return last;
+  }
+  return last;
 }
 async function obUs(code){
   const tick=String(code||"").replace(/\.US$/,"").toUpperCase(), tok=await rlToken();
