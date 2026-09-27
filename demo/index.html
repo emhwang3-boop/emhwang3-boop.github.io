@@ -5120,7 +5120,7 @@ function recoRender(){
   const en=LANG==="en", R=RECO;
   let h='<h3>'+(en?"12-slot strategy by portfolio":"포트폴리오에 따른 12칸 매매 전략")+' <span class="c21help" onclick="r12Info(event)">i</span>'+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
   try{ window._RECO=R; }catch(e){}
-  if(!R){ card.innerHTML=h+'<div class="soonrow">'+(en?"Loading…":"불러오는 중…")+'</div>'; return; }
+  if(!R){ card.innerHTML=h+'<div class="soonrow">'+(en?"Loading…":"불러오는 중…")+'</div>'; card._h=null; return; }
   // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률을 더해 "지금 60일선 대비"를 낸다 (사장님 2026-09-21).
   const liveP=function(nm){ var d=window._lastD; if(d&&d.changes){ for(var i=0;i<d.changes.length;i++){ if(d.changes[i].nm===nm && typeof d.changes[i].pct==="number") return d.changes[i].pct; } } return null; };
   const reg=function(x,nm){ if(!(x&&x.regime))return "-"; var lp=liveP(nm); var v=(+x.regime.vs_ma60||0)+(lp||0); var g=v>=0; var t=(g?(en?"good":"좋음"):(en?"weak":"나쁨"))+" ("+(v>0?"+":"")+v.toFixed(1)+"%)"; return '<b style="color:'+(g?"#2f9e44":"#e03131")+'">'+t+'</b>'; };
@@ -5283,7 +5283,7 @@ function recoRender(){
           +'<td>'+(r.err?('<button class="dpb buy dpsm" disabled style="opacity:.35;cursor:not-allowed">'+(en?"BUY":"매수")+'</button>'):('<button class="dpb '+(r.side==="B"?"buy":"sell")+' dpsm" onclick="coinGoOrd(&quot;'+r.k+'&quot;,&quot;'+r.side+'&quot;,'+(r.side==="B"?(+r.amt).toFixed(2):(+r.qty))+')">'+(r.side==="B"?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'))+'</td></tr>';
       }).join("")+'</table><div id="roOrd_co"></div>';
   }
-  if(card._h!==h){ card.innerHTML=h; card._h=h; }   // 같으면 안 그린다 — PC 깜빡임 (2026-09-26)
+  var _hk=h.replace(/pz\d+_/g,"pz_"); if(card._h!==_hk){ card.innerHTML=h; card._h=_hk; }   // 퍼즐 그림 번호(pzN_)는 빼고 비교 — 2초마다 통째로 다시 그리던 깜빡임 (2026-09-27)   // 같으면 안 그린다 — PC 깜빡임 (2026-09-26)
   try{ bkRender(); }catch(e){}
 }
 setTimeout(recoLoad,2500);
@@ -5876,7 +5876,7 @@ function bkRender(){
   var a=bkGet();
   var h='<h3>'+KE("가상 바스켓","Virtual basket")+'<span onclick="bkInfoPop(event)" class="icoi" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:800;vertical-align:middle;margin-left:6px">i</span>'+(a.length?' <span style="color:var(--nm);font-weight:800">'+a.length+'</span>':'')+'</h3>';
   h+='<div class="dpmsg">'+KE("추천 종목을 [조회]한 뒤 [＋ 가상 바스켓에 담기]를 누르면, 담긴 종목 전체의 3·6·12개월 과거 수익률을 함께 계산합니다.","Look up a pick, tap Add to virtual basket, then we compute the whole basket's past 3/6/12-month return.")+'</div>';
-  if(!a.length){ h+='<div class="mhempty">'+KE("아직 담긴 종목이 없습니다.","No items yet.")+'</div>'+bkSavedHtml(); card.innerHTML=h; return; }
+  if(!a.length){ h+='<div class="mhempty">'+KE("아직 담긴 종목이 없습니다.","No items yet.")+'</div>'+bkSavedHtml(); if(card._h!==h){ card.innerHTML=h; card._h=h; } return; }
   var AM=bkAmtOf(a), TOT={};
   a.forEach(function(x){ var c=bkCcy(x); TOT[c]=(TOT[c]||0)+(AM[x.code]||0); });
   var hasPerp=a.some(bkIsPerp);
@@ -5905,7 +5905,7 @@ function bkRender(){
   h+='<div id="bkMsg" class="c21msg" hidden></div><div id="bkOut">'+BK_OUT+'</div>';
   h+=bkSavedHtml();
   h+='<div class="dpmsg" style="margin-top:6px">'+KE("과거 수익률이며 미래 수익을 보장하지 않습니다. 배당·세금·수수료는 뺀 값입니다.","Past returns; no guarantee of future returns. Excludes dividends, taxes and fees.")+'</div>';
-  card.innerHTML=h;
+  var _bk=h.replace(/pz\d+_/g,"pz_"); if(card._h!==_bk){ card.innerHTML=h; card._h=_bk; }   // 같으면 안 그린다 (2026-09-27 깜빡임)
 }
 async function bkRun(days){
   var a=bkGet(); if(!a.length)return;
