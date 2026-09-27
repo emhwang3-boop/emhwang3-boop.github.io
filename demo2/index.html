@@ -771,6 +771,87 @@ function usMoney(n){n=+n;const a=Math.abs(n);
   if(a>=1e9)return "$"+(n/1e9).toFixed(2)+"B"; if(a>=1e6)return "$"+(n/1e6).toFixed(1)+"M";
   return "$"+Math.round(n).toLocaleString();}
 function usPrice(n){return "$"+(+n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+// ── 미국 시세·검색은 키움에서 (사장님 2026-09-27 — Infoway 끊기 준비). 키움을 못 쓰면 허브(옛 길) ──
+//    실측 09-27: 현재가 usa20100(/api/us/mrkcond) · 일봉 usa06012 · 분봉 usa06011 tic_scope(3·5·15·30·60) · 한 번에 100봉
+//    · 종목리스트 usa10099(/api/us/stkinfo, 거래소별 ND 5,206 · NY 5,579 · NA 1,947 — 한글명·ETF 표시 포함)
+//    · 분봉 시각 cntr_tm 은 뉴욕 시각. 거래소 ND 나스닥 · NY 뉴욕 · NA 아멕스.
+let US_KW_FAIL=0; const US_KW_C={}; let US_KW_LIST=null, US_KW_LISTAT=0;
+async function usKwTok(){ if(Date.now()-US_KW_FAIL<60000) return null;
+  try{ return await rlToken(); }catch(e){ US_KW_FAIL=Date.now(); return null; } }
+async function usKwPost(tok,path,api,body,nk){
+  const b={"Content-Type":"application/json;charset=UTF-8","authorization":"Bearer "+tok,"api-id":api};
+  if(nk){ b["cont-yn"]="Y"; b["next-key"]=nk; }
+  const h=(typeof rlHdr==="function")?rlHdr(b):b;
+  const r=await fetch(rlHost()+path,{method:"POST",headers:h,body:JSON.stringify(body)});
+  return {j:await r.json(),cont:r.headers.get("cont-yn")||"",nk:r.headers.get("next-key")||""};
+}
+function usKwEt(s){ // 뉴욕 시각 "YYYYMMDDhhmmss" → 초(UTC). 서머타임: 3월 둘째 일요일 ~ 11월 첫 일요일
+  const y=+s.slice(0,4),m=+s.slice(4,6),d=+s.slice(6,8),H=+s.slice(8,10),M=+s.slice(10,12);
+  const sun=function(mo,nth){ const f=new Date(Date.UTC(y,mo-1,1)).getUTCDay(); return 1+((7-f)%7)+7*(nth-1); };
+  const dst=(m>3&&m<11)||(m===3&&d>=sun(3,2))||(m===11&&d<sun(11,1));
+  return Date.UTC(y,m-1,d,H+(dst?4:5),M)/1000;
+}
+async function usKwStex(tok,tick){
+  if(RL_STEX[tick]) return RL_STEX[tick];
+  if(US_KW_LIST){ const x=US_KW_LIST.find(function(r){ return r[0]===tick; }); if(x){ RL_STEX[tick]=x[3]; return x[3]; } }
+  for(const st of ["ND","NY","NA"]){
+    try{ const r=await usKwPost(tok,"/api/us/mrkcond","usa20100",{stex_tp:st,stk_cd:tick});
+      if(r.j&&r.j.return_code===0&&(r.j.stk_nm||rlNum(r.j.cur_prc))){ RL_STEX[tick]=st; return st; } }catch(e){}
+  }
+  return "";
+}
+async function usKwList(tok){
+  if(US_KW_LIST && Date.now()-US_KW_LISTAT<86400000) return US_KW_LIST;
+  try{ const c=JSON.parse(localStorage.getItem("us_kw_list_v1")||"null"); if(c&&c.at&&Date.now()-c.at<86400000&&c.L&&c.L.length>1000){ US_KW_LIST=c.L; US_KW_LISTAT=c.at; return US_KW_LIST; } }catch(e){}
+  const L=[];
+  for(const st of ["ND","NY","NA"]){
+    try{ const r=await usKwPost(tok,"/api/us/stkinfo","usa10099",{stex_tp:st});
+      ((r.j&&r.j.list)||[]).forEach(function(x){ L.push([String(x.stk_cd||"").toUpperCase(),x.stk_nm||"",x.stk_enm||"",st]); }); }catch(e){}
+  }
+  if(L.length>1000){ US_KW_LIST=L; US_KW_LISTAT=Date.now(); try{ localStorage.setItem("us_kw_list_v1",JSON.stringify({at:US_KW_LISTAT,L:L})); }catch(e){} }
+  return US_KW_LIST;
+}
+async function usKwFetch(op,qs){
+  const P=new URLSearchParams(qs||""), tok=await usKwTok(); if(!tok) return null;
+  const ck=op+"?"+qs, hit=US_KW_C[ck], now=Date.now();
+  const ttl=op==="quote"?2000:(op==="kline"?(P.get("type")==="8"?30000:20000):0);
+  if(hit&&now-hit.at<ttl) return hit.d;
+  let out=null;
+  try{
+    if(op==="quote"){
+      const tick=String(P.get("codes")||"").split(",")[0].replace(/\.US$/i,"").toUpperCase(); if(!tick) return null;
+      const st=await usKwStex(tok,tick); if(!st) return null;
+      const j=(await usKwPost(tok,"/api/us/mrkcond","usa20100",{stex_tp:st,stk_cd:tick})).j;
+      const px=rlAbs(j&&j.cur_prc); if(!(px>0)) return null;
+      out={ret:200,data:[{s:tick+".US",p:px,v:rlAbs(j.acc_trde_qty),o:rlAbs(j.open_pric),pc:rlAbs(j.base_close_pric),nm:j.stk_nm||""}]};
+    } else if(op==="kline"){
+      const code=String(P.get("code")||""), tick=code.replace(/\.US$/i,"").toUpperCase(), type=+(P.get("type")||8), num=Math.min(500,+(P.get("num")||200));
+      let rl=[];
+      if(type===8){ rl=await rlUsDaily(tick,Math.max(num,2)); }
+      else{
+        const sc={1:"3",2:"5",3:"15",4:"30",5:"60"}[type]; if(!sc) return null;
+        const st=await usKwStex(tok,tick); if(!st) return null;
+        let r=await usKwPost(tok,"/api/us/chart","usa06011",{stex_tp:st,stk_cd:tick,tic_scope:sc,upd_stkpc_tp:"1"}), rows=(r.j&&r.j.result_list)||[];
+        while(rows.length<num&&r.cont==="Y"&&r.nk){ r=await usKwPost(tok,"/api/us/chart","usa06011",{stex_tp:st,stk_cd:tick,tic_scope:sc,upd_stkpc_tp:"1"},r.nk); if(!r.j||r.j.return_code!==0) break; rows=rows.concat(r.j.result_list||[]); }
+        rows.forEach(function(b){ const c=rlAbs(b.cur_prc), t=String(b.cntr_tm||""); if(!(c>0)||t.length<12) return;
+          rl.push({t:usKwEt(t),o:rlAbs(b.open_pric)||c,h:rlAbs(b.high_pric)||c,l:rlAbs(b.low_pric)||c,c:c,v:rlAbs(b.trde_qty)}); });
+      }
+      if(!rl||rl.length<1) return null;
+      out={ret:200,data:[{code:tick+".US",respList:rl.slice(0,num)}]};
+    } else if(op==="search"){
+      const q=String(P.get("q")||"").trim().toUpperCase(); if(!q) return {data:[]};
+      const L=await usKwList(tok); if(!L) return null;
+      const en=LANG==="en", hits=[];
+      L.forEach(function(r){ const sc=r[0]===q?0:(r[0].indexOf(q)===0?1:((r[2].toUpperCase().indexOf(q)>=0)?2:9)); if(sc<9) hits.push([sc,r]); });
+      hits.sort(function(a,b){ return (a[0]-b[0])||(a[1][0].length-b[1][0].length); });
+      out={data:hits.slice(0,20).map(function(h){ const r=h[1]; return {code:r[0]+".US",name:(en?(r[2]||r[1]):(r[1]||r[2]))||r[0],tick:r[0]}; })};
+    } else return null;
+  }catch(e){ return null; }
+  if(out) US_KW_C[ck]={at:now,d:out};
+  return out;
+}
+const usFetchHub=usFetch;
+usFetch=async function(op,qs){ const k=await usKwFetch(op,qs); return k||usFetchHub(op,qs); };
 const US_KT={"D":8,"W":9,"60":5,"30":4,"15":3,"5":2,"3":1};
 function usFmtT(t,tf){const d=new Date(t*1000),p=n=>String(n).padStart(2,"0");
   return (tf==="D"||tf==="W")?(p(d.getMonth()+1)+"/"+p(d.getDate())):(p(d.getMonth()+1)+"/"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes()));}
@@ -833,7 +914,7 @@ async function loadStockUS(){
   if(!rl.length)return;
   const today=rl[0], prev=rl[1]||rl[0];
   const price=(tr&&tr.data&&tr.data[0]&&+tr.data[0].p)||+today.c;
-  const open=+today.o, prevc=+prev.c, vol=+today.v, tv=+today.vw;
+  const open=+today.o, prevc=+prev.c, vol=+today.v, tv0=+today.vw, tvEst=!(tv0>0), tv=tvEst?vol*price:tv0;   // 거래대금이 없으면 어림 (2026-09-27)
   const co=open?(price-open)/open*100:0, cp=prevc?(price-prevc)/prevc*100:0;
   const cls=x=>x>0?"up":(x<0?"dn":"fl"),arw=x=>x>0?"▲":(x<0?"▼":"");
   const en=LANG==="en", tick=stkCode.replace(/\.US$/,"");
@@ -844,7 +925,7 @@ async function loadStockUS(){
    +'<tr><td class="k">'+L("vsOpen")+'</td><td class="v '+cls(co)+'">'+arw(co)+Math.abs(co).toFixed(2)+'%</td></tr>'
    +'<tr><td class="k">'+L("vsPrev")+'</td><td class="v '+cls(cp)+'">'+arw(cp)+Math.abs(cp).toFixed(2)+'%</td></tr>'
    +'<tr><td class="k">'+L("vol")+'</td><td class="v">'+Math.round(vol).toLocaleString()+(en?"":"주")+'</td></tr>'
-   +'<tr><td class="k">'+L("turnover")+'</td><td class="v">'+usMoney(tv)+'</td></tr>'
+   +'<tr><td class="k">'+L("turnover")+'</td><td class="v">'+(tvEst?"≈ ":"")+usMoney(tv)+'</td></tr>'
    +'</table>';
   stkChart.patchLast(price);
   dpPx["us:"+stkCode]=+price; dpShowStockBar();
