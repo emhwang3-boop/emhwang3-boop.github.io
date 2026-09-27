@@ -1075,7 +1075,7 @@ function c21Calc(key,B,CH){
   if(key==="ich"){const tk=c.map((_,i)=>i<8?null:(c21Rng(h,i,9,1)+c21Rng(l,i,9,0))/2),kj=c.map((_,i)=>i<25?null:(c21Rng(h,i,26,1)+c21Rng(l,i,26,0))/2),
       sb=c.map((_,i)=>i<51?null:(c21Rng(h,i,52,1)+c21Rng(l,i,52,0))/2),A=c.map((_,i)=>i>=26&&tk[i-26]!=null&&kj[i-26]!=null?(tk[i-26]+kj[i-26])/2:null),
       S=c.map((_,i)=>i>=26?sb[i-26]:null),lag=c.map((_,i)=>i+26<N?c[i+26]:null);
-    R.lines=[[tk,C21_COL.red,1.2],[kj,C21_COL.blue,1.2],[A,C21_COL.grn,1],[S,C21_COL.brn,1],[lag,C21_COL.pur,1]];R.fill=[A,S];}
+    R.lines=[[tk,C21_COL.red,1.2],[kj,C21_COL.blue,1.2],[A,C21_COL.grn,1],[S,C21_COL.brn,1],[lag,C21_COL.pur,1]];R.fill=[A,S];R.hatch=1;}
   if(key==="env"){const m=c21Sma(c,20);band(m,m.map(x=>x==null?null:x*1.05),m.map(x=>x==null?null:x*0.95),C21_COL.org,C21_COL.blue);}
   if(key==="kel"){const m=c21Ema(c,20),a=c21Atr(B,10);band(m,m.map((x,i)=>x==null||a[i]==null?null:x+2*a[i]),m.map((x,i)=>x==null||a[i]==null?null:x-2*a[i]),C21_COL.org,C21_COL.pur);}
   if(key==="vwap"||key==="vwma"){const n=key==="vwap"?20:100,o=new Array(N).fill(null);
@@ -1129,7 +1129,9 @@ function c21Calc(key,B,CH){
 
 function makeChart(cid,opt){
   opt=opt||{};const cv=E(cid);const NF=opt.fmt||(v=>Math.round(v).toLocaleString());
-  const PAGES=C21_PAGES.filter(p=>!p[4]||opt.liq);
+  // 🔴 청산맵 판은 **선물일 때만** 보인다 (코인앱과 맞춤 2026-09-27). 현물에는 청산이 없다. setLiq() 로 오가며 바꾼다.
+  let LIQ=!!opt.liq;
+  let PAGES=C21_PAGES.filter(p=>!p[4]||LIQ);
   let CH=null,VIEW={start:0,count:80},CROSS=null,GEO=null,CALC={},OVER=0,ODIR=0,MEAS=null,rdown=false,mTimer=null;
   const CCY=()=>cid==="coinChart"?"USDT":((typeof stkMarket!=="undefined"&&stkMarket==="us")?"$":"원");
   const SK="c21_"+cid;let ST0={base:0,ovs:[],page:0};
@@ -1221,7 +1223,27 @@ function makeChart(cid,opt){
     // 청산맵(코인) · 띠 채우기 · 매물대 — 봉보다 먼저(뒤에 깔린다)
     if(act.indexOf("liq")>=0&&CH.liq)for(const lv of CH.liq){const y=Y(lv[0]);if(y<y0||y>yP)continue;
       const a=0.9*Math.pow(clamp(lv[1],0,1),1.7);if(a<0.09)continue;ctx.fillStyle="rgba(255,214,0,"+a.toFixed(3)+")";for(let x=x0;x<x1;x+=7)ctx.fillRect(x,y-3,6,6);}
-    for(const k of act){const R=calc(k);if(!R.fill)continue;const A=R.fill[0],Bl=R.fill[1];ctx.fillStyle="rgba(93,180,255,.10)";ctx.beginPath();let st=false;
+    for(const k of act){const R=calc(k);if(!R.fill)continue;const A=R.fill[0],Bl=R.fill[1];
+      // 🔴 구름은 칠하지 않고 **사선**을 긋는다 (사장님 2026-09-20). 어두운 바탕에서 반투명 칠은 뿌옇게 뭉갠다.
+      //    A가 위면 ///, B가 위면 \\\ — 색을 쓰지 않고도 구름이 뒤집힌 자리가 눈에 들어온다.
+      if(R.hatch){let i=start;
+        while(i<end){
+          while(i<end&&(A[i]==null||Bl[i]==null))i++;
+          if(i>=end)break;
+          const up=A[i]>=Bl[i];let j=i;
+          while(j<end&&A[j]!=null&&Bl[j]!=null&&((A[j]>=Bl[j])===up))j++;
+          ctx.save();ctx.beginPath();
+          for(let t=i;t<j;t++)t===i?ctx.moveTo(X(t),Y(A[t])):ctx.lineTo(X(t),Y(A[t]));
+          for(let t=j-1;t>=i;t--)ctx.lineTo(X(t),Y(Bl[t]));
+          ctx.closePath();ctx.clip();
+          const H=yP-y0;
+          ctx.strokeStyle=up?"rgba(127,179,163,.5)":"rgba(176,154,122,.5)";ctx.lineWidth=1;ctx.beginPath();
+          for(let x=X(i)-H;x<=X(j-1)+H;x+=7){
+            if(up){ctx.moveTo(x,yP);ctx.lineTo(x+H,y0);}else{ctx.moveTo(x,y0);ctx.lineTo(x+H,yP);}}
+          ctx.stroke();ctx.restore();
+          i=j;}
+        continue;}
+      ctx.fillStyle="rgba(93,180,255,.10)";ctx.beginPath();let st=false;
       for(let i=start;i<end;i++){if(A[i]==null)continue;if(!st){ctx.moveTo(X(i),Y(A[i]));st=true;}else ctx.lineTo(X(i),Y(A[i]));}
       for(let i=end-1;i>=start;i--){if(Bl[i]==null)continue;ctx.lineTo(X(i),Y(Bl[i]));}if(st){ctx.closePath();ctx.fill();}}
     if(act.indexOf("vp")>=0){if(calc("vp").hasVol){const bins=26,vol=new Array(bins).fill(0),st=(hi-lo)/bins;
@@ -1356,7 +1378,15 @@ function makeChart(cid,opt){
   cv.addEventListener("touchend",()=>{const w=down;down=false;pinch=null;clearTimeout(mTimer);if(w&&CH)release();});
   function patchLast(price){if(!CH||!CH.bars.length||!(price>0))return;const b=CH.bars[CH.bars.length-1];b[4]=price;if(price>b[2])b[2]=price;if(price<b[3])b[3]=price;CALC={};draw();}
   paintBar();
-  return {setData,patchLast,flip,state:()=>ST0,meas:()=>MEAS,repaint:()=>{paintBar();draw();}};
+  function setLiq(on){
+    on=!!on; if(on===LIQ)return;
+    LIQ=on; PAGES=C21_PAGES.filter(p=>!p[4]||LIQ);
+    // 켜 두었던 청산맵은 현물로 오면 내린다. 보던 판 번호도 범위 안으로 당긴다.
+    ST0.ovs=(ST0.ovs||[]).filter(k=>PAGES.some(p=>p[0]===k));
+    ST0.page=Math.max(0,Math.min(PAGES.length,ST0.page|0));
+    save(); paintBar(); draw();
+  }
+  return {setData,patchLast,flip,setLiq,state:()=>ST0,meas:()=>MEAS,repaint:()=>{paintBar();draw();}};
 }
 
 
@@ -1438,6 +1468,7 @@ E("coinq").addEventListener("input",function(){clearTimeout(coinSearchTimer);con
 });
 E("coinq").addEventListener("keydown",function(e){if(e.key==="Enter"&&coinLast.length){pickCoin(coinLast[0].sym,coinLast[0].name,coinLast[0].kind);this.blur();}});
 function pickCoin(sym,name,kind){coinSym=sym;coinKind=(kind==="S")?"S":"F";
+  try{coinChart.setLiq(coinKind==="F");}catch(e){}   // 청산맵은 선물일 때만 (2026-09-27)
   var _cb=E("bkAddBtnCo"); if(_cb)_cb.hidden=false;
   try{ rememberPick("co",sym,name,coinKind); }catch(e){}E("coinResults").innerHTML="";E("coinq").value=name+" ("+sym+") "+(coinKind==="S"?(LANG==="en"?"SPOT":"현물"):(LANG==="en"?"PERP":"선물"));
   E("coinTf").hidden=false;E("coinChart").hidden=false;E("coinChartLbl").hidden=false;
