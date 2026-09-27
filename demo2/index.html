@@ -2532,6 +2532,8 @@ async function rlLoad(auto) {
               //    사장님 실측: entr 144,591 · d2_entra 8,039,676. 총 예수금은 d2_entra 다 (2026-09-21).
               const d2 = rlNum(cd.d2_entra), e2 = rlNum(cd.entr);
               if (d2) out.cash.krw = d2; else if (e2) out.cash.krw = e2;
+              // 🔴 살 수 있는 돈 = 주문가능금액 (실측 09-27: 100stk_ord_alow_amt·ord_alow_amt 502,593 · d2_entra 502,323) — 최대 매수 수량에만 쓴다
+              out.cash.krwOrd = rlNum(cd["100stk_ord_alow_amt"]) || rlNum(cd.ord_alow_amt) || null;
               out.cashWd = rlNum(cd.d2_entra);   // 인출가능(D+2) — 참고
             }
           } catch (e) {}
@@ -2983,15 +2985,23 @@ function dpHeldOf(mk, code){
       if(tdNorm(r.mk, r.code) === n) return {i: i, qty: +r.qty || 0}; } }catch(e){}
   return {i: -1, qty: 0};
 }
-function dpMaxQty(mk, side, code, px){
+var DP_FEE_PAD = 0.003;          // 수수료 여유 0.3% — 딱 그 수량을 넣어도 모자라지 않게 (사장님 2026-09-27)
+function dpBuyCash(mk){
+  var c = (mk === "coin" || mk === "coinS"), cs = (typeof RL !== "undefined" && RL.cash) || {};
+  if(c) return +cs.usdt || 0;
+  if(mk === "us") return +cs.usd || 0;
+  return (+cs.krwOrd > 0) ? +cs.krwOrd : (+cs.krw || 0);        // 키움 주문가능금액이 있으면 그것
+}
+function dpMaxQty(mk, side, code, px, used){
   var c = (mk === "coin" || mk === "coinS");
   if(side === "S") return dpHeldOf(mk, code).qty;
-  var cs = (typeof RL !== "undefined" && RL.cash) || {}, cash = c ? (+cs.usdt || 0) : (mk === "us" ? (+cs.usd || 0) : (+cs.krw || 0));
+  var cash = Math.max(0, dpBuyCash(mk) - (+used || 0));
   if(!(px > 0)) return 0;
-  return c ? Math.floor(cash / px * 1e6) / 1e6 : Math.max(0, Math.floor(cash / px));
+  var u = px * (1 + DP_FEE_PAD);
+  return c ? Math.floor(cash / u * 1e6) / 1e6 : Math.max(0, Math.floor(cash / u));
 }
-function dpMaxTxt(mk, side, code, px){
-  var en = LANG === "en", q = dpMaxQty(mk, side, code, px), c = (mk === "coin" || mk === "coinS");
+function dpMaxTxt(mk, side, code, px, used){
+  var en = LANG === "en", q = dpMaxQty(mk, side, code, px, used), c = (mk === "coin" || mk === "coinS");
   return (side === "B" ? (en ? "Max buy " : "최대 매수 ") : (en ? "Max sell " : "최대 매도 ")) + (+q).toLocaleString(undefined, {maximumFractionDigits: 6}) + (c ? (en ? "" : "개") : (en ? " sh" : "주"));
 }
 // 주식 조회 줄 [매수]·[매도] — 들고 있으면 그 줄로, 안 들고 있으면 새 종목으로
@@ -7206,12 +7216,14 @@ function bmRender(){
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
     h += '<table class="mhtab"><tr><th style="text-align:left">종목</th><th>수량</th><th>지정가</th><th>금액</th><th></th></tr>';
+    var _used = {};                                         // 위 매수 줄이 이미 쓴 돈 (사장님 2026-09-27)
     BM.rows.forEach(function(r, i){
       var amt = r.err ? 0 : (r.qty || 0) * (r.px || 0);     // 주문이 실제로 나갈 줄만 금액을 찍는다 (2026-09-25)
+      var _u = _used[r.mk] || 0; if(r.side === "B" && !r.err) _used[r.mk] = _u + amt * (1 + DP_FEE_PAD);
       h += '<tr'+(r.err?' style="opacity:.45"':'')+'><td style="text-align:left"><b class="'+(r.side==="B"?"up":"dn")+'">'+(r.side==="B"?"매수":"매도")+'</b> '+pfEsc(r.name)
-        + '<br><span class="dplbl">'+pfEsc(r.why)+(r.err?' · <span style="color:#ff5c5c">'+pfEsc(r.err)+'</span>':'')+(r.res?' · <b style="color:'+(/거부/.test(r.res)?'#ff5c5c':'#00c805')+'">'+pfEsc(r.res)+'</b>':'')+'</span></td>'
+        + '<br><span class="dplbl">'+pfEsc(String(r.why||"").replace(/ · 칸이 작아 1순위.*$/,""))+(r.res?' · <b style="color:'+(/거부/.test(r.res)?'#ff5c5c':'#00c805')+'">'+pfEsc(r.res)+'</b>':'')+'</span></td>'
         + '<td><input class="dpin" inputmode="numeric" value="'+(r.qty||0)+'" onchange="bmQty('+i+',this.value)" style="width:56px;text-align:right;font:inherit;font-size:13px">'
-        + (function(){ try{ return '<br><span class="dplbl">'+dpMaxTxt(r.mk, r.side, r.code, r.px||0)+'</span>'; }catch(e){ return ""; } })() + '</td>'
+        + (function(){ try{ return '<br><span class="dplbl">'+dpMaxTxt(r.mk, r.side, r.code, r.px||0, r.side === "B" ? _u : 0)+'</span>'; }catch(e){ return ""; } })() + '</td>'
         + '<td>'+(r.px?bmMoney(r.mk, r.px):'—')+'</td><td>'+(amt?bmMoney(r.mk, amt):'—')+'</td>'
         + '<td><span class="mhx" onclick="bmDrop('+i+')">✕</span></td></tr>';
     });
