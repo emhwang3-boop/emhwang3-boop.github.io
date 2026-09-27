@@ -7121,17 +7121,32 @@ async function bmPrice(rows, fx, cash, opt){
       if(!(r.qty > 0) && r.first){ r.qty = 1; r.why += " · 칸이 작아 1순위 1주"; }
       if(!(r.qty > 0)) r.err = "1주 미달";
     });
-    // 현금 한도 — 국내 원화 · 미국 달러 따로. 넘으면 뒤에서부터 뺀다
+    rows.forEach(function(r){ if(r.side === "B" && !r.err){ r.q0 = r.qty; } });   // 돈이 넉넉할 때 살 수량 — 재계산은 여기서 다시 자른다 (2026-09-28)
+    bmCashFit(rows, cash, opt && opt.sellCash);
+}
+// 현금 한도 — 국내 원화 · 미국 달러 따로. 넘으면 뒤에서부터 뺀다
+// 바스켓은 같은 바스켓에서 파는 돈까지 살 돈으로 센다 — 파는 주문을 먼저 낸다 (사장님 2026-09-27 "예수금이 허용하는 한 한 번에")
+function bmCashFit(rows, cash, sellCash){
+    cash = cash || {};
     ["kr", "us"].forEach(function(mk){
       var have = mk === "kr" ? ((+cash.krwOrd > 0) ? +cash.krwOrd : (+cash.krw || 0)) : (+cash.usd || 0), sell = 0;   // 키움 주문가능금액 (2026-09-27)
-      // 바스켓은 같은 바스켓에서 파는 돈까지 살 돈으로 센다 — 파는 주문을 먼저 낸다 (사장님 2026-09-27 "예수금이 허용하는 한 한 번에")
-      if(opt && opt.sellCash) rows.forEach(function(r){ if(r.mk === mk && r.side === "S" && !r.err && r.px) sell += (r.qty || 0) * r.px; });
+      if(sellCash) rows.forEach(function(r){ if(r.mk === mk && r.side === "S" && !r.err && r.px) sell += (r.qty || 0) * r.px; });
       have += sell;
       var use = 0, fp = 1 + DP_FEE_PAD;
-      rows.forEach(function(r){ if(r.mk !== mk || r.side !== "B" || r.err) return; var c = r.qty * r.px * fp;
+      rows.forEach(function(r){ if(r.mk !== mk || r.side !== "B") return;
+        if(r.err === "예수금 부족" && r.q0 > 0){ r.err = null; r.qty = r.q0; }      // 돈이 다시 생겼으면 되살린다
+        if(r.err) return; var c = r.qty * r.px * fp;
         if(use + c > have){ var q = Math.floor((have - use) / (r.px * fp)); if(q > 0){ r.qty = q; use += q * r.px * fp; } else { r.err = "예수금 부족"; r.qty = 0; } }
         else use += c; });
     });
+}
+// 바스켓 재계산 — ✕로 뺀 줄·고친 수량을 반영해 매수 수량을 다시 맞춘다 (사장님 2026-09-28)
+function bmRecalc(){
+  if(!BM.rows) return;
+  BM.rows.forEach(function(r){ if(r.side === "B" && r.q0 > 0 && (!r.err || r.err === "예수금 부족")){ r.err = null; r.qty = r.q0; } });
+  bmCashFit(BM.rows, (typeof RL !== "undefined" && RL.cash) || {}, true);
+  BM.msg = "다시 계산했습니다 — 남은 매도 금액과 주문가능금액 안에서 매수 수량을 맞췄습니다.";
+  bmRender();
 }
 // 바스켓 만들기 — 값은 이때 받는다
 async function bmBuild(){
@@ -7147,9 +7162,9 @@ async function bmBuild(){
   }catch(e){ BM.msg = "바스켓을 못 만들었습니다: " + (e.message || e); }
   BM.busy = false; bmRender();
 }
-function bmDrop(i){ if(BM.rows){ BM.rows.splice(i, 1); bmRender(); } }
+function bmDrop(i){ if(BM.rows){ BM.rows.splice(i, 1); bmRecalc(); } }   // 빼면 다시 맞춘다 (2026-09-28)
 function bmClear(){ if(!BM.rows || !BM.rows.length) return; if(!confirm("바스켓 종목을 모두 지울까요?")) return; BM.rows = null; BM.msg = ""; bmRender(); }   // 한꺼번에 지우기 (사장님 2026-09-26)
-function bmQty(i, v){ var r = BM.rows && BM.rows[i]; if(!r) return; var f = parseFloat(String(v).replace(/[^0-9.]/g, "")), n = r.mk === "coin" ? +(f || 0).toFixed(6) : Math.floor(f); r.qty = n > 0 ? n : 0; bmRender(); }
+function bmQty(i, v){ var r = BM.rows && BM.rows[i]; if(!r) return; var f = parseFloat(String(v).replace(/[^0-9.]/g, "")), n = r.mk === "coin" ? +(f || 0).toFixed(6) : Math.floor(f); r.qty = n > 0 ? n : 0; if(r.side === "B"){ r.q0 = r.qty; if(r.err === "예수금 부족") r.err = null; } bmRecalc(); }
 function bmMoney(mk, v){ if(mk === "coin") return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; return mk === "us" ? "$" + (+v).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : Math.round(v).toLocaleString() + "원"; }
 // ── 모의 판 (사장님 2026-09-26) ──────────────────────────────────────────────
 //   실주문 스위치가 꺼지면 앱 전체가 모의 계좌(DP) 하나만 본다 — 실계좌 값은 한 칸도 섞지 않는다.
@@ -7396,7 +7411,7 @@ function bmRender(){
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
   var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여, 자산배분비율 목표에 한 번에 맞추도록 매수·매도할 종목과 수량을 보여 줍니다. 예수금이 모자라면 아래 줄부터 빠집니다. '
         + '매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)과 자산배분비율 목표를 한 칸 넘게 넘은 갈래입니다. 코인은 [바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
-  h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
+  h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb flat dpsm" onclick="bmRecalc()"'+(BM.busy?" disabled":"")+'>재계산</button>':'')+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
     h += '<table class="mhtab"><tr><th style="text-align:left">종목</th><th>수량</th><th>지정가</th><th>금액</th><th></th></tr>';
@@ -7414,9 +7429,9 @@ function bmRender(){
     ["kr", "us"].forEach(function(mk){
       var b = 0, sl = 0; BM.rows.forEach(function(r){ if(r.mk !== mk || r.err) return; var a = (r.qty||0)*(r.px||0); if(r.side === "B") b += a; else sl += a; });
       if(!b && !sl) return;
-      var have = mk === "kr" ? (+cs.krw||0) : (+cs.usd||0);
+      var have = mk === "kr" ? ((+cs.krwOrd > 0) ? +cs.krwOrd : (+cs.krw||0)) : (+cs.usd||0);   // 주문가능금액 + 매도 − 매수 (2026-09-28)
       h += '<div class="dpmsg" style="font-weight:700;color:var(--nm)">' + (mk === "kr" ? "국내" : "미국") + ' — 매수 ' + bmMoney(mk, b)
-         + (sl ? ' · 매도 ' + bmMoney(mk, sl) : '') + ' · 남는 예수금 ' + bmMoney(mk, Math.max(0, have - b)) + '</div>';
+         + (sl ? ' · 매도 ' + bmMoney(mk, sl) : '') + ' · 남는 예수금 ' + bmMoney(mk, Math.max(0, have + sl - b)) + '</div>';
     });
     var live = BM.rows.some(function(r){ return bmCanLive(r.mk); });
     h += '<button onclick="bmRun()"'+(BM.busy||done?" disabled":"")+' style="display:block;width:100%;margin-top:10px;padding:13px;border:0;border-radius:12px;background:'+(live?"#e03131":"#1c7ed6")+';color:#fff;font-size:15px;font-weight:800;cursor:pointer;opacity:'+(BM.busy||done?".5":"1")+'">'
