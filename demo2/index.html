@@ -3394,23 +3394,18 @@ function dpCoinBuy(){
   dpOpenSell(k2,"B","dpCoinOrd");
   dpMsg("dpMsgC",en?"Pick how much to buy below":"아래에서 얼마나 살지 고르세요");
 }
-// 12칸 코인 줄 [매수]·[매도] — 바로 주문하지 않고 코인 조회 주문창으로 (사장님 2026-09-27)
-function coinGoOrd(k, side, amt){
-  const en=LANG==="en", sym=String(k).toUpperCase()+"USDT";
-  try{ pickCoin(sym, k, "S"); }catch(e){}
-  try{ const c=E("coin2"); if(c&&c.scrollIntoView) c.scrollIntoView({behavior:"smooth"}); }catch(e){}
-  let n=0;
-  (function wait(){
-    try{ dpShowCoinBar(); }catch(e){}
-    if(E("dpCoinB") && coinSym===sym && (side!=="B" || dpPx["coin:"+sym]>0 || n>=50)){   // 매수는 값이 들어올 때까지 기다린다
-      if(side==="B"){ dpCoinBuy();
-        const px=dpPx["coin:"+sym]||0, q=E("dpSQty");
-        if(q&&px>0&&amt>0){ q.value=Math.floor(amt/px*1e6)/1e6; dpSellSync(2); }
-        dpMsg("dpMsgC",(en?"12-slot plan ":"12칸 계획 ")+(+amt).toFixed(2)+" USDT"); }
-      else dpSpotSell();
-      return; }
-    if(++n<=50) setTimeout(wait,150);
-  })();
+// 12칸 코인 줄 [매수]·[매도] — 화면을 옮기지 않고 12칸 코인 표 바로 아래에 한 종목 주문판 (사장님 2026-09-27)
+async function coinGoOrd(k, side, amt){
+  const en=LANG==="en", sym=String(k).toUpperCase()+"USDT", key="coinS:"+sym;
+  let k2=null;
+  if(DP.pos[key]) k2=key;
+  else { const h=dpHeldOf("coinS",sym); if(h.i>=0){ k2="real:"+h.i; if(mkIsMock()){ const q3=rlRows()[h.i]; if(q3&&q3._dk&&DP.pos[q3._dk]) k2=q3._dk; } } }
+  if(side==="S"&&!k2){ alert(k+(en?" — not held":" — 들고 있지 않습니다")); return; }
+  let px=dpPx["coin:"+sym]||0;
+  if(!(px>0)){ try{ const tj=await (await fetch("https://www.okx.com/api/v5/market/ticker?instId="+k+"-USDT")).json(); px=+((tj.data||[{}])[0].last)||0; if(px>0) dpPx["coin:"+sym]=px; }catch(e){} }
+  if(!k2){ dpNewPos={mk:"coinS",code:sym,name:String(k).toUpperCase(),qty:0,avg:0,_real:true,_new:true,_pxkey:"coin:"+sym,_cur:px}; k2="new:"; }
+  dpOpenSell(k2,side,"roOrd_co");
+  if(side==="B"){ dpSellPlan=0; const q=E("dpSQty"); if(q&&px>0&&amt>0){ q.value=Math.floor(amt/px*1e6)/1e6; dpSellSync(2); } }
 }
 
 // ── 코인 현물 주문(시늉) — 증거금·레버리지·청산이 없다. 주식과 같은 셈법. ──
@@ -3620,7 +3615,7 @@ let dpSellCur=null, dpSellSide="S", dpSellBox="dpClose", dpSellPlan=0;   // dpSe
 function dpOpenSell(key,side,boxId){
   const p=dpPosOf(key); if(!p)return;
   side=side==="B"?"B":"S"; boxId=boxId||"dpClose";
-  ["dpClose","dpStkOrd","roOrd_kr","roOrd_us","dpCoinOrd"].forEach(function(id){ if(id!==boxId){ const b=E(id); if(b) b.innerHTML=""; } });   // 판은 한 곳에만
+  ["dpClose","dpStkOrd","roOrd_kr","roOrd_us","roOrd_co","dpCoinOrd"].forEach(function(id){ if(id!==boxId){ const b=E(id); if(b) b.innerHTML=""; } });   // 판은 한 곳에만
   dpSellCur=key; dpSellSide=side; dpSellBox=boxId; dpSellPlan=0;
   const en=LANG==="en", box=E(boxId); if(!box)return;
   const cur=dpPxOf(key,p)||p.avg, B=side==="B";
@@ -3643,7 +3638,8 @@ function dpOpenSell(key,side,boxId){
    +'<input id="dpSPct" class="dpin" style="width:64px;text-align:right" type="number" inputmode="decimal" oninput="dpSellSync(4)" value="'+(B?0:100)+'"><span class="dplbl">%</span>'
    +'<input id="dpSQty" class="dpin" style="text-align:right" type="number" inputmode="decimal" oninput="dpSellSync(2)" value="'
    +(B?"":p.qty)+'"><span class="dplbl">'+(p.mk==="coinS"?String(p.code).replace(/USDT$/,""):(en?"shares":"주"))+'</span>'
-   +'<span class="dplbl" id="dpSCash" style="font-weight:700"></span></div>'
+   +'<span class="dplbl" id="dpSCash" style="font-weight:700"></span>'
+   +'<span class="dplbl" id="dpSAmt" style="font-weight:800;color:var(--nm)"></span></div>'
    +'<div class="dpbar"><button class="dpb '+(B?"buy":"sell")+'" onclick="dpSellGo()">'+(B?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'
    +'<button class="dpb" style="background:var(--bg);color:var(--nm)" onclick="dpSellCancel()">'
    +(en?"Cancel":"취소")+'</button></div>'
@@ -3694,6 +3690,8 @@ function dpSellSync(from){
   const cs=E("dpSCash");                                        // 수량 옆 — 매수는 주문가능금액, 매도는 보유 (사장님 2026-09-27)
   if(cs) cs.textContent=dpSellSide==="B"?((en?"Available ":"주문가능 ")+mm(dpBuyCash(p.mk))):((en?"Holding ":"보유 ")+(+p.qty||0).toLocaleString(undefined,{maximumFractionDigits:8})+(c?dpUnit(p,en):(en?"":"주")));
   const isLim=!!(E("dpSL")&&E("dpSL").classList.contains("on")), lim=isLim?dpNum(E("dpSPx")&&E("dpSPx").value):0, qn=+q.value||0;
+  const ua=E("dpSAmt"), up=lim>0?lim:(dpPxOf(dpSellCur,p)||0);        // 주문금액 = 입력 수량 × 단가(지정가면 그 값) (사장님 2026-09-27)
+  if(ua) ua.textContent=" · "+(en?"Order ":"주문금액 ")+(up>0?mm(qn*up):"-");
   if(isLim&&lim>0){                                             // 지정가면 수량 × 단가 = 주문금액 (사장님 2026-09-27)
     E("dpSellMsg").textContent=qn.toLocaleString(undefined,{maximumFractionDigits:8})+(c?dpUnit(p,en):(en?" sh":"주"))+" × "+mm(lim)+" = "+mm(qn*lim); }
   else if(from) E("dpSellMsg").textContent=(dpSellSide==="B"?(en?"Buying ":"매수 "):(en?"Selling ":"매도 "))+rng.value+"% · "+qn.toLocaleString()
@@ -5272,7 +5270,7 @@ function recoRender(){
                :(r.side==="B"?('<b>'+(+r.amt).toFixed(2)+' USDT</b>'+(r.px?'<br><span class="dplbl">'+(r.amt/r.px).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</span>':'')+(r.px?'<br><span class="dplbl">'+dpMaxTxt("coinS","B",r.k,r.px)+'</span>':''))
                              :('<b>'+(+r.qty).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</b>')))+'</td>'
           +'<td>'+(r.err?('<button class="dpb buy dpsm" disabled style="opacity:.35;cursor:not-allowed">'+(en?"BUY":"매수")+'</button>'):('<button class="dpb '+(r.side==="B"?"buy":"sell")+' dpsm" onclick="coinGoOrd(&quot;'+r.k+'&quot;,&quot;'+r.side+'&quot;,'+(r.side==="B"?(+r.amt).toFixed(2):(+r.qty))+')">'+(r.side==="B"?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'))+'</td></tr>';
-      }).join("")+'</table>';
+      }).join("")+'</table><div id="roOrd_co"></div>';
   }
   if(card._h!==h){ card.innerHTML=h; card._h=h; }   // 같으면 안 그린다 — PC 깜빡임 (2026-09-26)
   try{ bkRender(); }catch(e){}
