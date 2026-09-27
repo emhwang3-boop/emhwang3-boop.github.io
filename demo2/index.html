@@ -3045,7 +3045,7 @@ function dpCoinBar(){
      +'<button class="dpb sell" onclick="dpSpotSell()">'+(en?"SELL":"매도")+'</button>'
      +'</div><div class="dpmsg" id="dpSpEst" style="color:var(--nm);font-weight:700"></div>'
      +'<div class="dpmsg" id="dpMsgC">'+(en?"Spot — no leverage, no liquidation."
-       :"현물 — 레버리지도 청산도 없습니다.")+'</div><div id="obCoin" class="ob"></div>';
+       :"현물 — 레버리지도 청산도 없습니다.")+'</div><div id="dpCoinOrd"></div><div id="obCoin" class="ob"></div>';
   }
   const lev=[1,2,3,5,10].map(function(v){
     return '<option value="'+v+'"'+(v===2?" selected":"")+'>'+v+'x</option>'; }).join("");
@@ -3270,10 +3270,29 @@ function dpCoin(act){
 function dpSpotSell(){
   const en=LANG==="en";
   if(!coinSym){ dpMsg("dpMsgC",en?"Pick a coin":"코인을 먼저 고르세요"); return; }
-  const key="coinS:"+coinSym;
-  if(!DP.pos[key]){ dpMsg("dpMsgC",en?"Nothing to sell":"팔 현물이 없습니다"); return; }
-  dpSellKey(key);
-  dpMsg("dpMsgC",en?"Pick how much to sell below":"아래 표에서 얼마나 팔지 고르세요");
+  // 모의 장부 또는 실계좌 현물 — 코인 조회 주문창 아래에 매도 판을 연다 (사장님 2026-09-27)
+  const key="coinS:"+coinSym; let k2=null;
+  if(DP.pos[key]) k2=key;
+  else { const h=dpHeldOf("coinS",coinSym); if(h.i>=0){ k2="real:"+h.i; if(mkIsMock()){ const q3=rlRows()[h.i]; if(q3&&q3._dk&&DP.pos[q3._dk]) k2=q3._dk; } } }
+  if(!k2){ dpMsg("dpMsgC",en?"Nothing to sell":"팔 현물이 없습니다"); return; }
+  dpOpenSell(k2,"S",E("dpCoinOrd")?"dpCoinOrd":"dpClose");
+  dpMsg("dpMsgC",en?"Pick how much to sell below":"아래에서 얼마나 팔지 고르세요");
+}
+// 12칸 코인 줄 [매수]·[매도] — 바로 주문하지 않고 코인 조회 주문창으로 (사장님 2026-09-27)
+function coinGoOrd(k, side, amt){
+  const en=LANG==="en", sym=String(k).toUpperCase()+"USDT";
+  try{ pickCoin(sym, k, "S"); }catch(e){}
+  try{ const c=E("coin2"); if(c&&c.scrollIntoView) c.scrollIntoView({behavior:"smooth"}); }catch(e){}
+  let n=0;
+  (function wait(){
+    try{ dpShowCoinBar(); }catch(e){}
+    if(E("dpSpQ") && coinSym===sym){
+      if(side==="B"){ dpCoinTp(0); const a=E("dpSpQ"); if(a){ a.value=(+amt).toFixed(2); } dpSpotEst();
+        dpMsg("dpMsgC",(en?"12-slot plan ":"12칸 계획 ")+(+amt).toFixed(2)+" USDT"); }
+      else dpSpotSell();
+      return; }
+    if(++n<40) setTimeout(wait,150);
+  })();
 }
 
 // ── 코인 현물 주문(시늉) — 증거금·레버리지·청산이 없다. 주식과 같은 셈법. ──
@@ -3479,12 +3498,12 @@ function dpBuyKey(key){
   setTimeout(function(){ try{ const b=E("dpClose"); if(b&&b.scrollIntoView) b.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} }, 60);
 }
 // ── 한 종목 주문 판 (매수·매도 같은 모양: 시장가/지정가 · 막대 · % · 수량 · 최대 가능 수량) ──
-let dpSellCur=null, dpSellSide="S", dpSellBox="dpClose";
+let dpSellCur=null, dpSellSide="S", dpSellBox="dpClose", dpSellPlan=0;   // dpSellPlan = 12칸 계획 수량 (2026-09-27)
 function dpOpenSell(key,side,boxId){
   const p=dpPosOf(key); if(!p)return;
   side=side==="B"?"B":"S"; boxId=boxId||"dpClose";
-  ["dpClose","dpStkOrd","roOrd_kr","roOrd_us"].forEach(function(id){ if(id!==boxId){ const b=E(id); if(b) b.innerHTML=""; } });   // 판은 한 곳에만
-  dpSellCur=key; dpSellSide=side; dpSellBox=boxId;
+  ["dpClose","dpStkOrd","roOrd_kr","roOrd_us","dpCoinOrd"].forEach(function(id){ if(id!==boxId){ const b=E(id); if(b) b.innerHTML=""; } });   // 판은 한 곳에만
+  dpSellCur=key; dpSellSide=side; dpSellBox=boxId; dpSellPlan=0;
   const en=LANG==="en", box=E(boxId); if(!box)return;
   const cur=dpPxOf(key,p)||p.avg, B=side==="B";
   const pct=[10,25,50,75,100].map(function(v){
@@ -3550,7 +3569,8 @@ function dpSellSync(from){
   else if(from===2){ let v=dpNum(q.value); const r=base>0?Math.round(Math.min(v,base)/base*100):0; rng.value=r; if(pc) pc.value=r; }
   else if(from===3&&q.value!==""){ fromPct(+rng.value); }
   const en=LANG==="en", mx=E("dpSMax");
-  if(mx) mx.textContent=(dpSellSide==="B"?(en?"Max buy ":"최대 매수 "):(en?"Max sell ":"최대 매도 "))
+  if(mx) mx.textContent=(dpSellPlan>0?((en?"12-slot plan ":"12칸 계획 ")+dpSellPlan+(c?dpUnit(p,en):(en?" sh":"주"))+" · "):"")
+    +(dpSellSide==="B"?(en?"Max buy ":"최대 매수 "):(en?"Max sell ":"최대 매도 "))
     +(+base).toLocaleString(undefined,{maximumFractionDigits:6})+(c?dpUnit(p,en):(en?" sh":"주"))+" = 100%";
   const mm=function(v){ return c?((+v).toLocaleString(undefined,{maximumFractionDigits:2})+" USDT"):dpMoney(p.mk,v); };
   const cs=E("dpSCash");                                        // 수량 옆 — 매수는 주문가능금액, 매도는 보유 (사장님 2026-09-27)
@@ -5133,7 +5153,7 @@ function recoRender(){
           +'<td>'+(r.err?'<span style="color:#ff5c5c;font-size:12px">'+r.err+'</span>'
                :(r.side==="B"?('<b>'+(+r.amt).toFixed(2)+' USDT</b>'+(r.px?'<br><span class="dplbl">'+(r.amt/r.px).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</span>':'')+(r.px?'<br><span class="dplbl">'+dpMaxTxt("coinS","B",r.k,r.px)+'</span>':''))
                              :('<b>'+(+r.qty).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</b>')))+'</td>'
-          +'<td>'+(r.err?('<button class="dpb buy dpsm" disabled style="opacity:.35;cursor:not-allowed">'+(en?"BUY":"매수")+'</button>'):('<button class="dpb '+(r.side==="B"?"buy":"sell")+' dpsm" onclick="coinOrd(&quot;'+r.k+'&quot;,&quot;'+r.side+'&quot;,'+(r.side==="B"?(+r.amt).toFixed(2):(+r.qty))+')">'+(r.side==="B"?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'))+'</td></tr>';
+          +'<td>'+(r.err?('<button class="dpb buy dpsm" disabled style="opacity:.35;cursor:not-allowed">'+(en?"BUY":"매수")+'</button>'):('<button class="dpb '+(r.side==="B"?"buy":"sell")+' dpsm" onclick="coinGoOrd(&quot;'+r.k+'&quot;,&quot;'+r.side+'&quot;,'+(r.side==="B"?(+r.amt).toFixed(2):(+r.qty))+')">'+(r.side==="B"?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'))+'</td></tr>';
       }).join("")+'</table>';
   }
   if(card._h!==h){ card.innerHTML=h; card._h=h; }   // 같으면 안 그린다 — PC 깜빡임 (2026-09-26)
@@ -6874,6 +6894,7 @@ async function recoOrd(key){
   else if(r.side === "S"){ alert(r.name + " — 들고 있지 않은 종목입니다."); return; }
   else { dpNewPos = {mk: r.mk, code: String(r.code).replace(/\.US$/i, ""), name: r.name, qty: 0, avg: 0, _real: true, _new: true, _pxkey: r.mk + ":" + r.code, _cur: r.cur || r.px || 0}; k = "new:"; }
   dpOpenSell(k, r.side, "roOrd_" + r.mk);
+  dpSellPlan = r.qty > 0 ? r.qty : 0;
   var q = E("dpSQty"); if(q && r.qty > 0){ q.value = r.qty; dpSellSync(2); }
   setTimeout(function(){ try{ var b = E("roOrd_" + r.mk); if(b && b.scrollIntoView) b.scrollIntoView({behavior: "smooth", block: "center"}); }catch(e){} }, 60);
 }
