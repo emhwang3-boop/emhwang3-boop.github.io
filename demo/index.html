@@ -4930,7 +4930,7 @@ function recoRender(){
           return '<tr><td style="text-align:left;cursor:pointer" onclick="' + go + ';E(\'stock\').scrollIntoView({behavior:\'smooth\'})"><u>' + dpEsc(r.name) + '</u><br><span class="dplbl">' + dpEsc(r.why) + '</span></td>'
             + '<td class="' + (m20 == null ? "fl" : (m20 >= 0 ? "up" : "dn")) + '">' + (m20 == null ? "-" : ((m20 > 0 ? "+" : "") + m20.toFixed(1) + "%")) + '</td>'
             + '<td id="roq_' + key.replace(/[^A-Za-z0-9]/g, "_") + '">' + (r.side === "B" ? '<span class="dplbl">' + money(r.mk === "us" ? r.amt / fx : r.amt) + '</span>' : (r.qty + (en ? " sh" : "주"))) + '</td>'
-            + '<td><button class="dpb ' + (r.side === "B" ? "buy" : "sell") + ' dpsm" onclick="recoOrd(&quot;' + key + '&quot;)">' + (r.side === "B" ? (en ? "BUY" : "매수") : (en ? "SELL" : "매도")) + '</button></td></tr>'; }).join("") + '</table>'; }
+            + '<td><button id="rob_' + key.replace(/[^A-Za-z0-9]/g, "_") + '" class="dpb ' + (r.side === "B" ? "buy" : "sell") + ' dpsm" onclick="recoOrd(&quot;' + key + '&quot;)">' + (r.side === "B" ? (en ? "BUY" : "매수") : (en ? "SELL" : "매도")) + '</button></td></tr>'; }).join("") + '</table>'; }
     }
     // 🔴 예전 표(오늘 살 것 하루 한 종목 · 다음 후보)는 더 안 보인다 — 계좌·성향이 없으면 한 줄만 (사장님 2026-09-26)
     else if(true){
@@ -5008,7 +5008,7 @@ function recoRender(){
           +'<td>'+(r.err?'<span style="color:#ff5c5c;font-size:12px">'+r.err+'</span>'
                :(r.side==="B"?('<b>'+(+r.amt).toFixed(2)+' USDT</b>'+(r.px?'<br><span class="dplbl">'+(r.amt/r.px).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</span>':''))
                              :('<b>'+(+r.qty).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</b>')))+'</td>'
-          +'<td>'+(r.err?'':('<button class="dpb '+(r.side==="B"?"buy":"sell")+' dpsm" onclick="coinOrd(&quot;'+r.k+'&quot;,&quot;'+r.side+'&quot;,'+(r.side==="B"?(+r.amt).toFixed(2):(+r.qty))+')">'+(r.side==="B"?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'))+'</td></tr>';
+          +'<td>'+(r.err?('<button class="dpb buy dpsm" disabled style="opacity:.35;cursor:not-allowed">'+(en?"BUY":"매수")+'</button>'):('<button class="dpb '+(r.side==="B"?"buy":"sell")+' dpsm" onclick="coinOrd(&quot;'+r.k+'&quot;,&quot;'+r.side+'&quot;,'+(r.side==="B"?(+r.amt).toFixed(2):(+r.qty))+')">'+(r.side==="B"?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'))+'</td></tr>';
       }).join("")+'</table>';
   }
   if(card._h!==h){ card.innerHTML=h; card._h=h; }   // 같으면 안 그린다 — PC 깜빡임 (2026-09-26)
@@ -6645,7 +6645,9 @@ var RO_P = {at: 0, sig: "", map: {}, busy: false};
 function roPaint(){
   Object.keys(RO_P.map).forEach(function(k){
     var r = RO_P.map[k], el = document.getElementById("roq_" + k.replace(/[^A-Za-z0-9]/g, "_")); if(!el) return;
-    if(window._RO && window._RO[k]){ window._RO[k].qty = r.qty; window._RO[k].px = r.px; window._RO[k].err = r.err; }
+    if(window._RO && window._RO[k]){ window._RO[k].qty = r.qty; window._RO[k].px = r.px; window._RO[k].err = r.err; if(r.amt != null) window._RO[k].amt = r.amt; }
+    var bt = document.getElementById("rob_" + k.replace(/[^A-Za-z0-9]/g, "_"));   // 최소수량 미달 줄은 단추를 흐리게·막는다 (사장님 2026-09-27)
+    if(bt){ bt.disabled = !!r.err; bt.style.opacity = r.err ? ".35" : ""; bt.style.cursor = r.err ? "not-allowed" : ""; }
     el.innerHTML = r.err ? '<span style="color:#ff5c5c;font-size:12px">' + r.err + '</span>'
       : '<b>' + (r.qty || 0) + '주</b><br><span class="dplbl">' + bmMoney(r.mk, (r.qty || 0) * (r.px || 0)) + '</span>';
   });
@@ -6690,7 +6692,8 @@ function coPlan(R){
     if(n<=0){ if(c==="알트") altInfo(); return; }
     var L=[];
     if(c==="BTC"||c==="ETH"){ if(C[c]&&C[c].state==="long") L.push([c, Math.min(n*slot, budget-have)]); }
-    else{ alts.forEach(function(k){ if(!held[k]&&L.length<n) L.push([k, slot]); }); if(!L.length) altInfo(); }
+    else{ alts.forEach(function(k){ if(!held[k]&&L.length<n) L.push([k, slot]); }); if(!L.length) altInfo();
+      else if(slot<5&&L.length>1) L=[[L[0][0], slot*L.length]]; }   // 칸이 작으면 1순위로 모음 (사장님 2026-09-27)
     L.forEach(function(x){ var amt=Math.min(x[1], cash), r={side:"B", k:x[0], amt:amt, px:pxOf(x[0]), m20:m20(x[0]),
         why:c+" "+(LANG==="en"?"target ":"목표 ")+m[1]+"% · "+(LANG==="en"?"held ":"보유 ")+(tot>0?(have/tot*100).toFixed(1):"0")+"%"};
       if(amt<5) r.err=(LANG==="en"?"USDT short":"USDT 부족"); else cash-=amt; rows.push(r); });
@@ -6732,8 +6735,9 @@ async function recoOrd(key){
   var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350;
   var cur = 0; try{ cur = await bmCur(r.mk, r.code); }catch(e){}
   if(!(cur > 0)){ alert("현재가를 못 받았습니다."); return; }
+  if(r.err){ alert(r.name + " — " + r.err); return; }
   var px = bmLimit(r.mk, r.side, cur, r.name), q = r.qty || 0;
-  if(r.side === "B"){ q = Math.floor((r.mk === "us" ? r.amt / fx : r.amt) / px); if(q < 1) q = 1; }
+  if(r.side === "B"){ var q2 = Math.floor((r.mk === "us" ? r.amt / fx : r.amt) / px); if(q2 > 0) q = q2; if(!(q > 0)){ alert(r.name + " — 1주 미달"); return; } }
   var live = rlCanLiveStock(r.mk);
   if(!dpAsk((live ? "실주문 · " : "모의 · ") + (r.side === "B" ? "매수 " : "매도 ") + r.name + " " + q + "주 @ " + bmMoney(r.mk, px))) return;
   if(!live){
@@ -6801,9 +6805,22 @@ async function bmPrice(rows, fx, cash){
       r.px = bmLimit(r.mk, r.side, r.cur, r.name);
       if(r.side === "B") r.qty = Math.floor((r.mk === "us" ? r.amt / fx : r.amt) / r.px);
       // 두 갈래 (사장님 2026-09-26): 한 칸으로 1주가 안 되면 그 갈래 추천 1순위만 1주 — 예수금이 되면 산다(아래 예수금 한도에서 가린다)
-      if(r.side === "B" && !(r.qty > 0) && r.first){ r.qty = 1; r.why += " · 칸이 작아 1순위 1주"; }
-      if(!(r.qty > 0)) r.err = "1주 미달";
     }
+    // 칸이 작아 1주가 안 되는 줄이 있으면 그 갈래 몫을 1순위로 모은다 (사장님 2026-09-27)
+    var byC = {};
+    rows.forEach(function(r){ if(r.side === "B" && !r.err) (byC[r.cls] = byC[r.cls] || []).push(r); });
+    Object.keys(byC).forEach(function(c){
+      var L = byC[c], f = L.filter(function(r){ return r.first; })[0] || L[0];
+      if(L.length < 2 || !L.some(function(r){ return !(r.qty > 0); })) return;
+      var sum = 0; L.forEach(function(r){ sum += r.amt; });
+      f.amt = sum; f.qty = Math.floor((f.mk === "us" ? sum / fx : sum) / f.px); f.why += " · 칸이 작아 1순위로 모음";
+      L.forEach(function(r){ if(r !== f){ r.qty = 0; r.err = "1순위로 모음"; } });
+    });
+    rows.forEach(function(r){
+      if(r.side !== "B" || r.err) return;
+      if(!(r.qty > 0) && r.first){ r.qty = 1; r.why += " · 칸이 작아 1순위 1주"; }
+      if(!(r.qty > 0)) r.err = "1주 미달";
+    });
     // 현금 한도 — 국내 원화 · 미국 달러 따로. 넘으면 뒤에서부터 뺀다
     ["kr", "us"].forEach(function(mk){
       var have = mk === "kr" ? (+cash.krw || 0) : (+cash.usd || 0), sell = 0;
