@@ -1648,7 +1648,7 @@ applyLang();
 function apply(t){document.body.classList.toggle("light",t==="light");document.getElementById("tg").textContent=t==="light"?"☀️":"🌙";}
 function toggle(){const t=document.body.classList.contains("light")?"dark":"light";try{localStorage.setItem("brief_theme",t);}catch(e){}apply(t);}
 (function(){let t;try{t=localStorage.getItem("brief_theme");}catch(e){}
-  if(!t)t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";apply(t);})();
+  if(!t)t="light";apply(t);})();   // 기본은 라이트 (사장님 2026-09-27) — 폰 설정이 다크여도
 </script>
 <script>
 /* 상표 마크 — 한글 화면엔 한글, EN 화면엔 영문 (사장님 2026-09-16) */
