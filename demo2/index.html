@@ -2235,6 +2235,8 @@ async function rlLotSz(instId) {
                           + encodeURIComponent(instId));
     const j = await r.json();
     v = rlNum(((j.data || [])[0] || {}).lotSz);
+    if (!RL.pmin) RL.pmin = {};
+    RL.pmin[instId] = rlNum(((j.data || [])[0] || {}).minSz);   // 최소 계약 수 (2026-09-27)
   } catch (e) {}
   RL.lot[instId] = v > 0 ? v : 0.1;
   return RL.lot[instId];
@@ -2242,6 +2244,14 @@ async function rlLotSz(instId) {
 
 // 현물 — 사는 것은 USDT 금액, 파는 것은 코인 수량
 async function rlSpotBuy(inst, amtUsdt, limitPx) {
+  // 최소 수량(minSz) 밑이면 거래소가 51020 으로 거부한다 — 먼저 알려 준다 (2026-09-27)
+  try {
+    const j = await (await fetch("https://www.okx.com/api/v5/public/instruments?instType=SPOT&instId=" + encodeURIComponent(inst))).json();
+    const mz = rlNum(((j.data || [])[0] || {}).minSz);
+    let px = limitPx > 0 ? limitPx : 0;
+    if (!(px > 0)) { const t = await (await fetch("https://www.okx.com/api/v5/market/ticker?instId=" + encodeURIComponent(inst))).json(); px = rlNum(((t.data || [])[0] || {}).last); }
+    if (mz > 0 && px > 0 && amtUsdt < mz * px) throw new Error("최소수량 미달 — " + inst.split("-")[0] + " 최소 " + mz + "개 ≈ " + (mz * px).toFixed(2) + " USDT");
+  } catch (e) { if (/최소수량/.test(e.message || "")) throw e; }
   const b = {instId: inst, tdMode: "cash", side: "buy"};
   if (limitPx > 0) {                       // 🔴 지정가면 sz 가 코인 수량이다
     b.ordType = "limit"; b.px = String(limitPx);
@@ -2268,7 +2278,8 @@ async function rlPerpOpen(inst, side, marginUsdt, lev, px, limitPx) {
   if (!(use > 0)) throw new Error("값을 못 받았습니다");
   const cv = await rlCtVal(inst), lot = await rlLotSz(inst);
   let sz = (marginUsdt * lev) / (use * cv);
-  sz = Math.max(lot, Math.floor(sz / lot) * lot);
+  const mn = Math.max(lot, (RL.pmin && RL.pmin[inst]) || 0);          // 최소 계약 수 밑이면 거래소가 51020 으로 거부 (2026-09-27)
+  sz = Math.max(mn, Math.floor(sz / lot) * lot);
   sz = +sz.toFixed(8);
   const b = {instId: inst, tdMode: "isolated", side: (side === "L" ? "buy" : "sell"),
              sz: String(sz)};
@@ -6654,7 +6665,14 @@ async function roFill(){
   }catch(e){ RO_P.busy = false; }
 }
 // 코인 D 규칙 계획 (사장님 2026-09-26) — PC 자동매매 엔진 buy_d_coin 과 같은 셈
+// OKX 현물 코인별 최소 수량(minSz) — 한 번 받아 둔다 (사장님 2026-09-27: ZEC 12.65 USDT 가 51020 으로 거부)
+var CO_MIN = null;
+function coMinLoad(){ if(CO_MIN) return; CO_MIN = {};
+  fetch("https://www.okx.com/api/v5/public/instruments?instType=SPOT").then(function(r){ return r.json(); }).then(function(j){
+    (j.data || []).forEach(function(x){ CO_MIN[x.instId] = +x.minSz || 0; }); try{ recoRender(); }catch(e){} }).catch(function(){ CO_MIN = null; }); }
+function coMinU(k, px){ var m = (CO_MIN && CO_MIN[k + "-USDT"]) || 0; return Math.max(5, m * (+px || 0) * 1.03); }
 function coPlan(R){
+  coMinLoad();
   var C=(R&&R.coin)||{}, RU=(typeof AT!=="undefined"&&AT.st&&AT.st.rules)||{item_tp:30,item_sl:-15};
   var pos=((RL&&RL.co)||[]).filter(function(p){ return p.spot && (p.qty||0)>0; }), cash=(RL.cash&&+RL.cash.usdt)||0;
   var cls=function(k){ return (k==="BTC"||k==="ETH")?k:"알트"; };
@@ -6682,10 +6700,10 @@ function coPlan(R){
     var L=[];
     if(c==="BTC"||c==="ETH"){ if(C[c]&&C[c].state==="long") L.push([c, Math.min(n*slot, budget-have)]); }
     else{ alts.forEach(function(k){ if(!held[k]&&L.length<n) L.push([k, slot]); }); if(!L.length) altInfo();
-      else if(slot<5&&L.length>1) L=[[L[0][0], slot*L.length]]; }   // 칸이 작으면 1순위로 모음 (사장님 2026-09-27)
+      else if(L.length>1&&L.some(function(x){ return slot<coMinU(x[0], pxOf(x[0])); })) L=[[L[0][0], slot*L.length]]; }   // 칸이 최소 주문보다 작으면 1순위로 모음 (사장님 2026-09-27)
     L.forEach(function(x){ var amt=Math.min(x[1], cash), r={side:"B", k:x[0], amt:amt, px:pxOf(x[0]), m20:m20(x[0]),
         why:c+" "+(LANG==="en"?"target ":"목표 ")+m[1]+"% · "+(LANG==="en"?"held ":"보유 ")+(tot>0?(have/tot*100).toFixed(1):"0")+"%"};
-      if(amt<5) r.err=(LANG==="en"?"USDT short":"USDT 부족"); else cash-=amt; rows.push(r); });
+      if(amt<coMinU(x[0], r.px)) r.err=(amt<5||cash<coMinU(x[0], r.px))?(LANG==="en"?"USDT short":"USDT 부족"):(LANG==="en"?"Below min order":"최소수량 미달"); else cash-=amt; rows.push(r); });
   });
   return rows;
 }
