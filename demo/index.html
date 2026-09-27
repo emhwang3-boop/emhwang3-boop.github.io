@@ -6894,7 +6894,7 @@ function bmPlan(o, opt){
       var c = m[0], budget = tot * m[1] / 100, slot = budget / 12, have = val[c] || 0;
       if(c === "예금·MMF" || !(slot > 0)) return;                     // 예수금이 곧 예금·MMF
       // 달마다 한 번 — 목표를 한 칸 넘게 넘은 ETF 갈래를 목표까지 줄인다
-      if(trimOk && !BM_STOCK_CLS[c] && have > budget + slot){
+      if(trimOk && have > budget + slot){          // 주식 갈래도 목표 초과에 건다 (사장님 2026-09-27)
         var over = have - budget;
         (RL.kr || []).concat(RL.us || []).filter(function(p){ return pfClassOf(p) === c; }).forEach(function(p){
           if(over <= 0) return; var k = p.mk === "us" ? fx : 1, pv = (+p.cur || 0) * k; if(!(pv > 0)) return;
@@ -7210,7 +7210,7 @@ function bmRender(){
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
   var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여 매수·매도할 종목과 수량을 보여 줍니다. '
-        + '매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)과 자산배분비율 목표를 한 칸 넘게 넘은 ETF 갈래입니다. 코인은 [바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
+        + '매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)과 자산배분비율 목표를 한 칸 넘게 넘은 갈래입니다. 코인은 [바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
