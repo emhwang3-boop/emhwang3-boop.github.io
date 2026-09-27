@@ -3159,7 +3159,7 @@ function dpOrder(side){
       if(mk==="kr")DP.krw+=px*qty; else DP.usd+=px*qty;
     }
     DP.pos[key]=p; if(p.qty<=0)delete DP.pos[key];
-    DP.log.unshift({t:dpNow(),kind:mk,code:stkCode,name:p.name,side:side,qty:qty,px:px,
+    DP.log.unshift({ts:Date.now(),t:dpNow(),kind:mk,code:stkCode,name:p.name,side:side,qty:qty,px:px,
                     how:ask>0?(en?"limit":"지정가"):(en?"market":"시장가")});
     DP.log=DP.log.slice(0,60); dpSave(); dpRender(); dpBusyS=false;
     dpMsg("dpMsg",(side==="B"?(en?"Filled (buy) ":"체결 (매수) "):(en?"Filled (sell) ":"체결 (매도) "))+dpMoney(mk,px));
@@ -3207,7 +3207,7 @@ function dpCoin(act){
     DP.usdt-=mg;
     DP.pos[key]={mk:"coin",code:coinSym,name:coinSym,side:act,entry:fill,margin:mg,lev:lev,
                  liq:act==="L"?fill*(1-1/lev*0.99):fill*(1+1/lev*0.99)};
-    DP.log.unshift({t:dpNow(),kind:"coin",code:coinSym,name:coinSym,side:act,qty:mg,px:fill,
+    DP.log.unshift({ts:Date.now(),t:dpNow(),kind:"coin",code:coinSym,name:coinSym,side:act,qty:mg,px:fill,
                     how:(isLim?(en?"limit":"지정가"):(en?"market":"시장가"))+" · "+lev+"x"});
     DP.log=DP.log.slice(0,60); dpSave(); dpRender(); dpBusyC=false;
     dpMsg("dpMsgC",(act==="L"?(en?"Long filled ":"롱 진입 "):(en?"Short filled ":"숏 진입 "))
@@ -3270,7 +3270,7 @@ function dpCoinSpot(side){
     const cost=fill*q;
     p.avg=(p.avg*p.qty+cost)/(p.qty+q); p.qty+=q; DP.usdt-=cost;
     DP.pos[key]=p;
-    DP.log.unshift({t:dpNow(),kind:"coin",code:coinSym,name:coinSym,side:"B",qty:q,px:fill,
+    DP.log.unshift({ts:Date.now(),t:dpNow(),kind:"coin",code:coinSym,name:coinSym,side:"B",qty:q,px:fill,
       how:(en?"spot ":"현물 ")+(isLim?(en?"limit":"지정가"):(en?"market":"시장가"))});
     DP.log=DP.log.slice(0,60); dpSave(); dpRender(); dpBusyC=false;
     const _sym=String(coinSym).replace(/USDT$/,"");
@@ -3322,7 +3322,7 @@ function dpCloseKey(key,ratio){
   const pnl=(p.side==="L"?1:-1)*(cur/p.entry-1)*p.lev*part;
   DP.usdt+=part+pnl;
   if(r>=0.999)delete DP.pos[key]; else { p.margin-=part; DP.pos[key]=p; }
-  DP.log.unshift({t:dpNow(),kind:"coin",code:p.code,name:p.code,side:"X",qty:part,px:cur,
+  DP.log.unshift({ts:Date.now(),t:dpNow(),kind:"coin",code:p.code,name:p.code,side:"X",qty:part,px:cur,
                   how:(LANG==="en"?((p.side==="L"?"long":"short")+" close "):
                        ((p.side==="L"?"롱":"숏")+" 청산 "))+Math.round(r*100)+"%",pnl:pnl});
   DP.log=DP.log.slice(0,60); dpSave(); dpRender();
@@ -3389,7 +3389,7 @@ function dpCloseGo(){
   if(p._real){
     const cur=dpPxOf(key,p)||p.entry;
     const pl=(p.side==="L"?1:-1)*(cur/p.entry-1)*(p.lev||1)*amt;
-    DP.log.unshift({t:dpNow(),kind:"coin",code:p.code,name:p.code,side:"X",qty:amt,px:cur,
+    DP.log.unshift({ts:Date.now(),t:dpNow(),kind:"coin",code:p.code,name:p.code,side:"X",qty:amt,px:cur,
                     how:((p.side==="L"?(en?"long":"롱"):(en?"short":"숏"))
                         +(en?" close ":" 청산 ")+Math.round(r*100)+"%"+(en?" · demo":" · 모의")),
                     pnl:pl});
@@ -3529,7 +3529,7 @@ function dpSellGo(){
   }
   if(p._real){
     // 🔴 실계좌 줄은 증권사가 가진 값이다. 여기서 줄이면 1분 뒤 되돌아와 거짓말이 된다.
-    DP.log.unshift({t:dpNow(),kind:p.mk,code:p.code,name:p.name,side:"S",qty:q,px:px,
+    DP.log.unshift({ts:Date.now(),t:dpNow(),kind:p.mk,code:p.code,name:p.name,side:"S",qty:q,px:px,
                     how:how+(en?" · demo":" · 모의"),pnl:pnl});
     DP.log=DP.log.slice(0,60); dpSave(); dpRender();
     dpDemoSaid("dpSellMsg",en); return;
@@ -3538,7 +3538,7 @@ function dpSellGo(){
   // 🔴 코인 현물을 팔면 원화·달러가 아니라 USDT 로 들어온다
   if(p.mk==="kr")DP.krw+=px*q; else if(p.mk==="coinS")DP.usdt+=px*q; else DP.usd+=px*q;
   if(p.qty<=0)delete DP.pos[key]; else DP.pos[key]=p;
-  DP.log.unshift({t:dpNow(),kind:p.mk,code:p.code,name:p.name,side:"S",qty:q,px:px,
+  DP.log.unshift({ts:Date.now(),t:dpNow(),kind:p.mk,code:p.code,name:p.name,side:"S",qty:q,px:px,
                   how:(isLim?(en?"limit":"지정가"):(en?"market":"시장가")),pnl:pnl});
   DP.log=DP.log.slice(0,60); dpSave(); dpRender();
   dpSellCancel();
@@ -6911,7 +6911,7 @@ function mkYdRows(md){
     if(/실주문|REAL/.test(r.how || "")) return;
     var mk = (r.kind === "coin" || r.kind === "coinS") ? "coin" : r.kind;
     var sd = (r.side === "B" || r.side === "L") ? "B" : "S";
-    var amt = (r.kind === "coin") ? +r.qty : (+r.qty) * (+r.px);
+    var amt = (r.kind === "coin" && !/현물|spot/i.test(r.how || "")) ? +r.qty : (+r.qty) * (+r.px);   // 선물은 증거금 · 현물은 개수×값 (2026-09-27)
     var code = mk === "coin" ? String(r.code).toUpperCase().replace(/USDT$/, "") + "-USDT" : r.code;
     var k = mk + ":" + code + ":" + sd;
     g[k] = g[k] || {mk: mk, code: code, name: mk === "coin" ? String(code).split("-")[0] : (r.name || code), side: sd, qty: 0, amt: 0, pl: sd === "S" ? 0 : null, est: false};
