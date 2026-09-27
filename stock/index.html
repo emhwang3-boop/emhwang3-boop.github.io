@@ -784,7 +784,7 @@ E("stkq").addEventListener("input",function(){
     E("stkResults").innerHTML='<div class="soonrow">'+(LANG==="en"?"Searching…":"검색 중…")+'</div>';
     const latin=/[A-Za-z]/.test(q)&&!/[가-힣]/.test(q);
     lastResults=[]; usResults=[];
-    if(latin)usFetch("search","q="+encodeURIComponent(q)).then(function(d){if(seq!==searchSeq)return;usResults=(d&&d.data)||[];renderStkResults();});
+    if(latin||/[가-힣]/.test(q))usFetch("search","q="+encodeURIComponent(q)).then(function(d){if(seq!==searchSeq)return;usResults=(d&&d.data)||[];renderStkResults();});
     krFetch("search","q="+encodeURIComponent(q),4).then(function(rows){if(seq!==searchSeq)return;lastResults=rows||[];renderStkResults();});
   },350);
 });
