@@ -4882,7 +4882,7 @@ function recoRender(){
     if(!x||x.err)return '<div class="dpmsg">'+(mk==="kr"?"국내":"미국")+' '+(en?"not ready":"자료 없음")+'</div>';
     const slot=tot>0?tot/12:0, empty=Math.max(0,12-held.length);
     const money=function(v){ return mk==="kr"?(Math.round(v).toLocaleString()+(en?" KRW":"원")):("$"+(+v).toLocaleString(undefined,{maximumFractionDigits:2})); };
-    let s='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm);text-align:center">'+(mk==="kr"?(en?"KR stocks":"국내 주식"):(en?"US stocks":"미국 주식"))
+    let s='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm);text-align:center">'+(mk==="kr"?(en?"KR stocks":"국내종목"):(en?"US stocks":"미국종목"))
       +' <span class="dplbl">'+(en?"as of ":"")+x.asof+(en?"":" 종가")+'</span></div>';
     // 칸 줄은 위 [12칸 현황] 표로 옮겼다 (사장님 2026-09-24)
     // 팔 것 — +15% 도달 · 60영업일 만기 · (국내·미국 공통 규칙)
