@@ -3126,33 +3126,43 @@ function dpCoinBar(){
    +(en?"Limit price":"지정가 가격")+'" oninput="try{dpSpotEst()}catch(e){} try{dpPerpEst()}catch(e){}" disabled>'
    +'</div><div class="dpmsg" id="dpCoinMax" style="font-weight:700;color:var(--nm)"></div>';
   if(sp){
-    // 🔴 현물은 주식과 똑같다 — 수량과 매수·매도뿐. 레버리지도 청산도 없다.
-    return head
-     +'<div class="dpbar">'
-     +'<span class="dplbl">'+(en?"Amount":"금액")+'</span>'
-     +'<input id="dpSpQ" class="dpin" type="number" inputmode="decimal" step="any" placeholder="USDT" oninput="dpSpotEst()">'
-     +'<span class="dplbl">$</span>'
-     +'<span class="dplbl">'+(en?"Qty":"수량")+'</span>'
-     +'<input id="dpSpN" class="dpin" type="number" inputmode="decimal" step="any" placeholder="'
-     +(en?"qty":"수량")+'" oninput="dpSpotEst()" disabled>'
-     +'<button class="dpb buy" onclick="dpCoinSpot(\'B\')">'+(en?"BUY":"매수")+'</button>'
-     +'<button class="dpb sell" onclick="dpSpotSell()">'+(en?"SELL":"매도")+'</button>'
-     +'</div><div class="dpmsg" id="dpSpEst" style="color:var(--nm);font-weight:700"></div>'
-     +'<div class="dpmsg" id="dpMsgC">'+(en?"Spot — no leverage, no liquidation."
-       :"현물 — 레버리지도 청산도 없습니다.")+'</div><div id="dpCoinOrd"></div><div id="obCoin" class="ob"></div>';
+    // 🔴 현물은 주식 조회와 같은 모양 — 평소엔 접고, [매수]·[매도]를 누르면 한 종목 주문판(막대·%·수량) (사장님 2026-09-27)
+    return '<div class="dpbar"><span class="ckind sp">'+(en?"SPOT":"현물")+'</span>'
+     +'<span class="dplbl" id="dpCoinMax" style="flex:1;font-weight:700"></span>'
+     +'<button id="dpCoinB" class="dpb buy" onclick="dpCoinBuy()">'+(en?"BUY":"매수")+'</button>'
+     +'<button class="dpb sell" onclick="dpSpotSell()">'+(en?"SELL":"매도")+'</button></div>'
+     +'<div class="dpmsg" id="dpMsgC">'+(en?"Spot — no leverage, no liquidation.":"현물 — 레버리지도 청산도 없습니다.")+'</div>'
+     +'<div id="dpCoinOrd"></div>';
   }
   const lev=[1,2,3,5,10].map(function(v){
     return '<option value="'+v+'"'+(v===2?" selected":"")+'>'+v+'x</option>'; }).join("");
   return head
    +'<div class="dpbar">'
    +'<span class="dplbl">'+(en?"Margin":"증거금")+'</span>'
-   +'<input id="dpMg" class="dpin" type="number" inputmode="decimal" placeholder="USDT" oninput="dpPerpEst()">'
+   +'<input id="dpMg" class="dpin" type="number" inputmode="decimal" placeholder="USDT" oninput="dpMgSync(2);dpPerpEst()">'
    +'<span class="dplbl">'+(en?"Leverage":"레버리지")+'</span>'
    +'<select id="dpLev" class="dpin dpsel" onchange="dpPerpEst()">'+lev+'</select>'
    +'<button class="dpb buy" onclick="dpCoin(\'L\')">'+(en?"LONG":"롱")+'</button>'
    +'<button class="dpb sell" onclick="dpCoin(\'S\')">'+(en?"SHORT":"숏")+'</button>'
    +'<button class="dpb flat" onclick="dpCoin(\'X\')">'+(en?"CLOSE":"청산")+'</button>'
-   +'</div><div class="dpmsg" id="dpPerpEst" style="color:var(--nm);font-weight:700"></div><div class="dpmsg" id="dpMsgC"></div><div id="obCoin" class="ob"></div>';
+   +'</div>'
+   // 증거금 막대 — 주문가능 USDT = 100% (사장님 2026-09-27)
+   +'<input type="range" id="dpMgRng" class="dprng" min="0" max="100" step="1" value="0" list="dpTicks" oninput="dpMgSync(1)">'
+   +'<div class="dpbar">'+[10,25,50,75,100].map(function(v){ return '<button class="dppct" onclick="dpMgPct('+v+')">'+v+'%</button>'; }).join("")
+   +'<input id="dpMgPctIn" class="dpin" style="width:64px;text-align:right" type="number" inputmode="decimal" value="0" oninput="dpMgSync(4)"><span class="dplbl">%</span></div>'
+   +'<div class="dpmsg" id="dpPerpEst" style="color:var(--nm);font-weight:700"></div><div class="dpmsg" id="dpMsgC"></div><div id="obCoin" class="ob"></div>';
+}
+// 선물 증거금 막대 — 100% = 주문가능 USDT (사장님 2026-09-27)
+function dpMgBase(){ const cs=(typeof RL!=="undefined"&&RL.cash)||{}; return +cs.usdt||0; }
+function dpMgPct(v){ const r=E("dpMgRng"); if(r){ r.value=v; dpMgSync(1); } }
+function dpMgSync(from){
+  const r=E("dpMgRng"), m=E("dpMg"), pc=E("dpMgPctIn"); if(!r||!m) return;
+  const base=dpMgBase();
+  const set=function(v){ v=Math.max(0,Math.min(100,v)); m.value=base>0?(Math.floor(base*v)/100).toFixed(2):""; };
+  if(from===1){ set(+r.value); if(pc) pc.value=r.value; }
+  else if(from===4){ let v=dpNum(pc&&pc.value); if(v>100)v=100; r.value=Math.round(v); set(v); }
+  else if(from===2){ const v=dpNum(m.value), q=base>0?Math.round(Math.min(v,base)/base*100):0; r.value=q; if(pc) pc.value=q; }
+  try{ dpPerpEst(); }catch(e){}
 }
 // 선물 지정가 — 수량(코인 수) × 단가 = 주문금액(증거금 × 레버리지) (사장님 2026-09-27)
 function dpPerpEst(){
@@ -3219,7 +3229,7 @@ function dpShowCoinBar(){
   // 🔴 열쇠에 현물/선물을 같이 넣는다. 안 그러면 갈아탔는데 옛 칸이 남는다.
   const kd=(typeof coinKind!=="undefined"&&coinKind==="S")?"S":"F";
   const key=kd+":"+coinSym;
-  if(dpBarCoin!==key||!E("dpTpM")){ E("dpCoin").innerHTML=dpCoinBar(); dpBarCoin=key; }
+  if(dpBarCoin!==key||!(E("dpTpM")||E("dpCoinB"))){ E("dpCoin").innerHTML=dpCoinBar(); dpBarCoin=key; }
   try{ const mx=E("dpCoinMax"), en=LANG==="en", cs=(typeof RL!=="undefined"&&RL.cash)||{}, u=+cs.usdt||0;   // 주문가능 수량 (사장님 2026-09-27)
     if(mx){ if(kd==="S"){ const cur=dpPx["coin:"+coinSym]||0; mx.textContent=dpMaxTxt("coinS","B",coinSym,cur)+" ("+(+u.toFixed(2))+" USDT) · "+dpMaxTxt("coinS","S",coinSym,cur); }
             else mx.textContent=(en?"Available margin ":"주문가능 증거금 ")+(+u.toFixed(2))+" USDT"; } }catch(e){}
@@ -3372,6 +3382,16 @@ function dpSpotSell(){
   dpOpenSell(k2,"S",E("dpCoinOrd")?"dpCoinOrd":"dpClose");
   dpMsg("dpMsgC",en?"Pick how much to sell below":"아래에서 얼마나 팔지 고르세요");
 }
+// 코인 현물 [매수] — 한 종목 주문판 (들고 있으면 그 줄, 아니면 새 코인) (사장님 2026-09-27)
+function dpCoinBuy(){
+  const en=LANG==="en"; if(!coinSym){ dpMsg("dpMsgC",en?"Pick a coin":"코인을 먼저 고르세요"); return; }
+  const key="coinS:"+coinSym, sym=String(coinSym).replace(/USDT$/,""); let k2=null;
+  if(DP.pos[key]) k2=key;
+  else { const h=dpHeldOf("coinS",coinSym); if(h.i>=0){ k2="real:"+h.i; if(mkIsMock()){ const q3=rlRows()[h.i]; if(q3&&q3._dk&&DP.pos[q3._dk]) k2=q3._dk; } } }
+  if(!k2){ dpNewPos={mk:"coinS",code:coinSym,name:sym,qty:0,avg:0,_real:true,_new:true,_pxkey:"coin:"+coinSym,_cur:dpPx["coin:"+coinSym]||0}; k2="new:"; }
+  dpOpenSell(k2,"B","dpCoinOrd");
+  dpMsg("dpMsgC",en?"Pick how much to buy below":"아래에서 얼마나 살지 고르세요");
+}
 // 12칸 코인 줄 [매수]·[매도] — 바로 주문하지 않고 코인 조회 주문창으로 (사장님 2026-09-27)
 function coinGoOrd(k, side, amt){
   const en=LANG==="en", sym=String(k).toUpperCase()+"USDT";
@@ -3380,12 +3400,14 @@ function coinGoOrd(k, side, amt){
   let n=0;
   (function wait(){
     try{ dpShowCoinBar(); }catch(e){}
-    if(E("dpSpQ") && coinSym===sym){
-      if(side==="B"){ dpCoinTp(0); const a=E("dpSpQ"); if(a){ a.value=(+amt).toFixed(2); } dpSpotEst();
+    if(E("dpCoinB") && coinSym===sym && (side!=="B" || dpPx["coin:"+sym]>0 || n>=50)){   // 매수는 값이 들어올 때까지 기다린다
+      if(side==="B"){ dpCoinBuy();
+        const px=dpPx["coin:"+sym]||0, q=E("dpSQty");
+        if(q&&px>0&&amt>0){ q.value=Math.floor(amt/px*1e6)/1e6; dpSellSync(2); }
         dpMsg("dpMsgC",(en?"12-slot plan ":"12칸 계획 ")+(+amt).toFixed(2)+" USDT"); }
       else dpSpotSell();
       return; }
-    if(++n<40) setTimeout(wait,150);
+    if(++n<=50) setTimeout(wait,150);
   })();
 }
 
