@@ -674,6 +674,7 @@ function fmt(n){n=+n;return n>=1000?n.toLocaleString(undefined,{maximumFractionD
 const coinSpark={};   // 심볼→최근 종가 배열(선그래프용, 5분마다 갱신)
 const _last24={};     // 심볼→방금 받은 현재가 (김프 셈에 쓴다)
 async function loadCoinKlines(){
+  if(!document.getElementById("coin")) return;          // 코인 카드를 들어낸 앱 — 헛조회 안 함 (2026-09-27)
   for(const [nm,sym] of COINS){
     try{const k=await fetch("https://api.binance.com/api/v3/klines?symbol="+sym+"&interval=1h&limit=30").then(r=>r.json());
       coinSpark[sym]=k.map(c=>+c[4]);}catch(e){}
@@ -728,6 +729,7 @@ setInterval(refreshKimp,15000);
 setTimeout(refreshKimp,2000);                   // 켠 직후 한 번(시세·환율이 차기를 기다려)
 
 async function loadCoin(){
+  if(!document.getElementById("coin")) return;          // 코인 카드가 없으면 멈춘다 — 3초마다 오류·바이낸스 헛조회 (2026-09-27)
   try{const out=[];
     for(const [nm,sym] of COINS){
       const d=await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol="+sym).then(r=>r.json());
@@ -1025,7 +1027,7 @@ function c21Calc(key,B,CH){
 
 function makeChart(cid,opt){
   opt=opt||{};const cv=E(cid);
-  if(!cv)return {setData:function(){},patchLast:function(){}};   // 칸이 없으면 조용히 넘어간다
+  if(!cv||(typeof _EDUM!=="undefined"&&cv===_EDUM)||!cv.getContext)return {setData:function(){},patchLast:function(){},flip:function(){},setLiq:function(){},state:function(){return {};},meas:function(){return null;},repaint:function(){}};   // 칸이 없으면(빈 쪽지 포함) 조용히 넘어간다   // 칸이 없으면 조용히 넘어간다
   const NF=opt.fmt||(v=>Math.round(v).toLocaleString());
   // 🔴 청산맵 판은 **선물일 때만** 보인다 (사장님 2026-09-20 "현물이면 청산맵을 보여주면 안 되는 거로").
   //    현물에는 청산이 없으므로 그 판 자체를 목록에서 뺀다. setLiq() 로 오가며 바꾼다.
