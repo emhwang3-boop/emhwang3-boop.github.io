@@ -5341,7 +5341,7 @@ function pbItems(){
     rlRows().forEach(function(p){
       if(!(+p.qty > 0)) return;
       if(p.mk === "kr") it.push({key: "kr:" + String(p.code), name: p.name || p.code, qty: +p.qty, cur: +p.cur, fx: false});
-      else if(p.mk === "us") it.push({key: "us:" + String(p.code).replace(/\.US$/i, "").toUpperCase(), name: p.name || p.code, qty: +p.qty, cur: +p.cur, fx: true});
+      else if(p.mk === "us") it.push({key: "us:" + String(p.code).replace(/\.US$/i, "").toUpperCase(), name: p.name || p.code, qty: +p.qty, cur: +p.cur, fx: false});   // 미국은 달러로 — 환율 빼고 (사장님 2026-09-28)
       else if(p.mk === "coin" && p.spot) it.push({key: "co:" + String(p.code).toUpperCase(), name: String(p.code).split("-")[0] + (LANG === "en" ? " spot" : " 현물"), qty: +p.qty, cur: +p.cur, fx: true});
     });
   }catch(e){}
@@ -5380,19 +5380,21 @@ function pbPaint(){
     return '<tr><td style="text-align:left">' + dpEsc(x.name) + '</td>' + cells.map(function(v){ return '<td>' + (ser === undefined ? '<span class="dplbl">…</span>' : pct(v)) + '</td>'; }).join("") + '</tr>';
   }).join(""); };
   var totOf = function(){ return MO.map(function(){ return {a: 0, b: 0, n: 0}; }); };
-  var stk = it.filter(function(x){ return x.key.indexOf("co:") !== 0; }), coi = it.filter(function(x){ return x.key.indexOf("co:") === 0; });
-  var tot = totOf(), totC = totOf(), rows = mkRows(stk, tot), rowsC = mkRows(coi, totC);
-  var sumRow = function(t, lab){ return '<tr class="pbcsum"><td style="text-align:left">' + lab + '</td>' + t.map(function(q){ return '<td>' + (q.b > 0 ? pct((q.a / q.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>'; };
-  var totRow = '<tr class="pbsum"><td style="text-align:left">' + (en ? "Total" : "전체") + '</td>' + tot.map(function(t){ return '<td>' + (t.b > 0 ? pct((t.a / t.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>';
-  var idx = [["ix:^KS11", en ? "KOSPI" : "코스피"], ["ix:^GSPC", "S&P500"]].map(function(q){
-    var ser = PB.px[q[0]], last = ser ? ser[ser.length - 1][1] : null;
-    return '<tr class="pbix"><td style="text-align:left">' + q[1] + '</td>' + T.map(function(ms){ var p0 = pbAt(ser, ms); return '<td>' + (ser === undefined ? '…' : pct(p0 > 0 && last > 0 ? (last / p0 - 1) * 100 : null)) + '</td>'; }).join("") + '</tr>';
-  }).join("");
+  // 🔴 전체를 시장별로 — 국내시장 전체(원화) ↔ 코스피 · 미국시장 전체(달러, 환율 빼고) ↔ S&P500 · 코인 합계 (사장님 2026-09-28)
+  var grp = function(pre){ return it.filter(function(x){ return x.key.indexOf(pre) === 0; }); };
+  var kr = grp("kr:"), us = grp("us:"), coi = grp("co:");
+  var totK = totOf(), totU = totOf(), totC = totOf(), rowsK = mkRows(kr, totK), rowsU = mkRows(us, totU), rowsC = mkRows(coi, totC);
+  var sumRow = function(t, lab, cls){ return '<tr class="' + cls + '"><td style="text-align:left">' + lab + '</td>' + t.map(function(q){ return '<td>' + (q.b > 0 ? pct((q.a / q.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>'; };
+  var ixRow = function(key, lab){
+    var ser = PB.px[key], last = ser ? ser[ser.length - 1][1] : null;
+    return '<tr class="pbix"><td style="text-align:left">' + lab + '</td>' + T.map(function(ms){ var p0 = pbAt(ser, ms); return '<td>' + (ser === undefined ? '…' : pct(p0 > 0 && last > 0 ? (last / p0 - 1) * 100 : null)) + '</td>'; }).join("") + '</tr>';
+  };
   box.innerHTML = '<h3>' + (en ? "Current portfolio backtest" : "현재 포트폴리오 백테스트") + '</h3>'
-    + '<div class="dpmsg">' + (en ? "If you had bought today's holdings (same quantities) back then · in KRW, US and crypto at that day's FX" : "지금 들고 있는 수량 그대로 그때 샀다면 · 원화 기준(미국·코인은 그때 환율)") + '</div>'
+    + '<div class="dpmsg">' + (en ? "If you had bought today's holdings (same quantities) back then · Korea in KRW · US in USD · crypto in KRW at that day's FX" : "지금 들고 있는 수량 그대로 그때 샀다면 · 국내 원화 · 미국 달러 · 코인은 그때 환율로 원화") + '</div>'
     + '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th>' + (en ? "3M" : "3개월") + '</th><th>' + (en ? "6M" : "6개월") + '</th><th>' + (en ? "1Y" : "1년") + '</th></tr>'
-    + rows + (stk.length ? totRow : '') + idx
-    + (coi.length ? rowsC + sumRow(totC, en ? "Crypto total" : "코인 합계") : '') + '</table>';
+    + (kr.length ? rowsK + sumRow(totK, en ? "Korea total" : "국내시장 전체", "pbsum") + ixRow("ix:^KS11", en ? "KOSPI" : "코스피") : '')
+    + (us.length ? rowsU + sumRow(totU, en ? "US total (USD)" : "미국시장 전체 (달러)", "pbsum") + ixRow("ix:^GSPC", "S&P500") : '')
+    + (coi.length ? rowsC + sumRow(totC, en ? "Crypto total" : "코인 합계", "pbcsum") : '') + '</table>';
 }
 function pbRender(){
   try{
@@ -5403,7 +5405,8 @@ function pbRender(){
     var it = pbItems();
     it.forEach(function(x){ pbSeries(x.key); });
     if(it.some(function(x){ return x.fx; })) pbSeries("fx:KRW=X");
-    if(it.length){ pbSeries("ix:^KS11"); pbSeries("ix:^GSPC"); }
+    if(it.some(function(x){ return x.key.indexOf("kr:") === 0; })) pbSeries("ix:^KS11");
+    if(it.some(function(x){ return x.key.indexOf("us:") === 0; })) pbSeries("ix:^GSPC");
     pbPaint();
   }catch(e){}
 }
