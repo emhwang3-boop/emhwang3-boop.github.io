@@ -4007,7 +4007,7 @@ function dpHoldRender(){
       :p.spot?(en?"SPOT":"현물")
       :((en?"PERP ":"선물 ")+(p.side==="L"?(en?"LONG":"롱"):(en?"SHORT":"숏"))+" "+p.lev+"x");
     const tagc=(p.mk==="coin")?(p.spot?" sp":" fu"):"";
-    _rh[ri]='<tr><td>'+anyLogo(p.code,p.mk)
+    _rh[ri]='<tr><td style="line-height:1.6">'+anyLogo(p.code,p.mk)
      +'<span class="mhnm" style="cursor:pointer" onclick="mhGo(&quot;'+dpEsc(String(p.code||"")).replace(/"/g,"")+'&quot;,&quot;'
        +dpEsc(String(p.name||p.code||"")).replace(/"/g,"")+'&quot;,&quot;'+(p.mk||"kr")+'&quot;,'+(p.spot?1:0)+')">'
        +dpEsc(p.name||p.code)+'</span>'+' <span class="mkt'+tagc+'">'+tag+'</span>'
