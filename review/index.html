@@ -5360,7 +5360,7 @@ function recoRender(){
           var m20 = r20Of(r.code);
           var key = r.side + ":" + r.mk + ":" + r.code; window._RO[key] = r;
           var go = r.mk === "kr" ? ("pickStock('" + r.code + "','" + String(r.name).replace(/'/g, "") + "')") : ("pickStockUS('" + String(r.code).replace(/\.US$/, "") + ".US','" + String(r.code).replace(/\.US$/, "") + "')");
-          return '<tr><td style="text-align:left;cursor:pointer" onclick="' + go + ';E(\'stock\').scrollIntoView({behavior:\'smooth\'})"><u>' + dpEsc(r.name) + '</u><br><span class="dplbl">' + dpEsc(r.why) + '</span></td>'
+          return '<tr><td style="text-align:left;cursor:pointer;overflow-wrap:anywhere" onclick="' + go + ';E(\'stock\').scrollIntoView({behavior:\'smooth\'})"><u>' + dpEsc(r.name) + '</u><br><span class="dplbl">' + dpEsc(r.why).replace(/ (목표|target) /, "<br>$1 ") + '</span></td>'   // 종목명 · 자산군 · 목표/보유 세 줄 — 첫 칸이 좁아져 폰에서 단추가 안 잘린다 (사장님 2026-09-28)
             + '<td class="' + (m20 == null ? "fl" : (m20 >= 0 ? "up" : "dn")) + '">' + (m20 == null ? "-" : ((m20 > 0 ? "+" : "") + m20.toFixed(1) + "%")) + '</td>'
             + '<td id="roq_' + key.replace(/[^A-Za-z0-9]/g, "_") + '">' + (r.side === "B" ? '<span class="dplbl">…</span>' : '<b>' + r.qty + (en ? " sh" : "주") + '</b>') + '</td>'
             + '<td id="roa_' + key.replace(/[^A-Za-z0-9]/g, "_") + '">' + (r.side === "B" ? '<span class="dplbl">' + money(r.mk === "us" ? r.amt / fx : r.amt) + '</span>' : '<span class="dplbl">…</span>') + '</td>'
