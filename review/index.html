@@ -4190,8 +4190,8 @@ function atPaint(){
     +'<tr><td style="text-align:left">'+KE("종목 하나","Each item")+'</td><td>'+inp("atItp",ru.item_tp)+'</td><td>'+inp("atIsl",ru.item_sl)+'</td></tr>'
     +'<tr><td style="text-align:left">'+KE("전체 (국내+미국+코인)","Whole (KR+US+crypto)")+'</td><td>'+inp("atPtp",ru.pf_tp)+'</td><td>'+inp("atPsl",ru.pf_sl)+'</td></tr></table>'
     +'<button class="dpb flat" style="width:100%;margin-top:6px" onclick="atSaveRules()">'+KE("기준 저장","Save rules")+'</button>';
-  h+='<div class="dpmsg" style="margin-top:8px">'+KE("매수: 시장마다 하루 한 번, 「오늘 살 것」을 1칸(총자산÷12)만큼. 1주도 못 사면 건너뜁니다.<br>매도: 종목이 익절·손절 기준에 닿으면 그 종목만, 전체가 닿으면 전부 팔고 스스로 꺼집니다.<br>컴퓨터가 켜져 있어야 돕니다.",
-      "Buy: once a day per market, today's pick for one slot (assets÷12).<br>Sell: an item at its take/stop, everything at the whole-portfolio take/stop, then it turns itself off.<br>Your PC must be on.")+'</div>';
+  h+='<div class="dpmsg" style="margin-top:8px">'+KE("매수: 국내·미국은 매달 첫 거래일에 한 번 성향 목표로 맞춥니다 — 이번 달 목록에서 빠진 종목은 팔고, 1주에 모자라도 1주는 삽니다. 코인은 하루 한 번 「오늘 살 것」을 삽니다.<br>매도: 종목이 손절 기준에 닿으면 그 종목만 바로 팝니다. 종목 익절은 코인에만 쓰며, 0이면 쓰지 않습니다. 전체가 익절·손절 기준에 닿으면 전부 팔고 다음 달 1일까지 쉽니다.<br>컴퓨터가 켜져 있어야 돕니다.",
+      "Buy: KR·US rebalance to your profile once, on the first trading day of each month — items that left this month's list are sold; at least one share is bought. Crypto buys today's pick once a day.<br>Sell: an item at its stop-loss right away. Item take-profit applies to crypto only; 0 turns it off. At the whole-portfolio take/stop everything is sold and it rests until the 1st of next month.<br>Your PC must be on.")+'</div>';
   if(L.at) h+='<div class="dpmsg" style="margin-top:6px">'+KE("마지막 점검 ","Last check ")+dpEsc(L.at)+' · '+KE("전체 ","whole ")+'<b>'+((L.pf>0?"+":"")+(+L.pf||0).toFixed(2))+'%</b>'
       +((L.err||[]).length?'<br><span style="color:#e03131">'+dpEsc(L.err.join(" / "))+'</span>':'')+'</div>';
   var lg=(st.log||[]).slice().reverse();
@@ -7339,7 +7339,7 @@ function coPlan(R){
   var rows=[], m20=function(k){ var z=C[k]; return (z&&z.mom20!=null)?+z.mom20:null; }, pxOf=function(k){ var z=C[k]; return z&&z.price?+z.price:((held[k]&&held[k].cur)||0); };
   // 팔 것 — 추천이 매도로 바뀐 BTC·ETH 전량 · 종목 익절/손절(자동매매 창 기준)
   Object.keys(held).forEach(function(k){ var p=held[k], z=C[k], why="";
-    if((+p.rt||0)>=RU.item_tp) why=(LANG==="en"?"Take profit ":"종목 익절 +")+(+p.rt).toFixed(1)+"%";
+    if(RU.item_tp>0&&(+p.rt||0)>=RU.item_tp) why=(LANG==="en"?"Take profit ":"종목 익절 +")+(+p.rt).toFixed(1)+"%";
     else if((+p.rt||0)<=RU.item_sl) why=(LANG==="en"?"Stop loss ":"종목 손절 ")+(+p.rt).toFixed(1)+"%";
     if(why) rows.push({side:"S", k:k, qty:+p.qty, px:pxOf(k), m20:m20(k), why:why}); });
   var alts=Object.keys(C).filter(function(k){ var z=C[k]; return k!=="BTC"&&k!=="ETH"&&z&&(z["new"]||z.state==="long"); })
@@ -7495,7 +7495,7 @@ function bmPlan(o, opt){
     hs.forEach(function(p){
       var rt = +p.rt || 0, why = "";
       if(all) why = "바스켓 전체 " + (pf > 0 ? "+" : "") + pf.toFixed(1) + "% — 전부 " + (pf >= RU.pf_tp ? "익절" : "손절");
-      else if(rt >= RU.item_tp) why = "종목 " + (rt > 0 ? "+" : "") + rt.toFixed(1) + "% 익절(+" + RU.item_tp + "%)";
+      else if(RU.item_tp > 0 && rt >= RU.item_tp) why = "종목 " + (rt > 0 ? "+" : "") + rt.toFixed(1) + "% 익절(+" + RU.item_tp + "%)";
       else if(rt <= RU.item_sl) why = "종목 " + rt.toFixed(1) + "% 손절(" + RU.item_sl + "%)";
       if(why && (+p.qty || 0) > 0) rows.push({side: "S", mk: p.mk, code: p.code, name: p.name || p.code, cls: pfClassOf(p), qty: Math.floor(+p.qty), why: why});
     });
