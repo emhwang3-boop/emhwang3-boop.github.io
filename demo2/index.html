@@ -4562,12 +4562,13 @@ setTimeout(function(){ dpRender(); dpTick(); }, 1200); setInterval(dpTick,10000)
  +"#mhBody .mhtab td:nth-child(2){white-space:normal;word-break:break-all}"
  +"#mhBody .mhtab tr.mhgrp td:first-child{white-space:normal}"
  +"#mhBody .mhtab .dpsm{width:100%;box-sizing:border-box;padding:6px 0;text-align:center}}"
- +"@media(min-width:521px){#mhBody .mhtab{table-layout:fixed}"   /* PC 전용 — 폰과 같은 칸 나눔(카드 폭 약 460px라 표가 밀려 단추가 잘렸다, 사장님 2026-09-28) · 폰 규칙은 그대로 */
- +"#mhBody .mhtab th:first-child{width:25%}"
- +"#mhBody .mhtab th:nth-child(2){width:12%}"
- +"#mhBody .mhtab th:nth-child(3),#mhBody .mhtab th:nth-child(4){width:17%}"
- +"#mhBody .mhtab th:nth-child(6){width:17%}"
- +"#mhBody .mhtab th:nth-child(7){width:12%}"
+ +"@media(min-width:521px){#mhBody .mhtab{table-layout:fixed}"   /* PC 전용 — 카드 폭 약 460px라 표가 밀려 단추가 잘렸다 · 7칸 모두 폭(평가 칸이 0이라 손익과 겹쳤다) (사장님 2026-09-28) · 폰 규칙은 그대로 */
+ +"#mhBody .mhtab th:first-child{width:22%}"
+ +"#mhBody .mhtab th:nth-child(2){width:10%}"
+ +"#mhBody .mhtab th:nth-child(3),#mhBody .mhtab th:nth-child(4),#mhBody .mhtab th:nth-child(5){width:15%}"
+ +"#mhBody .mhtab th:nth-child(6){width:13%}"
+ +"#mhBody .mhtab th:nth-child(7){width:10%}"
+ +"#mhBody .mhtab td:nth-child(5){white-space:nowrap;overflow:hidden;text-overflow:clip}"
  +"#mhBody .mhtab th{white-space:nowrap;line-height:1.35;vertical-align:bottom}"
  +"#mhBody .mhtab td:nth-child(3),#mhBody .mhtab td:nth-child(4),#mhBody .mhtab td:nth-child(6){white-space:nowrap;overflow:hidden;text-overflow:clip}"
  +"#mhBody .mhtab td:nth-child(2){white-space:normal;word-break:break-all}"
@@ -5235,13 +5236,14 @@ function recoRender(){
       var _pl = []; try{ _pl = bmPlan(_pfo).rows.filter(function(r){ return r.mk === mk; }); }catch(e){}
       s += '<div class="dpmsg" style="font-weight:700;color:var(--nm)">' + (en ? "Today (profile rule)" : "오늘 살 것·팔 것 — 내 성향 규칙") + '</div>';
       if(!_pl.length) s += '<div class="dpmsg">' + (en ? "Nothing today — classes are near target." : "오늘은 없습니다 — 갈래가 목표 근처입니다.") + '</div>';
-      else { window._RO = window._RO || {}; s += '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th>' + (en ? "20d return" : "20일 수익률") + '</th><th>' + (en ? "Amount" : "금액·수량") + '</th><th></th></tr>' + _pl.map(function(r){
+      else { window._RO = window._RO || {}; s += '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th style="white-space:nowrap">' + (en ? "20d" : "20일") + '</th><th>' + (en ? "Qty" : "수량") + '</th><th>' + (en ? "Amount" : "금액") + '</th><th></th></tr>' + _pl.map(function(r){
           var m20 = r20Of(r.code);
           var key = r.side + ":" + r.mk + ":" + r.code; window._RO[key] = r;
           var go = r.mk === "kr" ? ("pickStock('" + r.code + "','" + String(r.name).replace(/'/g, "") + "')") : ("pickStockUS('" + String(r.code).replace(/\.US$/, "") + ".US','" + String(r.code).replace(/\.US$/, "") + "')");
           return '<tr><td style="text-align:left;cursor:pointer" onclick="' + go + ';E(\'stock\').scrollIntoView({behavior:\'smooth\'})"><u>' + dpEsc(r.name) + '</u><br><span class="dplbl">' + dpEsc(r.why) + '</span></td>'
             + '<td class="' + (m20 == null ? "fl" : (m20 >= 0 ? "up" : "dn")) + '">' + (m20 == null ? "-" : ((m20 > 0 ? "+" : "") + m20.toFixed(1) + "%")) + '</td>'
-            + '<td id="roq_' + key.replace(/[^A-Za-z0-9]/g, "_") + '">' + (r.side === "B" ? '<span class="dplbl">' + money(r.mk === "us" ? r.amt / fx : r.amt) + '</span>' : (r.qty + (en ? " sh" : "주"))) + '</td>'
+            + '<td id="roq_' + key.replace(/[^A-Za-z0-9]/g, "_") + '">' + (r.side === "B" ? '<span class="dplbl">…</span>' : '<b>' + r.qty + (en ? " sh" : "주") + '</b>') + '</td>'
+            + '<td id="roa_' + key.replace(/[^A-Za-z0-9]/g, "_") + '">' + (r.side === "B" ? '<span class="dplbl">' + money(r.mk === "us" ? r.amt / fx : r.amt) + '</span>' : '<span class="dplbl">…</span>') + '</td>'
             + '<td><button id="rob_' + key.replace(/[^A-Za-z0-9]/g, "_") + '" class="dpb ' + (r.side === "B" ? "buy" : "sell") + ' dpsm" onclick="recoOrd(&quot;' + key + '&quot;)">' + (r.side === "B" ? (en ? "BUY" : "매수") : (en ? "SELL" : "매도")) + '</button></td></tr>'; }).join("") + '</table><div id="roOrd_' + mk + '"></div>'; }
     }
     // 🔴 예전 표(오늘 살 것 하루 한 종목 · 다음 후보)는 더 안 보인다 — 계좌·성향이 없으면 한 줄만 (사장님 2026-09-26)
@@ -5310,16 +5312,18 @@ function recoRender(){
     var _cp=[]; try{ _cp=coPlan(R); }catch(e){}
     h+='<div class="dpmsg" style="font-weight:700;color:var(--nm)">'+(en?"Today (crypto rule)":"오늘 살 것·팔 것 — 코인 규칙")+'</div>';
     if(!_cp.length) h+='<div class="dpmsg">'+(en?"Nothing today — classes are near target.":"오늘은 없습니다 — 갈래가 목표 근처입니다.")+'</div>';
-    else h+='<table class="mhtab"><tr><th style="text-align:left">'+(en?"Coin":"코인")+'</th><th>'+(en?"Price<br>(USDT)":"가격<br>(USDT)")+'</th><th>'+(en?"20d return":"20일 수익률")+'</th><th>'+(en?"Amount":"금액·수량")+'</th><th></th></tr>'
+    else h+='<table class="mhtab"><tr><th style="text-align:left">'+(en?"Coin":"코인")+'</th><th style="white-space:nowrap">'+(en?"20d":"20일")+'</th><th>'+(en?"Qty":"수량")+'</th><th>'+(en?"Amount":"금액")+'</th><th></th></tr>'
       +_cp.map(function(r){
         if(r.info) return '<tr><td style="text-align:left"><b>'+r.k+'</b><br><span class="dplbl">'+dpEsc(r.why)+'</span></td><td colspan="4" class="dplbl" style="text-align:center">'+r.msg+'</td></tr>';
         var m20=r.m20;
         return '<tr><td style="text-align:left;cursor:pointer" onclick="pickCoin(&quot;'+r.k+'USDT&quot;,&quot;'+r.k+'&quot;,&quot;S&quot;);E(&quot;coin2&quot;).scrollIntoView({behavior:&quot;smooth&quot;})"><u>'+r.k+'</u> <span class="ckind sp">'+(en?"SPOT":"현물")+'</span><br><span class="dplbl">'+dpEsc(r.why)+'</span></td>'
-          +'<td>'+(r.px?(+r.px).toLocaleString(undefined,{maximumFractionDigits:4}):"-")+'</td>'
           +'<td class="'+(m20==null?"fl":(m20>=0?"up":"dn"))+'">'+(m20==null?"-":((m20>0?"+":"")+m20.toFixed(1)+"%"))+'</td>'
-          +'<td>'+(r.err?'<span style="color:#ff5c5c;font-size:12px">'+r.err+'</span>'
-               :(r.side==="B"?('<b>'+(+r.amt).toFixed(2)+' USDT</b>'+(r.px?'<br><span class="dplbl">'+(r.amt/r.px).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</span>':'')+(r.px?'<br><span class="dplbl">'+dpMaxTxt("coinS","B",r.k,r.px)+'</span>':''))
-                             :('<b>'+(+r.qty).toLocaleString(undefined,{maximumFractionDigits:6})+(en?"":"개")+'</b>')))+'</td>'
+          +(function(){ // 수량 · 금액 두 칸 — 주식 표와 같은 틀 (사장님 2026-09-28)
+              var ea=en?"":"개", q=r.side==="B"?(r.px?r.amt/r.px:0):(+r.qty||0), a=r.side==="B"?(+r.amt||0):q*(+r.px||0);
+              var mx=""; try{ if(r.px) mx=(en?"Max ":"최대 ")+(+dpMaxQty("coinS",r.side,r.k,r.px)).toLocaleString(undefined,{maximumFractionDigits:4})+ea; }catch(e){}   // 수량과 같은 소수 4자리
+              var qc=(r.err?'<span style="color:#ff5c5c;font-size:12px">'+r.err+'</span>':'<b>'+q.toLocaleString(undefined,{maximumFractionDigits:4})+ea+'</b>')+(mx?'<br><span class="dplbl">'+mx+'</span>':'');
+              var ac=r.err?'<span class="dplbl">—</span>':'<b>'+a.toFixed(2)+' USDT</b>'+(r.px?'<br><span class="dplbl">@'+(+r.px).toLocaleString(undefined,{maximumFractionDigits:4})+'</span>':'');
+              return '<td>'+qc+'</td><td>'+ac+'</td>'; })()
           +'<td>'+(r.err?('<button class="dpb buy dpsm" disabled style="opacity:.35;cursor:not-allowed">'+(en?"BUY":"매수")+'</button>'):('<button class="dpb '+(r.side==="B"?"buy":"sell")+' dpsm" onclick="coinGoOrd(&quot;'+r.k+'&quot;,&quot;'+r.side+'&quot;,'+(r.side==="B"?(+r.amt).toFixed(2):(+r.qty))+')">'+(r.side==="B"?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'))+'</td></tr>';
       }).join("")+'</table><div id="roOrd_co"></div>';
   }
@@ -6961,9 +6965,13 @@ function roPaint(){
     if(window._RO && window._RO[k]){ window._RO[k].qty = r.qty; window._RO[k].px = r.px; window._RO[k].err = r.err; window._RO[k].cur = r.cur; if(r.amt != null) window._RO[k].amt = r.amt; }
     var bt = document.getElementById("rob_" + k.replace(/[^A-Za-z0-9]/g, "_"));   // 최소수량 미달 줄은 단추를 흐리게·막는다 (사장님 2026-09-27)
     if(bt){ bt.disabled = !!r.err; bt.style.opacity = r.err ? ".35" : ""; bt.style.cursor = r.err ? "not-allowed" : ""; }
-    el.innerHTML = r.err ? '<span style="color:#ff5c5c;font-size:12px">' + r.err + '</span>'
-      : '<b>' + (r.qty || 0) + '주</b><br><span class="dplbl">× ' + bmMoney(r.mk, r.px || 0) + ' = ' + bmMoney(r.mk, (r.qty || 0) * (r.px || 0)) + '</span>';
-    try{ el.innerHTML += '<br><span class="dplbl">' + dpMaxTxt(r.mk, r.side, r.code, r.px || r.cur || 0) + '</span>'; }catch(e){}   // 최대 가능 수량 (2026-09-27)
+    // 수량 칸 = 굵은 N주 / 작은 최대 M주 · 금액 칸 = 굵은 금액 / 작은 @단가 (사장님 2026-09-28 "보기 쉽게 통일")
+    var mx = ""; try{ mx = dpMaxTxt(r.mk, r.side, r.code, r.px || r.cur || 0).replace(/^최대 (매수|매도) /, "최대 ").replace(/^Max (buy|sell) /, "Max "); }catch(e){}
+    el.innerHTML = (r.err ? '<span style="color:#ff5c5c;font-size:12px">' + r.err + '</span>' : '<b>' + (r.qty || 0) + '주</b>')
+      + (mx ? '<br><span class="dplbl">' + mx + '</span>' : '');
+    var ea = document.getElementById("roa_" + k.replace(/[^A-Za-z0-9]/g, "_"));
+    if(ea) ea.innerHTML = r.err ? '<span class="dplbl">—</span>'
+      : '<b>' + bmMoney(r.mk, (r.qty || 0) * (r.px || 0)) + '</b><br><span class="dplbl">@' + bmMoney(r.mk, r.px || 0) + '</span>';
   });
 }
 async function roFill(){
