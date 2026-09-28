@@ -5344,8 +5344,8 @@ function pbPaint(){
   var fxS = PB.px["fx:KRW=X"], fxNow = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : (fxS ? fxS[fxS.length - 1][1] : 0);
   var MO = [3, 6, 12], T = MO.map(pbAgo);
   var pct = function(v){ return v == null ? '<span class="dplbl">—</span>' : '<span class="' + (v >= 0 ? "up" : "dn") + '">' + (v > 0 ? "+" : "") + v.toFixed(1) + '%</span>'; };
-  var tot = MO.map(function(){ return {a: 0, b: 0, n: 0}; });
-  var rows = it.map(function(x){
+  // 🔴 「전체」는 주식·ETF만 — 코스피·S&P500과 견준다. 코인은 아래로 따로 모아 「코인 합계」 (사장님 2026-09-28)
+  var mkRows = function(list, tot){ return list.map(function(x){
     var ser = PB.px[x.key];
     var cells = T.map(function(ms, k){
       var p0 = pbAt(ser, ms); if(!(p0 > 0) || !(x.cur > 0)) return null;
@@ -5356,7 +5356,11 @@ function pbPaint(){
       return (now / then - 1) * 100;
     });
     return '<tr><td style="text-align:left">' + dpEsc(x.name) + '</td>' + cells.map(function(v){ return '<td>' + (ser === undefined ? '<span class="dplbl">…</span>' : pct(v)) + '</td>'; }).join("") + '</tr>';
-  }).join("");
+  }).join(""); };
+  var totOf = function(){ return MO.map(function(){ return {a: 0, b: 0, n: 0}; }); };
+  var stk = it.filter(function(x){ return x.key.indexOf("co:") !== 0; }), coi = it.filter(function(x){ return x.key.indexOf("co:") === 0; });
+  var tot = totOf(), totC = totOf(), rows = mkRows(stk, tot), rowsC = mkRows(coi, totC);
+  var sumRow = function(t, lab){ return '<tr style="font-weight:800"><td style="text-align:left">' + lab + '</td>' + t.map(function(q){ return '<td>' + (q.b > 0 ? pct((q.a / q.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>'; };
   var totRow = '<tr style="font-weight:800"><td style="text-align:left">' + (en ? "Total" : "전체") + '</td>' + tot.map(function(t){ return '<td>' + (t.b > 0 ? pct((t.a / t.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>';
   var idx = [["ix:^KS11", en ? "KOSPI" : "코스피"], ["ix:^GSPC", "S&P500"]].map(function(q){
     var ser = PB.px[q[0]], last = ser ? ser[ser.length - 1][1] : null;
@@ -5365,7 +5369,8 @@ function pbPaint(){
   box.innerHTML = '<h3>' + (en ? "Current portfolio backtest" : "현재 포트폴리오 백테스트") + '</h3>'
     + '<div class="dpmsg">' + (en ? "If you had bought today's holdings (same quantities) back then · in KRW, US and crypto at that day's FX" : "지금 들고 있는 수량 그대로 그때 샀다면 · 원화 기준(미국·코인은 그때 환율)") + '</div>'
     + '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th>' + (en ? "3M" : "3개월") + '</th><th>' + (en ? "6M" : "6개월") + '</th><th>' + (en ? "1Y" : "1년") + '</th></tr>'
-    + rows + totRow + idx + '</table>';
+    + rows + (stk.length ? totRow : '') + idx
+    + (coi.length ? rowsC + sumRow(totC, en ? "Crypto total" : "코인 합계") : '') + '</table>';
 }
 function pbRender(){
   try{
