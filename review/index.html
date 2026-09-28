@@ -555,7 +555,8 @@ function render(d){
     // 🔴 주요자산 전일대비 — 이 열한 가지만 (사장님 2026-09-25). 금리는 %p(포인트) 변화로 보인다.
     { const byNm={}; (d.groups||[]).forEach(function(g){ (g.items||[]).forEach(function(it){ if(!(it.nm in byNm)) byNm[it.nm]=it; }); });
       const kr={}; (d.krates||[]).forEach(function(k){ kr[k.nm]=k; });
-      const PICK=[["코스피200 야간선물","g"],["나스닥 선물","g"],["반도체(SOX)","g"],["달러지수","g"],["원/달러","g"],["WTI 원유","g"],["금","g"],
+      const PICK=[["코스피","g"],["코스닥","g"],["코스피200 야간선물","g"],   // 코스피·코스닥 맨 위 (사장님 2026-09-28)
+                  ["나스닥 선물","g"],["반도체(SOX)","g"],["달러지수","g"],["원/달러","g"],["WTI 원유","g"],["금","g"],
                   ["한국 기준금리","k"],["CD 91일","k"],["미 10년물","y"],["미 30년물","y"]];
       d = Object.assign({}, d, {changes: PICK.map(function(x){
         if(x[1]==="k"){ const k=kr[x[0]]; return k?{nm:x[0],pct:+k.chg||0,unit:"%p",val:k.val}:null; }
