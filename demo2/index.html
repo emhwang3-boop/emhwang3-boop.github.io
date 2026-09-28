@@ -3717,8 +3717,7 @@ function dpSellSync(from){
   else if(from===2){ let v=dpNum(q.value); const r=base>0?Math.round(Math.min(v,base)/base*100):0; rng.value=r; if(pc) pc.value=r; }
   else if(from===3&&q.value!==""){ fromPct(+rng.value); }
   const en=LANG==="en", mx=E("dpSMax");
-  if(mx) mx.textContent=(dpSellPlan>0?((en?"12-slot plan ":"12칸 계획 ")+dpSellPlan+(c?dpUnit(p,en):(en?" sh":"주"))+" · "):"")
-    +(dpSellSide==="B"?(en?"Max buy ":"최대 매수 "):(en?"Max sell ":"최대 매도 "))
+  if(mx) mx.textContent=(dpSellSide==="B"?(en?"Max buy ":"최대 매수 "):(en?"Max sell ":"최대 매도 "))
     +(+base).toLocaleString(undefined,{maximumFractionDigits:6})+(c?dpUnit(p,en):(en?" sh":"주"))+" = 100%";
   const mm=function(v){ return c?((+v).toLocaleString(undefined,{maximumFractionDigits:2})+" USDT"):dpMoney(p.mk,v); };
   const cs=E("dpSCash");                                        // 수량 옆 — 매수는 주문가능금액, 매도는 보유 (사장님 2026-09-27)
@@ -4897,6 +4896,13 @@ function puzPicks(mk){
     }
     var o=(typeof pfGet==="function")?pfGet():null, g=(o&&typeof PF_GRADE!=="undefined")?PF_GRADE[o.gi]:null;
     var classes=g?g.mix.map(function(m){ return m[0]; }):Object.keys(BM_RECO), out2=[];
+    var MM=(R&&R.mom)||null;
+    if(MM&&MM.kr){                          // 새 엔진 — 이번 달 목록 중 아직 안 든 종목 (사장님 2026-09-29)
+      classes.forEach(function(c){ var k=MOM_CLS[c]; if(!k||momMk(k)!==mk) return;
+        (MM[k]||[]).slice(0,MOM_N[k]).forEach(function(x){ if(held[String(x.code).toUpperCase()]) return;
+          out2.push({name:x.name||x.code, code:x.code, mk:mk}); }); });
+      return out2;
+    }
     classes.forEach(function(c){ var b=BM_RECO[c]; if(!b||b[2]!==mk) return;
       var r=second((R&&R[b[0]]&&R[b[0]][b[1]])||[], function(x){ return x.code; });
       if(r) out2.push({name:r.name||r.code, code:r.code, mk:mk}); });
@@ -5460,7 +5466,7 @@ function pbPaint(){
 }
 function pbRender(){
   try{
-    var card = E("pbCard"), rc = E("recoCard");
+    var card = E("pbCard"), rc = E("rpCard") || E("recoCard");
     if(!rc) return;
     if(!card){ card = document.createElement("div"); card.className = "card"; card.id = "pbCard"; rc.parentNode.insertBefore(card, rc); }
     else if(card.nextSibling !== rc){ rc.parentNode.insertBefore(card, rc); }
@@ -5472,8 +5478,47 @@ function pbRender(){
     pbPaint();
   }catch(e){}
 }
+// 추천 포트폴리오 현황 — 성향별 자산군 비율과 이번 달 종목 (사장님 2026-09-29)
+function rpRender(){
+  try{
+    var rc = E("recoCard"); if(!rc) return;
+    var card = E("rpCard");
+    if(!card){ card = document.createElement("div"); card.className = "card"; card.id = "rpCard"; }
+    if(card.nextSibling !== rc) rc.parentNode.insertBefore(card, rc);
+    var en = LANG === "en", o = (typeof pfGet === "function") ? pfGet() : null;
+    if(!o || typeof PF_GRADE === "undefined" || !PF_GRADE[o.gi]){ card.hidden = true; return; }
+    card.hidden = false;
+    var g = PF_GRADE[o.gi], M = (typeof RECO !== "undefined" && RECO && RECO.mom) || {}, core = MOM_CORE[o.gi] || {}, byC = {};
+    g.mix.forEach(function(m){                         // 자산군마다 따로 — 같은 ETF가 두 자산군에 있어도 합치지 않는다
+      var c = m[0], b = m[1], k = MOM_CLS[c], L = byC[c] = [];
+      if(k){ var cf = core[c] || 0, rp = MOM_REP[k], n = MOM_N[k], sat = b * (1 - cf), X = (M[k] || []).slice(0, n);
+        if(cf > 0) L.push({name: rp[1], val: b * cf, role: "core"});
+        X.forEach(function(x){ L.push({name: x.name || x.code, val: sat / n}); });
+        if(X.length < n) L.push({name: rp[1], val: sat * (n - X.length) / n});
+      } else if(BM_REP[c]) L.push({name: BM_REP[c][1], val: b});
+    });
+    var nd = satNextDay(), dn = Math.ceil((nd - new Date(new Date().toDateString())) / 864e5);
+    var pc = function(v){ return (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, "") + "%"; };
+    var h = '<h3>' + (en ? "Recommended portfolio" : "추천 포트폴리오 현황") + '</h3>'
+      + '<div class="dpmsg" style="color:var(--nm)">' + (en ? "Next change " + (nd.getMonth() + 1) + "/" + nd.getDate() : "다음 교체 " + (nd.getMonth() + 1) + "월 " + nd.getDate() + "일")
+      + ' · D-' + dn + '</div>';
+    g.mix.forEach(function(m){
+      var c = m[0], L = byC[c] || [];
+      if(!(m[1] > 0)) return;
+      h += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">'
+        + '<div style="display:flex;justify-content:space-between;gap:8px;font-weight:800;font-size:14.5px"><span style="min-width:0;overflow-wrap:anywhere">' + dpEsc(c) + '</span><span style="flex:none">' + pc(m[1]) + '</span></div>';
+      L.forEach(function(t){
+        var tag = t.role === "core" ? (en ? " (core)" : " (코어)") : "";
+        h += '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;color:var(--sub);margin-top:3px;padding-left:10px">'
+          + '<span style="min-width:0;overflow-wrap:anywhere">' + dpEsc(t.name || t.code) + tag + '</span><span style="flex:none;font-variant-numeric:tabular-nums">' + pc(t.val) + '</span></div>';
+      });
+      h += '</div>';
+    });
+    card.innerHTML = h;
+  }catch(e){}
+}
 function recoRender(){
-  setTimeout(function(){ try{ pbRender(); }catch(e){} }, 0);   // 현재 포트폴리오 백테스트 카드 — 퍼즐맵 위 (사장님 2026-09-28)
+  setTimeout(function(){ try{ pbRender(); }catch(e){} try{ rpRender(); }catch(e){} }, 0);   // 현재 포트폴리오 백테스트 카드 — 퍼즐맵 위 (사장님 2026-09-28)
   if(dpSellCur && /^roOrd_/.test(dpSellBox||"") && E(dpSellBox) && E(dpSellBox).innerHTML) return;   // 12칸 주문판이 열려 있으면 다시 그리지 않는다
   let card=E("recoCard");
   if(!card){
@@ -5558,7 +5603,7 @@ function recoRender(){
     if(_pfo && has && typeof bmPlan === "function" && typeof RECO !== "undefined" && RECO){
       var _pl = []; try{ _pl = bmPlan(_pfo).rows.filter(function(r){ return r.mk === mk; }); }catch(e){}
       s += '<div class="dpmsg" style="font-weight:700;color:var(--nm)">' + (en ? "Today (profile rule)" : "오늘 살 것·팔 것 — 내 성향 규칙") + '</div>';
-      if(!_pl.length) s += '<div class="dpmsg">' + (en ? "Nothing today — classes are near target." : "오늘은 없습니다 — 갈래가 목표 근처입니다.") + '</div>';
+      if(!_pl.length) s += '<div class="dpmsg">' + (en ? "Nothing today — classes are near target." : "오늘은 없습니다 — 자산군이 목표 근처입니다.") + '</div>';
       else { window._RO = window._RO || {}; s += '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th style="white-space:nowrap">' + (en ? "20d" : "20일") + '</th><th>' + (en ? "Qty" : "수량") + '</th><th>' + (en ? "Amount" : "금액") + '</th><th></th></tr>' + _pl.map(function(r){
           var m20 = r20Of(r.code);
           var key = r.side + ":" + r.mk + ":" + r.code; window._RO[key] = r;
@@ -5634,7 +5679,7 @@ function recoRender(){
   else{
     var _cp=[]; try{ _cp=coPlan(R); }catch(e){}
     h+='<div class="dpmsg" style="font-weight:700;color:var(--nm)">'+(en?"Today (crypto rule)":"오늘 살 것·팔 것 — 코인 규칙")+'</div>';
-    if(!_cp.length) h+='<div class="dpmsg">'+(en?"Nothing today — classes are near target.":"오늘은 없습니다 — 갈래가 목표 근처입니다.")+'</div>';
+    if(!_cp.length) h+='<div class="dpmsg">'+(en?"Nothing today — classes are near target.":"오늘은 없습니다 — 자산군이 목표 근처입니다.")+'</div>';
     else h+='<table class="mhtab"><tr><th style="text-align:left">'+(en?"Coin":"코인")+'</th><th style="white-space:nowrap">'+(en?"20d":"20일")+'</th><th>'+(en?"Qty":"수량")+'</th><th>'+(en?"Amount":"금액")+'</th><th></th></tr>'
       +_cp.map(function(r){
         if(r.info) return '<tr><td style="text-align:left"><b>'+r.k+'</b><br><span class="dplbl">'+dpEsc(r.why)+'</span></td><td colspan="4" class="dplbl" style="text-align:center">'+r.msg+'</td></tr>';
@@ -6266,7 +6311,7 @@ function bkRender(){
   var tl=[]; Object.keys(TOT).forEach(function(c){ if(TOT[c]>0)tl.push(bkMoney(TOT[c],c)); });
   if(tl.length)h+='<tr style="font-weight:800"><td style="text-align:left">'+KE("합계","Total")+'</td><td colspan="'+(hasPerp?4:3)+'" style="text-align:right">'+tl.join(" · ")+'</td></tr>';
   h+='</table>';
-  h+='<div class="dpmsg">'+KE("금액은 추천 1칸 금액(총자산÷12)으로 채워집니다. 직접 고치셔도 됩니다.","Amounts default to one slot (total ÷ 12). You can edit them.")
+  h+='<div class="dpmsg">'+KE("금액은 직접 고치셔도 됩니다.","You can edit the amounts.")
     +' <span class="dplbl" style="cursor:pointer;text-decoration:underline" onclick="bkAmtReset()">'+KE("되돌리기","Reset")+'</span></div>';
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+BK_SPANS.map(function(s){ return '<button class="dppct" style="flex:1" onclick="bkRun('+s[0]+')">'+KE(s[1],s[2])+'</button>'; }).join("")+'<button class="dppct" style="border-color:#2bd4c0;color:#2bd4c0" onclick="openTower3D(bkGet(),\'가상 바스켓\')">3D</button>'+'<button class="dppct" onclick="bkClear()">'+KE("비우기","Clear")+'</button></div>';
   h+='<div id="bkMsg" class="c21msg" hidden></div><div id="bkOut">'+BK_OUT+'</div>';
@@ -7700,24 +7745,20 @@ function s12Info(e){
   try{ if(e) e.stopPropagation(); }catch(x){}
   if(document.getElementById("s12Pop")) return;
   var en = (typeof LANG !== "undefined" && LANG === "en");
-  var L = en ? ["💰 One slot = (cash + holdings value) × asset mix ratio ÷ 12.",
-                "🔸 <b>Below 1 share</b>: one slot is smaller than the price of one share. Adding cash grows your total, so the slot grows and this goes away.",
-                "🔸 <b>Cash short</b>: the slot is big enough, but after the rows above use your cash, what is left can't buy one share. KRW and USD cash are counted separately.",
-                "🥇 If a slot is too small, only the #1 pick of that type still buys 1 share — if the cash for that 1 share is missing, it shows Cash short.",
-                "🔴 <b>SELL button</b> shows up, regardless of whether the 12 slots are full, when: an item hits +30% or −15%; or the total (KR+US) hits +15% or −10% — then everything is sold and nothing is bought that day. Crypto: item +30% / −15%.",
+  var L = en ? ["💰 One slot = crypto total (USDT + holdings) × ratio ÷ 12. Buys one slot a day while below target.",
+                "🔸 <b>Cash short</b>: what is left in USDT can't buy the slot.",
+                "🔴 <b>SELL</b> shows when an item hits the stop-loss (or take-profit, if set) in the auto-trading window.",
                 "🚫 Being above target (Gap) alone never shows a sell."]
-             : ["💰 한 칸 = (예수금 + 평가금액) × 자산배분비율 ÷ 12.",
-                "🔸 <b>1주 미달</b>: 한 칸 금액이 1주 값보다 작습니다. 예수금을 넣으면 총자산이 커져 한 칸도 커지므로 풀립니다.",
-                "🔸 <b>예수금 부족</b>: 한 칸은 충분한데, 위쪽 줄부터 예수금을 쓰고 나니 남은 돈이 1주 값도 안 됩니다. 원화·달러 예수금은 따로 봅니다. 예수금을 넣으면 풀립니다.",
-                "🥇 한 칸이 모자라도 그 자산 종류의 추천 1순위는 1주만 삽니다. 그 1주를 살 돈이 없으면 「예수금 부족」으로 뜹니다.",
-                "🔴 <b>매도 버튼</b>은 12칸이 다 찼는지와 상관없이, 날마다 아래에 닿으면 나옵니다. 종목 +30% 익절·−15% 손절 / 전체(국내+미국) +15% 익절·−10% 손절 — 이때는 전부 팔고 그날은 사지 않습니다. 코인은 종목 +30%·−15%.",
+             : ["💰 한 칸 = 코인 총자산(USDT + 평가금액) × 비율 ÷ 12. 목표에 모자라는 동안 하루 한 칸씩 삽니다.",
+                "🔸 <b>예수금 부족</b>: 남은 USDT로 한 칸을 살 수 없습니다.",
+                "🔴 <b>매도 버튼</b>은 종목이 손절선(익절선을 넣었으면 익절선)에 닿으면 나옵니다. 값은 자동매매 창 값입니다.",
                 "🚫 목표보다 많다(Gap 플러스)는 것만으로는 매도가 나오지 않습니다."];
   var d = document.createElement("div"); d.id = "s12Pop";
   d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
   d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
   var close = 'document.getElementById(\'s12Pop\').remove()';
   d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">' + (en ? "12-slot status" : "12칸 현황") + '</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">' + (en ? "Crypto 12-slot" : "가상자산 12칸") + '</div>'
     + '<span onclick="' + close + '" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
     + L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + l + '</div>'; }).join("")
     + '<button onclick="' + close + '" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">' + (en ? "OK" : "확인") + '</button></div>';
@@ -7728,24 +7769,22 @@ function r12Info(e){
   try{ if(e) e.stopPropagation(); }catch(x){}
   if(document.getElementById("r12Pop")) return;
   var en = (typeof LANG !== "undefined" && LANG === "en");
-  var L = en ? ["🧩 The 12-slot strategy invests in the assets recommended for your risk profile, split over time.",
-                "💰 One slot = (cash + holdings value) × asset mix ratio ÷ 12. One slot per item, up to 3 slots a day per asset type.",
-                "📅 While a type is below target it buys a little each day; when the 12 slots are filled it reaches the target ratio.",
-                "🧺 The basket strategy invests by the asset allocation for your risk profile — it looks at the Gap to target and orders many items at once.",
-                "🔀 Difference: 12-slot decides when and how much to split (time); the basket decides what to fill and how much (allocation). Today's items and quantities come from the same calculation.",
-                "📉 Selling is the same for both: item +30% / −15%, total +15% / −10%. Gap alone never sells."]
-             : ["🧩 12칸 매매 전략은 성향별 추천 자산을 시간별로 분할해서 하는 투자입니다.",
-                "💰 한 칸 = (예수금 + 평가금액) × 자산배분비율 ÷ 12. 한 종목에 한 칸씩, 한 자산 종류에 하루 최대 3칸까지 삽니다.",
-                "📅 목표에 모자라는 동안 날마다 나눠 삽니다. 12칸이 차면 목표 비율에 닿습니다.",
-                "🧺 바스켓 매매 전략은 성향별 자산배분 전략에 따른 투자입니다. 목표 비율과의 Gap을 보고 여러 종목을 한 번에 담아 주문합니다.",
-                "🔀 차이점: 12칸은 언제·얼마씩 나눠 살지(시간 분할)를, 바스켓은 무엇을 얼마나 채울지(자산배분)를 봅니다. 오늘 살 종목과 수량은 두 곳이 같은 셈으로 나옵니다.",
-                "📉 매도는 두 곳 모두 같습니다. 종목 +30% / −15%, 전체 +15% / −10%에 닿을 때만 팝니다. Gap만으로는 팔지 않습니다."];
+  var L = en ? ["🧩 Core + satellite: part of each type is held as a core ETF, the rest goes to this month's top items.",
+                "📅 On the 1st of every month (next business day if a holiday) the whole portfolio is brought back to your asset mix ratio and the satellite items are swapped for this month's list.",
+                "🔻 An item that hits the stop-loss line is sold right away. If the total hits the take-profit or stop-loss line, everything is sold right away.",
+                "💤 Money from those sales stays as cash until the next 1st.",
+                "🧺 The basket and auto-trading use the same calculation."]
+             : ["🧩 코어 + 위성: 자산군마다 일부는 대표 ETF(코어)로 들고, 나머지는 이번 달 상위 종목(위성)으로 담습니다.",
+                "📅 매달 1일(휴일이면 다음 영업일)에 성향별 자산배분비율로 다시 맞추고, 위성 종목을 이번 달 목록으로 바꿉니다.",
+                "🔻 종목 손절선에 닿으면 그 종목을 바로 팝니다. 전체 익절·손절선에 닿으면 전부 바로 팝니다.",
+                "💤 판 돈은 다음 달 1일까지 예수금으로 둡니다.",
+                "🧺 바스켓 매매와 자동매매는 같은 셈으로 움직입니다."];
   var d = document.createElement("div"); d.id = "r12Pop";
   d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
   d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
   var close = 'document.getElementById(\'r12Pop\').remove()';
   d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">' + (en ? "12-slot strategy" : "12칸 매매 전략") + '</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">' + (en ? "How it works" : "추천 포트폴리오 운용") + '</div>'
     + '<span onclick="' + close + '" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
     + L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + l + '</div>'; }).join("")
     + '<button onclick="' + close + '" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">' + (en ? "OK" : "확인") + '</button></div>';
@@ -7839,7 +7878,7 @@ function bmRender(){
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
   var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">매달 1일(휴일이면 다음 영업일)에 성향별 자산배분비율로 맞추고, 위성 종목을 이번 달 목록으로 바꿉니다. 1주에 모자라도 1주는 삽니다. 예수금이 모자라면 안전한 자산군부터 채웁니다. '
-        + '종목 손절선이나 전체 익절·손절선(자동매매 창 값)에 닿으면 그날 바로 팝니다. 판 돈은 다음 달 1일까지 예수금으로 둡니다. 매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 미국 주식 매매차익이 연 250만 원을 넘으면 양도소득세(22%)가 붙습니다. 코인은 [바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
+        + '종목 손절선이나 전체 익절·손절선(자동매매 창 값)에 닿으면 그날 바로 팝니다. 판 돈은 다음 달 1일까지 예수금으로 둡니다. 매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 미국 주식 매매차익이 연 250만 원을 넘으면 양도소득세(22%)가 붙습니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb flat dpsm" onclick="bmRecalc()"'+(BM.busy?" disabled":"")+'>재계산</button>':'')+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
