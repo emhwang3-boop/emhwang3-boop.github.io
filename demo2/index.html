@@ -2264,11 +2264,12 @@ function rlParseUS(j) {
   return rows.map(function (r) {
     const qty = rlNum(r.poss_qty) || rlNum(r.qty);
     return {mk: "us", ccy: r.crnc_code || "USD",
-            code: r.stk_cd || "", name: r.fgn_stk_nm || r.stk_cd || "",
+            // 🔴 키움 ust21070 칸 이름은 frgn_ 이다 — fgn_ 만 읽어 매입단가가 늘 비고 되뺀 값(수수료 낀 값)이 적혔다 (09-28 실측 SMCI 41.25→41.45)
+            code: r.stk_cd || "", name: r.frgn_stk_nm || r.fgn_stk_nm || r.stk_cd || "",
             // 갓 산 종목은 매입단가도 매입금액도 0 으로 온다.
             // 그럴 땐 현재가에서 손익을 되뺀다: 55.77 − (−0.50)/1 = 56.27 (실측)
-            qty: qty, avg: rlNum(r.fgn_stk_book_uv)
-                          || (qty ? rlNum(r.fgn_stk_book_amt) / qty : 0)
+            qty: qty, avg: rlNum(r.frgn_stk_book_uv) || rlNum(r.fgn_stk_book_uv)
+                          || (qty ? (rlNum(r.frgn_stk_book_amt) || rlNum(r.fgn_stk_book_amt)) / qty : 0)
                           || (qty ? rlNum(r.now_pric) - rlNum(r.pl_amt) / qty : 0),
             cur: rlNum(r.now_pric), evl: rlNum(r.evlt_amt),
             pl: rlNum(r.pl_amt), rt: rlNum(r.pl_rt)};
