@@ -5349,6 +5349,15 @@ function pbItems(){
 }
 function pbPaint(){
   var box = E("pbCard"); if(!box) return;
+  if(!E("pbStyle")){ var st = document.createElement("style"); st.id = "pbStyle";
+    // 이름·숫자 같은 글꼴·크기 · 전체(초록 바탕·윗줄) · 지수(회색 바탕) · 코인 구역 윗줄 · 코인 합계(노랑 바탕) (사장님 2026-09-28)
+    st.textContent = "#pbCard .mhtab td,#pbCard .mhtab td span{font-family:inherit;font-size:13.5px;font-weight:400;font-variant-numeric:tabular-nums}"
+      + "#pbCard tr.pbsum td,#pbCard tr.pbsum td span,#pbCard tr.pbcsum td,#pbCard tr.pbcsum td span{font-weight:800}"
+      + "#pbCard tr.pbsum td{background:rgba(0,200,5,.10);border-top:2px solid var(--nm)}"
+      + "#pbCard tr.pbix td{background:rgba(128,128,128,.14)}"
+      + "#pbCard tr.pbix + tr:not(.pbix) td{border-top:2px solid var(--nm)}"
+      + "#pbCard tr.pbcsum td{background:rgba(255,176,0,.14)}";
+    document.head.appendChild(st); }
   var en = LANG === "en", it = pbItems();
   if(!it.length){ box.style.display = "none"; return; }
   box.style.display = "";
@@ -5371,11 +5380,11 @@ function pbPaint(){
   var totOf = function(){ return MO.map(function(){ return {a: 0, b: 0, n: 0}; }); };
   var stk = it.filter(function(x){ return x.key.indexOf("co:") !== 0; }), coi = it.filter(function(x){ return x.key.indexOf("co:") === 0; });
   var tot = totOf(), totC = totOf(), rows = mkRows(stk, tot), rowsC = mkRows(coi, totC);
-  var sumRow = function(t, lab){ return '<tr style="font-weight:800"><td style="text-align:left">' + lab + '</td>' + t.map(function(q){ return '<td>' + (q.b > 0 ? pct((q.a / q.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>'; };
-  var totRow = '<tr style="font-weight:800"><td style="text-align:left">' + (en ? "Total" : "전체") + '</td>' + tot.map(function(t){ return '<td>' + (t.b > 0 ? pct((t.a / t.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>';
+  var sumRow = function(t, lab){ return '<tr class="pbcsum"><td style="text-align:left">' + lab + '</td>' + t.map(function(q){ return '<td>' + (q.b > 0 ? pct((q.a / q.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>'; };
+  var totRow = '<tr class="pbsum"><td style="text-align:left">' + (en ? "Total" : "전체") + '</td>' + tot.map(function(t){ return '<td>' + (t.b > 0 ? pct((t.a / t.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>';
   var idx = [["ix:^KS11", en ? "KOSPI" : "코스피"], ["ix:^GSPC", "S&P500"]].map(function(q){
     var ser = PB.px[q[0]], last = ser ? ser[ser.length - 1][1] : null;
-    return '<tr class="dplbl"><td style="text-align:left">' + q[1] + '</td>' + T.map(function(ms){ var p0 = pbAt(ser, ms); return '<td>' + (ser === undefined ? '…' : pct(p0 > 0 && last > 0 ? (last / p0 - 1) * 100 : null)) + '</td>'; }).join("") + '</tr>';
+    return '<tr class="pbix"><td style="text-align:left">' + q[1] + '</td>' + T.map(function(ms){ var p0 = pbAt(ser, ms); return '<td>' + (ser === undefined ? '…' : pct(p0 > 0 && last > 0 ? (last / p0 - 1) * 100 : null)) + '</td>'; }).join("") + '</tr>';
   }).join("");
   box.innerHTML = '<h3>' + (en ? "Current portfolio backtest" : "현재 포트폴리오 백테스트") + '</h3>'
     + '<div class="dpmsg">' + (en ? "If you had bought today's holdings (same quantities) back then · in KRW, US and crypto at that day's FX" : "지금 들고 있는 수량 그대로 그때 샀다면 · 원화 기준(미국·코인은 그때 환율)") + '</div>'
