@@ -4891,7 +4891,30 @@ function puzFlip(ev, mk){
   PZFLIP[mk] = !PZFLIP[mk];
   try{ recoRender(); }catch(e){}
 }
+// 🔴 현금 조각 뒤 = 바스켓(1순위)에 안 나온 자산군별 추천 2등 — 2등을 이미 가졌으면 3등 (사장님 2026-09-28)
+//   가진 종목을 빼고 남은 줄에서 첫째는 바스켓 몫이라 건너뛰고 그다음 하나. 원화=국내 자산군 · 달러=미국 자산군 · USDT=알트
 function puzPicks(mk){
+  try{
+    var R=(typeof window._RECO!=="undefined")?window._RECO:null;
+    var held={}; try{ ((typeof RL!=="undefined"&&RL)?(RL.kr||[]).concat(RL.us||[]).concat(RL.co||[]):[]).forEach(function(p){ held[String(p.code).replace(/\.US$/i,"").split("-")[0].toUpperCase()]=1; }); }catch(e){}
+    var second=function(arr, key){ var n=0, out=null; (arr||[]).forEach(function(r){ if(out) return; var c=String(key(r)).toUpperCase(); if(held[c]) return; n++; if(n===2) out=r; }); return out; };
+    if(mk==="coin"){
+      var C=(R&&R.coin)||{}, alt=[];
+      Object.keys(C).forEach(function(k){ if(k==="BTC"||k==="ETH") return; var z=C[k]||{};
+        if(z["new"]||z.state==="long") alt.push({k:k, _rk:(+z.rank||999), _turn:(+z.turn||0)}); });
+      alt.sort(function(a,b){ return (a._rk-b._rk) || (b._turn-a._turn); });
+      var a2=second(alt, function(z){ return z.k; });
+      return a2 ? [{name:a2.k, code:a2.k+"-USDT", mk:"coin", spot:true}] : [];
+    }
+    var o=(typeof pfGet==="function")?pfGet():null, g=(o&&typeof PF_GRADE!=="undefined")?PF_GRADE[o.gi]:null;
+    var classes=g?g.mix.map(function(m){ return m[0]; }):Object.keys(BM_RECO), out2=[];
+    classes.forEach(function(c){ var b=BM_RECO[c]; if(!b||b[2]!==mk) return;
+      var r=second((R&&R[b[0]]&&R[b[0]][b[1]])||[], function(x){ return x.code; });
+      if(r) out2.push({name:r.name||r.code, code:r.code, mk:mk}); });
+    return out2;
+  }catch(e){ return []; }
+}
+function puzPicksOld(mk){
   try{
     var R=(typeof window._RECO!=="undefined")?window._RECO:null;
     if(mk==="coin"){                       // 코인앱과 같은 방식 — 알트까지 (사장님 2026-09-24)
@@ -5235,9 +5258,9 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
     const gOf = function(mk, list){ try{ return lgGroups(mk, list); }catch(e){ return null; } };
     const gKR = gOf("kr", kr), gUS = gOf("us", us), gCO = gOf("coin", co);
     const rows = [
-      [(en?"KR stocks":"국내 주식"), totKR, gKR ? Math.min(12, gKR.length) : days(kr), won, gKR, "kr"],
-      [(en?"US stocks":"미국 주식"), totUS, gUS ? Math.min(12, gUS.length) : days(us), usd, gUS, "us"],
-      [(en?"Crypto (spot)":"코인 (현물)"), totCO, gCO ? Math.min(12, gCO.length) : days(co), tet, gCO, "coin"],
+      [(en?"KR stocks":"국내시장"), totKR, gKR ? Math.min(12, gKR.length) : days(kr), won, gKR, "kr"],
+      [(en?"US stocks":"미국시장"), totUS, gUS ? Math.min(12, gUS.length) : days(us), usd, gUS, "us"],
+      [(en?"Crypto (spot)":"가상자산(현물)"), totCO, gCO ? Math.min(12, gCO.length) : days(co), tet, gCO, "coin"],
     ];
     let t = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"12-slot status":"12칸 현황")+' <span class="c21help" onclick="s12Info(event)">i</span> <button class="dpb flat dpsm" id="atBtn" style="margin-left:6px;vertical-align:middle" onclick="event.stopPropagation();atOpen()">'+(en?"Auto trading":"자동매매")+'</button></div>'
       + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
@@ -5279,7 +5302,7 @@ function recoRender(){
     acct.parentNode.insertBefore(card,acct.nextSibling);
   }
   const en=LANG==="en", R=RECO;
-  let h='<h3>'+(en?"12-slot strategy by portfolio":"포트폴리오에 따른 12칸 매매 전략")+' <span class="c21help" onclick="r12Info(event)">i</span>'+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
+  let h='<h3>'+(en?"Current portfolio & extra picks":"현재 포트폴리오와 추가 추천 종목")+' <span class="c21help" onclick="r12Info(event)">i</span>'+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
   try{ window._RECO=R; }catch(e){}
   if(!R){ card.innerHTML=h+'<div class="soonrow">'+(en?"Loading…":"불러오는 중…")+'</div>'; card._h=null; return; }
   // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률을 더해 "지금 60일선 대비"를 낸다 (사장님 2026-09-21).
