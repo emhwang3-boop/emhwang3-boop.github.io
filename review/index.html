@@ -5422,7 +5422,7 @@ function recoRender(){
       +slotTable(kr,us,totKR,totUS,cash,fx,en)
       +(fx>0?"":'<div class="dpmsg">'+(en?"USD rate not loaded yet — KR only.":"환율을 아직 못 받아 국내만 그렸습니다.")+'</div>');
   }
-  h+=body;
+  void body;   // 국내·미국 「오늘 살 것·팔 것」 표는 바스켓 매매로 합쳤다 — 화면에 안 붙인다 (사장님 2026-09-28) · 코인 표는 남김
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
   setTimeout(function(){ try{ roFill(); }catch(e){} }, 50);        // 국내·미국 수량 칸 채우기
   // 🔴 코인 — 국내·미국처럼 D 규칙 표 (사장님 2026-09-26): 현물 BTC 45 · ETH 45 · 알트 10, 줄 하나 = 오늘 주문 하나
@@ -7230,14 +7230,15 @@ function bmPlan(o, opt){
           rows.push({side: "S", mk: p.mk, code: p.code, name: p.name || p.code, cls: c, qty: q, why: c + " 목표 " + m[1] + "% · 보유 " + (tot > 0 ? (have / tot * 100).toFixed(1) : "0") + "% · 초과"}); over -= q * pv; });   // 매수 줄처럼 목표·보유 (사장님 2026-09-27)
       }
       var full = !!(opt && opt.full), need = budget - have;          // 바스켓은 D 규칙(하루 3칸) 없이 목표까지 한 번에 (사장님 2026-09-27)
-      var n = full ? Math.floor(need / slot + 0.5) : Math.min(3, Math.floor(need / slot + 0.5));
+      // 🔴 자산군마다 추천 1순위 한 종목 × 1회 매수금액(목표 ÷ 12) — 12칸 전략을 바스켓에 합침 (사장님 2026-09-28)
+      var n = full ? Math.floor(need / slot + 0.5) : Math.min(1, Math.floor(need / slot + 0.5));
       if(n <= 0) return;
       var L = [];
       if(BM_RECO[c]){ var R = RECO[BM_RECO[c][0]], a = (R && R[BM_RECO[c][1]]) || [];
         a.forEach(function(r){ var mk = BM_RECO[c][2], k = mk + ":" + String(r.code).toUpperCase();
           if(!held[k] && L.length < n) L.push({mk: mk, code: r.code, name: r.name || r.code, amt: slot}); });
         if(full && L.length) L.forEach(function(x){ x.amt = need / L.length; }); }      // 추천이 모자라면 있는 종목에 나눠 목표까지
-      else if(BM_REP[c]){ var rp = BM_REP[c]; L.push({mk: rp[2], code: rp[0], name: rp[1], amt: full ? need : Math.min(n * slot, need)}); }
+      else if(BM_REP[c]){ var rp = BM_REP[c]; L.push({mk: rp[2], code: rp[0], name: rp[1], amt: full ? need : slot}); }
       L.forEach(function(x, k){ rows.push({side: "B", mk: x.mk, code: x.code, name: x.name, cls: c, amt: x.amt, first: k === 0,
         why: c + " 목표 " + m[1] + "% · 보유 " + (tot > 0 ? (have / tot * 100).toFixed(1) : "0") + "%"}); });
     });
@@ -7281,17 +7282,20 @@ function bmCashFit(rows, cash, sellCash){
       if(sellCash) rows.forEach(function(r){ if(r.mk === mk && r.side === "S" && !r.err && r.px) sell += (r.qty || 0) * r.px; });
       have += sell;
       var use = 0, fp = 1 + DP_FEE_PAD;
-      rows.forEach(function(r){ if(r.mk !== mk || r.side !== "B") return;
-        if(r.err === "예수금 부족" && r.q0 > 0){ r.err = null; r.qty = r.q0; }      // 돈이 다시 생겼으면 되살린다
+      // 고객이 수량을 넣은 줄 먼저, 그다음 목록 차례(안전한 자산군 먼저) (사장님 2026-09-28)
+      var B = rows.filter(function(r){ return r.mk === mk && r.side === "B"; });
+      B.filter(function(r){ return r.user; }).concat(B.filter(function(r){ return !r.user; })).forEach(function(r){
+        if(/^예수금 부족/.test(r.err || "") && r.q0 > 0){ r.err = null; r.qty = r.q0; }      // 돈이 다시 생겼으면 되살린다
         if(r.err) return; var c = r.qty * r.px * fp;
-        if(use + c > have){ var q = Math.floor((have - use) / (r.px * fp)); if(q > 0){ r.qty = q; use += q * r.px * fp; } else { r.err = "예수금 부족"; r.qty = 0; } }
+        if(use + c > have){ var q = Math.floor((have - use) / (r.px * fp)); if(q > 0){ r.qty = q; use += q * r.px * fp; }
+          else { r.err = "예수금 부족 — 필요 " + bmMoney(mk, (r.q0 || r.qty || 1) * r.px); r.qty = 0; } }
         else use += c; });
     });
 }
 // 바스켓 재계산 — ✕로 뺀 줄·고친 수량을 반영해 매수 수량을 다시 맞춘다 (사장님 2026-09-28)
 function bmRecalc(){
   if(!BM.rows) return;
-  BM.rows.forEach(function(r){ if(r.side === "B" && r.q0 > 0 && (!r.err || r.err === "예수금 부족")){ r.err = null; r.qty = r.q0; } });
+  BM.rows.forEach(function(r){ if(r.side === "B" && r.q0 > 0 && (!r.err || /^예수금 부족/.test(r.err))){ r.err = null; r.qty = r.q0; } });
   bmCashFit(BM.rows, (typeof RL !== "undefined" && RL.cash) || {}, true);
   BM.msg = "다시 계산했습니다 — 남은 매도 금액과 주문가능금액 안에서 매수 수량을 맞췄습니다.";
   bmRender();
@@ -7304,7 +7308,7 @@ async function bmBuild(){
   BM.busy = true; BM.msg = "현재가를 받는 중…"; BM.rows = null; bmRender();
   try{ if(typeof AT !== "undefined" && !AT.st) AT.st = await atCall(null); }catch(e){}   // 파는 기준 = 자동매매 창 값
   try{
-    var P = bmPlan(o, {trim: true, full: true}), rows = P.rows, fx = P.fx, cash = P.cash;
+    var P = bmPlan(o, {trim: true}), rows = P.rows, fx = P.fx, cash = P.cash;   // 목표까지 한 번에(full) 는 안 쓴다 (사장님 2026-09-28)
     await bmPrice(rows, fx, cash, {sellCash: true});
     BM.rows = rows; BM.msg = rows.length ? "" : "오늘 사고팔 것이 없습니다 — 모든 갈래가 목표 근처입니다.";
   }catch(e){ BM.msg = "바스켓을 못 만들었습니다: " + (e.message || e); }
@@ -7312,7 +7316,10 @@ async function bmBuild(){
 }
 function bmDrop(i){ if(BM.rows){ BM.rows.splice(i, 1); bmRecalc(); } }   // 빼면 다시 맞춘다 (2026-09-28)
 function bmClear(){ if(!BM.rows || !BM.rows.length) return; if(!confirm("바스켓 종목을 모두 지울까요?")) return; BM.rows = null; BM.msg = ""; bmRender(); }   // 한꺼번에 지우기 (사장님 2026-09-26)
-function bmQty(i, v){ var r = BM.rows && BM.rows[i]; if(!r) return; var f = parseFloat(String(v).replace(/[^0-9.]/g, "")), n = r.mk === "coin" ? +(f || 0).toFixed(6) : Math.floor(f); r.qty = n > 0 ? n : 0; if(r.side === "B"){ r.q0 = r.qty; if(r.err === "예수금 부족") r.err = null; } bmRecalc(); }
+// 고객이 넣은 수량은 흐린 표시(1순위로 모음·1주 미달·예수금 부족)를 지우고 먼저 돈을 잡는다 (사장님 2026-09-28)
+function bmQty(i, v){ var r = BM.rows && BM.rows[i]; if(!r) return; var f = parseFloat(String(v).replace(/[^0-9.]/g, "")), n = r.mk === "coin" ? +(f || 0).toFixed(6) : Math.floor(f); r.qty = n > 0 ? n : 0;
+  if(r.side === "B"){ r.q0 = r.qty; r.user = r.qty > 0; if(r.px > 0 && /^(예수금 부족|1순위로 모음|1주 미달)/.test(r.err || "")) r.err = r.qty > 0 ? null : r.err; }
+  bmRecalc(); }
 function bmMoney(mk, v){ if(mk === "coin") return (+v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; return mk === "us" ? "$" + (+v).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : Math.round(v).toLocaleString() + "원"; }
 // ── 모의 판 (사장님 2026-09-26) ──────────────────────────────────────────────
 //   실주문 스위치가 꺼지면 앱 전체가 모의 계좌(DP) 하나만 본다 — 실계좌 값은 한 칸도 섞지 않는다.
@@ -7557,18 +7564,28 @@ function bmRender(){
   if(!card){ var pc = document.getElementById("pfCard"); if(!pc) return;
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
-  var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">위 「목표와의 차이」에 현재 보유 수량을 감안하여, 자산배분비율 목표에 한 번에 맞추도록 매수·매도할 종목과 수량을 보여 줍니다. 예수금이 모자라면 아래 줄부터 빠집니다. '
+  var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">자산군마다 추천 1순위 한 종목을 1회 매수금액((예수금+평가금액) × 자산배분비율 ÷ 12)만큼 삽니다. 1주에 모자라면 1주를 삽니다. 예수금이 모자라면 안전한 자산군부터 채우고, 수량을 직접 넣은 줄은 먼저 채웁니다. '
         + '매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 파는 기준은 자동매매 창 값(종목 익절·손절, 바스켓 전체 익절·손절)과 자산배분비율 목표를 한 칸 넘게 넘은 갈래입니다. 코인은 [바스켓 담기]로 담은 것만 현물 시장가로 삽니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb flat dpsm" onclick="bmRecalc()"'+(BM.busy?" disabled":"")+'>재계산</button>':'')+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
-    h += '<table class="mhtab"><tr><th style="text-align:left">종목</th><th>수량</th><th>지정가</th><th>금액</th><th></th></tr>';
+    // 종목 칸 세 줄(매수·매도+종목명 / 자산군 / 목표·보유) · 수익률 칸 · 지정가는 금액 아래 @ (사장님 2026-09-28)
+    h += '<table class="mhtab"><tr><th style="text-align:left">종목</th><th>수익률</th><th>수량</th><th>금액</th><th></th></tr>';
+    var hold = {}; try{ (RL.kr || []).concat(RL.us || []).forEach(function(p){ hold[p.mk + ":" + String(p.code).replace(/\.US$/i, "").toUpperCase()] = p; }); }catch(e){}
     BM.rows.forEach(function(r, i){
       var amt = r.err ? 0 : (r.qty || 0) * (r.px || 0);     // 주문이 실제로 나갈 줄만 금액을 찍는다 (2026-09-25)
-      h += '<tr'+(r.err?' style="opacity:.45"':'')+'><td style="text-align:left"><b class="'+(r.side==="B"?"up":"dn")+'">'+(r.side==="B"?"매수":"매도")+'</b> '+pfEsc(r.name)
-        + '<br><span class="dplbl">'+pfEsc(String(r.why||"").replace(/ · 칸이 작아 1순위.*$/,""))+(r.res?' · <b style="color:'+(/거부/.test(r.res)?'#ff5c5c':'#00c805')+'">'+pfEsc(r.res)+'</b>':'')+'</span></td>'
-        + '<td><input class="dpin" inputmode="numeric" value="'+(r.qty||0)+'" onchange="bmQty('+i+',this.value)" style="width:56px;text-align:right;font:inherit;font-size:13px"></td>'
-        + '<td>'+(r.px?bmMoney(r.mk, r.px):'—')+'</td><td>'+(amt?bmMoney(r.mk, amt):'—')+'</td>'
+      var why = String(r.why || "").replace(/ · 칸이 작아 1순위.*$/, ""), cls = r.cls || "";
+      if(cls && why.indexOf(cls + " ") === 0) why = why.slice(cls.length + 1);
+      var hp = hold[r.mk + ":" + String(r.code).replace(/\.US$/i, "").toUpperCase()], rt = "";
+      if(hp && typeof hp.rt === "number") rt = '<span class="' + (hp.rt >= 0 ? "up" : "dn") + '">' + (hp.rt > 0 ? "+" : "") + hp.rt.toFixed(2) + '%</span>';
+      else if(r.side === "B"){ var m20 = null; try{ m20 = r20Of(r.code); }catch(e){} if(m20 != null) rt = '<span class="dplbl">20일</span><br><span class="' + (m20 >= 0 ? "up" : "dn") + '">' + (m20 > 0 ? "+" : "") + m20.toFixed(1) + '%</span>'; }
+      h += '<tr'+(r.err?' style="opacity:.45"':'')+'><td style="text-align:left;overflow-wrap:anywhere"><b class="'+(r.side==="B"?"up":"dn")+'">'+(r.side==="B"?"매수":"매도")+'</b> '+pfEsc(r.name)
+        + (cls ? '<br><span class="dplbl">'+pfEsc(cls)+'</span>' : '')
+        + '<br><span class="dplbl">'+pfEsc(why)+(r.res?' · <b style="color:'+(/거부/.test(r.res)?'#ff5c5c':'#00c805')+'">'+pfEsc(r.res)+'</b>':'')+'</span>'
+        + (r.err ? '<br><span style="color:#ff5c5c;font-size:12px;font-weight:700">'+pfEsc(r.err)+'</span>' : '') + '</td>'
+        + '<td>'+(rt || '—')+'</td>'
+        + '<td><input class="dpin" inputmode="numeric" value="'+(r.qty||0)+'" onchange="bmQty('+i+',this.value)" style="width:48px;text-align:right;font:inherit;font-size:13px"></td>'
+        + '<td>'+(amt ? '<b>'+bmMoney(r.mk, amt)+'</b>' : '—')+(r.px ? '<br><span class="dplbl">@'+bmMoney(r.mk, r.px)+'</span>' : '')+'</td>'
         + '<td><span class="mhx" onclick="bmDrop('+i+')">✕</span></td></tr>';
     });
     h += '</table>';
