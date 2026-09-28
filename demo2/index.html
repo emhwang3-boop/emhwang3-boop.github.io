@@ -5108,6 +5108,99 @@ function stkLogo(code, mk, px){
 var REG_HTML = "";
 // 장세 줄은 맨 위 [국내 증시 현황] 카드 안에 그린다 (사장님 2026-09-24)
 function regPaint(){ var n=document.getElementById("regLine"); if(n && REG_HTML) n.innerHTML = REG_HTML; }
+// ── 체결 장부 → 12칸 램프 (사장님 2026-09-28) ─────────────────────────────
+//   중계기 GET /ledger = 날짜별 매수·매도 수량·금액. 종목마다 선입선출로 남은 몫을 산 날별로 묶는다 → 한 칸 = 산 날 하루.
+//   장부가 보유와 안 맞으면(장부 전 매수·수수료로 준 코인) 모자란 몫은 보유 평균가·산 날로 채우고 넘치는 몫은 오래된 것부터 뺀다.
+var LG = {rows: null, at: 0, busy: false, t: 0, err: ""};
+function lgLoad(force){
+  try{
+    if(LG.busy || (typeof mkIsMock === "function" && mkIsMock())) return;
+    if(!force && Date.now() - LG.t < 5 * 60e3) return;
+    var base = (typeof rlRelay === "function") ? rlRelay() : ""; if(!base) return;
+    LG.busy = true; LG.t = Date.now();
+    fetch(base + "/ledger", {headers: atHdr(), cache: "no-store"}).then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status); return r.json();
+    }).then(function(j){
+      LG.rows = j.rows || []; LG.at = j.at || 0; LG.err = ""; LG.busy = false;
+      try{ recoRender(); }catch(e){}
+    }).catch(function(e){ LG.err = String(e.message || e); LG.busy = false; });
+  }catch(e){ LG.busy = false; }
+}
+function lgRowsFor(mk){
+  if(typeof mkIsMock === "function" && mkIsMock()){   // 모의 — 앱 주문 기록에서
+    var out = [];
+    try{ (DP.log || []).forEach(function(x){
+      if(x.kind !== mk || !(x.qty > 0) || !(x.px > 0)) return;
+      var d = new Date(x.ts || Date.now());
+      out.push({mk: mk, code: mk === "us" ? String(x.code).replace(/\.US$/i, "").toUpperCase() : String(x.code),
+        name: x.name, date: d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"),
+        side: x.side === "S" ? "S" : "B", qty: +x.qty, amt: x.qty * x.px}); }); }catch(e){}
+    return out;
+  }
+  return (LG.rows || []).filter(function(r){ return r.mk === mk; });
+}
+// 보유 목록 → 산 날별 묶음 [{date, items:[{name,code,qty,cost,val}], cost, val, pl, pct}] (오래된 날 먼저)
+function lgGroups(mk, list){
+  var rows = lgRowsFor(mk), byDate = {};
+  list.forEach(function(p){
+    var code = String(p.code || ""), cu = code.toUpperCase().replace(/\.US$/i, "");
+    var rs = rows.filter(function(r){ return String(r.code).toUpperCase() === cu; })
+      .sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.side === "B" ? -1 : 1); });
+    var lots = [];
+    rs.forEach(function(r){
+      if(r.side === "B") lots.push({date: r.date, qty: +r.qty, px: r.qty > 0 ? r.amt / r.qty : 0});
+      else { var q = +r.qty; while(q > 1e-12 && lots.length){ var l = lots[0], t = Math.min(q, l.qty); l.qty -= t; q -= t; if(l.qty <= 1e-12) lots.shift(); } }
+    });
+    var held = +p.qty || 0, have = lots.reduce(function(a, l){ return a + l.qty; }, 0);
+    while(have - held > 1e-9 && lots.length){ var l0 = lots[0], t0 = Math.min(have - held, l0.qty); l0.qty -= t0; have -= t0; if(l0.qty <= 1e-12) lots.shift(); }
+    if(held - have > 1e-9){
+      var sd = ""; try{ var h = rlHeldDays(p.code); if(h && h.since) sd = String(h.since).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"); }catch(e){}
+      lots.unshift({date: sd || "?", qty: held - have, px: +p.avg || 0});
+    }
+    var cur = +p.cur || 0;
+    lots.forEach(function(l){
+      var g = byDate[l.date] || (byDate[l.date] = {date: l.date, items: [], cost: 0, val: 0});
+      var c = l.qty * l.px, v = l.qty * cur;
+      g.items.push({name: p.name || code, code: code, qty: l.qty, cost: c, val: v}); g.cost += c; g.val += v;
+    });
+  });
+  var gs = Object.keys(byDate).sort().map(function(k){ return byDate[k]; });
+  while(gs.length > 12){ var a = gs.shift(), b = gs[0]; b.items = a.items.concat(b.items); b.cost += a.cost; b.val += a.val; b.date = a.date + "~" + b.date.replace(/^.*~/, ""); }
+  gs.forEach(function(g){ g.pl = g.val - g.cost; g.pct = g.cost > 0 ? g.pl / g.cost * 100 : 0; });
+  return gs;
+}
+// 손익 색 — + 초록 · − 빨강, 0~5 · 5~10 · 10~20 · 20%↑ 로 밝아진다
+function lgColor(pct){
+  var i = Math.abs(pct) < 5 ? 0 : Math.abs(pct) < 10 ? 1 : Math.abs(pct) < 20 ? 2 : 3;
+  return pct >= 0 ? ["#006b03", "#00a105", "#00d406", "#7dff80"][i] : ["#7a2600", "#b23800", "#e84900", "#ff7a3d"][i];
+}
+var LG_G = {};
+function lgPop(ev, key){
+  try{
+    ev.stopPropagation();
+    var old = E("lgPop"); if(old){ var same = old.getAttribute("data-k") === key; old.remove(); if(same && ev.type === "click") return; }
+    var x = LG_G[key]; if(!x) return;
+    var g = x.g, f = x.f, en = LANG === "en";
+    var sg = function(v){ return (v > 0 ? "+" : v < 0 ? "−" : "") + f(Math.abs(v)); };
+    var cl = g.pl >= 0 ? "#00c805" : "#ff5c5c";
+    var h = '<div style="font-weight:800;margin-bottom:4px">' + (en ? "Bought " : "산 날 ") + dpEsc(g.date) + '</div>'
+      + g.items.map(function(it){ var pl = it.val - it.cost, pc = it.cost > 0 ? pl / it.cost * 100 : 0;
+          return '<div style="display:flex;justify-content:space-between;gap:10px"><span>' + dpEsc(it.name) + '</span><span style="color:' + (pl >= 0 ? "#00c805" : "#ff5c5c") + '">' + (pc >= 0 ? "+" : "") + pc.toFixed(1) + '%</span></div>'; }).join("")
+      + '<div style="border-top:1px solid var(--bd);margin-top:5px;padding-top:4px">'
+      + (en ? "Cost " : "원금 ") + f(g.cost) + '<br>' + (en ? "Value " : "평가 ") + f(g.val) + '<br>'
+      + '<b style="color:' + cl + '">' + (en ? "P/L " : "손익 ") + sg(g.pl) + ' (' + (g.pct >= 0 ? "+" : "") + g.pct.toFixed(2) + '%)</b></div>';
+    var d = document.createElement("div"); d.id = "lgPop"; d.setAttribute("data-k", key);
+    d.setAttribute("style", "position:fixed;z-index:100003;background:var(--card);color:var(--nm);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.5;max-width:260px;box-shadow:0 8px 24px rgba(0,0,0,.4)");
+    d.innerHTML = h; document.body.appendChild(d);
+    var r = ev.currentTarget.getBoundingClientRect(), w = d.offsetWidth, hh = d.offsetHeight;
+    var left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+    var top = r.bottom + 6; if(top + hh > window.innerHeight - 8) top = Math.max(8, r.top - hh - 6);
+    d.style.left = left + "px"; d.style.top = top + "px";
+  }catch(e){}
+}
+function lgPopOff(){ var o = E("lgPop"); if(o) o.remove(); }
+document.addEventListener("click", function(){ lgPopOff(); });
+window.addEventListener("scroll", function(){ lgPopOff(); }, {passive: true});
 // ── 12칸 현황 표 (사장님 2026-09-24) — 국내·미국·코인을 한 눈에 ────────────────
 //   총자산을 열두 칸으로 나눠 한 칸씩 채운다. 코인은 현물만, 칸을 금액으로 센다.
 function slotTable(kr, us, totKR, totUS, cash, fx, en){
@@ -5121,10 +5214,14 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
     // 채운 칸 — 주식은 종목 수, 코인은 든 돈을 칸으로 나눈 값
     // 🔴 채운 칸 = 들고 있는 종목을 산 날이 며칠인가 — 하루에 몇 종목을 샀든 1칸 (사장님 2026-09-26 시간 배분)
     const days = function(list){ const seen = {}; list.forEach(function(p){ var h = null; try{ h = rlHeldDays(p.code); }catch(e){} seen[(h && h.since) ? h.since : ("?" + p.code)] = 1; }); return Math.min(12, Object.keys(seen).length); };
+    // 장부가 있으면(실계좌 = 중계기 /ledger, 모의 = 앱 주문 기록) 산 날별 묶음으로 칸을 센다 (사장님 2026-09-28)
+    try{ lgLoad(); }catch(e){}
+    const gOf = function(mk, list){ try{ return lgGroups(mk, list); }catch(e){ return null; } };
+    const gKR = gOf("kr", kr), gUS = gOf("us", us), gCO = gOf("coin", co);
     const rows = [
-      [(en?"KR stocks":"국내 주식"), totKR, days(kr), won],
-      [(en?"US stocks":"미국 주식"), totUS, days(us), usd],
-      [(en?"Crypto (spot)":"코인 (현물)"), totCO, days(co), tet],
+      [(en?"KR stocks":"국내 주식"), totKR, gKR ? Math.min(12, gKR.length) : days(kr), won, gKR, "kr"],
+      [(en?"US stocks":"미국 주식"), totUS, gUS ? Math.min(12, gUS.length) : days(us), usd, gUS, "us"],
+      [(en?"Crypto (spot)":"코인 (현물)"), totCO, gCO ? Math.min(12, gCO.length) : days(co), tet, gCO, "coin"],
     ];
     let t = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"12-slot status":"12칸 현황")+' <span class="c21help" onclick="s12Info(event)">i</span> <button class="dpb flat dpsm" id="atBtn" style="margin-left:6px;vertical-align:middle" onclick="event.stopPropagation();atOpen()">'+(en?"Auto trading":"자동매매")+'</button></div>'
       + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
@@ -5135,8 +5232,14 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
       // 코인앱과 같은 컬러 램프 — 1~4 빨강(어둡→밝) · 5~6 초록빛 회색 · 7~12 초록(어둡→밝), 12px 정사각형 (사장님 2026-09-24)
       const SLC = ["#7a2600","#a83400","#d64300","#ff5000","#8f9690","#7fa587","#006b03","#008604","#00a105","#00c805","#33da38","#66ec6a"];
       let bar = '<span style="display:flex;gap:4px;margin-top:4px">';
-      for (let i = 0; i < 12; i++) bar += '<span style="flex:1 1 0;max-width:12px;min-width:4px;aspect-ratio:1/1;border-radius:3px;'
-        + (i < fill ? 'background:'+SLC[i] : 'background:var(--bd);opacity:.45') + '"></span>';
+      const G = r[4];   // 산 날별 묶음 — 램프 색 = 그 칸 손익, PC 커서·폰 누르면 팝업 (사장님 2026-09-28)
+      for (let i = 0; i < 12; i++){
+        const g = (G && i < fill) ? G[i] : null, key = r[5] + ":" + i;
+        if(g) LG_G[key] = {g: g, f: f};
+        bar += '<span' + (g ? ' onmouseenter="if(matchMedia(\'(hover:hover)\').matches)lgPop(event,\'' + key + '\')" onmouseleave="if(matchMedia(\'(hover:hover)\').matches)lgPopOff()" onclick="lgPop(event,\'' + key + '\')"' : '')
+          + ' style="flex:1 1 0;max-width:12px;min-width:4px;aspect-ratio:1/1;border-radius:3px;' + (g ? 'cursor:pointer;' : '')
+          + (i < fill ? 'background:' + (g ? lgColor(g.pct) : SLC[i]) : 'background:var(--bd);opacity:.45') + '"></span>';
+      }
       bar += '</span>';
       // 점 막대는 그 줄 아래 표 전체 폭으로 — 자산 칸 안에 두면 폰에서 오른쪽이 잘렸다 (사장님 2026-09-28)
       t += '<tr><td style="text-align:left;border-bottom:0;padding-bottom:0">'+nm+'</td>'
