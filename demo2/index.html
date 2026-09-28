@@ -5340,7 +5340,9 @@ function pbPaint(){
   var box = E("pbCard"); if(!box) return;
   if(!E("pbStyle")){ var st = document.createElement("style"); st.id = "pbStyle";
     // 이름·숫자 같은 글꼴·크기 · 전체(초록 바탕·윗줄) · 지수(회색 바탕) · 코인 구역 윗줄 · 코인 합계(노랑 바탕) (사장님 2026-09-28)
-    st.textContent = "#pbCard .mhtab td,#pbCard .mhtab td span{font-family:inherit;font-size:13.5px;font-weight:400;font-variant-numeric:tabular-nums}"
+    st.textContent = "#pbCard .mhtab{table-layout:fixed;width:100%}#pbCard .mhtab th:first-child{width:37%}"
+      + "#pbCard .mhtab td:first-child{white-space:normal;overflow-wrap:anywhere}#pbCard .mhtab td{padding-left:1px;padding-right:1px}"
+      + "#pbCard .mhtab td,#pbCard .mhtab td span{font-family:inherit;font-size:13.5px;font-weight:400;font-variant-numeric:tabular-nums}"
       + "#pbCard tr.pbsum td,#pbCard tr.pbsum td span,#pbCard tr.pbcsum td,#pbCard tr.pbcsum td span{font-weight:800}"
       + "#pbCard tr.pbsum td{background:rgba(0,200,5,.10);border-top:2px solid var(--nm)}"
       + "#pbCard tr.pbix td{background:rgba(128,128,128,.14)}"
@@ -5352,7 +5354,7 @@ function pbPaint(){
   box.style.display = "";
   var fxS = PB.px["fx:KRW=X"], fxNow = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : (fxS ? fxS[fxS.length - 1][1] : 0);
   var MO = [3, 6, 12], T = MO.map(pbAgo);
-  var pct = function(v){ return v == null ? '<span class="dplbl">—</span>' : '<span class="' + (v >= 0 ? "up" : "dn") + '">' + (v > 0 ? "+" : "") + v.toFixed(1) + '%</span>'; };
+  var pct = function(v){ return v == null ? '<span class="dplbl">—</span>' : '<span class="' + (v >= 0 ? "up" : "dn") + '">' + (v > 0 ? "+" : "") + v.toFixed(Math.abs(v) >= 100 ? 0 : 1) + '%</span>'; };
   // 🔴 「전체」는 주식·ETF만 — 코스피·S&P500과 견준다. 코인은 아래로 따로 모아 「코인 합계」 (사장님 2026-09-28)
   var mkRows = function(list, tot){ return list.map(function(x){
     var ser = PB.px[x.key];
