@@ -5170,15 +5170,19 @@ function lgGroups(mk, list){
       lots.unshift({date: sd || "?", qty: held - have, px: +p.avg || 0});
     }
     var cur = +p.cur || 0;
+    // 손익은 키움이 준 값(수수료 뺀 값)에 맞춘다 (사장님 2026-09-28) — 값 차이 손익과 키움 손익의 차이를 수량 비율로 나눠 뺀다.
+    //   한 번 산 종목은 키움과 똑같고, 나눠 산 종목은 날짜 칸을 더하면 키움과 같다. 코인 현물은 거래소 손익이 없어 값 차이 그대로.
+    var tq = lots.reduce(function(a, l){ return a + l.qty; }, 0), gross = lots.reduce(function(a, l){ return a + l.qty * (cur - l.px); }, 0);
+    var adj = (mk !== "coin" && typeof p.pl === "number" && isFinite(p.pl) && tq > 0) ? gross - p.pl : 0;
     lots.forEach(function(l){
-      var g = byDate[l.date] || (byDate[l.date] = {date: l.date, items: [], cost: 0, val: 0});
-      var c = l.qty * l.px, v = l.qty * cur;
-      g.items.push({name: p.name || code, code: code, qty: l.qty, cost: c, val: v}); g.cost += c; g.val += v;
+      var g = byDate[l.date] || (byDate[l.date] = {date: l.date, items: [], cost: 0, val: 0, fee: 0});
+      var c = l.qty * l.px, v = l.qty * cur, f = tq > 0 ? adj * l.qty / tq : 0;
+      g.items.push({name: p.name || code, code: code, qty: l.qty, cost: c, val: v, fee: f}); g.cost += c; g.val += v; g.fee += f;
     });
   });
   var gs = Object.keys(byDate).sort().map(function(k){ return byDate[k]; });
-  while(gs.length > 12){ var a = gs.shift(), b = gs[0]; b.items = a.items.concat(b.items); b.cost += a.cost; b.val += a.val; b.date = a.date + "~" + b.date.replace(/^.*~/, ""); }
-  gs.forEach(function(g){ g.pl = g.val - g.cost; g.pct = g.cost > 0 ? g.pl / g.cost * 100 : 0; });
+  while(gs.length > 12){ var a = gs.shift(), b = gs[0]; b.items = a.items.concat(b.items); b.cost += a.cost; b.val += a.val; b.fee += a.fee; b.date = a.date + "~" + b.date.replace(/^.*~/, ""); }
+  gs.forEach(function(g){ g.pl = g.val - g.cost - g.fee; g.pct = g.cost > 0 ? g.pl / g.cost * 100 : 0; });
   return gs;
 }
 // 손익 색 — + 초록 · − 빨강, 0~5 · 5~10 · 10~20 · 20%↑ 로 밝아진다
@@ -5196,7 +5200,7 @@ function lgPop(ev, key){
     var sg = function(v){ return (v > 0 ? "+" : v < 0 ? "−" : "") + f(Math.abs(v)); };
     var cl = g.pl >= 0 ? "#00c805" : "#ff5c5c";
     var h = '<div style="font-weight:800;margin-bottom:4px">' + (en ? "Bought " : "산 날 ") + dpEsc(g.date) + '</div>'
-      + g.items.map(function(it){ var pl = it.val - it.cost, pc = it.cost > 0 ? pl / it.cost * 100 : 0;
+      + g.items.map(function(it){ var pl = it.val - it.cost - (it.fee || 0), pc = it.cost > 0 ? pl / it.cost * 100 : 0;
           return '<div style="display:flex;justify-content:space-between;gap:10px"><span>' + dpEsc(it.name) + '</span><span style="color:' + (pl >= 0 ? "#00c805" : "#ff5c5c") + '">' + (pc >= 0 ? "+" : "") + pc.toFixed(1) + '%</span></div>'; }).join("")
       + '<div style="border-top:1px solid var(--bd);margin-top:5px;padding-top:4px">'
       + (en ? "Cost " : "원금 ") + f(g.cost) + '<br>' + (en ? "Value " : "평가 ") + f(g.val) + '<br>'
