@@ -5293,7 +5293,106 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
     return t;
   }catch(e){ return ""; }
 }
+// ── 현재 포트폴리오 백테스트 (사장님 2026-09-28) ─────────────────────────────
+//   지금 들고 있는 수량 그대로 3·6·12개월 전에 샀다면. 원화 기준 — 미국·코인은 그때 환율로(환차익 포함).
+//   그날이 휴장이면 그 앞 거래일 종가. 그때 값이 없으면 「—」. 맨 아래 같은 기간 코스피·S&P500(지수 그대로).
+//   일봉: 허브 /us/kline(야후 — 국내 .KS/.KQ · 미국 · 지수 ^KS11 ^GSPC · 환율 KRW=X) · 코인은 OKX 1Dutc.
+var PB = {px: {}, busy: {}, at: 0};
+function pbHub(){ return (typeof KRB!=="undefined"&&KRB)?(KRB+"/us/"):((typeof MDR!=="undefined"&&MDR)?(MDR+"/us/"):""); }   // 허브(야후 일봉) 먼저
+async function pbYahoo(sym){
+  var b = pbHub(); if(!b) return null;
+  try{
+    var j = await fetch(b + "kline?code=" + encodeURIComponent(sym) + "&type=8&num=300", {cache: "no-store"}).then(function(r){ return r.json(); });
+    var L = j && j.data && j.data[0] && j.data[0].respList;
+    if(!L || L.length < 20) return null;
+    return L.map(function(x){ var t = +x.t; if(t < 1e12) t *= 1000; return [t, +x.c]; }).filter(function(x){ return x[1] > 0; }).sort(function(a, b){ return a[0] - b[0]; });
+  }catch(e){ return null; }
+}
+async function pbOkx(inst){
+  var out = [], after = "";
+  for(var k = 0; k < 5; k++){
+    try{
+      var j = await fetch("https://www.okx.com/api/v5/market/history-candles?instId=" + inst + "&bar=1Dutc&limit=100" + (after ? "&after=" + after : "")).then(function(r){ return r.json(); });
+      var d = (j && j.data) || []; if(!d.length) break;
+      d.forEach(function(x){ out.push([+x[0], +x[4]]); });
+      after = d[d.length - 1][0];
+      if(d.length < 100) break;
+    }catch(e){ break; }
+  }
+  return out.length > 20 ? out.sort(function(a, b){ return a[0] - b[0]; }) : null;
+}
+async function pbSeries(key){
+  if(PB.px[key] !== undefined || PB.busy[key]) return;
+  PB.busy[key] = 1;
+  var v = null, m = key.split(":"), mk = m[0], c = m.slice(1).join(":");
+  try{
+    if(mk === "kr"){ v = await pbYahoo(c + ".KS"); if(!v) v = await pbYahoo(c + ".KQ"); }
+    else if(mk === "co") v = await pbOkx(c);
+    else v = await pbYahoo(c);
+  }catch(e){}
+  PB.px[key] = v; delete PB.busy[key];
+  pbPaint();
+}
+function pbAt(ser, ms){ if(!ser) return null; var r = null; for(var i = 0; i < ser.length; i++){ if(ser[i][0] <= ms) r = ser[i][1]; else break; } return r; }
+function pbAgo(mo){ var d = new Date(); d.setMonth(d.getMonth() - mo); d.setHours(23, 59, 0, 0); return d.getTime(); }
+function pbItems(){
+  var it = [];
+  try{
+    rlRows().forEach(function(p){
+      if(!(+p.qty > 0)) return;
+      if(p.mk === "kr") it.push({key: "kr:" + String(p.code), name: p.name || p.code, qty: +p.qty, cur: +p.cur, fx: false});
+      else if(p.mk === "us") it.push({key: "us:" + String(p.code).replace(/\.US$/i, "").toUpperCase(), name: p.name || p.code, qty: +p.qty, cur: +p.cur, fx: true});
+      else if(p.mk === "coin" && p.spot) it.push({key: "co:" + String(p.code).toUpperCase(), name: String(p.code).split("-")[0] + (LANG === "en" ? " spot" : " 현물"), qty: +p.qty, cur: +p.cur, fx: true});
+    });
+  }catch(e){}
+  return it;
+}
+function pbPaint(){
+  var box = E("pbCard"); if(!box) return;
+  var en = LANG === "en", it = pbItems();
+  if(!it.length){ box.style.display = "none"; return; }
+  box.style.display = "";
+  var fxS = PB.px["fx:KRW=X"], fxNow = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : (fxS ? fxS[fxS.length - 1][1] : 0);
+  var MO = [3, 6, 12], T = MO.map(pbAgo);
+  var pct = function(v){ return v == null ? '<span class="dplbl">—</span>' : '<span class="' + (v >= 0 ? "up" : "dn") + '">' + (v > 0 ? "+" : "") + v.toFixed(1) + '%</span>'; };
+  var tot = MO.map(function(){ return {a: 0, b: 0, n: 0}; });
+  var rows = it.map(function(x){
+    var ser = PB.px[x.key];
+    var cells = T.map(function(ms, k){
+      var p0 = pbAt(ser, ms); if(!(p0 > 0) || !(x.cur > 0)) return null;
+      var f0 = 1, f1 = 1;
+      if(x.fx){ f0 = pbAt(fxS, ms); f1 = fxNow; if(!(f0 > 0) || !(f1 > 0)) return null; }
+      var then = x.qty * p0 * f0, now = x.qty * x.cur * f1;
+      tot[k].a += now; tot[k].b += then; tot[k].n++;
+      return (now / then - 1) * 100;
+    });
+    return '<tr><td style="text-align:left">' + dpEsc(x.name) + '</td>' + cells.map(function(v){ return '<td>' + (ser === undefined ? '<span class="dplbl">…</span>' : pct(v)) + '</td>'; }).join("") + '</tr>';
+  }).join("");
+  var totRow = '<tr style="font-weight:800"><td style="text-align:left">' + (en ? "Total" : "전체") + '</td>' + tot.map(function(t){ return '<td>' + (t.b > 0 ? pct((t.a / t.b - 1) * 100) : '<span class="dplbl">—</span>') + '</td>'; }).join("") + '</tr>';
+  var idx = [["ix:^KS11", en ? "KOSPI" : "코스피"], ["ix:^GSPC", "S&P500"]].map(function(q){
+    var ser = PB.px[q[0]], last = ser ? ser[ser.length - 1][1] : null;
+    return '<tr class="dplbl"><td style="text-align:left">' + q[1] + '</td>' + T.map(function(ms){ var p0 = pbAt(ser, ms); return '<td>' + (ser === undefined ? '…' : pct(p0 > 0 && last > 0 ? (last / p0 - 1) * 100 : null)) + '</td>'; }).join("") + '</tr>';
+  }).join("");
+  box.innerHTML = '<h3>' + (en ? "Current portfolio backtest" : "현재 포트폴리오 백테스트") + '</h3>'
+    + '<div class="dpmsg">' + (en ? "If you had bought today's holdings (same quantities) back then · in KRW, US and crypto at that day's FX" : "지금 들고 있는 수량 그대로 그때 샀다면 · 원화 기준(미국·코인은 그때 환율)") + '</div>'
+    + '<table class="mhtab"><tr><th style="text-align:left">' + (en ? "Item" : "종목") + '</th><th>' + (en ? "3M" : "3개월") + '</th><th>' + (en ? "6M" : "6개월") + '</th><th>' + (en ? "1Y" : "1년") + '</th></tr>'
+    + rows + totRow + idx + '</table>';
+}
+function pbRender(){
+  try{
+    var card = E("pbCard"), rc = E("recoCard");
+    if(!rc) return;
+    if(!card){ card = document.createElement("div"); card.className = "card"; card.id = "pbCard"; rc.parentNode.insertBefore(card, rc); }
+    else if(card.nextSibling !== rc){ rc.parentNode.insertBefore(card, rc); }
+    var it = pbItems();
+    it.forEach(function(x){ pbSeries(x.key); });
+    if(it.some(function(x){ return x.fx; })) pbSeries("fx:KRW=X");
+    if(it.length){ pbSeries("ix:^KS11"); pbSeries("ix:^GSPC"); }
+    pbPaint();
+  }catch(e){}
+}
 function recoRender(){
+  setTimeout(function(){ try{ pbRender(); }catch(e){} }, 0);   // 현재 포트폴리오 백테스트 카드 — 퍼즐맵 위 (사장님 2026-09-28)
   if(dpSellCur && /^roOrd_/.test(dpSellBox||"") && E(dpSellBox) && E(dpSellBox).innerHTML) return;   // 12칸 주문판이 열려 있으면 다시 그리지 않는다
   let card=E("recoCard");
   if(!card){
