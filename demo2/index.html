@@ -4561,6 +4561,17 @@ setTimeout(function(){ dpRender(); dpTick(); }, 1200); setInterval(dpTick,10000)
  +"#mhBody .mhtab td:nth-child(3),#mhBody .mhtab td:nth-child(4),#mhBody .mhtab td:nth-child(6){white-space:nowrap;overflow:hidden;text-overflow:clip}"
  +"#mhBody .mhtab td:nth-child(2){white-space:normal;word-break:break-all}"
  +"#mhBody .mhtab tr.mhgrp td:first-child{white-space:normal}"
+ +"#mhBody .mhtab .dpsm{width:100%;box-sizing:border-box;padding:6px 0;text-align:center}}"
+ +"@media(min-width:521px){#mhBody .mhtab{table-layout:fixed}"   /* PC 전용 — 폰과 같은 칸 나눔(카드 폭 약 460px라 표가 밀려 단추가 잘렸다, 사장님 2026-09-28) · 폰 규칙은 그대로 */
+ +"#mhBody .mhtab th:first-child{width:25%}"
+ +"#mhBody .mhtab th:nth-child(2){width:12%}"
+ +"#mhBody .mhtab th:nth-child(3),#mhBody .mhtab th:nth-child(4){width:17%}"
+ +"#mhBody .mhtab th:nth-child(6){width:17%}"
+ +"#mhBody .mhtab th:nth-child(7){width:12%}"
+ +"#mhBody .mhtab th{white-space:nowrap;line-height:1.35;vertical-align:bottom}"
+ +"#mhBody .mhtab td:nth-child(3),#mhBody .mhtab td:nth-child(4),#mhBody .mhtab td:nth-child(6){white-space:nowrap;overflow:hidden;text-overflow:clip}"
+ +"#mhBody .mhtab td:nth-child(2){white-space:normal;word-break:break-all}"
+ +"#mhBody .mhtab tr.mhgrp td:first-child{white-space:normal}"
  +"#mhBody .mhtab .dpsm{width:100%;box-sizing:border-box;padding:6px 0;text-align:center}}";   /* 칸 너비 합 100% · [매수]/[매도] 같은 자리 (사장님 2026-09-26) */
   document.head.appendChild(st); })();
 
@@ -5115,19 +5126,21 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
     ];
     let t = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+(en?"12-slot status":"12칸 현황")+' <span class="c21help" onclick="s12Info(event)">i</span> <button class="dpb flat dpsm" id="atBtn" style="margin-left:6px;vertical-align:middle" onclick="event.stopPropagation();atOpen()">'+(en?"Auto trading":"자동매매")+'</button></div>'
       + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
-      + '<th>'+(en?"Filled":"채운 칸")+'</th><th>'+(en?"Empty":"빈 칸")+'</th></tr>';
+      + '<th style="white-space:nowrap">'+(en?"Filled":"채운 칸")+'</th><th style="white-space:nowrap">'+(en?"Empty":"빈 칸")+'</th></tr>';
     rows.forEach(function(r){
       const nm=r[0], tot=r[1], fill=Math.max(0,Math.min(12,r[2])), f=r[3];
       const empty = 12 - fill;
       // 코인앱과 같은 컬러 램프 — 1~4 빨강(어둡→밝) · 5~6 초록빛 회색 · 7~12 초록(어둡→밝), 12px 정사각형 (사장님 2026-09-24)
       const SLC = ["#7a2600","#a83400","#d64300","#ff5000","#8f9690","#7fa587","#006b03","#008604","#00a105","#00c805","#33da38","#66ec6a"];
       let bar = '<span style="display:flex;gap:4px;margin-top:4px">';
-      for (let i = 0; i < 12; i++) bar += '<span style="flex:0 0 12px;width:12px;height:12px;border-radius:3px;'
+      for (let i = 0; i < 12; i++) bar += '<span style="flex:1 1 0;max-width:12px;min-width:4px;aspect-ratio:1/1;border-radius:3px;'
         + (i < fill ? 'background:'+SLC[i] : 'background:var(--bd);opacity:.45') + '"></span>';
       bar += '</span>';
-      t += '<tr><td style="text-align:left">'+nm+bar+'</td>'
-        + '<td>'+(tot>0?f(tot/12):"-")+'</td>'
-        + '<td>'+fill+'</td><td'+(empty>0?' style="color:#00c805;font-weight:800"':'')+'>'+empty+'</td></tr>';
+      // 점 막대는 그 줄 아래 표 전체 폭으로 — 자산 칸 안에 두면 폰에서 오른쪽이 잘렸다 (사장님 2026-09-28)
+      t += '<tr><td style="text-align:left;border-bottom:0;padding-bottom:0">'+nm+'</td>'
+        + '<td style="border-bottom:0;padding-bottom:0">'+(tot>0?f(tot/12):"-")+'</td>'
+        + '<td style="border-bottom:0;padding-bottom:0">'+fill+'</td><td style="border-bottom:0;padding-bottom:0'+(empty>0?';color:#00c805;font-weight:800':'')+'">'+empty+'</td></tr>'
+        + '<tr><td colspan="4" style="text-align:left;padding-top:2px">'+bar+'</td></tr>';
     });
     t += '</table><div class="dpmsg">'
       + (en ? "(Cash + holdings) × the allocation weight is split into twelve slots; one slot is bought per day while slots are empty. Crypto counts slots by amount (spot only)."
