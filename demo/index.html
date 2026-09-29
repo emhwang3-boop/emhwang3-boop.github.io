@@ -6760,6 +6760,11 @@ setInterval(dpRegimeTick,15000);
     "미국 달러 주식형 ETF": "US equity ETF (USD)", "달러 주식형 ETF": "Equity ETF (USD)", "달러 주식형 레버리지 ETF": "Leveraged equity ETF (USD)",
     "반도체": "Semis", "바이오3x": "Biotech 3x", "비트코인": "Bitcoin", "이더리움": "Ethereum",
     "프랑스": "France", "독일": "Germany", "영국": "UK", "일본": "Japan", "중국": "China", "한국": "Korea", "유로존": "Eurozone", "캐나다": "Canada",
+    "기업 정보": "Company", "관련 뉴스": "Related news", "코인 정보": "Coin info", "공시": "Filings",
+    "최근 5영업일 관련 뉴스가 없습니다.": "No related news in the last 5 business days.", "제목을 누르면 언론사 원문이 열립니다.": "Tap a headline for the original article.",
+    "종목을 고르면 관련 뉴스가 나옵니다.": "Pick an item to see related news.", "최근 5영업일 공시가 없습니다.": "No filings in the last 5 business days.",
+    "회사 설명을 찾지 못했습니다.": "No company description found.", "코인 설명을 찾지 못했습니다.": "No description found.",
+    "투자 판단이 아닌 참고 정보입니다.": "For reference only, not investment advice.",
     "호주": "Australia", "스위스": "Switzerland", "이탈리아": "Italy", "스페인": "Spain", "인도": "India", "뉴질랜드": "New Zealand", "홍콩": "Hong Kong"
   };
   // 역방향(영어 → 한글): 영어 상태로 그려진 뒤 한글로 바꿔도 되돌아오게
@@ -6974,7 +6979,7 @@ function nwInit(anchorId, inputId, kind){
     +KE("종목을 고르면 관련 뉴스가 나옵니다.","Pick an item to see related news.")+'</div></div></div>');
   var last="";
   setInterval(function(){ var el=document.getElementById(inputId); if(!el) return;
-    var v=String(el.value||"").trim(); if(!v || v===last) return; last=v; nwLoad(anchorId, v, kind); }, 2500);
+    var v=String(el.value||"").trim(); if(!v || v+LANG===last) return; last=v+LANG; nwLoad(anchorId, v, kind); }, 2500);   // 한/영 바꾸면 다시 받는다 (2026-09-29)
 }
 setTimeout(function(){ try{ nwInit("stock","stkq","stock"); }catch(e){} try{ nwInit("coin2","coinq","coin"); }catch(e){} }, 1500);
 </script>
