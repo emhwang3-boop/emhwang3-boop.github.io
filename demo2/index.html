@@ -6895,7 +6895,7 @@ setInterval(dpRegimeTick,15000);
     need.forEach(function (k) { ENN_ASK[k] = 1; });
     for (var i = 0; i < need.length; i += 40) (function (part) {
       fetch(HUB + "/enname?c=" + encodeURIComponent(part.join(","))).then(function (r) { return r.json(); }).then(function (j) {
-        part.forEach(function (k) { if (j && j[k]) { ENN[k] = {ko: found[k], en: j[k]}; ennPut(found[k], j[k]); } });
+        part.forEach(function (k) { if (j && j[k]) { ENN[k] = {ko: found[k], en: j[k]}; ennPut(found[k], j[k]); } else ennPut(found[k], k.split(":")[1]); });   // 마지막 비상수단 = 종목번호 (저장 안 함)
         try { localStorage.setItem(ENN_KEY, JSON.stringify(ENN)); } catch (e) {}
         try { redraw(); } catch (e) {}
         run();
