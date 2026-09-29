@@ -4368,7 +4368,7 @@ function ydHtml(rows, note, auto){
     });
     h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계(원화)","Total (KRW)") + '</td><td colspan="3" style="text-align:right;white-space:nowrap;font-size:12.5px">'
       + KE("매수 ","Buy ") + Math.round(buyK).toLocaleString() + ' · ' + KE("매도 ","Sell ") + Math.round(sellK).toLocaleString()
-      + ' · ' + KE("미실현 ","Unrealized ") + (plN ? ((plK > 0 ? "+" : "") + Math.round(plK).toLocaleString()) : "—")
+      + '<br>' + KE("미실현 ","Unrealized ") + (plN ? ((plK > 0 ? "+" : "") + Math.round(plK).toLocaleString()) : "—")
       + ' · ' + KE("실현 ","Realized ") + (rzN ? ((rzK > 0 ? "+" : "") + Math.round(rzK).toLocaleString()) : "—") + '</td></tr></table>';
     if(!fx) h += '<div class="dpmsg">' + KE("환율을 못 받아 합계는 국내만입니다.","FX not loaded; total is KR only.") + '</div>';
   }
@@ -8167,5 +8167,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-29 21:55</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-29 22:43</div>
 </body></html>
