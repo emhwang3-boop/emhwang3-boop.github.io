@@ -1310,9 +1310,9 @@ function makeChart(cid,opt){
       if(A){const last=A[end-1];line(A,last>=0?C21_COL.up:C21_COL.dn,1.8,YS);}});
     // 🔴 Y축 눈금은 없다(사장님 2026-09-18 — "십자선이 있으니 불편하지 않고 공백도 사라진다"). 값은 십자선으로 본다.
     // 추세선 — 찍은 두 점(봉 번호·가격)을 잇는다. Esc 로 지운다 (사장님 2026-09-29)
-    const tlDraw=(a,b,dash)=>{const xa=X(a.i),ya=Y(a.p),xb=X(b.i),yb=Y(b.p);ctx.strokeStyle=C21_COL.blue;ctx.lineWidth=2;if(dash)ctx.setLineDash([5,4]);
+    const tlDraw=(a,b,dash)=>{const xa=X(a.i),ya=Y(a.p),xb=X(b.i),yb=Y(b.p);ctx.strokeStyle="#4a4f57";ctx.lineWidth=2;if(dash)ctx.setLineDash([5,4]);
       ctx.beginPath();ctx.moveTo(xa,ya);ctx.lineTo(xb,yb);ctx.stroke();ctx.setLineDash([]);
-      for(const q of [[xa,ya],[xb,yb]]){ctx.fillStyle=C21_COL.blue;ctx.beginPath();ctx.arc(q[0],q[1],3,0,7);ctx.fill();}};
+      for(const q of [[xa,ya],[xb,yb]]){ctx.fillStyle="#4a4f57";ctx.beginPath();ctx.arc(q[0],q[1],3,0,7);ctx.fill();}};
     ctx.save();ctx.beginPath();ctx.rect(x0,y0,x1-x0,yP-y0);ctx.clip();
     for(const t of TL)tlDraw(t.a,t.b);
     if(TLP){const cp=CROSS&&CROSS.py!=null?{i:CROSS.i,p:lo+(yP-CROSS.py)/(yP-y0)*(hi-lo)}:TLP;tlDraw(TLP,cp,true);}
