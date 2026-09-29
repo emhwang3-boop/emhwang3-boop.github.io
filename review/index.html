@@ -5342,7 +5342,7 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
     const rows = [
       [(en?"Crypto (spot)":"가상자산(현물)"), totCO, gCO ? Math.min(12, gCO.length) : days(co), tet, gCO, "coin"],
     ];
-    let t = satHtml(en, fx) + '<div class="dphd" style="margin-top:10px;font-size:14px;color:var(--nm)">'+(en?"Crypto 12-slot":"가상자산 12칸")+' <span class="c21help" onclick="s12Info(event)">i</span></div>'
+    let t = '<h3>'+(en?"Crypto 12-slot":"가상자산 12칸")+' <span class="c21help" onclick="s12Info(event)">i</span></h3>'
       + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
       + '<th style="white-space:nowrap">'+(en?"Filled":"채운 칸")+'</th><th style="white-space:nowrap">'+(en?"Empty":"빈 칸")+'</th></tr>';
     rows.forEach(function(r){
@@ -5510,9 +5510,20 @@ function rpRender(){
     });
     var nd = satNextDay(), dn = Math.ceil((nd - new Date(new Date().toDateString())) / 864e5);
     var pc = function(v){ return (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, "") + "%"; };
-    var h = '<h3>' + (en ? "Recommended portfolio" : "추천 포트폴리오 현황") + '</h3>'
+    var h = '<h3>' + (en ? "Recommended portfolio" : "추천 포트폴리오 현황")
+      + ' <button class="dpb flat dpsm" id="atBtn" style="margin-left:6px;vertical-align:middle" onclick="event.stopPropagation();atOpen()">' + (en ? "Auto trading" : "자동매매") + '</button></h3>'
       + '<div class="dpmsg" style="color:var(--nm)">' + (en ? "Next change " + (nd.getMonth() + 1) + "/" + nd.getDate() : "다음 교체 " + (nd.getMonth() + 1) + "월 " + nd.getDate() + "일")
       + ' · D-' + dn + '</div>';
+    try{   // 전체 익절·손절까지 남은 거리 (위성 현황 카드에서 옮김, 2026-09-29)
+      var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 0;
+      var RU = (typeof AT !== "undefined" && AT.st && AT.st.rules) || {};
+      var PTP = (RU.pf_tp != null ? +RU.pf_tp : 30), PSL = (RU.pf_sl != null ? +RU.pf_sl : -20);
+      var hs = (typeof RL !== "undefined" && RL) ? (RL.kr || []).concat(RL.us || []) : [], pc0 = 0, pl = 0;
+      hs.forEach(function(p){ var k = p.mk === "us" ? (fx || 1) : 1, e = (+p.evl || 0) * k, l = (+p.pl || 0) * k; pc0 += e - l; pl += l; });
+      if(pc0 > 0){ var pf = pl / pc0 * 100;
+        h += '<div class="dpmsg" style="color:var(--nm)">' + (en ? "Total " : "전체 ") + '<b style="color:' + (pf >= 0 ? "#00c805" : "#ff5c5c") + '">' + (pf > 0 ? "+" : "") + pf.toFixed(1) + '%</b>'
+          + ' · ' + (en ? "to take-profit " : "익절 ") + '+' + PTP + (en ? " " : "까지 ") + (PTP - pf).toFixed(1) + '%p · ' + (en ? "to stop " : "손절 ") + PSL + (en ? " " : "까지 ") + (pf - PSL).toFixed(1) + '%p</div>'; }
+    }catch(e){}
     g.mix.forEach(function(m){
       var c = m[0], L = byC[c] || [];
       if(!(m[1] > 0)) return;
@@ -5670,6 +5681,7 @@ function recoRender(){
     return s;
   };
   const body=sec("kr",R.kr,totKR,kr)+sec("us",R.us,totUS,us);
+  var ch="";   // 가상자산 카드 (사장님 2026-09-29 — 독립 카드)
   if(has){
     if(fx>0){
       (RL.co||[]).filter(function(p){return !p.spot;}).forEach(function(p){ PIEP.push([String(p.code).split("-")[0]+(en?" perp":" 선물"),(p.evl||0)*fx,"held",(p.evl||0),"us",(p.evl||0),(typeof p.rt==="number"?p.rt:null)]); });
@@ -5677,21 +5689,21 @@ function recoRender(){
       if(cash.usdt>0)PIEP.push(["USDT",cash.usdt*fx,"cash",cash.usdt,"coin",cash.usdt]);
     }
     // 퍼즐맵 먼저, 12칸 현황은 그 아래 · 「보유 + 추천 포트폴리오」 제목은 뺐다 (사장님 2026-09-24)
+    ch=slotTable(kr,us,totKR,totUS,cash,fx,en);
     h+=recoPuz(PIEP)   // [고른 것 + 보유로 바스켓 만들기] 숨김 (사장님 2026-09-26)
-      +slotTable(kr,us,totKR,totUS,cash,fx,en)
       +(fx>0?"":'<div class="dpmsg">'+(en?"USD rate not loaded yet — KR only.":"환율을 아직 못 받아 국내만 그렸습니다.")+'</div>');
   }
   void body;   // 국내·미국 「오늘 살 것·팔 것」 표는 바스켓 매매로 합쳤다 — 화면에 안 붙인다 (사장님 2026-09-28) · 코인 표는 남김
   // 코인 — 왕관 판정과 지금 선물 포지션 비교
   setTimeout(function(){ try{ roFill(); }catch(e){} }, 50);        // 국내·미국 수량 칸 채우기
   // 🔴 코인 — 국내·미국처럼 D 규칙 표 (사장님 2026-09-26): 현물 BTC 45 · ETH 45 · 알트 10, 줄 하나 = 오늘 주문 하나
-  h+='<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm);text-align:center">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div>';
-  if(!has){ h+='<div class="dpmsg">'+(en?"Load your real account to see today's crypto buys and sells.":"실계좌를 불러오면 오늘 살 것·팔 것이 나옵니다.")+'</div>'; }
+  ch+='<div class="dphd" style="margin-top:14px;font-size:14px;color:var(--nm);text-align:center">'+(en?"Crypto (spot)":"코인 (현물)")+' <span class="dplbl">'+(en?"BTC 45 · ETH 45 · Alts 10":"BTC 45 · ETH 45 · 알트 10")+'</span></div>';
+  if(!has){ ch+='<div class="dpmsg">'+(en?"Load your real account to see today's crypto buys and sells.":"실계좌를 불러오면 오늘 살 것·팔 것이 나옵니다.")+'</div>'; }
   else{
     var _cp=[]; try{ _cp=coPlan(R); }catch(e){}
-    h+='<div class="dpmsg" style="font-weight:700;color:var(--nm)">'+(en?"Today (crypto rule)":"오늘 살 것·팔 것 — 코인 규칙")+'</div>';
-    if(!_cp.length) h+='<div class="dpmsg">'+(en?"Nothing today — classes are near target.":"오늘은 없습니다 — 자산군이 목표 근처입니다.")+'</div>';
-    else h+='<table class="mhtab"><tr><th style="text-align:left">'+(en?"Coin":"코인")+'</th><th style="white-space:nowrap">'+(en?"20d":"20일")+'</th><th>'+(en?"Qty":"수량")+'</th><th>'+(en?"Amount":"금액")+'</th><th></th></tr>'
+    ch+='<div class="dpmsg" style="font-weight:700;color:var(--nm)">'+(en?"Today (crypto rule)":"오늘 살 것·팔 것 — 코인 규칙")+'</div>';
+    if(!_cp.length) ch+='<div class="dpmsg">'+(en?"Nothing today — classes are near target.":"오늘은 없습니다 — 자산군이 목표 근처입니다.")+'</div>';
+    else ch+='<table class="mhtab"><tr><th style="text-align:left">'+(en?"Coin":"코인")+'</th><th style="white-space:nowrap">'+(en?"20d":"20일")+'</th><th>'+(en?"Qty":"수량")+'</th><th>'+(en?"Amount":"금액")+'</th><th></th></tr>'
       +_cp.map(function(r){
         if(r.info) return '<tr><td style="text-align:left"><b>'+r.k+'</b><br><span class="dplbl">'+dpEsc(r.why)+'</span></td><td colspan="4" class="dplbl" style="text-align:center">'+r.msg+'</td></tr>';
         var m20=r.m20;
@@ -5706,6 +5718,12 @@ function recoRender(){
           +'<td>'+(r.err?('<button class="dpb buy dpsm" disabled style="opacity:.35;cursor:not-allowed">'+(en?"BUY":"매수")+'</button>'):('<button class="dpb '+(r.side==="B"?"buy":"sell")+' dpsm" onclick="coinGoOrd(&quot;'+r.k+'&quot;,&quot;'+r.side+'&quot;,'+(r.side==="B"?(+r.amt).toFixed(2):(+r.qty))+')">'+(r.side==="B"?(en?"BUY":"매수"):(en?"SELL":"매도"))+'</button>'))+'</td></tr>';
       }).join("")+'</table><div id="roOrd_co"></div>';
   }
+  try{
+    var cc=E("coCard");
+    if(!cc){ cc=document.createElement("div"); cc.className="card"; cc.id="coCard"; }
+    if(card.nextSibling!==cc) card.parentNode.insertBefore(cc, card.nextSibling);
+    var _ck=ch.replace(/pz\d+_/g,"pz_"); if(cc._h!==_ck){ cc.innerHTML=ch; cc._h=_ck; }
+  }catch(e){}
   var _hk=h.replace(/pz\d+_/g,"pz_"); if(card._h!==_hk){ card.innerHTML=h; card._h=_hk; }   // 퍼즐 그림 번호(pzN_)는 빼고 비교 — 2초마다 통째로 다시 그리던 깜빡임 (2026-09-27)   // 같으면 안 그린다 — PC 깜빡임 (2026-09-26)
   try{ bkRender(); }catch(e){}
 }
