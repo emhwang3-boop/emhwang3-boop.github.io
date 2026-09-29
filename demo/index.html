@@ -887,7 +887,7 @@ E("stkq").addEventListener("input",function(){
     E("stkResults").innerHTML='<div class="soonrow">'+(LANG==="en"?"Searching…":"검색 중…")+'</div>';
     const latin=/[A-Za-z]/.test(q)&&!/[가-힣]/.test(q);
     lastResults=[]; usResults=[];
-    if(latin||/[가-힣]/.test(q))usFetch("search","q="+encodeURIComponent(q)).then(function(d){if(seq!==searchSeq)return;usResults=(d&&d.data)||[];renderStkResults();});
+    if(latin||/[가-힣]/.test(q))usFetch("search","q="+encodeURIComponent(q)+(LANG==="en"?"&en=1":"")).then(function(d){if(seq!==searchSeq)return;usResults=(d&&d.data)||[];renderStkResults();});
     krFetch("search","q="+encodeURIComponent(q),4).then(function(rows){if(seq!==searchSeq)return;lastResults=rows||[];renderStkResults();});
   },350);
 });
@@ -1744,7 +1744,7 @@ async function mhTick(){
             +'<span>'+mhEsc(b)+' <span class="mkt '+cc+'">'+kl+'</span></span>'
             +'<span class="c">'+sym+'</span></a>';}).join("");}).join("");
       E("mhResults").innerHTML=h||'<div class="soonrow">'+(en?"No results":"결과 없음")+'</div>';};
-    if(latin||/[가-힣]/.test(q))usFetch("search","q="+encodeURIComponent(q)).then(function(d){
+    if(latin||/[가-힣]/.test(q))usFetch("search","q="+encodeURIComponent(q)+(LANG==="en"?"&en=1":"")).then(function(d){
       if(seq!==mhSeq)return;us=(d&&d.data)||[];paint();});
     krFetch("search","q="+encodeURIComponent(q),4).then(function(rows){
       if(seq!==mhSeq)return;kr=rows||[];paint();});
