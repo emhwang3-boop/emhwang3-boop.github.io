@@ -4969,6 +4969,7 @@ function puzPicksOld(mk){
 }
 function recoPuz(parts){
   const en=LANG==="en";
+  if(en&&typeof window.demoEnName==="function")parts=parts.map(function(p){ var e=window.demoEnName(p[0]); if(!e)return p; var q=p.slice(); q[0]=e; return q; });   // 영어 화면은 영문 이름으로 자른다 (2026-09-29)
   parts=parts.filter(function(p){return p[1]>0;}).sort(function(a,b){return b[1]-a[1];});
   const tot=parts.reduce(function(s,p){return s+p[1];},0); if(!(tot>0))return "";
   let small=0; const big=[];
@@ -6734,7 +6735,20 @@ setInterval(dpRegimeTick,15000);
     "판을 넘기다": "On a panel, tick", "를 체크하면 기본 차트 위에 겹쳐 놓고 봅니다(최대 4개).": "to overlay it on the base chart (up to 4).",
     "고객의 소리": "Feedback", "보내기": "Send", "레버리지": "Leverage", "시스템 오류 내용을 적어 주세요": "Describe the system error",
     "빨강=저항 초록=지지": "red = resistance, green = support", "노랑=청산맵(어림)": "yellow = liquidation map (est.)", "밀어서 과거·핀치": "drag for history · pinch to zoom",
-    "헐 이동평균선": "Hull MA"
+    "헐 이동평균선": "Hull MA",
+    // ── 영어 화면 한글 걷어내기 (사장님 2026-09-29) ──
+    "증권사 & 거래소": "Brokers & Exchanges", "계좌번호": "Account no.", "성명": "Name", "코인": "Crypto", "매매현황": "Trading status",
+    "내 투자성향": "My Risk Profile", "누르면 결과": "tap for result", "분석": "Analysis", "바스켓 매매 전략": "Basket Trading Strategy",
+    "오늘 바스켓 만들기": "Build today's basket", "다시 만들기": "Rebuild", "재계산": "Recalculate", "모두 지우기": "Clear all",
+    "＋ 바스켓 담기": "＋ Add to basket", "연결": "Consolidated", "별도": "Separate",
+    "안정형": "Conservative", "안정추구형": "Moderately conservative", "위험중립형": "Balanced", "적극투자형": "Growth", "공격투자형": "Aggressive",
+    "예금·MMF": "Deposits·MMF", "국내 지수형 ETF": "KR index ETF", "국내 채권형 ETF": "KR bond ETF", "국내 원화 ETF": "KR KRW ETF",
+    "해외 원화표시 채권형 ETF": "Overseas bond ETF (KRW)", "미국 달러 지수형 ETF": "US index ETF (USD)", "미국 달러표시 채권형 ETF": "US bond ETF (USD)",
+    "해외(원화) 주식형 ETF": "Overseas equity ETF (KRW)", "원화 주식형 레버리지 ETF": "Leveraged equity ETF (KRW)",
+    "미국 달러 주식형 ETF": "US equity ETF (USD)", "달러 주식형 ETF": "Equity ETF (USD)", "달러 주식형 레버리지 ETF": "Leveraged equity ETF (USD)",
+    "반도체": "Semis", "바이오3x": "Biotech 3x", "비트코인": "Bitcoin", "이더리움": "Ethereum",
+    "프랑스": "France", "독일": "Germany", "영국": "UK", "일본": "Japan", "중국": "China", "한국": "Korea", "유로존": "Eurozone", "캐나다": "Canada",
+    "호주": "Australia", "스위스": "Switzerland", "이탈리아": "Italy", "스페인": "Spain", "인도": "India", "뉴질랜드": "New Zealand", "홍콩": "Hong Kong"
   };
   // 역방향(영어 → 한글): 영어 상태로 그려진 뒤 한글로 바꿔도 되돌아오게
   // 🔴 짧은 낱말(D·W·3m…)은 되돌리기 표에 넣지 않는다 — 한글 화면의 "D" 배지가 "일" 로 바뀌었다 (2026-09-22)
@@ -6749,16 +6763,23 @@ setInterval(dpRegimeTick,15000);
   var RULES = [
     [/^(\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}(?::\d{2})?)?) 기준$/, function (m) { return "as of " + m[1]; }],
     [/^(.+?) 기준$/, function (m) { return "as of " + m[1]; }],
-    [/^([0-9.,]+)억KRW$/, function (m) { var s = fmtEok(m[1]); return s ? s + " KRW" : null; }],
-    [/^([0-9.,]+)억$/, function (m) { var s = fmtEok(m[1]); return s ? s : null; }],
+    [/^([0-9.,]+)억KRW$/, function (m) { var s = fmtEok(m[1]); return s ? "₩" + s : null; }],
+    [/^([+\-−]?)([0-9.,]+)억$/, function (m) { var s = fmtEok(m[2]); return s ? m[1] + "₩" + s : null; }],
+    [/^([+\-−]?)([0-9.,]+)조$/, function (m) { return m[1] + "₩" + m[2] + "T"; }],
+    [/^([+\-−]?)([0-9,]+(?:\.\d+)?)\s*원$/, function (m) { return m[1] + "₩" + m[2]; }],
+    [/^@\s*([0-9,]+(?:\.\d+)?)\s*원$/, function (m) { return "@₩" + m[1]; }],
+    [/^([0-9,.]+)\s*주$/, function (m) { return m[1] + " sh"; }],
+    [/^(\d+)점$/, function (m) { return m[1] + " pts"; }],
+    [/^(\d{4}-\d{2}-\d{2}) 분석$/, function (m) { return m[1] + " Analysis"; }],
+    [/^알트 (.+)$/, function (m) { return "Alts " + m[1]; }],
+    [/^(.+?) ([+\-−]?[0-9.]+%)$/, function (m) { var a = tr(m[1]); return a ? a + " " + m[2] : null; }],
     [/^(\d+)일째$/, function (m) { return "day " + m[1]; }],
     [/^(\d+)건$/, function (m) { return m[1]; }],
     [/^(\d+)개$/, function (m) { return m[1]; }],
-    [/^(\d+)주$/, function (m) { return m[1] + " sh"; }],
-    [/^([0-9,]+)원$/, function (m) { return m[1] + " KRW"; }],
     [/^([①-⑳]\s*)(.+)$/, function (m) { var t = tr(m[2]); return t ? m[1] + t : null; }],   // ① 한섬 → ① Handsome
     [/^(.+?) \(([^()]+)\)$/, function (m) { var a = tr(m[1]), b = tr(m[2]); return (a || b) ? (a || m[1]) + " (" + (b || m[2]) + ")" : null; }],
     [/^(.+?)(\s*·\s*)(.+)$/, function (m) { var a = tr(m[1]), b = tr(m[3]); return (a || b) ? (a || m[1]) + m[2] + (b || m[3]) : null; }],
+    [/^(.+?) \(([^()]*[가-힣][^()]*)\)$/, function (m) { return /[가-힣]/.test(m[1]) ? null : m[1]; }],   // 못 바꾼 한글 괄호는 뺀다
   ];
   function tr(s) {                                 // 한글 → 영어. 없으면 null
     if (!s || !/[가-힣]/.test(s)) return null;
@@ -6835,12 +6856,54 @@ setInterval(dpRegimeTick,15000);
     var _o = window.applyLang;
     // 그릴 때 한/영을 정하는 데모 카드들은 다시 그린다 (실주문 띠·주문판·보유·추천·바스켓) — 사장님 "한영 할 때마다 왔다갔다 하지를 않아"
     function redraw() {
-      ["dpNoteSync", "dpRender", "dpHoldRender", "recoRender", "mhRender", "bkRender"].forEach(function (f) {
+      ["dpNoteSync", "dpRender", "dpHoldRender", "recoRender", "mhRender", "bkRender", "bmRender", "pfRender"].forEach(function (f) {
         try { if (typeof window[f] === "function") window[f](); } catch (e) {}
       });
     }
     if (typeof _o === "function" && !_o._demoEn) { window.applyLang = function () { var r = _o.apply(this, arguments); try { redraw(); run(); } catch (e) {} return r; }; window.applyLang._demoEn = 1; }
   } catch (e) {}
+  // ── 종목 영문 이름 — 허브 /enname(야후)로 받아 NAMES 에 더한다 (사장님 2026-09-29 영어 화면에 한글 금지) ──
+  var ENN_KEY = "en_names_v1", ENN = {}, ENN_ASK = {};
+  try { ENN = JSON.parse(localStorage.getItem(ENN_KEY) || "{}") || {}; } catch (e) { ENN = {}; }
+  function ennPut(ko, e) { if (!ko || !e || NAMES[ko]) return; NAMES[ko] = e; if (!(e in R)) R[e] = ko; }
+  Object.keys(ENN).forEach(function (k) { var v = ENN[k]; if (v && v.ko && v.en) ennPut(v.ko, v.en); });
+  function ennScan() {
+    var found = {}, kw = {};
+    try { if (typeof US_KW_LIST !== "undefined" && US_KW_LIST) US_KW_LIST.forEach(function (r) { if (r[2]) kw[r[0]] = r[2]; }); } catch (e) {}
+    function add(o) {
+      var nm = o.name || o.nm, cd = String(o.code || "").replace(/^A/, "").replace(/\.US$/i, "").toUpperCase();
+      if (!nm || !cd || o.mk === "coin" || !/[가-힣]/.test(nm) || NAMES[nm]) return;
+      var mk = (o.mk === "kr" || o.mk === "us") ? o.mk : (/^\d{5}[0-9A-Z]$/.test(cd) ? "kr" : (/^[A-Z][A-Z.\-]{0,6}$/.test(cd) ? "us" : ""));
+      if (!mk) return;
+      if (mk === "us" && kw[cd]) { ennPut(nm, kw[cd]); return; }
+      found[mk + ":" + cd] = nm;
+    }
+    function dig(x, d) {
+      if (!x || d > 7 || typeof x !== "object") return;
+      if (Array.isArray(x)) { for (var i = 0; i < x.length; i++) dig(x[i], d + 1); return; }
+      if ((x.name || x.nm) && x.code) add(x);
+      for (var k in x) if (Object.prototype.hasOwnProperty.call(x, k) && x[k] && typeof x[k] === "object") dig(x[k], d + 1);
+    }
+    try { dig(typeof RL !== "undefined" ? RL : null, 0); } catch (e) {}
+    try { dig(typeof RK !== "undefined" ? RK.data : null, 0); } catch (e) {}
+    try { dig(typeof RECO !== "undefined" ? RECO : null, 0); } catch (e) {}
+    try { dig(typeof BM !== "undefined" ? BM.rows : null, 0); } catch (e) {}
+    try { dig(window._PZBUY, 0); } catch (e) {}
+    try { dig(JSON.parse(localStorage.getItem("bk_basket_demo_v1") || "null"), 0); } catch (e) {}
+    var need = Object.keys(found).filter(function (k) { return !ENN_ASK[k] && !ENN[k]; });
+    if (!need.length) return;
+    need.forEach(function (k) { ENN_ASK[k] = 1; });
+    for (var i = 0; i < need.length; i += 40) (function (part) {
+      fetch(HUB + "/enname?c=" + encodeURIComponent(part.join(","))).then(function (r) { return r.json(); }).then(function (j) {
+        part.forEach(function (k) { if (j && j[k]) { ENN[k] = {ko: found[k], en: j[k]}; ennPut(found[k], j[k]); } });
+        try { localStorage.setItem(ENN_KEY, JSON.stringify(ENN)); } catch (e) {}
+        try { redraw(); } catch (e) {}
+        run();
+      }).catch(function () {});
+    })(need.slice(i, i + 40));
+  }
+  setInterval(function () { if (en()) ennScan(); }, 4000);
+  window.demoEnName = function (ko) { return NAMES[ko] || null; };
   window.demoEnRun = run;
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run); else run();
   setTimeout(run, 1500); setTimeout(run, 4000);
@@ -6936,10 +6999,12 @@ function cpMoney(v, unit){ if(v==null||!isFinite(v)) return "—"; var a=Math.ab
   if(a>=1e9) return sg+"$"+(a/1e9).toFixed(1)+"B"; if(a>=1e6) return sg+"$"+(a/1e6).toFixed(0)+"M"; return sg+"$"+Math.round(a).toLocaleString(); }
 async function cpLoad(mk, code, name){
   var b=document.getElementById("cpb"), t=document.getElementById("cpq"); if(!b) return;
-  if(t) t.textContent=name||code;
+  var _en=LANG==="en";   // 영어 화면은 영문 이름·영문 설명만 (사장님 2026-09-29)
+  if(t) t.textContent=(_en&&window.demoEnName&&window.demoEnName(name))||(_en&&/[가-힣]/.test(name||"")?code:(name||code));
   b.innerHTML='<div class="dpmsg">'+KE("불러오는 중…","Loading…")+'</div>';
   var j=null; try{ j=await fetch(HUB+"/corp?mk="+mk+"&code="+encodeURIComponent(code)+"&name="+encodeURIComponent(name||"")).then(function(r){ return r.json(); }); }catch(e){}
   j=j||{};
+  if(_en){ if(t&&j.nameEn) t.textContent=j.nameEn; j.enc=null; j.desc=j.descEn||null; }
   var ind=j.ind||{}, di=(j.fin&&j.fin.ind)||null;
   // 국내 — 금감원 DART 가 원본: PER = 현재가 ÷ EPS · PBR = 현재가 ÷ 주당순자산 · 시가총액 = 현재가 × 보통주 발행주식수 (키움 안 씀, 2026-09-27)
   var per=ind.per, pbr=ind.pbr, roe=null, debt=null, opm=null, mcap=ind.mcap, cur=0;
@@ -7004,7 +7069,7 @@ function cpInit(){
     if(us) code=String((typeof stkCode!=="undefined"&&stkCode)||"").replace(/\.US$/i,"").toUpperCase();
     else { var m=/\((\d{6})\)/.exec(v)||/^(\d{6})$/.exec(v); code=m?m[1]:""; }
     c.style.display=code?"":"none";
-    var k=(us?"us:":"kr:")+code; if(!code||k===last) return; last=k; cpLoad(us?"us":"kr", code, name); }, 2500);
+    var k=(us?"us:":"kr:")+code+":"+LANG; if(!code||k===last) return; last=k; cpLoad(us?"us":"kr", code, name); }, 2500);
   return true;
 }
 (function tryCp(n){ if(!cpInit() && n>0) setTimeout(function(){ tryCp(n-1); }, 1000); })(20);
@@ -7013,10 +7078,12 @@ function cpInit(){
 async function ciLoad(sym){
   var b=document.getElementById("cib"), t=document.getElementById("ciq"); if(!b) return;
   var ko=(typeof NW_COIN!=="undefined"&&NW_COIN[sym])||"";
-  if(t) t.textContent=sym+(ko?" · "+ko:"");
+  var _en=LANG==="en";   // 영어 화면은 한글 이름·네이버 백과 빼고 영문 소개만 (사장님 2026-09-29)
+  if(t) t.textContent=sym+(ko&&!_en?" · "+ko:"");
   b.innerHTML='<div class="dpmsg">'+KE("불러오는 중…","Loading…")+'</div>';
   var j=null; try{ j=await fetch(HUB+"/coininfo?sym="+encodeURIComponent(sym)+"&ko="+encodeURIComponent(ko)).then(function(r){ return r.json(); }); }catch(e){}
   j=j||{}; var c=j.cmc||{}, g=j.gecko||{}, h='';
+  if(_en){ var _nm=c.name||g.name||""; if(t&&_nm&&_nm.toUpperCase()!==sym) t.textContent=sym+" · "+_nm; j.enc=null; j.desc=j.descEn||null; }
   if(j.enc&&j.enc.lead) h+='<div style="font-weight:800;font-size:14.5px;line-height:1.6;color:var(--nm);margin-bottom:6px">'+dpEsc(j.enc.lead)
      +(j.enc.link?' <a href="'+dpEsc(String(j.enc.link).replace(/"/g,"%22"))+'" target="_blank" rel="noopener" style="font-weight:600;font-size:12.5px;color:#2ee6c0;white-space:nowrap">'+KE("네이버 지식백과에서 전문 보기 ›","Full article on Naver ›")+'</a>':'')+'</div>';
   if(j.desc&&j.desc.text) h+='<div style="font-size:14px;line-height:1.7;color:var(--nm)">'+dpEsc(j.desc.text)+'</div>';
@@ -7040,7 +7107,7 @@ function ciInit(){
   var last="";
   setInterval(function(){ var c=document.getElementById("ciCard"); if(!c) return;
     var sym=String((typeof coinSym!=="undefined"&&coinSym)||"").toUpperCase().replace(/USDT$/,"").replace(/-.*$/,"");
-    c.style.display=sym?"":"none"; if(!sym||sym===last) return; last=sym; ciLoad(sym); }, 2500);
+    c.style.display=sym?"":"none"; if(!sym||sym+LANG===last) return; last=sym+LANG; ciLoad(sym); }, 2500);
   return true;
 }
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
@@ -7391,10 +7458,10 @@ function pfRender(){
   // ② 목표 배분 원형 그래프 + 실계좌와의 차이
   var fx = (typeof fxKrw==="function"&&fxKrw()>0)?fxKrw():0;
   h += '<div style="position:relative;margin-top:6px">' + pfPie(g.mix.map(function(m){ return [m[0], m[1]]; }))
-     + (fx?'<span style="position:absolute;top:0;right:2px;font-size:11px;color:var(--sub);background:var(--card);padding:1px 5px;border:1px solid var(--bd);border-radius:6px">환율 '+fx.toLocaleString(undefined,{maximumFractionDigits:2})+'원</span>':'')
+     + (fx?'<span style="position:absolute;top:0;right:2px;font-size:11px;color:var(--sub);background:var(--card);padding:1px 5px;border:1px solid var(--bd);border-radius:6px">'+KE('환율 '+fx.toLocaleString(undefined,{maximumFractionDigits:2})+'원','FX ₩'+fx.toLocaleString(undefined,{maximumFractionDigits:2}))+'</span>':'')
      + '</div>';
   var has = (typeof RL!=="undefined") && RL.at;
-  if(!has){ h += '<div class="dpmsg">실계좌를 불러오면 목표 비중과의 차이를 보여 드립니다.</div>'; card.innerHTML=h; pfAcctRender(o); return; }
+  if(!has){ h += '<div class="dpmsg">'+KE('실계좌를 불러오면 목표 비중과의 차이를 보여 드립니다.','Load your real account to see the gap from the target mix.')+'</div>'; card.innerHTML=h; pfAcctRender(o); return; }
   var f = fx || 1350, val = {}, coin = 0, cash = RL.cash || {};
   (RL.kr||[]).forEach(function(p){ var c=pfClassOf(p); val[c]=(val[c]||0)+(+p.evl||0); });
   (RL.us||[]).forEach(function(p){ var c=pfClassOf(p); val[c]=(val[c]||0)+(+p.evl||0)*f; });
@@ -7404,14 +7471,14 @@ function pfRender(){
   var tot = 0; Object.keys(val).forEach(function(k){ tot += val[k]; });   // 코인은 빼고 센다 — 바스켓 매매·보유종목 Gap 과 같은 셈 (사장님 2026-09-26)
   var TGT = {}; g.mix.forEach(function(m){ TGT[m[0]] = m[1]; });
   var keys = g.mix.map(function(m){ return m[0]; }); Object.keys(val).forEach(function(k){ if(keys.indexOf(k)<0 && val[k]>0) keys.push(k); });
-  h += '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">목표와의 차이 <span class="dplbl">총자산(코인 제외) '+Math.round(tot).toLocaleString()+'원</span></div>'
-     + '<table class="mhtab"><tr><th>자산 종류</th><th>보유</th><th>목표</th><th>차이</th></tr>';
+  h += '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+KE('목표와의 차이','Gap from target')+' <span class="dplbl">'+KE('총자산(코인 제외) '+Math.round(tot).toLocaleString()+'원','Total assets (ex-crypto) ₩'+Math.round(tot).toLocaleString())+'</span></div>'
+     + '<table class="mhtab"><tr><th>'+KE('자산 종류','Asset class')+'</th><th>'+KE('보유','Held')+'</th><th>'+KE('목표','Target')+'</th><th>'+KE('차이','Gap')+'</th></tr>';
   var row = function(k, now, tg){ var d = now - tg;
     return '<tr><td style="text-align:left">'+k+'</td><td>'+now.toFixed(1)+'%</td><td>'+(tg==null?'—':tg.toFixed(1)+'%')+'</td>'
       +'<td class="'+(d<-0.05?"dn":(d>0.05?"up":"fl"))+'">'+(d>0?"+":(d<0?"−":""))+Math.abs(d).toFixed(1)+'%p</td></tr>'; };
   keys.forEach(function(k){ h += row(k, tot>0?(val[k]||0)/tot*100:0, TGT[k]||0); });
-  h += '</table><div class="dpmsg">총자산 = 예수금 + 평가금액(코인 제외). 예수금은 예금·MMF로, 달러는 그날 환율로 원화 환산해 셉니다.'
-     + (coin>0 ? ' 코인 '+Math.round(coin).toLocaleString()+'원은 따로 봅니다(BTC 45 · ETH 45 · 알트 10).' : '') + '</div>';
+  h += '</table><div class="dpmsg">'+KE('총자산 = 예수금 + 평가금액(코인 제외). 예수금은 예금·MMF로, 달러는 그날 환율로 원화 환산해 셉니다.','Total assets = cash + holdings value (ex-crypto). Cash counts as Deposits·MMF; USD is converted to KRW at the daily FX rate.')
+     + (coin>0 ? KE(' 코인 '+Math.round(coin).toLocaleString()+'원은 따로 봅니다(BTC 45 · ETH 45 · 알트 10).',' Crypto ₩'+Math.round(coin).toLocaleString()+' is tracked separately (BTC 45 · ETH 45 · Alts 10).') : '') + '</div>';
   if(card._h !== h){ card.innerHTML = h; card._h = h; }
   pfAcctRender(o);
 }
@@ -8037,8 +8104,10 @@ function bmRender(){
   if(!card){ var pc = document.getElementById("pfCard"); if(!pc) return;
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
-  var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">매달 1일(휴일이면 다음 영업일)에 성향별 자산배분비율로 맞추고, 추가 종목을 이번 달 목록으로 바꿉니다. 1주에 모자라도 1주는 삽니다. 예수금이 모자라면 안전한 자산군부터 채웁니다. '
-        + '종목 손절선이나 전체 익절·손절선(자동매매 창 값)에 닿으면 그날 바로 팝니다. 판 돈은 다음 달 1일까지 예수금으로 둡니다. 매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 미국 주식 매매차익이 연 250만 원을 넘으면 양도소득세(22%)가 붙습니다.</div>';
+  var h = '<h3>' + KE("바스켓 매매 전략", "Basket Trading Strategy") + '</h3><div class="dpmsg">' + KE('매달 1일(휴일이면 다음 영업일)에 성향별 자산배분비율로 맞추고, 추가 종목을 이번 달 목록으로 바꿉니다. 1주에 모자라도 1주는 삽니다. 예수금이 모자라면 안전한 자산군부터 채웁니다. '
+        + '종목 손절선이나 전체 익절·손절선(자동매매 창 값)에 닿으면 그날 바로 팝니다. 판 돈은 다음 달 1일까지 예수금으로 둡니다. 매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 미국 주식 매매차익이 연 250만 원을 넘으면 양도소득세(22%)가 붙습니다.',
+          "On the 1st of each month (next business day if a holiday) the account is rebalanced to your profile's asset mix and the added stocks switch to this month's list. At least 1 share is bought even if the amount is short of one. If cash runs short, the safest asset classes are filled first. "
+        + "When a stock stop-loss or the overall take-profit/stop-loss (auto-trading settings) is hit, it is sold that day. Sale proceeds stay as cash until the next 1st. Buys are limit orders at current price +1 tick, sells at −1 tick. US stock gains above ₩2.5M a year are subject to capital gains tax (22%).") + '</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb flat dpsm" onclick="bmRecalc()"'+(BM.busy?" disabled":"")+'>재계산</button>':'')+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
