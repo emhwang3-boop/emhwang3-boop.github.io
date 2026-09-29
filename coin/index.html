@@ -1046,7 +1046,7 @@ function makeChart(cid,opt){
   //    현물에는 청산이 없으므로 그 판 자체를 목록에서 뺀다. setLiq() 로 오가며 바꾼다.
   let LIQ=!!opt.liq;
   let PAGES=C21_PAGES.filter(p=>!p[4]||LIQ);
-  let CH=null,VIEW={start:0,count:80},CROSS=null,GEO=null,CALC={},OVER=0,ODIR=0,MEAS=null,rdown=false,mTimer=null;
+  let CH=null,VIEW={start:0,count:80},CROSS=null,GEO=null,CALC={},OVER=0,ODIR=0,MEAS=null,rdown=false,mTimer=null,TL=[],TLP=null,TLK="",dnXY=null;   // TL 추세선 · TLP 찍어 둔 시작점 (2026-09-29)
   const CCY=()=>cid==="coinChart"?"USDT":((typeof stkMarket!=="undefined"&&stkMarket==="us")?"$":"원");
   const SK="c21_"+cid;let ST0={base:0,ovs:[],page:0};
   try{const x=JSON.parse(localStorage.getItem(SK)||"null");if(x&&typeof x==="object")ST0=Object.assign(ST0,x);}catch(e){}
@@ -1086,6 +1086,7 @@ function makeChart(cid,opt){
     const lab=String(d.bars&&d.bars.length?d.bars[d.bars.length-1][0]:""),Y=opt.year||250;
     if(!/[: ]/.test(lab)&&d.bars.length>Y){const k=d.bars.length-Y;   // 🔴 일봉만 1년
       d=Object.assign({},d,{bars:d.bars.slice(k),hma:(d.hma||[]).slice(k),sma:(d.sma||[]).slice(k)});}
+    const tk=d.bars&&d.bars.length?(d.bars[0][0]+"|"+d.bars[0][4]):"";if(tk!==TLK){TL=[];TLP=null;TLK=tk;}
     CH=d;CALC={};const N=d.bars.length;VIEW.count=Math.min(80,N||1);VIEW.start=Math.max(0,N-VIEW.count);CROSS=null;paintBar();draw();}
   function draw(){
     if(!CH||!CH.bars.length)return;
@@ -1130,6 +1131,7 @@ function makeChart(cid,opt){
     if(act.indexOf("nz")>=0)for(const z of (calc("nz").nz||[]))if(z.ti>=start&&z.ti<end+20)inc(z.tgt);
     if(!(hi>lo))hi=lo+1;const pd=(hi-lo)*0.06;lo-=pd;hi+=pd;
     const Y=v=>yP-(yP-y0)*(v-lo)/(hi-lo);
+    GEO.lo=lo;GEO.hi=hi;GEO.yP=yP;
     const line=(A,col,w,yf,dash)=>{ctx.strokeStyle=col;ctx.lineWidth=w;if(dash)ctx.setLineDash(dash);ctx.beginPath();let s=false;
       for(let i=start;i<end;i++){const v=A[i];if(v==null||!isFinite(v)){s=false;continue;}const xx=X(i),yy=yf(v);if(!s){ctx.moveTo(xx,yy);s=true;}else ctx.lineTo(xx,yy);}
       ctx.stroke();ctx.setLineDash([]);};
@@ -1220,8 +1222,18 @@ function makeChart(cid,opt){
       for(const L of (R.sub||[]))line(L[0],L[1],L[2],YS);
       if(A){const last=A[end-1];line(A,last>=0?C21_COL.up:C21_COL.dn,1.8,YS);}});
     // 🔴 Y축 눈금은 없다(사장님 2026-09-18 — "십자선이 있으니 불편하지 않고 공백도 사라진다"). 값은 십자선으로 본다.
-    if(MEAS&&MEAS.i1!=null&&MEAS.i2!=null){const i1=clamp(Math.min(MEAS.i1,MEAS.i2),0,N-1),i2=clamp(Math.max(MEAS.i1,MEAS.i2),0,N-1);
-      const c1=bars[i1][4],c2=bars[i2][4],n=i2-i1,pc=c1?(c2/c1-1)*100:0,col=c2>=c1?C21_COL.up:C21_COL.dn;
+    // 추세선 — 찍은 두 점(봉 번호·가격)을 잇는다. Esc 로 지운다 (사장님 2026-09-29)
+    const tlDraw=(a,b,dash)=>{const xa=X(a.i),ya=Y(a.p),xb=X(b.i),yb=Y(b.p);ctx.strokeStyle="#4a4f57";ctx.lineWidth=2;if(dash)ctx.setLineDash([5,4]);
+      ctx.beginPath();ctx.moveTo(xa,ya);ctx.lineTo(xb,yb);ctx.stroke();ctx.setLineDash([]);
+      for(const q of [[xa,ya],[xb,yb]]){ctx.fillStyle="#4a4f57";ctx.beginPath();ctx.arc(q[0],q[1],3,0,7);ctx.fill();}};
+    ctx.save();ctx.beginPath();ctx.rect(x0,y0,x1-x0,yP-y0);ctx.clip();
+    for(const t of TL)tlDraw(t.a,t.b);
+    if(TLP){const cp=CROSS&&CROSS.py!=null?{i:CROSS.i,p:lo+(yP-CROSS.py)/(yP-y0)*(hi-lo)}:TLP;tlDraw(TLP,cp,true);}
+    ctx.restore();
+    if(MEAS&&MEAS.i1!=null&&MEAS.i2!=null){const sw=MEAS.i1>MEAS.i2,i1=clamp(Math.min(MEAS.i1,MEAS.i2),0,N-1),i2=clamp(Math.max(MEAS.i1,MEAS.i2),0,N-1);
+      // 🔴 두 점은 봉 종가가 아니라 찍은 높이의 가격 — 마우스·손가락을 그대로 따라간다 (사장님 2026-09-29, 자석 없음)
+      const q1=sw?MEAS.p2:MEAS.p1,q2=sw?MEAS.p1:MEAS.p2;
+      const c1=(q1>0?q1:bars[i1][4]),c2=(q2>0?q2:bars[i2][4]),n=i2-i1,pc=c1?(c2/c1-1)*100:0,col=c2>=c1?C21_COL.up:C21_COL.dn;
       const xa=X(i1),ya=Y(c1),xb=X(i2),yb=Y(c2),ang=n?Math.atan2(ya-yb,xb-xa)*180/Math.PI:0,per=n&&c1>0&&c2>0?(Math.pow(c2/c1,1/n)-1)*100:0;
       ctx.strokeStyle=col;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(xa,ya);ctx.lineTo(xb,yb);ctx.stroke();
       ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xa,ya);ctx.lineTo(xb,ya);ctx.stroke();ctx.setLineDash([]);
@@ -1259,6 +1271,7 @@ function makeChart(cid,opt){
     requestAnimationFrame(step);}
   let down=false,sx=0,sStart=0,pinch=null;
   const rel=(e)=>{const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};};
+  const pAt=(py)=>(GEO&&GEO.hi>GEO.lo)?GEO.lo+(GEO.yP-clamp(py,GEO.y0,GEO.yP))/(GEO.yP-GEO.y0)*(GEO.hi-GEO.lo):null;
   const idxAt=(px)=>GEO?clamp(GEO.start+Math.floor((px-GEO.x0)/((GEO.x1-GEO.x0)/GEO.cnt)),0,GEO.N-1):0;
   const barW=()=>GEO?(GEO.x1-GEO.x0)/GEO.cnt:1;
   // 🔴 끝을 넘긴 만큼 OVER 에 모은다. 70px 넘기고 떼면 넘어간다.
@@ -1266,25 +1279,30 @@ function makeChart(cid,opt){
     if(want<0){OVER=-want*barW();ODIR=-1;}else if(want>mx){OVER=(want-mx)*barW();ODIR=1;}else{OVER=0;ODIR=0;}}
   function release(){const o=OVER,d=ODIR;OVER=0;ODIR=0;if(o>=70&&d)flip(d);else draw();}
   cv.addEventListener("contextmenu",e=>e.preventDefault());
-  cv.addEventListener("mousemove",e=>{if(!CH)return;const p=rel(e);if(rdown&&MEAS){MEAS.i2=idxAt(p.x);draw();return;}if(down)pan(p);CROSS={i:idxAt(p.x),py:p.y};draw();});
+  cv.addEventListener("mousemove",e=>{if(!CH)return;const p=rel(e);if(rdown&&MEAS){MEAS.i2=idxAt(p.x);MEAS.p2=pAt(p.y);draw();return;}if(down)pan(p);CROSS={i:idxAt(p.x),py:p.y};draw();});
   cv.addEventListener("mousedown",e=>{if(!CH)return;const p=rel(e);
-    if(e.button===2){rdown=true;MEAS={i1:idxAt(p.x),i2:idxAt(p.x)};draw();return;}
-    if(e.button!==0)return;if(MEAS){MEAS=null;draw();}down=true;sx=p.x;sStart=VIEW.start;OVER=0;});
-  window.addEventListener("mouseup",e=>{if(rdown){rdown=false;return;}if(down){down=false;if(CH)release();}});
+    if(e.button===2){rdown=true;MEAS={i1:idxAt(p.x),i2:idxAt(p.x),p1:pAt(p.y),p2:pAt(p.y)};draw();return;}
+    if(e.button!==0)return;if(MEAS){MEAS=null;draw();}down=true;sx=p.x;sStart=VIEW.start;OVER=0;dnXY=[e.clientX,e.clientY];});
+  window.addEventListener("mouseup",e=>{if(rdown){rdown=false;return;}if(down){down=false;
+    // 끌지 않은 왼쪽 클릭 = 추세선 점 — 첫 클릭 시작점, 둘째 클릭 끝점 (사장님 2026-09-29)
+    if(CH&&dnXY&&Math.abs(e.clientX-dnXY[0])<4&&Math.abs(e.clientY-dnXY[1])<4&&e.button===0){const p=rel(e),pt={i:idxAt(p.x),p:pAt(p.y)};
+      if(pt.p!=null){if(!TLP)TLP=pt;else{TL.push({a:TLP,b:pt});TLP=null;}}}
+    dnXY=null;if(CH)release();}});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&(TL.length||TLP)){TL=[];TLP=null;if(CH)draw();}});
   cv.addEventListener("mouseleave",()=>{CROSS=null;if(CH&&!down)draw();});
   cv.addEventListener("wheel",e=>{if(!CH)return;e.preventDefault();const p=rel(e),N=CH.bars.length;
     const f=e.deltaY>0?1.18:1/1.18,nc=clamp(Math.round(VIEW.count*f),Math.min(20,N),N),ci=idxAt(p.x),frac=(ci-VIEW.start)/VIEW.count;
     VIEW.start=clamp(Math.round(ci-frac*nc),0,N-nc);VIEW.count=nc;draw();},{passive:false});
-  const tx=(t)=>t.clientX-cv.getBoundingClientRect().left;
+  const tx=(t)=>t.clientX-cv.getBoundingClientRect().left,ty=(t)=>t.clientY-cv.getBoundingClientRect().top;
   cv.addEventListener("touchstart",e=>{if(!CH)return;
     if(e.touches.length===2){const t0=e.touches[0],t1=e.touches[1];
       pinch={d:Math.hypot(t0.clientX-t1.clientX,t0.clientY-t1.clientY),c:VIEW.count,moved:false};down=false;OVER=0;CROSS=null;
-      clearTimeout(mTimer);const a=tx(t0),b=tx(t1);
-      mTimer=setTimeout(function(){if(pinch&&!pinch.moved){MEAS={i1:idxAt(a),i2:idxAt(b)};pinch.meas=true;draw();}},300);return;}
+      clearTimeout(mTimer);const a=tx(t0),b=tx(t1),ya=ty(t0),yb=ty(t1);
+      mTimer=setTimeout(function(){if(pinch&&!pinch.moved){MEAS={i1:idxAt(a),i2:idxAt(b),p1:pAt(ya),p2:pAt(yb)};pinch.meas=true;draw();}},300);return;}
     if(MEAS){MEAS=null;}
     const p=rel(e);down=true;sx=p.x;sStart=VIEW.start;OVER=0;CROSS={i:idxAt(p.x),py:p.y};draw();},{passive:false});
   cv.addEventListener("touchmove",e=>{if(!CH)return;e.preventDefault();
-    if(e.touches.length===2&&pinch&&pinch.meas){MEAS={i1:idxAt(tx(e.touches[0])),i2:idxAt(tx(e.touches[1]))};draw();return;}
+    if(e.touches.length===2&&pinch&&pinch.meas){MEAS={i1:idxAt(tx(e.touches[0])),i2:idxAt(tx(e.touches[1])),p1:pAt(ty(e.touches[0])),p2:pAt(ty(e.touches[1]))};draw();return;}
     if(e.touches.length===2&&pinch){const nd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
       if(!pinch.moved&&Math.abs(nd-pinch.d)<8)return;pinch.moved=true;clearTimeout(mTimer);
       const N=CH.bars.length,nc=clamp(Math.round(pinch.c*pinch.d/Math.max(1,nd)),Math.min(20,N),N),e0=VIEW.start+VIEW.count;VIEW.count=nc;VIEW.start=clamp(e0-nc,0,N-nc);draw();return;}
@@ -1334,6 +1352,9 @@ function c21Coach(force) {
     + row("✌️", en ? "Two fingers, hold 0.3s" : "두 손가락 0.3초",
           en ? "Put two fingers on the chart and hold still for 0.3 seconds to measure between two bars — change, amount, bar count, angle. Spreading them zooms instead."
              : "두 손가락을 차트에 대고 <b>움직이지 말고 0.3초</b> 두면 두 봉 사이를 잽니다 — 상승률·금액·봉 수·각도. 벌리면 확대·축소가 됩니다.")
+    + row("📏", en ? "Trend line (PC)" : "추세선 (PC)",
+          en ? "Left-click once for the start, click again for the end — a line is drawn. Press Esc to clear."
+             : "왼쪽 클릭으로 시작점, 한 번 더 클릭하면 끝점 — 선이 그어집니다. <b>Esc</b> 를 누르면 지워집니다.")
     + row("🧩", en ? "Keep on chart" : "얹기",
           en ? "On a panel, tick “Keep on chart” to overlay it on the base chart (up to 4)."
              : "판을 넘기다 <b>얹기</b>를 체크하면 기본 차트 위에 겹쳐 놓고 봅니다(최대 4개).")
