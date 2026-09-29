@@ -1046,6 +1046,17 @@ function makeChart(cid,opt){
   let LIQ=!!opt.liq;
   let PAGES=C21_PAGES.filter(p=>!p[4]||LIQ);
   let CH=null,VIEW={start:0,count:80},CROSS=null,GEO=null,CALC={},OVER=0,ODIR=0,MEAS=null,rdown=false,mTimer=null,TL=[],TLP=null,TLK="",dnXY=null;   // TL 추세선 · TLP 찍어 둔 시작점 (2026-09-29)
+  // 「✕ 선 지우기」 — 추세선이 있을 때만 차트 오른쪽 위에 (사장님 2026-09-29 폰엔 Esc 가 없다)
+  const tlBtn=()=>{let b=document.getElementById(cid+"_tlx");const on=!!(TL.length||TLP);if(!b&&!on)return;
+    const par=cv.parentElement;
+    if(!b){if(getComputedStyle(par).position==="static")par.style.position="relative";
+      b=document.createElement("button");b.id=cid+"_tlx";b.type="button";
+      b.style.cssText="position:absolute;z-index:5;font-size:12px;padding:3px 9px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--nm);cursor:pointer;opacity:.92;white-space:nowrap";
+      b.addEventListener("click",e=>{e.stopPropagation();TL=[];TLP=null;if(CH)draw();});
+      par.appendChild(b);}
+    b.textContent=(typeof LANG!=="undefined"&&LANG==="en")?"✕ Clear lines":"✕ 선 지우기";
+    b.style.display=on?"":"none";if(!on)return;
+    b.style.top=(cv.offsetTop+6)+"px";b.style.left=(cv.offsetLeft+cv.offsetWidth-b.offsetWidth-6)+"px";};
   const CCY=()=>cid==="coinChart"?"USDT":((typeof stkMarket!=="undefined"&&stkMarket==="us")?"$":"원");
   const SK="c21_"+cid;let ST0={base:0,ovs:[],page:0};
   try{const x=JSON.parse(localStorage.getItem(SK)||"null");if(x&&typeof x==="object")ST0=Object.assign(ST0,x);}catch(e){}
@@ -1229,6 +1240,7 @@ function makeChart(cid,opt){
     for(const t of TL)tlDraw(t.a,t.b);
     if(TLP){const cp=CROSS&&CROSS.py!=null?{i:CROSS.i,p:lo+(yP-CROSS.py)/(yP-y0)*(hi-lo)}:TLP;tlDraw(TLP,cp,true);}
     ctx.restore();
+    tlBtn();
     if(MEAS&&MEAS.i1!=null&&MEAS.i2!=null){const sw=MEAS.i1>MEAS.i2,i1=clamp(Math.min(MEAS.i1,MEAS.i2),0,N-1),i2=clamp(Math.max(MEAS.i1,MEAS.i2),0,N-1);
       // 🔴 두 점은 봉 종가가 아니라 찍은 높이의 가격 — 마우스·손가락을 그대로 따라간다 (사장님 2026-09-29, 자석 없음)
       const q1=sw?MEAS.p2:MEAS.p1,q2=sw?MEAS.p1:MEAS.p2;
@@ -3976,5 +3988,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-29 21:19</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-29 21:55</div>
 </body></html>
