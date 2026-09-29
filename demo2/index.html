@@ -7547,7 +7547,9 @@ function bmPlanMom(o){
     var k = (p.mk === "us" ? "us:" : "kr:") + String(p.code).replace(/\.US$/i, "").toUpperCase(); sold[k] = 1;
     rows.push({side: "S", mk: p.mk, code: p.code, name: p.name || p.code, cls: pfClassOf(p), qty: Math.floor(+p.qty), why: "종목 손절 " + rt.toFixed(1) + "%"}); } });
   var M = (typeof RECO !== "undefined" && RECO && RECO.mom) || null;
-  if(!M || M.month !== momMonth() || !M.start || momDone()) return {rows: rows, fx: fx, cash: cash, mode: "stops"};   // 달 초 목록이 아니거나 이번 달 맞추기를 했다 — 손절만
+  // 새 계좌(국내·미국 보유 없음)는 날짜와 상관없이 바로 이번 달 목표로 채운다 — 전체 익절·손절 뒤 쉬는 달은 빼고 (사장님 2026-09-29)
+  var fresh = !hs.some(function(p){ return (+p.qty || 0) > 0; }) && !((typeof AT !== "undefined" && AT.st && AT.st.pf_rest) === momMonth());
+  if(!M || M.month !== momMonth() || ((!M.start || momDone()) && !fresh)) return {rows: rows, fx: fx, cash: cash, mode: "stops"};   // 달 초 목록이 아니거나 이번 달 맞추기를 했다 — 손절만
   // 이번 달 맞추기 — 목록에서 빠진 것 팔고, 목표보다 많은 건 줄이고, 모자란 건 산다
   var T = momTargets(o, tot), TK = {};
   T.forEach(function(t){ TK[t.mk + ":" + String(t.code).toUpperCase()] = t; });
