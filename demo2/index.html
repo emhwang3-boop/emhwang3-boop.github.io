@@ -5570,7 +5570,8 @@ function recoRender(){
     acct.parentNode.insertBefore(card,acct.nextSibling);
   }
   const en=LANG==="en", R=RECO;
-  let h='<h3>'+(en?"Current portfolio & extra picks":"현재 포트폴리오와 추가 추천 종목")+' <span class="c21help" onclick="r12Info(event)">i</span>'+(R&&R.at?' <span class="dplbl">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
+  // 제목 두 줄 + ⓘ 는 제목 옆 · 계산 시각은 오른쪽 맞춤 (사장님 2026-09-29)
+  let h='<h3><span>'+(en?"Current portfolio &amp;<br>extra picks":"현재 포트폴리오와<br>추가 종목")+' <span class="c21help" onclick="r12Info(event)">i</span></span>'+(R&&R.at?'<span class="dplbl" style="text-align:right;margin-left:auto;padding-left:8px">'+dpEsc(R.at)+(en?" calc":" 계산")+'</span>':'')+'</h3>';
   try{ window._RECO=R; }catch(e){}
   if(!R){ card.innerHTML=h+'<div class="soonrow">'+(en?"Loading…":"불러오는 중…")+'</div>'; card._h=null; return; }
   // 🔴 장세는 실시간 — 어제 마감 vs_MA60 에 오늘 지수 등락률을 더해 "지금 60일선 대비"를 낸다 (사장님 2026-09-21).
