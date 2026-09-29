@@ -5538,6 +5538,10 @@ function rpRender(){
       + ' <button class="dpb flat dpsm" id="atBtn" style="margin-left:6px;vertical-align:middle" onclick="event.stopPropagation();atOpen()">' + (en ? "Auto trading" : "자동매매") + '</button></h3>'
       + '<div class="dpmsg" style="color:var(--nm)">' + (en ? "Next change " + (nd.getMonth() + 1) + "/" + nd.getDate() : "다음 교체 " + (nd.getMonth() + 1) + "월 " + nd.getDate() + "일")
       + ' · D-' + dn + '</div>';
+    try{   // 입금분 — 자동매매가 목표 비율로 나눠 산다 (사장님 2026-09-29)
+      var DP = (typeof AT !== "undefined" && AT.st && AT.st.dep) || {}, dk = +DP.kr || 0, du = +DP.us || 0;
+      if(dk + du >= 10000) h += '<div class="dpmsg" style="color:var(--nm)">' + (en ? "Deposit to invest " : "입금분 ") + Math.round(dk + du).toLocaleString() + (en ? " KRW — auto trading buys it by your target ratio" : "원 — 자동매매가 목표 비율로 나눠 삽니다") + '</div>';
+    }catch(e){}
     try{   // 전체 익절·손절까지 남은 거리 (위성 현황 카드에서 옮김, 2026-09-29)
       var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 0;
       var RU = (typeof AT !== "undefined" && AT.st && AT.st.rules) || {};
