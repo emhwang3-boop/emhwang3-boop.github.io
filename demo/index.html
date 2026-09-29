@@ -4364,9 +4364,9 @@ function ydHtml(rows, note, auto){
         + '<td class="' + (o.side === "B" ? "up" : "dn") + '">' + (o.side === "B" ? KE("매수","Buy") : KE("매도","Sell")) + ' ' + (+o.qty).toLocaleString(undefined, {maximumFractionDigits: o.mk === "coin" ? 4 : 6}) + '</td>'
         + '<td>' + money(o.mk, o.amt) + '</td><td class="' + (v > 0 ? "up" : (v < 0 ? "dn" : "fl")) + '">' + pl + '</td></tr>';
     });
-    h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계(원화)","Total (KRW)") + '</td><td colspan="3" style="text-align:right">'
+    h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계(원화)","Total (KRW)") + '</td><td colspan="3" style="text-align:right;white-space:nowrap;font-size:12.5px">'
       + KE("매수 ","Buy ") + Math.round(buyK).toLocaleString() + ' · ' + KE("매도 ","Sell ") + Math.round(sellK).toLocaleString()
-      + '<br>' + KE("미실현 ","Unrealized ") + (plN ? ((plK > 0 ? "+" : "") + Math.round(plK).toLocaleString()) : "—")
+      + ' · ' + KE("미실현 ","Unrealized ") + (plN ? ((plK > 0 ? "+" : "") + Math.round(plK).toLocaleString()) : "—")
       + ' · ' + KE("실현 ","Realized ") + (rzN ? ((rzK > 0 ? "+" : "") + Math.round(rzK).toLocaleString()) : "—") + '</td></tr></table>';
     if(!fx) h += '<div class="dpmsg">' + KE("환율을 못 받아 합계는 국내만입니다.","FX not loaded; total is KR only.") + '</div>';
   }
@@ -5521,6 +5521,9 @@ function rpRender(){
     if(!o || typeof PF_GRADE === "undefined" || !PF_GRADE[o.gi]){ card.hidden = true; return; }
     card.hidden = false;
     var g = PF_GRADE[o.gi], M = (typeof RECO !== "undefined" && RECO && RECO.mom) || {}, core = MOM_CORE[o.gi] || {}, byC = {};
+    var RPH = null;       // 들고 있는 종목 — 계좌를 받았을 때만 신규·유지를 붙인다
+    try{ if(typeof RL !== "undefined" && RL && RL.at){ RPH = {}; (RL.kr || []).concat(RL.us || []).forEach(function(p){
+      var us = p.mk === "us", c = String(p.code).replace(/\.US$/i, ""); if(!us) c = c.replace(/^A(?=\d)/, ""); RPH[(us ? "us:" : "kr:") + c.toUpperCase()] = 1; }); } }catch(e){ RPH = null; }
     g.mix.forEach(function(m){                         // 자산군마다 따로 — 같은 ETF가 두 자산군에 있어도 합치지 않는다
       var c = m[0], b = m[1], k = MOM_CLS[c], L = byC[c] = [];
       if(k){ var cf = core[c] || 0, rp = MOM_REP[k], n = MOM_N[k], sat = b * (1 - cf), X = (M[k] || []).slice(0, n);
@@ -5552,6 +5555,10 @@ function rpRender(){
         + '<div style="display:flex;justify-content:space-between;gap:8px;font-weight:800;font-size:14.5px"><span style="min-width:0;overflow-wrap:anywhere">' + dpEsc(c) + '</span><span style="flex:none">' + pc(m[1]) + '</span></div>';
       L.forEach(function(t){
         var tag = t.role === "core" ? (en ? " (base)" : " (바탕)") : "";
+        // 신규·유지 — 지금 계좌에 들고 있으면 유지 (사장님 2026-09-29)
+        if(RPH){ var hk = (t.mk === "us" ? "us:" : "kr:") + String(t.code || "").toUpperCase();
+          tag += RPH[hk] ? ' <span style="font-size:11px;padding:0 5px;border-radius:6px;background:rgba(128,138,152,.22);color:var(--sub)">' + (en ? "Hold" : "유지") + '</span>'
+                         : ' <span style="font-size:11px;padding:0 5px;border-radius:6px;border:1px solid #00c805;color:#00c805">' + (en ? "New" : "신규") + '</span>'; }
         h += '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;color:var(--sub);margin-top:3px;padding-left:10px">'
           + '<span style="min-width:0;overflow-wrap:anywhere;cursor:pointer" onclick="mhGo(&quot;' + dpEsc(String(t.code || "")).replace(/"/g, "") + '&quot;,&quot;' + dpEsc(String(t.name || t.code || "")).replace(/"/g, "") + '&quot;,&quot;' + (t.mk || "kr") + '&quot;,0)">' + dpEsc(t.name || t.code) + tag + '</span><span style="flex:none;font-variant-numeric:tabular-nums">' + pc(t.val) + '</span></div>';
       });
