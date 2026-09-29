@@ -5623,8 +5623,8 @@ function rkInfo(e){
 function rkPaint(){
   var card = E("rkCard"); if(!card) return;
   var en = LANG === "en", pg = RK_PAGES[RK.page], L = RK.data[pg[0]] || [];
-  var sty = '<style>#rkCard .rkrow{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;padding:6px 2px;border-bottom:1px solid var(--bd);font-size:14px}'
-    + '#rkCard .rknm{min-width:0;overflow-wrap:anywhere;cursor:pointer}#rkCard .rkv{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}'
+  var sty = '<style>#rkCard .rkrow{display:grid;grid-template-columns:22px minmax(0,1fr) 38px 64px 70px;gap:6px;align-items:center;padding:6px 2px;border-bottom:1px solid var(--bd);font-size:14px}'
+    + '#rkCard .rknm{min-width:0;overflow-wrap:anywhere;cursor:pointer}#rkCard .rkv{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}#rkCard .rkw{grid-column:3 / span 3}'
     + '#rkCard .rkbtn{border:1px solid var(--bd);background:var(--bg);color:var(--nm);border-radius:8px;padding:2px 10px;font-size:15px;cursor:pointer}'
     + '#rkCard .rkdot{width:7px;height:7px;border-radius:50%;background:var(--bd);display:inline-block}#rkCard .rkdot.on{background:var(--nm)}</style>';
   var h = sty + '<h3><span>' + (en ? "Rankings" : "순위") + ' <span class="c21help" onclick="rkInfo(event)">i</span></span>'
@@ -5638,12 +5638,14 @@ function rkPaint(){
   else if(!RK.at) body = '<div class="dpmsg">' + (en ? "Loading…" : "순위를 받는 중입니다…") + '</div>';
   else if(!L.length) body = '<div class="dpmsg">' + (en ? "Nothing to show right now." : "지금은 해당 종목이 없습니다.") + '</div>';
   else body = L.map(function(r, i){
+      // 칸 셋(연속 · 가격 · %)으로 나눠 줄마다 세로로 맞춘다 (사장님 2026-09-29)
       var v;
-      if(pg[0] === "frg" || pg[0] === "org") v = '<span class="' + (r.amt >= 0 ? "up" : "dn") + '">' + (r.amt > 0 ? "+" : "") + (r.amt / 10).toLocaleString(undefined, {maximumFractionDigits: 0}) + (en ? "0M KRW" : "억") + '</span>';
-      else v = (r.px ? '<span class="dplbl">' + r.px.toLocaleString() + '</span> ' : '') + '<span class="' + (r.rt >= 0 ? "up" : "dn") + '">' + (r.rt > 0 ? "+" : "") + r.rt.toFixed(2) + '%</span>'
-             + ((pg[0] === "lim" || pg[0] === "low") && r.cnt > 1 ? ' <span class="dplbl">' + r.cnt + (en ? "x" : "연속") + '</span>' : '');
+      if(pg[0] === "frg" || pg[0] === "org") v = '<span class="rkv rkw ' + (r.amt >= 0 ? "up" : "dn") + '">' + (r.amt > 0 ? "+" : "") + (r.amt / 10).toLocaleString(undefined, {maximumFractionDigits: 0}) + (en ? "0M KRW" : "억") + '</span>';
+      else v = '<span class="rkv dplbl">' + ((pg[0] === "lim" || pg[0] === "low") && r.cnt > 1 ? r.cnt + (en ? "x" : "연속") : '') + '</span>'
+             + '<span class="rkv dplbl">' + (r.px ? r.px.toLocaleString() : '') + '</span>'
+             + '<span class="rkv ' + (r.rt >= 0 ? "up" : "dn") + '">' + (r.rt > 0 ? "+" : "") + r.rt.toFixed(2) + '%</span>';
       return '<div class="rkrow"><span class="dplbl">' + (i + 1) + '</span><span class="rknm" onclick="mhGo(&quot;' + dpEsc(String(r.code)).replace(/"/g, "") + '&quot;,&quot;'
-        + dpEsc(String(r.name || r.code)).replace(/"/g, "") + '&quot;,&quot;kr&quot;,0)">' + dpEsc(r.name || r.code) + '</span><span class="rkv">' + v + '</span></div>';
+        + dpEsc(String(r.name || r.code)).replace(/"/g, "") + '&quot;,&quot;kr&quot;,0)">' + dpEsc(r.name || r.code) + '</span>' + v + '</div>';
     }).join("");
   var keep = E("rkList") ? E("rkList").scrollTop : 0, same = card._pg === RK.page;
   card.innerHTML = h + '<div id="rkList" style="max-height:440px;overflow-y:auto;touch-action:pan-y">' + body + '</div>';
