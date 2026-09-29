@@ -5352,7 +5352,7 @@ function slotTable(kr, us, totKR, totUS, cash, fx, en){
     const rows = [
       [(en?"Crypto (spot)":"가상자산(현물)"), totCO, gCO ? Math.min(12, gCO.length) : days(co), tet, gCO, "coin"],
     ];
-    let t = '<h3>'+(en?"Crypto 12-slot":"가상자산 12칸")+' <span class="c21help" onclick="s12Info(event)">i</span></h3>'
+    let t = '<h3><span>'+(en?"Crypto 12-slot":"가상자산 12칸")+' <span class="c21help" onclick="s12Info(event)">i</span></span></h3>'
       + '<table class="mhtab"><tr><th>'+(en?"Asset":"자산")+'</th><th>'+(en?"Slot":"1칸")+'</th>'
       + '<th style="white-space:nowrap">'+(en?"Filled":"채운 칸")+'</th><th style="white-space:nowrap">'+(en?"Empty":"빈 칸")+'</th></tr>';
     rows.forEach(function(r){
