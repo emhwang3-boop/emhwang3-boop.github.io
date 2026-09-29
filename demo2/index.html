@@ -5492,10 +5492,10 @@ function rpRender(){
     g.mix.forEach(function(m){                         // 자산군마다 따로 — 같은 ETF가 두 자산군에 있어도 합치지 않는다
       var c = m[0], b = m[1], k = MOM_CLS[c], L = byC[c] = [];
       if(k){ var cf = core[c] || 0, rp = MOM_REP[k], n = MOM_N[k], sat = b * (1 - cf), X = (M[k] || []).slice(0, n);
-        if(cf > 0) L.push({name: rp[1], val: b * cf, role: "core"});
-        X.forEach(function(x){ L.push({name: x.name || x.code, val: sat / n}); });
-        if(X.length < n) L.push({name: rp[1], val: sat * (n - X.length) / n});
-      } else if(BM_REP[c]) L.push({name: BM_REP[c][1], val: b});
+        if(cf > 0) L.push({name: rp[1], code: rp[0], mk: rp[2], val: b * cf, role: "core"});
+        X.forEach(function(x){ L.push({name: x.name || x.code, code: x.code, mk: momMk(k), val: sat / n}); });
+        if(X.length < n) L.push({name: rp[1], code: rp[0], mk: rp[2], val: sat * (n - X.length) / n});
+      } else if(BM_REP[c]) L.push({name: BM_REP[c][1], code: BM_REP[c][0], mk: BM_REP[c][2], val: b});
     });
     var nd = satNextDay(), dn = Math.ceil((nd - new Date(new Date().toDateString())) / 864e5);
     var pc = function(v){ return (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, "") + "%"; };
@@ -5509,7 +5509,7 @@ function rpRender(){
       var PTP = (RU.pf_tp != null ? +RU.pf_tp : 30), PSL = (RU.pf_sl != null ? +RU.pf_sl : -20);
       var hs = (typeof RL !== "undefined" && RL) ? (RL.kr || []).concat(RL.us || []) : [], pc0 = 0, pl = 0;
       hs.forEach(function(p){ var k = p.mk === "us" ? (fx || 1) : 1, e = (+p.evl || 0) * k, l = (+p.pl || 0) * k; pc0 += e - l; pl += l; });
-      if(pc0 > 0){ var pf = pl / pc0 * 100;
+      if(false && pc0 > 0){ var pf = pl / pc0 * 100;   // 사장님 2026-09-29 — 안 보이게
         h += '<div class="dpmsg" style="color:var(--nm)">' + (en ? "Total " : "전체 ") + '<b style="color:' + (pf >= 0 ? "#00c805" : "#ff5c5c") + '">' + (pf > 0 ? "+" : "") + pf.toFixed(1) + '%</b>'
           + ' · ' + (en ? "to take-profit " : "익절 ") + '+' + PTP + (en ? " " : "까지 ") + (PTP - pf).toFixed(1) + '%p · ' + (en ? "to stop " : "손절 ") + PSL + (en ? " " : "까지 ") + (pf - PSL).toFixed(1) + '%p</div>'; }
     }catch(e){}
@@ -5521,7 +5521,7 @@ function rpRender(){
       L.forEach(function(t){
         var tag = t.role === "core" ? (en ? " (base)" : " (바탕)") : "";
         h += '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;color:var(--sub);margin-top:3px;padding-left:10px">'
-          + '<span style="min-width:0;overflow-wrap:anywhere">' + dpEsc(t.name || t.code) + tag + '</span><span style="flex:none;font-variant-numeric:tabular-nums">' + pc(t.val) + '</span></div>';
+          + '<span style="min-width:0;overflow-wrap:anywhere;cursor:pointer" onclick="mhGo(&quot;' + dpEsc(String(t.code || "")).replace(/"/g, "") + '&quot;,&quot;' + dpEsc(String(t.name || t.code || "")).replace(/"/g, "") + '&quot;,&quot;' + (t.mk || "kr") + '&quot;,0)">' + dpEsc(t.name || t.code) + tag + '</span><span style="flex:none;font-variant-numeric:tabular-nums">' + pc(t.val) + '</span></div>';
       });
       h += '</div>';
     });
