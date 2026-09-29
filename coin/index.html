@@ -3601,17 +3601,27 @@ function nwAgo(t){ if(!t) return ""; var s=(Date.now()-t)/1000;
   if(s<3600) return Math.max(1,Math.floor(s/60))+KE("분 전","m ago");
   if(s<86400) return Math.floor(s/3600)+KE("시간 전","h ago");
   return Math.floor(s/86400)+KE("일 전","d ago"); }
+var NW_COIN_EN = {BTC:"Bitcoin", ETH:"Ethereum", XRP:"XRP", SOL:"Solana", DOGE:"Dogecoin", ADA:"Cardano", NEAR:"NEAR Protocol",
+  ZEC:"Zcash", TRX:"TRON", AVAX:"Avalanche", LINK:"Chainlink", DOT:"Polkadot", SUI:"Sui", TON:"Toncoin", BNB:"BNB",
+  PEPE:"Pepe coin", SHIB:"Shiba Inu", ETC:"Ethereum Classic", BCH:"Bitcoin Cash", LTC:"Litecoin", APT:"Aptos", ARB:"Arbitrum", HBAR:"Hedera"};
+// 영문 화면 — 영문 이름으로 구글 뉴스 영문을 부른다 (사장님 2026-09-29)
+function nwNameEn(v, kind){
+  var raw=String(v||""), m=raw.match(/\(([^)]+)\)\s*$/), code=m?m[1].trim():"", nm=raw.replace(/\s*\(.*$/,"").trim();
+  if(kind==="coin"){ var s=nm.toUpperCase().replace(/USDT$/,"").replace(/-.*$/,""); return NW_COIN_EN[s] || s; }
+  if(/^[\x20-\x7e]+$/.test(nm)) return nm;                                   // 이미 영문
+  var d=(typeof window!=="undefined"&&window.DEMO_NAMES_EN)||{}, e=(typeof window!=="undefined"&&window.SV_EN)||{};
+  return d[nm] || e[code] || e[nm] || code || nm; }
 function nwName(v, kind){
   var nm=String(v||"").replace(/\s*\(.*$/,"").trim();
   if(kind==="coin"){ var s=nm.toUpperCase().replace(/USDT$/,"").replace(/-.*$/,""); return NW_COIN[s] || (s+" 코인"); }
   return nm; }
 async function nwLoad(id, v, kind){
-  var q=nwName(v,kind), b=document.getElementById("nwb_"+id), t=document.getElementById("nwq_"+id);
+  var en=(typeof LANG!=="undefined"&&LANG==="en"), q=en?nwNameEn(v,kind):nwName(v,kind), b=document.getElementById("nwb_"+id), t=document.getElementById("nwq_"+id);
   if(!q) return;
   if(t) t.textContent=q;
   if(b) b.innerHTML='<div class="dpmsg">'+KE("불러오는 중…","Loading…")+'</div>';
   var mk=(kind==="coin")?"coin":((typeof stkMarket!=="undefined"&&stkMarket==="us")?"us":"kr");   // 허브가 「주가」를 붙이고 AI 로 거른다 (2026-09-25)
-  var j=null; try{ j=await fetch(HUB+"/news?q="+encodeURIComponent(q)+"&mk="+mk+"&ctx="+encodeURIComponent(String(v).slice(0,60))).then(function(r){return r.json();}); }catch(e){}
+  var j=null; try{ j=await fetch(HUB+"/news?q="+encodeURIComponent(q)+"&mk="+mk+"&ctx="+encodeURIComponent(String(v).slice(0,60))+(en?"&lang=en":"")).then(function(r){return r.json();}); }catch(e){}
   var it=(j&&j.items)||[], key=q.replace(/\s+/g,"").toLowerCase();
   var hit=function(x){ return (String(x.title)+String(x.desc)).replace(/\s+/g,"").toLowerCase().indexOf(key)>=0; };
   it=it.filter(hit).concat(it.filter(function(x){return !hit(x);})).slice(0,8);   // 이름이 든 기사를 앞에
