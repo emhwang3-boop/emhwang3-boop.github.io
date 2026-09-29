@@ -5519,7 +5519,7 @@ function rpRender(){
       h += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">'
         + '<div style="display:flex;justify-content:space-between;gap:8px;font-weight:800;font-size:14.5px"><span style="min-width:0;overflow-wrap:anywhere">' + dpEsc(c) + '</span><span style="flex:none">' + pc(m[1]) + '</span></div>';
       L.forEach(function(t){
-        var tag = t.role === "core" ? (en ? " (core)" : " (코어)") : "";
+        var tag = t.role === "core" ? (en ? " (base)" : " (바탕)") : "";
         h += '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;color:var(--sub);margin-top:3px;padding-left:10px">'
           + '<span style="min-width:0;overflow-wrap:anywhere">' + dpEsc(t.name || t.code) + tag + '</span><span style="flex:none;font-variant-numeric:tabular-nums">' + pc(t.val) + '</span></div>';
       });
@@ -7527,7 +7527,7 @@ function bmPlanMom(o){
     var h = hold[k], diff = t.val - (h ? h.v : 0);
     if(!(diff > 0) || (h && h.px > 0 && diff < h.px)) return;
     rows.push({side: "B", mk: t.mk, code: t.code, name: t.name, cls: t.cls, amt: diff, first: true, nomerge: true,
-      why: t.cls + (t.role === "sat" ? " · 이번 달 " + t.rank + "위" : (t.role === "rep" ? " · 대표 ETF" : " · 코어"))}); });
+      why: t.cls + (t.role === "sat" ? " · 이번 달 " + t.rank + "위" : (t.role === "rep" ? " · 대표 ETF" : " · 바탕"))}); });
   return {rows: rows, fx: fx, cash: cash, mode: "month"};
 }
 function bmPlan(o, opt){
@@ -7787,13 +7787,13 @@ function r12Info(e){
   try{ if(e) e.stopPropagation(); }catch(x){}
   if(document.getElementById("r12Pop")) return;
   var en = (typeof LANG !== "undefined" && LANG === "en");
-  var L = en ? ["🧩 Core + satellite: part of each type is held as a core ETF, the rest goes to this month's top items.",
-                "📅 On the 1st of every month (next business day if a holiday) the whole portfolio is brought back to your asset mix ratio and the satellite items are swapped for this month's list.",
+  var L = en ? ["🧩 Base + add-on items: part of each type is held as a base ETF, the rest goes to this month's top items.",
+                "📅 On the 1st of every month (next business day if a holiday) the whole portfolio is brought back to your asset mix ratio and the add-on items are swapped for this month's list.",
                 "🔻 An item that hits the stop-loss line is sold right away. If the total hits the take-profit or stop-loss line, everything is sold right away.",
                 "💤 Money from those sales stays as cash until the next 1st.",
                 "🧺 The basket and auto-trading use the same calculation."]
-             : ["🧩 코어 + 위성: 자산군마다 일부는 대표 ETF(코어)로 들고, 나머지는 이번 달 상위 종목(위성)으로 담습니다.",
-                "📅 매달 1일(휴일이면 다음 영업일)에 성향별 자산배분비율로 다시 맞추고, 위성 종목을 이번 달 목록으로 바꿉니다.",
+             : ["🧩 바탕 + 추가 종목: 자산군마다 일부는 대표 ETF(바탕)로 들고, 나머지는 이번 달 상위 종목(추가 종목)으로 담습니다.",
+                "📅 매달 1일(휴일이면 다음 영업일)에 성향별 자산배분비율로 다시 맞추고, 추가 종목을 이번 달 목록으로 바꿉니다.",
                 "🔻 종목 손절선에 닿으면 그 종목을 바로 팝니다. 전체 익절·손절선에 닿으면 전부 바로 팝니다.",
                 "💤 판 돈은 다음 달 1일까지 예수금으로 둡니다.",
                 "🧺 바스켓 매매와 자동매매는 같은 셈으로 움직입니다."];
@@ -7895,7 +7895,7 @@ function bmRender(){
   if(!card){ var pc = document.getElementById("pfCard"); if(!pc) return;
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
-  var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">매달 1일(휴일이면 다음 영업일)에 성향별 자산배분비율로 맞추고, 위성 종목을 이번 달 목록으로 바꿉니다. 1주에 모자라도 1주는 삽니다. 예수금이 모자라면 안전한 자산군부터 채웁니다. '
+  var h = '<h3>바스켓 매매 전략</h3><div class="dpmsg">매달 1일(휴일이면 다음 영업일)에 성향별 자산배분비율로 맞추고, 추가 종목을 이번 달 목록으로 바꿉니다. 1주에 모자라도 1주는 삽니다. 예수금이 모자라면 안전한 자산군부터 채웁니다. '
         + '종목 손절선이나 전체 익절·손절선(자동매매 창 값)에 닿으면 그날 바로 팝니다. 판 돈은 다음 달 1일까지 예수금으로 둡니다. 매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 미국 주식 매매차익이 연 250만 원을 넘으면 양도소득세(22%)가 붙습니다.</div>';
   h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb flat dpsm" onclick="bmRecalc()"'+(BM.busy?" disabled":"")+'>재계산</button>':'')+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
