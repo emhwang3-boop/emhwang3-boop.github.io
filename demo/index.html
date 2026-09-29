@@ -5574,7 +5574,7 @@ function rpRender(){
 // ── 순위 카드 — 키움 TR 그대로 (사장님 2026-09-29) ──────────────────────────
 //   상승률 상위 ka10027 · 상한가 ka10017 · 외국인·기관 순매수 ka90009 · 조회수 ka00198. 갯수는 키움이 주는 대로. 1분에 한 번만 새로 받는다.
 var RK = {page: 0, data: {}, at: 0, busy: false, err: ""};
-var RK_PAGES = [["up", "상승률 상위", "Top gainers"], ["lim", "상한가", "Limit up"], ["frg", "외국인 순매수", "Foreign net buy"],
+var RK_PAGES = [["up", "상승률 상위", "Top gainers"], ["lim", "상한가", "Limit up"], ["low", "하한가", "Limit down"], ["frg", "외국인 순매수", "Foreign net buy"],
                 ["org", "기관 순매수", "Institution net buy"], ["view", "조회수 많은 종목", "Most viewed"]];
 function rkNum(v){ var x = parseFloat(String(v == null ? "" : v).replace(/[+,]/g, "")); return isFinite(x) ? x : 0; }
 function rkCd(c){ return String(c || "").replace(/_(AL|NX)$/i, ""); }
@@ -5589,15 +5589,18 @@ async function rkLoad(force){
       updown_incls: "1", pric_cnd: "0", trde_prica_cnd: "0", stex_tp: "3"}, "pred_pre_flu_rt_upper");
     var lim = await q("ka10017", "/api/dostk/stkinfo", {mrkt_tp: "000", updown_tp: "1", sort_tp: "3", stk_cnd: "0", trde_qty_tp: "00000",
       crd_cnd: "0", trde_gold_tp: "0", stex_tp: "3"}, "updown_pric");
+    var low = await q("ka10017", "/api/dostk/stkinfo", {mrkt_tp: "000", updown_tp: "4", sort_tp: "3", stk_cnd: "0", trde_qty_tp: "00000",
+      crd_cnd: "0", trde_gold_tp: "0", stex_tp: "3"}, "updown_pric");      // 하한가 (2026-09-29)
     var fo = await q("ka90009", "/api/dostk/rkinfo", {mrkt_tp: "000", amt_qty_tp: "1", qry_dt_tp: "0", stex_tp: "3"}, "frgnr_orgn_trde_upper");
     var vw = await q("ka00198", "/api/dostk/stkinfo", {qry_tp: "4"}, "item_inq_rank");
     RK.data = {
       up: (up || []).map(function(r){ return {code: rkCd(r.stk_cd), name: r.stk_nm, px: Math.abs(rkNum(r.cur_prc)), rt: rkNum(r.flu_rt)}; }),
       lim: (lim || []).map(function(r){ return {code: rkCd(r.stk_cd), name: r.stk_nm, px: Math.abs(rkNum(r.cur_prc)), rt: rkNum(r.flu_rt), cnt: +r.cnt || 0}; }),
+      low: (low || []).map(function(r){ return {code: rkCd(r.stk_cd), name: r.stk_nm, px: Math.abs(rkNum(r.cur_prc)), rt: rkNum(r.flu_rt), cnt: +r.cnt || 0}; }),
       frg: (fo || []).filter(function(r){ return r.for_netprps_stk_cd; }).map(function(r){ return {code: rkCd(r.for_netprps_stk_cd), name: r.for_netprps_stk_nm, amt: rkNum(r.for_netprps_amt)}; }),
       org: (fo || []).filter(function(r){ return r.orgn_netprps_stk_cd; }).map(function(r){ return {code: rkCd(r.orgn_netprps_stk_cd), name: r.orgn_netprps_stk_nm, amt: rkNum(r.orgn_netprps_amt)}; }),
       view: (vw || []).map(function(r){ return {code: rkCd(r.stk_cd), name: r.stk_nm, px: Math.abs(rkNum(r.past_curr_prc)), rt: rkNum(r.base_comp_chgr)}; })};
-    RK.err = (up === null && lim === null && fo === null && vw === null) ? "load" : "";
+    RK.err = (up === null && lim === null && low === null && fo === null && vw === null) ? "load" : "";
     RK.at = Date.now();
   }catch(e){ RK.err = "nokey"; RK.at = Date.now(); }
   RK.busy = false; rkPaint();
@@ -5609,8 +5612,8 @@ function rkInfo(e){
   var en = LANG === "en", d = document.createElement("div"); d.id = "rkPop";
   d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
   d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
-  var L = en ? ["👉 Swipe left / right to see limit-up · foreign net buy · institution net buy · most viewed.", "🖱️ On PC, use the ‹ › buttons.", "📋 Kiwoom rankings as they are — refreshed every minute. Tap a name to look it up."]
-             : ["👉 좌우로 넘겨 상한가 · 외국인 · 기관 · 조회수 순위를 보세요.", "🖱️ PC에서는 ‹ › 단추로 넘깁니다.", "📋 키움 순위를 그대로 보여 줍니다(1분마다 새로). 종목 이름을 누르면 종목 조회로 넘어갑니다."];
+  var L = en ? ["👉 Swipe left / right to see limit-up · limit-down · foreign net buy · institution net buy · most viewed.", "🖱️ On PC, use the ‹ › buttons.", "📋 Kiwoom rankings as they are — refreshed every minute. Tap a name to look it up."]
+             : ["👉 좌우로 넘겨 상한가 · 하한가 · 외국인 · 기관 · 조회수 순위를 보세요.", "🖱️ PC에서는 ‹ › 단추로 넘깁니다.", "📋 키움 순위를 그대로 보여 줍니다(1분마다 새로). 종목 이름을 누르면 종목 조회로 넘어갑니다."];
   d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45)">'
     + '<div style="font-size:19px;font-weight:800;margin-bottom:6px">' + (en ? "Rankings" : "순위 보는 법") + '</div>'
     + L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + l + '</div>'; }).join("")
@@ -5638,7 +5641,7 @@ function rkPaint(){
       var v;
       if(pg[0] === "frg" || pg[0] === "org") v = '<span class="' + (r.amt >= 0 ? "up" : "dn") + '">' + (r.amt > 0 ? "+" : "") + (r.amt / 10).toLocaleString(undefined, {maximumFractionDigits: 0}) + (en ? "0M KRW" : "억") + '</span>';
       else v = (r.px ? '<span class="dplbl">' + r.px.toLocaleString() + '</span> ' : '') + '<span class="' + (r.rt >= 0 ? "up" : "dn") + '">' + (r.rt > 0 ? "+" : "") + r.rt.toFixed(2) + '%</span>'
-             + (pg[0] === "lim" && r.cnt > 1 ? ' <span class="dplbl">' + r.cnt + (en ? "x" : "연속") + '</span>' : '');
+             + ((pg[0] === "lim" || pg[0] === "low") && r.cnt > 1 ? ' <span class="dplbl">' + r.cnt + (en ? "x" : "연속") + '</span>' : '');
       return '<div class="rkrow"><span class="dplbl">' + (i + 1) + '</span><span class="rknm" onclick="mhGo(&quot;' + dpEsc(String(r.code)).replace(/"/g, "") + '&quot;,&quot;'
         + dpEsc(String(r.name || r.code)).replace(/"/g, "") + '&quot;,&quot;kr&quot;,0)">' + dpEsc(r.name || r.code) + '</span><span class="rkv">' + v + '</span></div>';
     }).join("");
