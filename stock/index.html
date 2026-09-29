@@ -3365,10 +3365,10 @@ function svRecoRender() {
   window._SVPICK = {};
   const PZP = [];
   // 🔴 새 엔진 (사장님 2026-09-29): 위성 자산군은 이번 달 목록(reco.json mom — 매달 1일 고정). 주식 5 · ETF 1.
-  //    적극·공격투자형은 주식 자산군 일부를 대표 ETF(코어)로 든다 — 맨 앞에 보인다.
+  //    적극·공격투자형은 주식 자산군 일부를 대표 ETF(바탕)로 든다 — 맨 앞에 보인다.
   const MOMK = {"국내 주식": "kr", "해외 주식": "us", "해외(원화) 주식형 ETF": "etfw", "원화 주식형 레버리지 ETF": "levw",
                 "미국 달러 주식형 ETF": "etfu", "달러 주식형 레버리지 ETF": "levu"};
-  const MOMCORE = {3: {"국내 주식": ["KODEX 200 (코어)", "069500"]}, 4: {"국내 주식": ["KODEX 200 (코어)", "069500"], "해외 주식": ["SPY (코어)", "SPY"]}};
+  const MOMCORE = {3: {"국내 주식": ["KODEX 200 (바탕)", "069500"]}, 4: {"국내 주식": ["KODEX 200 (바탕)", "069500"], "해외 주식": ["SPY (바탕)", "SPY"]}};
   g.mix.forEach(function (m) {
     const cls = m[0];
     let cand = [];
