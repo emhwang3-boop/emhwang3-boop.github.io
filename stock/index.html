@@ -353,7 +353,16 @@ function stkLogo(code, mk, px){
       + ' style="width:'+d+'px;height:'+d+'px;border-radius:50%;object-fit:contain;background:#fff;vertical-align:-3px;margin-right:5px">';
   }catch(e){ return ""; }
 }
-function mpOrderPick(){   // 주문은 머니퍼즐(실전앱) 사장님판 /demo/ 로 바로 (사장님 2026-09-30 「내가 쓰는 것에 맞춰줘」 — 고르는 창 뺌)
+function mpOrderPick(){   // 주문은 머니퍼즐(실전앱)에서 (사장님 2026-09-30 「내가 쓰는 것에 맞춰줘」)
+  //   폰(안드로이드 웹앱) = 깔린 실전앱 /demo2/ 로 바로 — chrome://webapks 실측 패키지. 그냥 링크면 이 앱 안 작은 창에 떠 계좌가 안 붙었다
+  //   PC·브라우저 = /demo/ (사장님 PC 판)
+  var ua = navigator.userAgent || "", sa = false;
+  try{ sa = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || !!navigator.standalone; }catch(e){}
+  if(/Android/i.test(ua) && sa){
+    var u = "https://emhwang3-boop.github.io/demo2/";
+    location.href = "intent://emhwang3-boop.github.io/demo2/?src=pwa#Intent;scheme=https;package=org.chromium.webapk.af0443d66d71c5c19_v2;S.browser_fallback_url=" + encodeURIComponent(u + "?via=app") + ";end";
+    return;
+  }
   try{ window.open("https://emhwang3-boop.github.io/demo/", "_blank", "noopener"); }catch(e){ location.href = "https://emhwang3-boop.github.io/demo/"; }
 }
 function svOpenApp(a){
@@ -4272,5 +4281,5 @@ function tkPaint(d){
   try{ tkPaint(window._lastD||window.SNAP); }catch(e){}
 })();
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-30 15:50</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-30 16:04</div>
 </body></html>
