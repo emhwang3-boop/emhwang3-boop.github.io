@@ -4302,6 +4302,12 @@ async function ydLoad(force){
             if(bq > 0) rows.push({mk:"kr", code:cd, name:r.stk_nm||cd, side:"B", qty:bq, amt:rlNum(r.buy_amt), pl:null});
             if(sq > 0) rows.push({mk:"kr", code:cd, name:r.stk_nm||cd, side:"S", qty:sq, amt:rlNum(r.sell_amt), pl:rlNum(r.pl_amt), est:false});
           });
+          // 매도 손익은 실현손익(ka10072)으로 — 매매일지는 같은 날 사고판 것만 손익을 준다(전에 산 걸 팔면 0) (사장님 2026-09-30)
+          for(var ri = 0; ri < rows.length; ri++){ var sr = rows[ri]; if(sr.mk !== "kr" || sr.side !== "S") continue;
+            try{ var zj = await rlKiwoom(tok, "/api/dostk/acnt", "ka10072", {stk_cd: sr.code, strt_dt: ds});
+              var zl = (zj && zj.dt_stk_div_rlzt_pl) || [], zs = 0, zn = 0;
+              zl.forEach(function(z){ if(String(z.stk_cd || "").replace(/^A/, "") === sr.code){ zs += rlNum(z.tdy_sel_pl); zn++; } });
+              if(zn) sr.pl = zs; }catch(e){} }
         }
       }catch(e){ note.push(KE("국내 ","KR ") + e.message); }
       // 미국 — 어제 체결 + 앞선 85일 매수로 평균값
@@ -8185,7 +8191,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-30 09:09</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-30 09:25</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
