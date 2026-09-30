@@ -343,18 +343,8 @@ button{text-align:center !important}
 <div class="card">
   <a class="svlink" style="background:#2f9e44" href="../stock/" target="_blank" rel="noopener" data-pkg="org.chromium.webapk.adca9386646c16d2c_v2" onclick="return svOpenApp(this)"><span class="kko">주식앱 열기</span><span class="ken">Open Stock App</span></a>
 </div><script>
-function mpOrderPick(){   // 주문은 머니퍼즐(실전앱)에서 — 두 판 중 고른다 (사장님 2026-09-30 「증권사 연결은 없다」 · (ㄱ))
-  var en = (typeof LANG !== "undefined" && LANG === "en"), old = document.getElementById("mpPick"); if(old) old.remove();
-  var d = document.createElement("div"); d.id = "mpPick";
-  d.setAttribute("style", "position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
-  var b = function(href, t, s){ return '<a href="' + href + '" target="_blank" rel="noopener" onclick="document.getElementById(&quot;mpPick&quot;).remove();return svOpenApp(this)" style="display:block;margin-top:10px;padding:13px 14px;border-radius:12px;background:#1c7ed6;color:#fff;text-decoration:none;font-weight:800;font-size:15px">' + t + '<div style="font-weight:400;font-size:12px;opacity:.85;margin-top:2px">' + s + '</div></a>'; };
-  d.innerHTML = '<div style="background:var(--card,#fff);color:var(--nm,#111);border-radius:18px;max-width:380px;width:100%;padding:20px 18px;box-shadow:0 18px 50px rgba(0,0,0,.45)">'
-    + '<div style="font-weight:800;font-size:16px">' + (en ? "Order in Money Puzzle" : "머니퍼즐에서 주문하기") + '</div>'
-    + b("https://emhwang3-boop.github.io/demo/", en ? "Money Puzzle" : "머니퍼즐", en ? "Keys saved in this browser" : "키를 이 브라우저에 넣어 둔 판")
-    + b("https://emhwang3-boop.github.io/demo2/", en ? "Money Puzzle · Key edition" : "머니퍼즐 열쇠판", en ? "Only the relay key is needed" : "중계기 열쇠만 넣는 판")
-    + '<button onclick="document.getElementById(&quot;mpPick&quot;).remove()" style="display:block;width:100%;margin-top:12px;padding:11px;border:1px solid var(--bd,#ccc);border-radius:12px;background:transparent;color:inherit;font-size:14px;cursor:pointer">' + (en ? "Cancel" : "닫기") + '</button></div>';
-  d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
-  document.body.appendChild(d);
+function mpOrderPick(){   // 주문은 머니퍼즐(실전앱) 사장님판 /demo/ 로 바로 (사장님 2026-09-30 「내가 쓰는 것에 맞춰줘」 — 고르는 창 뺌)
+  try{ window.open("https://emhwang3-boop.github.io/demo/", "_blank", "noopener"); }catch(e){ location.href = "https://emhwang3-boop.github.io/demo/"; }
 }
 function svOpenApp(a){
   try{
@@ -4001,5 +3991,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-30 15:40</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 09-30 15:50</div>
 </body></html>
