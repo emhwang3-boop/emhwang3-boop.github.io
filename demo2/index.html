@@ -7752,7 +7752,11 @@ var MOM_N = {kr: 5, us: 5, etfw: 1, levw: 1, etfu: 1, levu: 1};
 var MOM_CORE = {3: {"국내 주식": 0.4}, 4: {"국내 주식": 2 / 3, "해외 주식": 2 / 3}};     // 적극 70:30 · 공격 60:40
 function momMk(k){ return (k === "us" || k === "etfu" || k === "levu") ? "us" : "kr"; }
 function momMonth(){ var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
-function momDone(){ try{ return localStorage.getItem("bm_mom_done_v1") === momMonth(); }catch(e){ return false; } }
+function momDone(){
+  // 중계기 자동매매가 이번 달 맞추기를 했으면(기록 「… 이번 달 맞추기 N건 (목록 YYYY-MM)」) 앱도 이번 달은 닫는다 (사장님 2026-10-02)
+  try{ var L = (typeof AT !== "undefined" && AT.st && AT.st.log) || [], mm = momMonth();
+    if(L.some(function(l){ return String(l).indexOf("이번 달 맞추기") >= 0 && String(l).indexOf("(목록 " + mm + ")") >= 0; })) localStorage.setItem("bm_mom_done_v1", mm); }catch(e){}
+  try{ return localStorage.getItem("bm_mom_done_v1") === momMonth(); }catch(e){ return false; } }
 // 성향 목표 — [{mk, code, name, cls, val(원), role, rank}] (코인 빼고)
 function momTargets(o, tot){
   var g = PF_GRADE[o.gi], M = (typeof RECO !== "undefined" && RECO && RECO.mom) || {}, T = {}, order = [];
@@ -7773,7 +7777,7 @@ function momTargets(o, tot){
   });
   return order.map(function(k){ return T[k]; });
 }
-function bmPlanMom(o){
+function bmPlanMom(o, opt){
   var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350, cash = RL.cash || {};
   var hold = {}, tot = 0, rows = [], hs = (RL.kr || []).concat(RL.us || []);
   hs.forEach(function(p){ var us = p.mk === "us", k = (us ? "us:" : "kr:") + String(p.code).replace(/\.US$/i, "").toUpperCase();
@@ -7797,7 +7801,8 @@ function bmPlanMom(o){
   var M = (typeof RECO !== "undefined" && RECO && RECO.mom) || null;
   // 새 계좌(국내·미국 보유 없음)는 날짜와 상관없이 바로 이번 달 목표로 채운다 — 전체 익절·손절 뒤 쉬는 달은 빼고 (사장님 2026-09-29)
   var fresh = !hs.some(function(p){ return (+p.qty || 0) > 0; }) && !((typeof AT !== "undefined" && AT.st && AT.st.pf_rest) === momMonth());
-  if(!M || M.month !== momMonth() || ((!M.start || momDone()) && !fresh)) return {rows: rows, fx: fx, cash: cash, mode: "stops"};   // 달 초 목록이 아니거나 이번 달 맞추기를 했다 — 손절만
+  var adhoc = !!(opt && opt.adhoc) && M && M.kr;          // 비정기 리밸런싱 — 아무 때나 지금 목표 비율로 (사장님 2026-10-02)
+  if(!adhoc && (!M || M.month !== momMonth() || ((!M.start || momDone()) && !fresh))) return {rows: rows, fx: fx, cash: cash, mode: "stops"};   // 달 초 목록이 아니거나 이번 달 맞추기를 했다 — 손절만
   // 이번 달 맞추기 — 목록에서 빠진 것 팔고, 목표보다 많은 건 줄이고, 모자란 건 산다
   var T = momTargets(o, tot), TK = {};
   T.forEach(function(t){ TK[t.mk + ":" + String(t.code).toUpperCase()] = t; });
@@ -7810,10 +7815,10 @@ function bmPlanMom(o){
     if(!(diff > 0) || (h && h.px > 0 && diff < h.px)) return;
     rows.push({side: "B", mk: t.mk, code: t.code, name: t.name, cls: t.cls, amt: diff, first: true, nomerge: true,
       why: t.cls + (t.role === "sat" ? " · 이번 달 " + t.rank + "위" : (t.role === "rep" ? " · 대표 ETF" : " · 바탕"))}); });
-  return {rows: rows, fx: fx, cash: cash, mode: "month"};
+  return {rows: rows, fx: fx, cash: cash, mode: adhoc ? "adhoc" : "month"};
 }
 function bmPlan(o, opt){
-    if(typeof RECO !== "undefined" && RECO && RECO.mom && RECO.mom.kr) return bmPlanMom(o);     // 새 엔진 (사장님 2026-09-29)
+    if(typeof RECO !== "undefined" && RECO && RECO.mom && RECO.mom.kr) return bmPlanMom(o, opt);     // 새 엔진 (사장님 2026-09-29)
     var g = PF_GRADE[o.gi], fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350, cash = RL.cash || {};
     var val = {}, held = {}, tot = 0;
     (RL.kr || []).forEach(function(p){ var c = pfClassOf(p), v = +p.evl || 0; val[c] = (val[c]||0) + v; tot += v; held["kr:"+p.code] = p; });
@@ -7919,14 +7924,14 @@ function bmRecalc(){
   bmRender();
 }
 // 바스켓 만들기 — 값은 이때 받는다
-async function bmBuild(){
+async function bmBuild(adhoc){
   var o = pfGet(); if(!o){ BM.msg = "먼저 투자성향 분석을 해 주십시오."; bmRender(); return; }
   if(!(typeof RL !== "undefined" && RL.at)){ BM.msg = "먼저 실계좌를 불러와 주십시오."; bmRender(); return; }
   if(typeof RECO === "undefined" || !RECO){ BM.msg = "추천 자료를 받는 중입니다. 잠시 뒤 다시 눌러 주십시오."; bmRender(); return; }
   BM.busy = true; BM.msg = "현재가를 받는 중…"; BM.rows = null; bmRender();
   try{ if(typeof AT !== "undefined" && !AT.st) AT.st = await atCall(null); }catch(e){}   // 파는 기준 = 자동매매 창 값
   try{
-    var P = bmPlan(o, {trim: true}), rows = P.rows, fx = P.fx, cash = P.cash; BM.mode = P.mode || "";   // 목표까지 한 번에(full) 는 안 쓴다 (사장님 2026-09-28)
+    var P = bmPlan(o, {trim: true, adhoc: !!adhoc}), rows = P.rows, fx = P.fx, cash = P.cash; BM.mode = P.mode || "";   // 목표까지 한 번에(full) 는 안 쓴다 (사장님 2026-09-28)
     await bmPrice(rows, fx, cash, {sellCash: true});
     BM.rows = rows; BM.msg = (P.mode === "stops" ? "이번 달 맞추기는 다음 교체일(매달 1일)에 합니다 — 지금은 손절·전체 기준에 닿은 종목만 보여 줍니다. " : "") + (rows.length ? "" : "오늘 사고팔 것이 없습니다.");
   }catch(e){ BM.msg = "바스켓을 못 만들었습니다: " + (e.message || e); }
@@ -8182,7 +8187,7 @@ function bmRender(){
         + '종목 손절선이나 전체 익절·손절선(자동매매 창 값)에 닿으면 그날 바로 팝니다. 판 돈은 다음 달 1일까지 예수금으로 둡니다. 매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 미국 주식 매매차익이 연 250만 원을 넘으면 양도소득세(22%)가 붙습니다.',
           "On the 1st of each month (next business day if a holiday) the account is rebalanced to your profile's asset mix and the added stocks switch to this month's list. At least 1 share is bought even if the amount is short of one. If cash runs short, the safest asset classes are filled first. "
         + "When a stock stop-loss or the overall take-profit/stop-loss (auto-trading settings) is hit, it is sold that day. Sale proceeds stay as cash until the next 1st. Buys are limit orders at current price +1 tick, sells at −1 tick. US stock gains above ₩2.5M a year are subject to capital gains tax (22%).") + '</div>';
-  h += '<div style="display:flex;gap:6px;margin:8px 0"><button class="dpb flat dpsm" style="flex:1" onclick="bmBuild()"'+(BM.busy?" disabled":"")+'>'+(BM.rows?"다시 만들기":"오늘 바스켓 만들기")+'</button>'+((BM.rows&&BM.rows.length)?'<button class="dpb flat dpsm" onclick="bmRecalc()"'+(BM.busy?" disabled":"")+'>재계산</button>':'')+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
+  h += '<div style="display:flex;gap:6px;margin:8px 0"><div style="flex:1;display:flex;flex-direction:column;gap:6px"><button class="dpb flat dpsm" onclick="bmBuild(false)"'+(BM.busy?" disabled":"")+'>'+KE("정기(매월 1일) 리밸런싱","Scheduled (1st of month) rebalance")+'</button><button class="dpb flat dpsm" onclick="bmBuild(true)"'+(BM.busy?" disabled":"")+'>'+KE("비정기 리밸런싱","Rebalance now")+'</button></div>'+((BM.rows&&BM.rows.length)?'<button class="dpb flat dpsm" onclick="bmRecalc()"'+(BM.busy?" disabled":"")+'>재계산</button>':'')+((BM.rows&&BM.rows.length)?'<button class="dpb sell dpsm" onclick="bmClear()"'+(BM.busy?" disabled":"")+'>모두 지우기</button>':'')+'</div>';
   if(BM.msg) h += '<div class="dpmsg">' + pfEsc(BM.msg) + '</div>';
   if(BM.rows && BM.rows.length){
     // 종목 칸 세 줄(매수·매도+종목명 / 자산군 / 목표·보유) · 수익률 칸 · 지정가는 금액 아래 @ (사장님 2026-09-28)
@@ -8222,5 +8227,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 00:29</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 07:03</div>
 </body></html>
