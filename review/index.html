@@ -160,6 +160,7 @@ body.light #mhBody tr.mhgrp td{background:rgba(127,127,127,.10);border-top:0}
   .dplbl{font-size:11px}
   .shpanel{position:fixed;left:10px;right:10px;top:54px;width:auto;max-width:none;box-sizing:border-box}
 }
+@media (pointer:fine){a,button,select,label,summary,[onclick],[role=button],.dpb,.tgl,.svbtn{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M9.2 15.2V4.6a2.4 2.4 0 0 1 4.8 0V13.4a2.3 2.3 0 0 1 4.4.6a2.3 2.3 0 0 1 4.4.8a2.3 2.3 0 0 1 4.4 1V22c0 4.2-3.1 7.4-7.2 7.4H17c-2.4 0-4.3-1-5.7-2.9L5.5 18.6a2.2 2.2 0 0 1 3.5-2.8z' fill='%23fff' stroke='%23111' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M14 13.4v4.4M18.4 14v4M22.8 14.8v3.6' stroke='%23111' stroke-width='1.1' stroke-linecap='round'/%3E%3Cpath d='M12.6 26.3h13.4' stroke='%23111' stroke-width='1.5'/%3E%3C/svg%3E") 11 2,pointer}}   /* PC 마우스 — 누를 수 있는 곳은 흰 장갑 손가락 (사장님 2026-10-02) */
 .stpanel{width:290px}
 .mhtab.ydtab{table-layout:fixed}.mhtab.ydtab td{white-space:normal;overflow-wrap:anywhere}.mhtab.ydtab td:first-child{word-break:break-all}   /* 매매현황 표는 카드 폭에 고정 — 긴 이름은 아무 데서나 줄바꿈 (사장님 2026-10-01) */
 .ydbr{display:none}   /* 매매현황 합계 — 넓은 화면 한 줄 · 폰 두 줄 (사장님 2026-09-29) */
@@ -4124,6 +4125,41 @@ function dpHoldItems(){
   // 🔴 모의 장부(DP.pos)는 따로 더하지 않는다 — 모의 판이면 위 rlRows 가 곧 모의 계좌다. 더하면 두 번 세고, 실계좌 판엔 옛 모의가 섞였다 (2026-09-26)
   return out;
 }
+// ── 포트폴리오 베타 (사장님 2026-10-02) — 시장마다 따로: 국내→코스피 · 미국→S&P500 · 코인→비트코인. 평가금 비중대로 더한다.
+//    지금 들고 있는 수량·현재가 비중 · 최근 1년(약 250일) 일봉 일간 수익률 · β = cov(포트폴리오, 지수) ÷ var(지수)
+var HB_BETA = {txt: "", sig: "", at: 0};
+function hbDay(t, mk){ var off = mk === "kr" ? 9 : (mk === "us" ? -4 : 0); return new Date(t + off * 3600000).toISOString().slice(0, 10); }
+function hbRet(ser, mk){ var m = {}, prev = null; (ser || []).forEach(function(x){ var d = hbDay(x[0], mk); if(prev !== null && prev > 0) m[d] = x[1] / prev - 1; prev = x[1]; }); return m; }
+function hbBeta(){
+  try{
+    var it = pbItems(); if(!it.length){ HB_BETA.txt = ""; return; }
+    var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350;
+    var bench = {kr: "ix:^KS11", us: "ix:^GSPC", co: "co:BTC-USDT"}, need = [];
+    it.forEach(function(x){ need.push(x.key); });
+    Object.keys(bench).forEach(function(g){ if(it.some(function(x){ return x.key.indexOf(g + ":") === 0; })) need.push(bench[g]); });
+    var miss = need.filter(function(k){ return PB.px[k] === undefined; });
+    miss.forEach(function(k){ pbSeries(k); });
+    if(miss.length) return;
+    var tot = 0, acc = 0, used = 0;
+    ["kr", "us", "co"].forEach(function(g){
+      var gi = it.filter(function(x){ return x.key.indexOf(g + ":") === 0 && PB.px[x.key]; }); if(!gi.length) return;
+      var mk = g === "co" ? "coin" : g, br = hbRet(PB.px[bench[g]], mk); if(!Object.keys(br).length) return;
+      var val = function(x){ return (+x.qty || 0) * (+x.cur || 0) * (g === "kr" ? 1 : fx); };
+      var gv = gi.reduce(function(s, x){ return s + val(x); }, 0); if(!(gv > 0)) return;
+      var rr = gi.map(function(x){ return {w: val(x) / gv, r: hbRet(PB.px[x.key], mk)}; });
+      var days = Object.keys(br).sort().slice(-250), P = [], B = [];
+      days.forEach(function(d){ var sw = 0, sr = 0; rr.forEach(function(o){ if(o.r[d] !== undefined){ sw += o.w; sr += o.w * o.r[d]; } }); if(sw > 0.5){ P.push(sr / sw); B.push(br[d]); } });
+      if(P.length < 40) return;
+      var mb = B.reduce(function(a, b){ return a + b; }, 0) / B.length, mp = P.reduce(function(a, b){ return a + b; }, 0) / P.length, cv = 0, vb = 0;
+      for(var i = 0; i < P.length; i++){ cv += (P[i] - mp) * (B[i] - mb); vb += (B[i] - mb) * (B[i] - mb); }
+      if(!(vb > 0)) return;
+      acc += (cv / vb) * gv; tot += gv; used++;
+    });
+    HB_BETA.txt = (tot > 0 && used) ? ("β " + (acc / tot).toFixed(2)) : "";
+  }catch(e){ HB_BETA.txt = ""; }
+  var el = document.getElementById("hbBeta"); if(el) el.textContent = HB_BETA.txt;
+}
+setInterval(function(){ try{ if(document.getElementById("hbBeta")) hbBeta(); }catch(e){} }, 5000);
 // 합계 수익률 = Σ평가 ÷ Σ산 돈 − 1. 달러 통은 원/달러(fxKrw)로 원화 환산 — 환율이 없으면 1:1(통화별 값 그대로 합침).
 function dpHoldSumHtml(){
   const en=LANG==="en", a=dpHoldItems(); if(!a.length)return "";
@@ -4144,6 +4180,7 @@ function dpHoldSumHtml(){
     +(en?"Totals · ":"합계 · ")+parts.join(" · ")+'</div>'):"";
   return tot+'<div class="mhsum" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px">'
     +'<span>'+(en?"Portfolio return ":"포트폴리오 수익률 ")+'<b class="'+cls+'">'+(r>0?"+":"")+r.toFixed(2)+'%</b></span>'
+    +'<span id="hbBeta" title="'+(en?"Beta — how much this portfolio moved when its market moved 1% (KR→KOSPI · US→S&P 500 · crypto→BTC), last 1 year daily":"베타 — 시장이 1% 움직일 때 지금 포트폴리오가 움직인 정도 (국내→코스피 · 미국→S&P 500 · 코인→비트코인) · 최근 1년 일봉")+'" style="color:var(--sub)">'+(HB_BETA.txt||"")+'</span>'
     +'<button class="dppct" style="border-color:#2bd4c0;color:#2bd4c0" onclick="holdTower3D()">3D</button>'
     +'<span onclick="bkTowerInfo(event)" class="icoi" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span></div>';
 }
@@ -8196,7 +8233,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-01 12:47</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 00:29</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
