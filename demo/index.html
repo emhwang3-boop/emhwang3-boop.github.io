@@ -5545,7 +5545,10 @@ function pbPaint(){
       tot[k].a += now; tot[k].b += then; tot[k].n++;
       return (now / then - 1) * 100;
     });
-    return '<tr><td style="text-align:left">' + dpEsc(x.name) + '</td>' + cells.map(function(v){ return '<td>' + (ser === undefined ? '<span class="dplbl">…</span>' : pct(v)) + '</td>'; }).join("") + '</tr>';
+    // 이름을 누르면 종목·코인 조회로 (사장님 2026-10-02) — 순위 카드와 같은 mhGo
+    var km = x.key.split(":"), kmk = km[0] === "co" ? "coin" : km[0], kcd = km.slice(1).join(":");
+    var nm = '<span style="cursor:pointer;text-decoration:underline dotted" onclick="mhGo(&quot;' + dpEsc(kcd).replace(/"/g, "") + '&quot;,&quot;' + dpEsc(kmk === "coin" ? kcd : x.name).replace(/"/g, "") + '&quot;,&quot;' + kmk + '&quot;,' + (kmk === "coin" ? "true" : "false") + ')">' + dpEsc(x.name) + '</span>';
+    return '<tr><td style="text-align:left">' + nm + '</td>' + cells.map(function(v){ return '<td>' + (ser === undefined ? '<span class="dplbl">…</span>' : pct(v)) + '</td>'; }).join("") + '</tr>';
   }).join(""); };
   var totOf = function(){ return MO.map(function(){ return {a: 0, b: 0, n: 0}; }); };
   // 🔴 전체를 시장별로 — 국내시장 전체(원화) ↔ 코스피 · 미국시장 전체(달러, 환율 빼고) ↔ S&P500 · 코인 합계 (사장님 2026-09-28)
@@ -8238,5 +8241,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 07:03</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 07:14</div>
 </body></html>
