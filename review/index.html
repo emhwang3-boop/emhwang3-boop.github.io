@@ -5547,7 +5547,7 @@ function pbPaint(){
     });
     // 이름을 누르면 종목·코인 조회로 (사장님 2026-10-02) — 순위 카드와 같은 mhGo
     var km = x.key.split(":"), kmk = km[0] === "co" ? "coin" : km[0], kcd = km.slice(1).join(":");
-    var nm = '<span style="cursor:pointer;text-decoration:underline dotted" onclick="mhGo(&quot;' + dpEsc(kcd).replace(/"/g, "") + '&quot;,&quot;' + dpEsc(kmk === "coin" ? kcd : x.name).replace(/"/g, "") + '&quot;,&quot;' + kmk + '&quot;,' + (kmk === "coin" ? "true" : "false") + ')">' + dpEsc(x.name) + '</span>';
+    var nm = '<span style="cursor:pointer" onclick="mhGo(&quot;' + dpEsc(kcd).replace(/"/g, "") + '&quot;,&quot;' + dpEsc(kmk === "coin" ? kcd : x.name).replace(/"/g, "") + '&quot;,&quot;' + kmk + '&quot;,' + (kmk === "coin" ? "true" : "false") + ')">' + dpEsc(x.name) + '</span>';
     return '<tr><td style="text-align:left">' + nm + '</td>' + cells.map(function(v){ return '<td>' + (ser === undefined ? '<span class="dplbl">…</span>' : pct(v)) + '</td>'; }).join("") + '</tr>';
   }).join(""); };
   var totOf = function(){ return MO.map(function(){ return {a: 0, b: 0, n: 0}; }); };
@@ -8241,7 +8241,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 07:14</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 07:21</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
