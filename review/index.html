@@ -3933,7 +3933,7 @@ function mhGroups(real, rh, en){
     var bg = '';                                   // 바탕색은 CSS(.mhgrp) — 다크모드에서 더 밝게 (2026-09-26)
     return '<tr class="mhgrp"><td colspan="' + (CS - 1) + '" style="text-align:left;' + bg + 'padding:7px 6px">'
       + '<div><b>' + name + '</b> <span class="dplbl">' + (en ? "held " : "보유 ") + now.toFixed(1) + '% · ' + (en ? "target " : "목표 ") + tg + '%</span></div>'
-      + '<div style="text-align:right;margin-top:2px"><b class="' + (d < -0.05 ? "dn" : (d > 0.05 ? "up" : "fl")) + '">Gap ' + (d > 0 ? "+" : (d < 0 ? "−" : "")) + Math.abs(d).toFixed(1) + '%p'
+      + '<div style="text-align:right;margin-top:2px"><b style="color:var(--nm,#111)">' + (d > 0.05 ? KE("비중초과 ", "Overweight ") : (d < -0.05 ? KE("비중미달 ", "Underweight ") : "Gap ")) + (d > 0 ? "+" : (d < 0 ? "−" : "")) + Math.abs(d).toFixed(1) + '%p'
       + ' <span style="font-weight:400">(' + (amt > 0 ? "+" : (amt < 0 ? "−" : "")) + money(Math.abs(amt)) + ')</span></b></div></td>'
       + '<td style="' + bg + 'text-align:center">' + (d < -0.05 && key !== "예금·MMF" ? '<button class="dpb buy dpsm" onclick="mhGapBuy(event,&quot;' + String(key || name).replace(/"/g, "") + '&quot;)">' + (en ? "BUY" : "매수") + '</button>' : '') + '</td></tr>'; };
   var won = function(v){ return Math.round(v).toLocaleString() + (en ? " KRW" : "원"); }, usdt = function(v){ return v.toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; };
@@ -8251,7 +8251,7 @@ function dcaInfo(e){
                 "🪜 차례: 예금·MMF → 국내 지수형 ETF → 국내 채권형 ETF → 국내 원화 ETF → 해외 원화표시 채권형 → 미국 달러 지수형 → 미국 달러표시 채권형 → 해외(원화) 주식형 → 원화 레버리지 → 국내 주식 → 미국 달러 주식형 → 달러 레버리지 → 해외 주식",
                 "⏳ 다음 차례 종목 1주를 살 돈이 모자라면 <b>건너뛰지 않고</b> 돈을 모아 두었다가, 다음 달 입금과 합쳐 삽니다.",
                 "🛒 사기만 합니다 — 매달 바뀌는 추천 목록에서 빠진 종목도 <b>팔지 않습니다</b>. 적립식이 켜져 있는 동안은 종목 손절과 전체 익절·손절도 <b>꺼집니다</b>.",
-                "📈 카드 아래에 지금 들고 있는 종목별 손익률과 전체 손익률이 실시간으로 나옵니다(코인 제외).",
+                "📈 카드 아래 「현재 손익」에 지금 들고 있는 종목별 손익률과 전체 손익률이 실시간으로 나옵니다(코인 제외).",
                 "💱 다음 차례가 미국 자산이면 「달러로 얼마 환전해 두세요」라고 알려 드립니다.",
                 "📅 만기: 개월 수를 넣으면 옆에 만기 날짜가 나옵니다. 만기가 되면 적립식만 멈추고, 산 종목은 그대로 둡니다.",
                 "⚙ 자동매매(중계기 PC)가 사 줍니다 — 자동매매가 켜져 있어야 합니다."];
@@ -8338,7 +8338,7 @@ function dcaRender(force){
              + '<td class="' + c + '" style="text-align:right">' + (pl > 0 ? "+" : (pl < 0 ? "−" : "")) + Math.round(Math.abs(pl)).toLocaleString() + '</td></tr>';
       }).join("");
       var trt = tpur > 0 ? tpl / tpur * 100 : 0, tc = trt > 0.005 ? "up" : (trt < -0.005 ? "dn" : "fl");
-      h += '<div style="margin-top:10px;font-weight:700">' + KE("지금 손익 (실시간)", "Live P/L") + '</div>'
+      h += '<div style="margin-top:10px;font-weight:700">' + KE("현재 손익", "Current P/L") + '</div>'
          + '<table class="mhtab" style="width:100%;margin-top:4px"><tr><th style="text-align:left">' + KE("종목", "Holding") + '</th><th style="text-align:right">' + KE("손익률", "Return")
          + '</th><th style="text-align:right">' + KE("손익(원)", "P/L (KRW)") + '</th></tr>' + rows
          + '<tr style="font-weight:800"><td style="text-align:left">' + KE("전체", "Total") + '</td><td class="' + tc + '" style="text-align:right">'
@@ -8398,7 +8398,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 05:10</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 05:24</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
