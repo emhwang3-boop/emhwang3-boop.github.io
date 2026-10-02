@@ -8197,10 +8197,123 @@ async function bmRun(){
   try{ [3000, 10000, 25000].forEach(function(ms){ setTimeout(function(){ try{ ydLoad(true); if(go.some(function(r){ return r.mk === "coin"; })) rlLoad(true); }catch(e){} }, ms); }); }catch(e){}
   BM.busy = false; bmRender();
 }
+// ══ 적립식 포트폴리오 (사장님 2026-10-03) ══════════════════════════════════════════
+//   매달 정한 금액 · 안전자산부터 차례로 사기만 · 1주가 모자라면 건너뛰지 않고 모아서 다음 달 · 만기 되면 적립식만 멈춤
+//   실제 사기는 중계기 자동매매가 한다(_auto.py fill_dca). 이 카드는 설정과 「다음에 살 것」을 보여 준다.
+var DCA_KEY = "dca_v1";
+function dcaGet(){ try{ return JSON.parse(localStorage.getItem(DCA_KEY) || "null") || {}; }catch(e){ return {}; } }
+function dcaPut(o){ try{ localStorage.setItem(DCA_KEY, JSON.stringify(o)); }catch(e){} }
+function dcaIso(d){ return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function dcaEnd(start, months){
+  var m = parseInt(months, 10); if(!(m > 0)) return "";
+  var d = start ? new Date(start + "T00:00:00") : new Date(); var day = d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth() + m);
+  var last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); d.setDate(Math.min(day, last));
+  return dcaIso(d);
+}
+function dcaDateKo(iso){
+  if(!iso) return "";
+  var p = iso.split("-");
+  return KE(p[0] + "년 " + (+p[1]) + "월 " + (+p[2]) + "일", iso);
+}
+function dcaName(code){
+  try{ var M = (typeof RECO !== "undefined" && RECO && RECO.mom) || {}, c = String(code || "").toUpperCase();
+    for(var k in M){ var L = M[k]; if(Array.isArray(L)){ for(var i = 0; i < L.length; i++){ if(String(L[i].code || "").toUpperCase() === c) return (LANG === "en" && L[i].en) || L[i].name || code; } } }
+  }catch(e){}
+  var REPN = {"069500": "KODEX 200", "114260": "KODEX 국고채3년", "360750": "TIGER 미국S&P500", "305080": "TIGER 미국채10년선물", "133690": "TIGER 미국나스닥100", "122630": "KODEX 레버리지"};
+  return REPN[code] || code;
+}
+function dcaWon(v){ return Math.round(+v || 0).toLocaleString() + KE("원", " KRW"); }
+function dcaInfo(e){
+  try{ if(e) e.stopPropagation(); }catch(x){}
+  if(document.getElementById("dcaPop")) return;
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  var L = en ? ["💰 Set an amount to invest every month. Each deposit buys your profile's asset mix <b>from the safest asset first</b>.",
+                "🪜 Order: Deposit·MMF → KR index ETF → KR bond ETF → KRW ETF → KRW-hedged bond → USD index ETF → USD bond → KRW equity ETF → KRW leveraged → KR stocks → USD equity ETF → USD leveraged → US stocks.",
+                "⏳ If the next item costs more than one share's worth of your money, it is <b>not skipped</b> — the cash is kept and bought next month together with the new deposit.",
+                "🛒 Buy only: stocks that leave the monthly list are <b>not sold</b>. (Stop-loss rules in Auto-trading still apply.)",
+                "💱 When the next item is a US asset, the app tells you how many dollars to exchange.",
+                "📅 Maturity: enter months — the end date shows next to it. At maturity only the plan stops; what you bought stays.",
+                "⚙ Runs through Auto-trading (relay PC). Auto-trading must be on."]
+             : ["💰 매달 넣을 금액을 정해 두면, 입금한 돈으로 내 투자성향의 자산배분비율을 <b>안전한 자산부터</b> 차례로 사 나갑니다.",
+                "🪜 차례: 예금·MMF → 국내 지수형 ETF → 국내 채권형 ETF → 국내 원화 ETF → 해외 원화표시 채권형 → 미국 달러 지수형 → 미국 달러표시 채권형 → 해외(원화) 주식형 → 원화 레버리지 → 국내 주식 → 미국 달러 주식형 → 달러 레버리지 → 해외 주식",
+                "⏳ 다음 차례 종목 1주를 살 돈이 모자라면 <b>건너뛰지 않고</b> 돈을 모아 두었다가, 다음 달 입금과 합쳐 삽니다.",
+                "🛒 사기만 합니다 — 매달 바뀌는 추천 목록에서 빠진 종목도 <b>팔지 않습니다</b>. (자동매매 창의 손절 기준은 그대로 적용)",
+                "💱 다음 차례가 미국 자산이면 「달러로 얼마 환전해 두세요」라고 알려 드립니다.",
+                "📅 만기: 개월 수를 넣으면 옆에 만기 날짜가 나옵니다. 만기가 되면 적립식만 멈추고, 산 종목은 그대로 둡니다.",
+                "⚙ 자동매매(중계기 PC)가 사 줍니다 — 자동매매가 켜져 있어야 합니다."];
+  var d = document.createElement("div"); d.id = "dcaPop";
+  d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
+  d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
+  var close = "document.getElementById('dcaPop').remove()";
+  d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">' + (en ? "Savings Portfolio" : "적립식 포트폴리오") + '</div>'
+    + '<span onclick="' + close + '" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
+    + L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + l + '</div>'; }).join("")
+    + '<button onclick="' + close + '" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">' + (en ? "OK" : "확인") + '</button></div>';
+  document.body.appendChild(d);
+}
+function dcaMonthsInput(el){
+  var o = dcaGet(), end = dcaEnd(o.start || dcaIso(new Date()), el.value), t = document.getElementById("dcaEndTxt");
+  if(t) t.textContent = end ? ("→ " + dcaDateKo(end)) : "";
+}
+var DCA_MSG = "";
+async function dcaSave(){
+  var on = !!(document.getElementById("dcaOn") || {}).checked;
+  var amt = Math.max(0, Math.round(+((document.getElementById("dcaAmt") || {}).value || "0").replace(/[^0-9.]/g, "") || 0));
+  var months = Math.max(0, parseInt((document.getElementById("dcaMon") || {}).value || "0", 10) || 0);
+  var o = dcaGet(), start = (on && !o.on) ? dcaIso(new Date()) : (o.start || dcaIso(new Date()));
+  var nd = {on: on, amt: amt, months: months, start: start, end: dcaEnd(start, months)};
+  if(on && !(amt > 0)){ DCA_MSG = KE("매달 넣을 금액을 넣어 주세요.", "Enter a monthly amount."); dcaRender(true); return; }
+  dcaPut(nd);
+  if(typeof mkIsMock === "function" && mkIsMock()){ DCA_MSG = KE("모의 판에서는 저장만 됩니다 — 실계좌 자동매매에서 돌아갑니다.", "Saved only — runs on the live account's Auto-trading."); dcaRender(true); return; }
+  try{ AT.st = await atCall({dca: nd}); DCA_MSG = on ? KE("적립식을 켰습니다.", "Savings plan on.") : KE("적립식을 껐습니다.", "Savings plan off."); }
+  catch(e){ DCA_MSG = KE("중계기에 못 보냈습니다 — ", "Could not reach the relay — ") + (e.message || e); }
+  dcaRender(true);
+}
+function dcaRender(force){
+  var bm = document.getElementById("bmCard"); if(!bm) return;
+  var card = document.getElementById("dcaCard");
+  if(!card){ card = document.createElement("div"); card.className = "card"; card.id = "dcaCard"; bm.parentNode.insertBefore(card, bm); }
+  if(!force && card.contains(document.activeElement) && /INPUT/.test((document.activeElement || {}).tagName || "")) return;   // 입력 중엔 다시 그리지 않는다
+  var o = dcaGet(), sv = (typeof AT !== "undefined" && AT.st && AT.st.dca) || null, today = dcaIso(new Date());
+  var on = sv ? !!sv.on : !!o.on, amt = (sv && sv.amt) || o.amt || "", months = (sv && sv.months) || o.months || "", start = (sv && sv.start) || o.start || today;
+  var end = dcaEnd(start, months);
+  var h = '<h3><span>' + KE("적립식 포트폴리오", "Savings Portfolio") + ' <span class="c21help" onclick="dcaInfo(event)">i</span></span></h3>';
+  h += '<div style="display:flex;align-items:center;gap:8px;margin:6px 0"><label style="display:flex;align-items:center;gap:6px;font-weight:700"><input type="checkbox" id="dcaOn"' + (on ? " checked" : "") + '> '
+     + KE("적립식 켜기", "Turn on") + '</label>' + (on ? '<span class="tag" style="background:#2f9e44;color:#fff">' + KE("켜짐", "ON") + '</span>' : '') + '</div>';
+  h += '<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap"><span style="min-width:72px">' + KE("매달 금액", "Monthly") + '</span>'
+     + '<input id="dcaAmt" class="dpin" inputmode="numeric" style="width:130px" value="' + (amt ? Math.round(amt).toLocaleString() : "") + '" placeholder="500,000"> ' + KE("원", "KRW") + '</div>';
+  h += '<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap"><span style="min-width:72px">' + KE("만기", "Term") + '</span>'
+     + '<input id="dcaMon" class="dpin" inputmode="numeric" style="width:60px" value="' + (months || "") + '" placeholder="12" oninput="dcaMonthsInput(this)"> ' + KE("개월", "months")
+     + ' <b id="dcaEndTxt">' + (end ? "→ " + dcaDateKo(end) : "") + '</b></div>';
+  h += '<button class="dpb flat dpsm" onclick="dcaSave()" style="margin:6px 0">' + KE("저장", "Save") + '</button>';
+  if(DCA_MSG) h += '<div class="dpmsg">' + pfEsc(DCA_MSG) + '</div>';
+  // 만기 알림
+  if(sv && !sv.on && sv.end && sv.end < today) h += '<div class="dpmsg" style="color:#e0a020;font-weight:700">⏰ ' + KE("적립식 만기가 되었습니다 (" + dcaDateKo(sv.end) + ") — 산 종목은 그대로 있습니다.", "Plan matured (" + sv.end + ") — holdings stay.") + '</div>';
+  // 다음에 살 것 · 모은 돈 · 환전 알림
+  var nx = (sv && sv.next) || {};
+  if(on && nx.code){
+    var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350, cash = (typeof RL !== "undefined" && RL.cash) || {};
+    var have = nx.mk === "us" ? (+cash.usd || 0) * fx : (+cash.krw || 0);
+    var cls = String(nx.why || "").split(" · ")[0];
+    h += '<div class="dpmsg">🪜 ' + KE("다음에 살 것: ", "Next: ") + '<b>' + pfEsc(dcaName(nx.code)) + '</b>' + (cls ? ' <span class="dplbl">(' + pfEsc(cls) + ')</span>' : '')
+       + (nx.krw > 0 ? ' · ' + KE("1주 약 ", "1 share ≈ ") + dcaWon(nx.krw) : '') + ' · ' + KE("모은 돈 ", "saved ") + dcaWon(have) + '</div>';
+    if(nx.mk === "us" && nx.krw > 0 && have < nx.krw){
+      var need = (nx.krw - have) / fx;
+      h += '<div class="dpmsg" style="color:#1c7ed6;font-weight:700">💱 ' + KE("다음 차례는 미국 자산입니다 — 달러로 약 $" + Math.ceil(need).toLocaleString() + " 환전해 두세요.",
+                                                                              "Next is a US asset — exchange about $" + Math.ceil(need).toLocaleString() + " to dollars.") + '</div>';
+    }
+  } else if(on){
+    h += '<div class="dpmsg">' + KE("다음 차례는 다음 사기 때 정해집니다.", "The next item is decided at the next buy.") + '</div>';
+  }
+  card.innerHTML = h;
+}
 function bmRender(){
   var card = document.getElementById("bmCard");
   if(!card){ var pc = document.getElementById("pfCard"); if(!pc) return;
     card = document.createElement("div"); card.className = "card"; card.id = "bmCard"; pc.parentNode.insertBefore(card, pc.nextSibling); }
+  try{ dcaRender(); }catch(e){}                                  // 적립식 카드 — 바스켓 매매 위 (사장님 2026-10-03)
   var done = false;                                                // 하루 여러 번 해도 된다 (사장님 2026-09-26)
   var h = '<h3>' + KE("바스켓 매매 전략", "Basket Trading Strategy") + '</h3><div class="dpmsg">' + KE('매달 1일(휴일이면 다음 영업일)에 성향별 자산배분비율로 맞추고, 추가 종목을 이번 달 목록으로 바꿉니다. 1주에 모자라도 1주는 삽니다. 예수금이 모자라면 안전한 자산군부터 채웁니다. '
         + '종목 손절선이나 전체 익절·손절선(자동매매 창 값)에 닿으면 그날 바로 팝니다. 판 돈은 다음 달 1일까지 예수금으로 둡니다. 매수는 현재가 +1호가, 매도는 현재가 −1호가 지정가입니다. 미국 주식 매매차익이 연 250만 원을 넘으면 양도소득세(22%)가 붙습니다.',
@@ -8246,5 +8359,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 04:00</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 04:55</div>
 </body></html>
