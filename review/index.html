@@ -7784,6 +7784,9 @@ function momTargets(o, tot){
     if(c === "예금·MMF" || !(b > 0)) return;
     if(k){
       var cf = core[c] || 0, rp = MOM_REP[k], n = MOM_N[k], sat = b * (1 - cf), L = (M[k] || []).slice(0, n);
+      // 그달 손절한 주식은 빼고 대표 ETF 로 — 중계기 기록(/auto stopped)을 따른다 (사장님 2026-10-02)
+      var SP = (typeof AT !== "undefined" && AT.st && AT.st.stopped) || {};
+      L = L.filter(function(x){ return !SP[momMk(k) + ":" + String(x.code || "").toUpperCase().replace(/\.US$/, "")]; });
       if(cf > 0) add(rp[2], rp[0], rp[1], c, b * cf, "core");
       L.forEach(function(x){ add(momMk(k), x.code, x.name || x.code, c, sat / n, "sat", x.rank); });
       if(L.length < n) add(rp[2], rp[0], rp[1], c, sat * (n - L.length) / n, "rep");
@@ -8241,7 +8244,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 09:38</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 11:05</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
