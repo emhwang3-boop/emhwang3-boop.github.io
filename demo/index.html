@@ -8270,7 +8270,7 @@ function dcaMonthsInput(el){
   var o = dcaGet(), end = dcaEnd(o.start || dcaIso(new Date()), el.value), t = document.getElementById("dcaEndTxt");
   if(t) t.textContent = end ? ("→ " + dcaDateKo(end)) : "";
 }
-var DCA_MSG = "";
+var DCA_MSG = "", DCA_DRAFT = {};
 async function dcaSave(){
   var on = !!(document.getElementById("dcaOn") || {}).checked;
   var amt = Math.max(0, Math.round(+((document.getElementById("dcaAmt") || {}).value || "0").replace(/[^0-9.]/g, "") || 0));
@@ -8279,7 +8279,7 @@ async function dcaSave(){
   var o = dcaGet(), start = (on && !o.on) ? dcaIso(new Date()) : (o.start || dcaIso(new Date()));
   var nd = {on: on, amt: amt, months: months, start: start, end: dcaEnd(start, months), day: day};
   if(on && !(amt > 0)){ DCA_MSG = KE("매달 넣을 금액을 넣어 주세요.", "Enter a monthly amount."); dcaRender(true); return; }
-  dcaPut(nd);
+  dcaPut(nd); DCA_DRAFT = {};
   if(typeof mkIsMock === "function" && mkIsMock()){ DCA_MSG = KE("모의 판에서는 저장만 됩니다 — 실계좌 자동매매에서 돌아갑니다.", "Saved only — runs on the live account's Auto-trading."); dcaRender(true); return; }
   try{ AT.st = await atCall({dca: nd}); DCA_MSG = on ? KE("적립식을 켰습니다 — 오늘 바로 사고, 그다음은 매달 " + day + "일에 삽니다.", "Plan on — buys today, then on day " + day + " each month.") : KE("적립식을 껐습니다.", "Savings plan off."); }
   catch(e){ DCA_MSG = KE("중계기에 못 보냈습니다 — ", "Could not reach the relay — ") + (e.message || e); }
@@ -8287,7 +8287,7 @@ async function dcaSave(){
 }
 async function dcaCancel(){
   if(!confirm(KE("적립식을 해지할까요?\n산 종목은 팔지 않고 그대로 둡니다.", "Cancel the savings plan?\nHoldings are kept, not sold."))) return;
-  var o = dcaGet(); o.on = false; dcaPut(o);
+  var o = dcaGet(); o.on = false; dcaPut(o); DCA_DRAFT = {};
   if(typeof mkIsMock === "function" && mkIsMock()){ DCA_MSG = KE("해지했습니다(모의 판).", "Cancelled (mock)."); dcaRender(true); return; }
   try{ AT.st = await atCall({dca: o}); DCA_MSG = KE("적립식을 해지했습니다 — 산 종목은 그대로 있습니다.", "Plan cancelled — holdings stay."); }
   catch(e){ DCA_MSG = KE("중계기에 못 보냈습니다 — ", "Could not reach the relay — ") + (e.message || e); }
@@ -8325,17 +8325,19 @@ function dcaRender(force){
   var o = dcaGet(), sv = (typeof AT !== "undefined" && AT.st && AT.st.dca) || null, today = dcaIso(new Date());
   var on = sv ? !!sv.on : !!o.on, amt = (sv && sv.amt) || o.amt || "", months = (sv && sv.months) || o.months || "", start = (sv && sv.start) || o.start || today;
   var day = (sv && sv.day) || o.day || new Date().getDate();
+  if(!on){ amt = DCA_DRAFT.amt || ""; months = DCA_DRAFT.months || ""; day = DCA_DRAFT.day || ""; start = today; }   /* 꺼져 있으면 새로 넣는다 (사장님 2026-10-03) */
   var end = dcaEnd(start, months);
+  if(!on) end = dcaEnd(today, months);
   var h = '<h3><span>' + KE("적립식 포트폴리오", "Savings Portfolio") + ' <span class="c21help" onclick="dcaInfo(event)">i</span></span></h3>';
   h += '<div style="display:flex;align-items:center;gap:8px;margin:6px 0"><label style="display:flex;align-items:center;gap:6px;font-weight:700"><input type="checkbox" id="dcaOn"' + (on ? " checked" : "") + '> '
      + KE("적립식 켜기", "Turn on") + '</label>' + (on ? '<span class="tag" style="background:#2f9e44;color:#fff">' + KE("켜짐", "ON") + '</span>' : '') + '</div>';
   h += '<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap"><span style="min-width:72px">' + KE("매달 금액", "Monthly") + '</span>'
-     + '<input id="dcaAmt" class="dpin" inputmode="numeric" style="width:130px" value="' + (amt ? Math.round(amt).toLocaleString() : "") + '" placeholder="500,000"> ' + KE("원", "KRW") + '</div>';
+     + '<input id="dcaAmt" class="dpin" inputmode="numeric" style="width:130px" oninput="DCA_DRAFT.amt=this.value" value="' + (amt ? Math.round(amt).toLocaleString() : "") + '" placeholder="500,000"> ' + KE("원", "KRW") + '</div>';
   h += '<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap"><span style="min-width:72px">' + KE("만기", "Term") + '</span>'
-     + '<input id="dcaMon" class="dpin" inputmode="numeric" style="width:60px" value="' + (months || "") + '" placeholder="12" oninput="dcaMonthsInput(this)"> ' + KE("개월", "months")
+     + '<input id="dcaMon" class="dpin" inputmode="numeric" style="width:60px" value="' + (months || "") + '" placeholder="12" oninput="DCA_DRAFT.months=this.value;dcaMonthsInput(this)"> ' + KE("개월", "months")
      + ' <b id="dcaEndTxt">' + (end ? "→ " + dcaDateKo(end) : "") + '</b></div>';
   h += '<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap"><span style="min-width:72px">' + KE("적립일", "Buy day") + '</span>'
-     + KE("매달 ", "Day ") + '<input id="dcaDay" class="dpin" inputmode="numeric" style="width:50px" value="' + day + '"> ' + KE("일", "")
+     + KE("매달 ", "Day ") + '<input id="dcaDay" class="dpin" inputmode="numeric" style="width:50px" oninput="DCA_DRAFT.day=this.value" value="' + day + '"> ' + KE("일", "")
      + ' <span class="dplbl">' + KE("(저장한 날은 바로 삼)", "(buys on save day too)") + '</span></div>';
   h += '<div style="display:flex;gap:6px;margin:6px 0"><button class="dpb flat dpsm" onclick="dcaSave()">' + KE("저장", "Save") + '</button>'
      + '<button class="dpb flat dpsm" onclick="dcaPlan()">' + (DCA_PLAN ? KE("플랜 닫기", "Hide plan") : KE("내 플랜 조회", "View my plan")) + '</button></div>';
@@ -8362,11 +8364,21 @@ function dcaRender(force){
   /* 실시간 손익 — 종목별 · 전체 (국내·미국 보유, 코인 제외) (사장님 2026-10-03) */
   try{
     var fx2 = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350;
-    var P = ((typeof RL !== "undefined" && RL.kr) || []).concat((typeof RL !== "undefined" && RL.us) || []).filter(function(p){ return (+p.qty || 0) > 0; });
+    /* 적립식 장부(중계기) — 적립식으로 산 것만. 지금 값은 보유종목 시세에서 (사장님 2026-10-03) */
+    var book = (sv && sv.book) || {}, pend = (sv && sv.pend) || [];
+    var HELD = {}; ((typeof RL !== "undefined" && RL.kr) || []).concat((typeof RL !== "undefined" && RL.us) || []).forEach(function(p){ HELD[p.mk + ":" + String(p.code).toUpperCase().replace(/\.US$/, "")] = p; });
+    var P = on ? Object.keys(book).filter(function(k){ return (+book[k].qty || 0) > 0; }).map(function(k){
+      var b = book[k], mk = k.split(":")[0], code = k.split(":")[1], h0 = HELD[k], qty = +b.qty, avg = qty ? (+b.cost / qty) : 0, cur = (h0 && +h0.cur) || avg;
+      var pl = (cur - avg) * qty, ev = cur * qty;
+      return {mk: mk, code: code, name: (h0 && h0.name) || dcaName(code), qty: qty, cur: cur, evl: ev, pl: pl, rt: avg ? (cur / avg - 1) * 100 : 0, _cls: b.cls};
+    }) : [];
+    if(on && !P.length) h += '<div style="margin-top:10px;font-weight:700">' + KE("현재 손익", "Current P/L") + '</div><div class="dpmsg">'
+         + (pend.length ? KE("적립식 주문 " + pend.length + "건 체결 확인 중입니다(장이 끝난 뒤 장부에 들어갑니다).", pend.length + " order(s) awaiting fill check.")
+                        : KE("아직 적립식으로 산 종목이 없습니다.", "Nothing bought by the plan yet.")) + '</div>';
     if(P.length){
       var ORDc = ["예금·MMF", "국내 지수형 ETF", "국내 채권형 ETF", "국내 원화 ETF", "해외 원화표시 채권형 ETF", "미국 달러 지수형 ETF", "미국 달러표시 채권형 ETF",
                   "해외(원화) 주식형 ETF", "원화 주식형 레버리지 ETF", "국내 주식", "미국 달러 주식형 ETF", "달러 주식형 레버리지 ETF", "해외 주식"];
-      var cl = function(p){ try{ var c = pfClassOf(p), i = ORDc.indexOf(c); return i < 0 ? 99 : i; }catch(e){ return 99; } };
+      var cl = function(p){ try{ var c = p._cls || pfClassOf(p), i = ORDc.indexOf(c); return i < 0 ? 99 : i; }catch(e){ return 99; } };
       P = P.slice().sort(function(a, b){ return cl(a) - cl(b); });
       var tpl = 0, tpur = 0;
       var rows = P.map(function(p){
@@ -8381,7 +8393,8 @@ function dcaRender(force){
          + '<table class="mhtab" style="width:100%;margin-top:4px"><tr><th style="text-align:left">' + KE("종목", "Holding") + '</th><th style="text-align:right">' + KE("손익률", "Return")
          + '</th><th style="text-align:right">' + KE("손익(원)", "P/L (KRW)") + '</th></tr>' + rows
          + '<tr style="font-weight:800"><td style="text-align:left">' + KE("전체", "Total") + '</td><td class="' + tc + '" style="text-align:right">'
-         + (trt > 0 ? "+" : "") + trt.toFixed(2) + '%</td><td class="' + tc + '" style="text-align:right">' + (tpl > 0 ? "+" : (tpl < 0 ? "−" : "")) + Math.round(Math.abs(tpl)).toLocaleString() + '</td></tr></table>';
+         + (trt > 0 ? "+" : "") + trt.toFixed(2) + '%</td><td class="' + tc + '" style="text-align:right">' + (tpl > 0 ? "+" : (tpl < 0 ? "−" : "")) + Math.round(Math.abs(tpl)).toLocaleString() + '</td></tr></table>'
+         + '<div class="dplbl" style="margin-top:4px">' + KE("적립식으로 산 것만 (장부) · 그 전부터 들고 있던 종목은 빠집니다", "Plan purchases only (ledger)") + (pend.length ? KE(" · 체결 확인 중 " + pend.length + "건", " · " + pend.length + " pending") : "") + '</div>';
     }
   }catch(e){}
   card.innerHTML = h;
@@ -8437,5 +8450,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 06:12</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 06:42</div>
 </body></html>
