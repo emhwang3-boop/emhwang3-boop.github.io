@@ -3909,6 +3909,11 @@ function mhGroups(real, rh, en){
   var dep = (+cash.krw || 0) + (+cash.usd || 0) * fx; val["예금·MMF"] = (val["예금·MMF"] || 0) + dep; tot += dep;
   var TGT = {}, keys = []; g.mix.forEach(function(m){ TGT[m[0]] = m[1]; keys.push(m[0]); });
   order.forEach(function(c){ if(c.indexOf("C:") !== 0 && keys.indexOf(c) < 0) keys.push(c); });
+  /* 묶음 순서 고정 — 안전 → 위험 (사장님 2026-10-03: 국내 주식은 고위험 끝, 해외 주식은 맨 끝) */
+  var ORD = ["예금·MMF", "국내 지수형 ETF", "국내 채권형 ETF", "국내 원화 ETF", "해외 원화표시 채권형 ETF", "미국 달러 지수형 ETF", "미국 달러표시 채권형 ETF",
+             "해외(원화) 주식형 ETF", "원화 주식형 레버리지 ETF", "국내 주식", "미국 달러 주식형 ETF", "달러 주식형 레버리지 ETF", "해외 주식"];
+  var _ri = function(c){ var i = ORD.indexOf(c); return i < 0 ? 99 : i; };
+  keys = keys.map(function(c, i){ return [c, i]; }).sort(function(a, b){ return (_ri(a[0]) - _ri(b[0])) || (a[1] - b[1]); }).map(function(x){ return x[0]; });
   var CT = {"C:BTC": 45, "C:ETH": 45}; CT["C:" + (en ? "Alts" : "알트")] = 10;
   var ckeys = Object.keys(CT);
   var CS = (window.matchMedia && matchMedia("(max-width:520px)").matches) ? 6 : 7;     // 폰은 평가 칸이 숨는다
@@ -8241,5 +8246,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 22:39</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 04:00</div>
 </body></html>
