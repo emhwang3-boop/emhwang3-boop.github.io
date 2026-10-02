@@ -8264,14 +8264,47 @@ async function dcaSave(){
   var on = !!(document.getElementById("dcaOn") || {}).checked;
   var amt = Math.max(0, Math.round(+((document.getElementById("dcaAmt") || {}).value || "0").replace(/[^0-9.]/g, "") || 0));
   var months = Math.max(0, parseInt((document.getElementById("dcaMon") || {}).value || "0", 10) || 0);
+  var day = Math.max(1, Math.min(31, parseInt((document.getElementById("dcaDay") || {}).value || String(new Date().getDate()), 10) || new Date().getDate()));
   var o = dcaGet(), start = (on && !o.on) ? dcaIso(new Date()) : (o.start || dcaIso(new Date()));
-  var nd = {on: on, amt: amt, months: months, start: start, end: dcaEnd(start, months)};
+  var nd = {on: on, amt: amt, months: months, start: start, end: dcaEnd(start, months), day: day};
   if(on && !(amt > 0)){ DCA_MSG = KE("매달 넣을 금액을 넣어 주세요.", "Enter a monthly amount."); dcaRender(true); return; }
   dcaPut(nd);
   if(typeof mkIsMock === "function" && mkIsMock()){ DCA_MSG = KE("모의 판에서는 저장만 됩니다 — 실계좌 자동매매에서 돌아갑니다.", "Saved only — runs on the live account's Auto-trading."); dcaRender(true); return; }
-  try{ AT.st = await atCall({dca: nd}); DCA_MSG = on ? KE("적립식을 켰습니다.", "Savings plan on.") : KE("적립식을 껐습니다.", "Savings plan off."); }
+  try{ AT.st = await atCall({dca: nd}); DCA_MSG = on ? KE("적립식을 켰습니다 — 오늘 바로 사고, 그다음은 매달 " + day + "일에 삽니다.", "Plan on — buys today, then on day " + day + " each month.") : KE("적립식을 껐습니다.", "Savings plan off."); }
   catch(e){ DCA_MSG = KE("중계기에 못 보냈습니다 — ", "Could not reach the relay — ") + (e.message || e); }
   dcaRender(true);
+}
+async function dcaCancel(){
+  if(!confirm(KE("적립식을 해지할까요?\n산 종목은 팔지 않고 그대로 둡니다.", "Cancel the savings plan?\nHoldings are kept, not sold."))) return;
+  var o = dcaGet(); o.on = false; dcaPut(o);
+  if(typeof mkIsMock === "function" && mkIsMock()){ DCA_MSG = KE("해지했습니다(모의 판).", "Cancelled (mock)."); dcaRender(true); return; }
+  try{ AT.st = await atCall({dca: o}); DCA_MSG = KE("적립식을 해지했습니다 — 산 종목은 그대로 있습니다.", "Plan cancelled — holdings stay."); }
+  catch(e){ DCA_MSG = KE("중계기에 못 보냈습니다 — ", "Could not reach the relay — ") + (e.message || e); }
+  dcaRender(true);
+}
+var DCA_PLAN = false;
+async function dcaPlan(){
+  DCA_PLAN = !DCA_PLAN;
+  if(DCA_PLAN && !(typeof mkIsMock === "function" && mkIsMock())){ try{ AT.st = await atCall(null); }catch(e){} }   // 중계기에 저장된 플랜을 새로 받는다
+  dcaRender(true);
+}
+function dcaPlanHtml(p){
+  if(!p || !(p.amt > 0)) return '<div class="dpmsg">' + KE("저장된 적립식 플랜이 없습니다.", "No savings plan saved.") + '</div>';
+  var today = dcaIso(new Date()), left = "";
+  if(p.end){ var a = new Date(today + "T00:00:00"), b = new Date(p.end + "T00:00:00"); var mo = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()) - (b.getDate() < a.getDate() ? 1 : 0);
+    left = p.end < today ? KE("만기 지남", "matured") : KE("약 " + Math.max(0, mo) + "개월", "about " + Math.max(0, mo) + " months"); }
+  var R = function(k, v){ return '<tr><td style="text-align:left;color:var(--sub);width:34%">' + k + '</td><td style="text-align:left;font-weight:700">' + v + '</td></tr>'; };
+  return '<div style="margin:8px 0;padding:10px;border:1px solid var(--line,#ddd);border-radius:12px">'
+    + '<div style="font-weight:800;margin-bottom:4px">📋 ' + KE("내 적립식 플랜", "My savings plan") + '</div>'
+    + '<table style="width:100%;font-size:13px">'
+    + R(KE("상태", "Status"), p.on ? KE("진행 중", "Active") : KE("해지·멈춤", "Stopped"))
+    + R(KE("매달 금액", "Monthly"), dcaWon(p.amt))
+    + R(KE("적립일", "Buy day"), p.day ? KE("매달 " + p.day + "일 (휴일이면 다음 거래일)", "Day " + p.day + " each month") : "—")
+    + R(KE("기간", "Term"), (p.start ? dcaDateKo(p.start) : "—") + " ~ " + (p.end ? dcaDateKo(p.end) : KE("만기 없음", "no end")) + (p.months ? " (" + p.months + KE("개월", " mo") + ")" : ""))
+    + (left ? R(KE("남은 기간", "Left"), left) : "")
+    + '</table>'
+    + (p.on ? '<button class="dpb sell dpsm" onclick="dcaCancel()" style="margin-top:8px;width:100%">' + KE("적립식 해지", "Cancel plan") + '</button>' : '')
+    + '</div>';
 }
 function dcaRender(force){
   var bm = document.getElementById("bmCard"); if(!bm) return;
@@ -8280,6 +8313,7 @@ function dcaRender(force){
   if(!force && card.contains(document.activeElement) && /INPUT/.test((document.activeElement || {}).tagName || "")) return;   // 입력 중엔 다시 그리지 않는다
   var o = dcaGet(), sv = (typeof AT !== "undefined" && AT.st && AT.st.dca) || null, today = dcaIso(new Date());
   var on = sv ? !!sv.on : !!o.on, amt = (sv && sv.amt) || o.amt || "", months = (sv && sv.months) || o.months || "", start = (sv && sv.start) || o.start || today;
+  var day = (sv && sv.day) || o.day || new Date().getDate();
   var end = dcaEnd(start, months);
   var h = '<h3><span>' + KE("적립식 포트폴리오", "Savings Portfolio") + ' <span class="c21help" onclick="dcaInfo(event)">i</span></span></h3>';
   h += '<div style="display:flex;align-items:center;gap:8px;margin:6px 0"><label style="display:flex;align-items:center;gap:6px;font-weight:700"><input type="checkbox" id="dcaOn"' + (on ? " checked" : "") + '> '
@@ -8289,7 +8323,12 @@ function dcaRender(force){
   h += '<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap"><span style="min-width:72px">' + KE("만기", "Term") + '</span>'
      + '<input id="dcaMon" class="dpin" inputmode="numeric" style="width:60px" value="' + (months || "") + '" placeholder="12" oninput="dcaMonthsInput(this)"> ' + KE("개월", "months")
      + ' <b id="dcaEndTxt">' + (end ? "→ " + dcaDateKo(end) : "") + '</b></div>';
-  h += '<button class="dpb flat dpsm" onclick="dcaSave()" style="margin:6px 0">' + KE("저장", "Save") + '</button>';
+  h += '<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap"><span style="min-width:72px">' + KE("적립일", "Buy day") + '</span>'
+     + KE("매달 ", "Day ") + '<input id="dcaDay" class="dpin" inputmode="numeric" style="width:50px" value="' + day + '"> ' + KE("일", "")
+     + ' <span class="dplbl">' + KE("(저장한 날은 바로 삼)", "(buys on save day too)") + '</span></div>';
+  h += '<div style="display:flex;gap:6px;margin:6px 0"><button class="dpb flat dpsm" onclick="dcaSave()">' + KE("저장", "Save") + '</button>'
+     + '<button class="dpb flat dpsm" onclick="dcaPlan()">' + (DCA_PLAN ? KE("플랜 닫기", "Hide plan") : KE("내 플랜 조회", "View my plan")) + '</button></div>';
+  if(DCA_PLAN) h += dcaPlanHtml(sv || o);
   if(DCA_MSG) h += '<div class="dpmsg">' + pfEsc(DCA_MSG) + '</div>';
   // 만기 알림
   if(sv && !sv.on && sv.end && sv.end < today) h += '<div class="dpmsg" style="color:#e0a020;font-weight:700">⏰ ' + KE("적립식 만기가 되었습니다 (" + dcaDateKo(sv.end) + ") — 산 종목은 그대로 있습니다.", "Plan matured (" + sv.end + ") — holdings stay.") + '</div>';
@@ -8387,5 +8426,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 05:24</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 06:12</div>
 </body></html>
