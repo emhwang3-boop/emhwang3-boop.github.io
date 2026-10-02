@@ -4034,10 +4034,10 @@ function dpHoldRender(){
     // 코인은 계약 수 옆에 코인 수, 그 아래에 증거금 — 0.13 계약(0.0013 BTC) / 49.55 USDT
     const sym=(p.mk==="coin")?String(p.code).split("-")[0]:"";
     const qtx=(p.mk==="coin"&&p.spot)
-      ? ((+p.qty.toFixed(8))+" "+sym+"<br><span class=\"dplbl\">-</span>")   // 현물엔 증거금이 없다
+      ? ("<span style=\"white-space:nowrap\">"+(+p.qty.toFixed(8))+"</span><br><span style=\"white-space:nowrap\">"+sym+"</span><br><span class=\"dplbl\">-</span>")   // 현물엔 증거금이 없다 · 수량 한 줄·코인 이름 다음 줄 (사장님 2026-10-02 「B 와 TC 가 따로」)
       : (p.mk==="coin")
       ? ("<span title=\""+p.ctr.toLocaleString()+" "+unit+"\">"
-         +(+p.qty.toFixed(8))+" "+sym+"</span><br>"+mny(p.evl))
+         +"<span style=\"white-space:nowrap\">"+(+p.qty.toFixed(8))+"</span><br><span style=\"white-space:nowrap\">"+sym+"</span></span><br>"+mny(p.evl))
       : (p.qty.toLocaleString()+" "+unit);
     // 🔴 OKX 는 선물과 현물을 보는 자리가 다르다 — 선물은 positions, 현물은 계좌 잔고.
     //    한 표에 같이 올리므로 배지로 갈라 적는다.
@@ -8241,7 +8241,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 07:21</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 09:38</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
