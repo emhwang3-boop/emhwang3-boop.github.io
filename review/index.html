@@ -7628,6 +7628,8 @@ async function bmUsCur(tick){
     var r = await rlKiwoom(tok, "/api/us/mrkcond", "usa20100", {stex_tp: s, stk_cd: tick}); return rlAbs(r && r.cur_prc); };
   try{ var p = await once(); if(p > 0) return p; }catch(e){}
   try{ var q = await usFetch("quote", "codes=" + encodeURIComponent(tick)); var up = q && q.data && q.data[0] && +q.data[0].p; if(up > 0) return up; }catch(e){}
+  /* 🔴 키 없는 모의 판에서 허브 시세가 「infoway busy」면 빈손 — 일봉 마지막 종가로 (사장님 2026-10-02) */
+  try{ var k = await usFetch("kline", "code=" + encodeURIComponent(tick) + "&type=8&num=2"); var kl = k && k.data && k.data[0] && k.data[0].respList; var kp = kl && kl.length && +kl[0].c; if(kp > 0) return kp; }catch(e){}
   try{ await new Promise(function(r){ setTimeout(r, 1500); }); return (await once()) || 0; }catch(e){ return 0; }
 }
 async function bmCur(mk, code){
@@ -8250,7 +8252,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 22:12</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 22:39</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
