@@ -7634,7 +7634,7 @@ async function bmCur(mk, code){
   if(mk === "kr"){
     var q = null; try{ q = await rlKrStock(code); }catch(e){}
     // 🔴 키가 없는 모의 판(심사용 /review/ 등)은 키움으로 못 받는다 — 종목 조회와 같은 허브 길로 (사장님 2026-10-02)
-    if(!(q && q.cur > 0)){ try{ var h = await krFetchHub("stock", "code=" + encodeURIComponent(code), 12); if(h && h.cur > 0) q = h; }catch(e){} }
+    if(!(q && q.cur > 0)){ try{ var h = await krFetchHub("stock", "code=" + encodeURIComponent(code), 45);   // 바스켓은 한꺼번에 여러 개를 물어 허브 줄이 길다 — 넉넉히 기다린다 if(h && h.cur > 0) q = h; }catch(e){} }
     return q ? q.cur : 0;
   }
   return await bmUsCur(String(code).replace(/\.US$/i, "").toUpperCase());
@@ -8250,5 +8250,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 21:56</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 22:10</div>
 </body></html>
