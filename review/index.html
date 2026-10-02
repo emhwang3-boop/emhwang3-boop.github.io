@@ -311,7 +311,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 </div>
 
 <div class="card" id="demoacct">
-  <h3><span style="display:inline-flex;align-items:center;gap:8px">계좌<button class="dpb flat dpsm" onclick="event.stopPropagation();rlLoad()">잔고 업데이트</button></span> <span class="tag live">● 실시간</span></h3>
+  <h3><span style="display:inline-flex;align-items:center;gap:8px">계좌<button class="dpb flat dpsm" onclick="event.stopPropagation();rlLoad()">잔고 업데이트</button><button class="dpb flat dpsm" id="atBtn" onclick="event.stopPropagation();atOpen()">자동매매</button></span> <span class="tag live">● 실시간</span></h3>
   <div id="dpBody"></div>
 </div>
 <div id="recoSlot"></div>
@@ -5378,7 +5378,7 @@ function satHtml(en, fx){
   var o = (typeof pfGet === "function") ? pfGet() : null;
   var M = (typeof RECO !== "undefined" && RECO && RECO.mom) || null;
   var head = '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">' + (en ? "This month's satellites" : "이번 달 위성 현황")
-    + ' <button class="dpb flat dpsm" id="atBtn" style="margin-left:6px;vertical-align:middle" onclick="event.stopPropagation();atOpen()">' + (en ? "Auto trading" : "자동매매") + '</button></div>';
+    + '</div>';
   if(!o) return head + '<div class="dpmsg">' + (en ? "Take the investor-profile test first." : "투자성향 분석을 하면 나옵니다.") + '</div>';
   if(!(o.gi >= 3)) return head + '<div class="dpmsg">' + (en ? "This profile has no satellites — index ETFs only." : "이 성향은 위성이 없습니다 — 대표 ETF만 듭니다.") + '</div>';
   var RU = (typeof AT !== "undefined" && AT.st && AT.st.rules) || {};
@@ -5614,7 +5614,7 @@ function rpRender(){
     var nd = satNextDay(), dn = Math.ceil((nd - new Date(new Date().toDateString())) / 864e5);
     var pc = function(v){ return (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, "") + "%"; };
     var h = '<h3>' + (en ? "Recommended portfolio" : "추천 포트폴리오 현황")
-      + ' <button class="dpb flat dpsm" id="atBtn" style="margin-left:6px;vertical-align:middle" onclick="event.stopPropagation();atOpen()">' + (en ? "Auto trading" : "자동매매") + '</button></h3>'
+      + '</h3>'
       + '<div class="dpmsg" style="color:var(--nm)">' + (en ? "Next change " + (nd.getMonth() + 1) + "/" + nd.getDate() : "다음 교체 " + (nd.getMonth() + 1) + "월 " + nd.getDate() + "일")
       + ' · D-' + dn + '</div>';
     try{   // 입금분 — 자동매매가 목표 비율로 나눠 산다 (사장님 2026-09-29)
@@ -6733,7 +6733,7 @@ setInterval(dpRegimeTick,15000);
     "⚠ 실주문 — 주식(키움)·코인(OKX) 주문이 실제로 나갑니다": "⚠ LIVE — stock (Kiwoom) and coin (OKX) orders are really sent",
     "3분": "3m", "5분": "5m", "15분": "15m", "30분": "30m", "60분": "60m", "일": "D", "주": "W",
     // ── 카드 제목·조회 ──
-    "내 보유종목": "My Holdings", "실계좌 불러오기": "Load real account", "잔고 업데이트": "Update balance", "지움": "Clear",
+    "내 보유종목": "My Holdings", "실계좌 불러오기": "Load real account", "잔고 업데이트": "Update balance", "자동매매": "Auto trading", "지움": "Clear",
     "주식 조회": "Stock Search", "코인 조회": "Coin Search", "암호화폐": "Crypto",
     "종목코드 또는 이름 (예: 005930, 삼성전자)": "Code or name (e.g. 005930, Samsung)",
     "코인 심볼 (예: BTC, ETH, SOL)": "Coin symbol (e.g. BTC, ETH, SOL)",
@@ -8450,7 +8450,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 06:42</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 07:05</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
