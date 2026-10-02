@@ -4282,7 +4282,7 @@ function ydSet(v){
   ydLoad(true);
 }
 function ydYmd(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
-async function ydAutoKeys(md){
+async function ydAutoKeys(md, mdp){
   var out = null;
   try{
     var base = (typeof rlRelay === "function") ? rlRelay() : "";
@@ -4292,8 +4292,10 @@ async function ydAutoKeys(md){
     if(!r.ok) return null;
     var j = await r.json(); out = {};
     (j.log || []).forEach(function(l){
-      var m = /^(\d\d-\d\d) \d\d:\d\d 주문 (국내|미국|코인) (\S+) (매수|매도)/.exec(l);
-      if(m && m[1] === md) out[{"국내":"kr","미국":"us","코인":"coin"}[m[2]] + ":" + m[3] + ":" + (m[4] === "매수" ? "B" : "S")] = 1;
+      var m = /^(\d\d-\d\d) (\d\d):\d\d 주문 (국내|미국|코인) (\S+) (매수|매도)/.exec(l);
+      // 🔴 미국은 한국 밤(전날 22:30~)에 체결돼 중계기 기록 날짜가 하루 앞선다 — 전날 낮 12시 뒤 기록도 본다 (사장님 2026-10-02 MRNA)
+      if(m) m = [m[0], m[1], m[3], m[4], m[5], m[2]];
+      if(m && (m[1] === md || (m[2] === "미국" && mdp && m[1] === mdp && +m[5] >= 12))) out[{"국내":"kr","미국":"us","코인":"coin"}[m[2]] + ":" + m[3] + ":" + (m[4] === "매수" ? "B" : "S")] = 1;
     });
   }catch(e){ return null; }
   return out;
@@ -4314,7 +4316,8 @@ async function ydLoad(force){
   }
   var en = LANG === "en", rows = [], note = [];
   try{
-    var auto = await ydAutoKeys(md);
+    var _yp = new Date(y); _yp.setDate(_yp.getDate() - 1);
+    var auto = await ydAutoKeys(md, String(_yp.getMonth()+1).padStart(2,"0") + "-" + String(_yp.getDate()).padStart(2,"0"));
     var tok = null; try{ tok = await rlToken(); }catch(e){ note.push(KE("키움 ","Kiwoom ") + e.message); }
     // 국내
     if(tok){
@@ -8233,5 +8236,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 11:05</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-02 19:42</div>
 </body></html>
