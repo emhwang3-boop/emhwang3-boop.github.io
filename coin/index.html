@@ -305,7 +305,7 @@ button{text-align:center !important}
 
 <div class="card" id="coin2">
   <h3>코인 조회 <span class="tag live">● 바이낸스 현물</span></h3>
-  <div id="cvMkt" class="stktf" style="margin:4px 0 8px"><button data-mk="spot" class="on"><span class="kko">현물</span><span class="ken">Spot</span></button><button data-mk="perp"><span class="kko">선물</span><span class="ken">Perp</span></button></div>
+  <div id="cvMkt" class="stktf" style="display:none"><button data-mk="spot" class="on"><span class="kko">현물</span><span class="ken">Spot</span></button></div><!-- 선물 뺌 (사장님 2026-10-03) -->
   <input id="coinq" class="stkq" placeholder="코인 심볼 (예: BTC, ETH, SOL)" autocomplete="off">
   <div id="coinResults" class="stkres"></div>
   <div id="coinDetail"></div>
@@ -1404,6 +1404,7 @@ function cvApi(){return cvMkt==="perp"?"https://fapi.binance.com/fapi/v1":"https
 function cvTagTxt(){var en=(typeof LANG!=="undefined"&&LANG==="en");
   return (en?"● Binance ":"● 바이낸스 ")+(cvMkt==="perp"?(en?"Perp":"선물"):(en?"Spot":"현물"));}
 function cvMktSet(m){
+  if(m==="perp")return;                          /* 선물 뺌 (사장님 2026-10-03) — 청산맵도 같이 안 보인다 */
   if(m===cvMkt)return; cvMkt=m;
   try{document.querySelectorAll("#cvMkt button").forEach(function(b){b.className=(b.dataset.mk===m)?"on":"";});}catch(e){}
   try{coinChart.setLiq(m==="perp");}catch(e){}
@@ -2550,7 +2551,7 @@ function bkRender() {
   const AM = bkAmtOf(a);
   const tAll = a.reduce(function (t, x) { return t + (AM[x.code] || 0); }, 0);
   h += '<table class="mhtab"><tr><th>' + KE("지금 바스켓", "Current basket") + '</th><th>' + KE("투자금액", "Amount")
-     + '</th><th>' + KE("배수", "Lev") + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
+     + '</th><th>' + KE("비중", "Weight") + '</th><th></th></tr>';
   a.forEach(function (x, i) {
     const amt = AM[x.code] || 0, w = tAll > 0 ? (amt / tAll * 100) : 0;
     h += '<tr><td class="bkgo" style="text-align:left;cursor:pointer" data-code="' + x.code + '" data-mk="' + (x.mk || "")
@@ -2558,16 +2559,12 @@ function bkRender() {
        + '</td><td><input class="bkamt" type="text" inputmode="decimal" value="' + bkNum(amt, "USDT")
        + '" oninput="bkAmtLive(this)" onchange="bkSetAmt(' + i + ',this.value)" style="width:96px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 6px;font-size:12px">'
        + ' <span class="dplbl">USDT</span></td>'
-       + '<td>' + (bkIsPerp(x)
-           ? ('<input type="text" inputmode="decimal" value="' + bkLev(x) + '" onchange="bkSetLev(' + i + ',this.value)"'
-              + ' style="width:44px;text-align:right;background:var(--bg);color:var(--nm);border:1px solid var(--bd);border-radius:7px;padding:4px 5px;font-size:12px"> ×')
-           : '<span class="dplbl">—</span>') + '</td>'
        + '<td>' + w.toFixed(1) + '%</td>'
        + '<td style="white-space:nowrap"><span class="mhx" onclick="bkDel(' + i + ')">✕</span>'
        + ' <span class="mhx" style="color:#16a34a;font-weight:700;font-size:22px;line-height:12px;vertical-align:-3px" onclick="bkAddToSaved(' + i + ')">＋</span></td></tr>';
   });
   if (tAll > 0) h += '<tr style="font-weight:800"><td style="text-align:left">' + KE("합계", "Total") + '</td>'
-       + '<td colspan="4" style="text-align:right">' + bkMoney(tAll, "USDT") + '</td></tr>';
+       + '<td colspan="3" style="text-align:right">' + bkMoney(tAll, "USDT") + '</td></tr>';
   h += '</table>';
   h += '<div class="svsub">' + KE("하루에 쓰는 돈은 한 칸(가상 계좌 ÷ 12)뿐이며, 그 안에서 목표 비중대로 나눠 채웁니다. 직접 고치셔도 됩니다.",
        "You spend one slot (account ÷ 12) a day, split by the target weights. You can edit them.")
@@ -2679,6 +2676,20 @@ async function bkRun(days) {
 // ── 보관한 포트폴리오 — 지울 때까지 수익률을 계속 관찰 (사장님 2026-09-21) ──
 //   수익률 = 보관한 날 종가(base) 대비 지금 종가. 균등 비중.
 function bkSaveGet() { try { return JSON.parse(localStorage.getItem(BK_SAVED_KEY) || "[]") || []; } catch (e) { return []; } }
+function bkPurgePerp() {                        /* 선물 뺌 (사장님 2026-10-03 「1-가」) — 담긴·보관한 선물 줄 지움 */
+  try {
+    var a = bkGet(), a2 = a.filter(function (x) { return !bkIsPerp(x); });
+    if (a2.length !== a.length) bkSave(a2);
+    var sv = bkSaveGet(), ch = false;
+    sv.forEach(function (p) {
+      var it = p.items || [], er = p.erows || [], ni = [], ne = [];
+      for (var i = 0; i < it.length; i++) { if (bkIsPerp(it[i]) || it[i].perp) { ch = true; continue; } ni.push(it[i]); ne.push(er[i]); }
+      p.items = ni; if (p.erows) p.erows = ne;
+    });
+    if (ch) bkSavePut(sv.filter(function (p) { return (p.items || []).length; }));
+  } catch (e) {}
+}
+setTimeout(function () { try { bkPurgePerp(); if (typeof bkRender === "function") bkRender(); } catch (e) {} }, 1500);
 function bkSavePut(a) { try { localStorage.setItem(BK_SAVED_KEY, JSON.stringify(a)); } catch (e) {} try { sySoon(); } catch (e) {} }
 function bkAgo(ms) { if (!ms) return ""; var s = (Date.now() - ms) / 1000;
   if (s < 60) return KE("방금", "just now");
@@ -4029,5 +4040,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:24</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:30</div>
 </body></html>
