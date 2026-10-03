@@ -1481,7 +1481,7 @@ const stkChart=makeChart("stkChart",{walls:true,fmt:v=>Math.abs(v)>=1000?Math.ro
 const coinChart=makeChart("coinChart",{walls:true,liq:true,fmt:coinFmt,year:365});
 
 // ---- 코인 조회 (바이낸스, 클라이언트) ----
-let coinKind="F", coinSym=null, coinTf="D", coinTimer=null, coinSearchTimer=null, coinList=null, coinLast=[];
+let coinKind="S", coinSym=null,   /* 선물 뺌 (2026-10-03) */ coinTf="D", coinTimer=null, coinSearchTimer=null, coinList=null, coinLast=[];
 function coinFmtTime(ms,tf){const d=new Date(ms),p=n=>String(n).padStart(2,"0"),md=p(d.getMonth()+1)+"/"+p(d.getDate());
   return (tf==="D"||tf==="W")?md:md+" "+p(d.getHours())+":"+p(d.getMinutes());}
 async function coinSyms(){
@@ -1495,7 +1495,7 @@ E("coinq").addEventListener("input",function(){clearTimeout(coinSearchTimer);con
     const en=LANG==="en", rows=[];
     all.filter(b=>b.startsWith(q)).slice(0,12).forEach(function(b){
       const o=_okxList||{F:new Set([b]),S:new Set([b])};   // OKX 에 있는 것만 — 없는 건 주문이 거절된다
-      if(o.F.has(b)) rows.push({sym:b+"USDT",name:b,kind:"F"});      // 선물이 먼저 — 기본이 선물이다
+      /* 선물 줄은 뺌 (사장님 2026-10-03) */
       if(o.S.has(b)) rows.push({sym:b+"USDT",name:b,kind:"S"});});
     coinLast=rows;
     E("coinResults").innerHTML=rows.map(function(r){
@@ -1507,8 +1507,8 @@ E("coinq").addEventListener("input",function(){clearTimeout(coinSearchTimer);con
   },300);
 });
 E("coinq").addEventListener("keydown",function(e){if(e.key==="Enter"&&coinLast.length){pickCoin(coinLast[0].sym,coinLast[0].name,coinLast[0].kind);this.blur();}});
-function pickCoin(sym,name,kind){coinSym=sym;coinKind=(kind==="S")?"S":"F";
-  try{coinChart.setLiq(coinKind==="F");}catch(e){}   // 청산맵은 선물일 때만 (2026-09-27)
+function pickCoin(sym,name,kind){coinSym=sym;coinKind="S";   /* 선물 뺌 (사장님 2026-10-03) — 늘 현물 */
+  try{coinChart.setLiq(false);}catch(e){}
   var _cb=E("bkAddBtnCo"); if(_cb)_cb.hidden=false;
   try{ rememberPick("co",sym,name,coinKind); }catch(e){}E("coinResults").innerHTML="";E("coinq").value=name+" ("+sym+") "+(coinKind==="S"?(LANG==="en"?"SPOT":"현물"):(LANG==="en"?"PERP":"선물"));
   E("coinTf").hidden=false;E("coinChart").hidden=false;E("coinChartLbl").hidden=false;
@@ -2772,8 +2772,7 @@ async function rlLoad(auto) {
     } else if (ST.co.broker !== "okx") {
       out.err.push("코인 " + ST.co.broker + " 는 아직 연동 전입니다");
     } else {
-      try { out.co = await rlParseCoin(await rlOkx("/api/v5/account/positions?instType=SWAP")); }
-      catch (e) { out.err.push("코인 " + e.message); }
+      out.co = [];                                       // 선물 포지션은 안 불러온다 (사장님 2026-10-03 선물 뺌)
       try {
         const b = await rlOkx("/api/v5/account/balance");
         const det = ((b.data || [])[0] || {}).details || [];
@@ -2913,7 +2912,8 @@ async function rlOsoLoad() {
       try {
         const j = await rlOkx("/api/v5/trade/orders-pending");
         for (const x of (j.data || [])) {
-          const swap = x.instType === "SWAP";
+          if (x.instType === "SWAP") continue;              // 선물 뺌 (2026-10-03)
+          const swap = false;
           const cv = swap ? await rlCtVal(x.instId) : 1;        // 선물은 계약 수 → 코인 수
           const base = String(x.instId).split("-")[0];
           out.push({mk: "co", id: x.ordId, code: x.instId,
@@ -3394,6 +3394,7 @@ function dpOrder(side){
 }
 function dpCoin(act){
   const en=LANG==="en";
+  if(act==="L"||act==="S"||act==="X"){ dpMsg("dpMsgC",en?"Perpetuals are not supported — spot only.":"선물은 쓰지 않습니다 — 현물만 됩니다."); return; }   /* 선물 뺌 (2026-10-03) */
   if(dpBusyC){ dpMsg("dpMsgC",en?"Previous order in flight":"앞 주문을 보내는 중입니다"); return; }
   if(!coinSym){ dpMsg("dpMsgC",en?"Pick a coin":"코인을 먼저 고르세요"); return; }
   const key="coin:"+coinSym, cur=dpPx[key]||0, p=DP.pos[key];
@@ -6105,6 +6106,7 @@ function bkAdd(code,name,mk,spot){
   if(a.length>=12){ bkMsg(KE("한 번에 열두 개까지 담을 수 있습니다.","You can add up to 12 at a time.")); try{ var _bc=document.getElementById("bkCard"); if(_bc&&_bc.scrollIntoView)_bc.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){} return; }
   var _it={code:code,name:name||code,mk:mk||"kr"};
   if(spot!==undefined)_it.spot=!!spot;          // 코인은 현물·선물을 갈라 담는다 (2026-09-24)
+  if(_it.mk==="coin")_it.spot=true;              /* 선물 뺌 (사장님 2026-10-03) — 코인은 늘 현물 */
   a.push(_it);
   BK_OUT=""; bkSave(a); bkRender();
 }
@@ -6363,6 +6365,18 @@ async function openTower3DGo(list, title, pid, shape) {
 const BK_SAVED_KEY = "bk_saved_demo_v1";
 var bkOpenS = {}, bkSavedBusy = false;
 function bkSaveGet(){ try{ return JSON.parse(localStorage.getItem(BK_SAVED_KEY)||"[]")||[]; }catch(e){ return []; } }
+function bkPurgePerp(){                         /* 선물 뺌 (사장님 2026-10-03) */
+  try{ var a=bkGet(), a2=a.filter(function(x){ return !bkIsPerp(x); }); if(a2.length!==a.length) bkSave(a2); }catch(e){}
+  try{ var sv=bkSaveGet(), ch=false;
+    sv.forEach(function(p){ var it=p.items||[], er=p.erows||[], ni=[], ne=[];
+      for(var i=0;i<it.length;i++){ if(it[i].perp || bkIsPerp(it[i])){ ch=true; continue; } ni.push(it[i]); ne.push(er[i]); }
+      p.items=ni; if(p.erows) p.erows=ne; });
+    if(ch) bkSavePut(sv.filter(function(p){ return (p.items||[]).length; })); }catch(e){}
+  try{ if(typeof dpLoad==="function"){ if(!DP) dpLoad(); var n=0;
+    Object.keys(DP.pos||{}).forEach(function(k){ var p=DP.pos[k]; if(p && p.mk==="coin" && (p.side==="L"||p.side==="S") && p.lev!=null){ DP.usdt=(+DP.usdt||0)+(+p.margin||0); delete DP.pos[k]; n++; } });
+    if(n) dpSave(); } }catch(e){}
+}
+setTimeout(function(){ try{ bkPurgePerp(); }catch(e){} }, 1500);
 function bkSavePut(a){ try{ localStorage.setItem(BK_SAVED_KEY, JSON.stringify(a)); }catch(e){} try{ sySoon(); }catch(e){} }
 function bkAgo(ms){ if(!ms)return""; var t=(Date.now()-ms)/1000;
   if(t<60)return KE("방금","just now");
@@ -8517,5 +8531,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:30</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:35</div>
 </body></html>
