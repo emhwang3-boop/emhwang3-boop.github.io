@@ -3528,12 +3528,10 @@ function cvRecoRender() {
   // 제목은 카드 머리에 있다 (2026-09-23)
 
   // USDT 계좌 줄은 뺐다 — 위 가상 계좌 카드에 이미 있다 (사장님 2026-09-23)
-  h += '<div class="svsub">' + KE('BTC 50 · ETH 50, 그 안에서 <b>현물 ' + CV_SPOT + ' · 선물 '
-     + (100 - CV_SPOT) + '</b>. 선물은 청산이 있어 적게 둡니다. 아래 금액은 모든 이용자에게 '
+  h += '<div class="svsub">' + KE('BTC 50 · ETH 50 · <b>현물만 추천합니다.</b> 선물은 청산이 있어 추천하지 않으며, 원하시면 코인 조회에서 직접 담으세요. 아래 금액은 모든 이용자에게 '
      + '똑같이 주어지는 가상 금액입니다.',
-     'BTC 50 · ETH 50, and within each <b>spot ' + CV_SPOT + ' · perpetual ' + (100 - CV_SPOT)
-     + '</b>. Perpetuals can be liquidated, so they get less. The amounts below are virtual amounts '
-     + 'given equally to every user.') + '</div>';
+     'BTC 50 · ETH 50 · <b>spot only.</b> Perpetuals can be liquidated, so they are not recommended — add them yourself from coin lookup if you want. '
+     + 'The amounts below are virtual amounts given equally to every user.') + '</div>';
   // 🔴 원그래프와 목표 비중 표는 뺐다 (사장님 2026-09-23) — 아래 퍼즐이 같은 것을 보여 준다
 
   // ③ 자산군별 코인 — **이름만** (비중 없음)
@@ -3559,7 +3557,7 @@ function cvRecoRender() {
     const rows = [];
     L.forEach(function (k) {
       rows.push({name: k, kind: "S", code: k + "USDT|S", mk: "coin"});
-      rows.push({name: k, kind: "F", code: k + "USDT|F", mk: "coin"});
+      /* 선물은 추천에서 뺌 — 원하면 코인 조회에서 직접 담는다 (사장님 2026-10-03) */
     });
     window._SVPICK[grp] = rows;
     if (m[1] > 0) PZP.push([KN(grp), m[1], "cls", 0, grp, 0, null]);
@@ -4031,5 +4029,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:19</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:24</div>
 </body></html>
