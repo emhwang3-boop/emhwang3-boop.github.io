@@ -3167,7 +3167,7 @@ function pzPick(ev, cls, ix){
   ev.stopPropagation();
   var L = puzPicks(cls), it = L[ix]; if(!it || !it.code) return;
   if(pzHas(it.code)) PZSEL = PZSEL.filter(function(z){ return z.code!==it.code; });
-  else { PZSEL.push({code:it.code, name:it.name, mk:it.mk}); pzView(it); }
+  else { PZSEL.push({code:it.code, name:it.name, mk:it.mk, cls:cls}); pzView(it); }
   try{ svRecoRender(); }catch(e){}
 }
 // 고른 종목을 아래 조회 칸에 띄운다 (사장님 2026-09-24)
@@ -3181,7 +3181,40 @@ function pzView(it){
   }catch(e){}
 }
 function pzOpen(){ PZDRAFT = PZSEL.slice(); try{ svRecoRender(); }catch(e){} }
-function pzClose(){ PZDRAFT = null; try{ svRecoRender(); }catch(e){} }
+function pzClose(){ PZDRAFT = null; PZSEL = []; try{ svRecoRender(); }catch(e){} }   /* 그만하기 = 고른 것까지 비움 (사장님 2026-10-03) */
+function pzComplete(){
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  var p = null; try{ p = svGet(); }catch(e){}
+  var g = p ? SV_GRADE[p.pick] : null;
+  if(!g){ alert(en ? "Choose your risk profile first." : "먼저 투자성향을 골라 주세요."); return; }
+  /* 지금 = 보관한 포트폴리오(가상 계좌) · 목표 = 성향 비율 — 「목표와의 차이」 표와 같은 셈 */
+  var old = bkOldest(), val = {};
+  if(old){ var er = old.erows || [];
+    (old.items || []).forEach(function(x, i){ var c = x.cls || bkClassOf(x); if(BK_CLS_OLD[c]) c = BK_CLS_OLD[c];
+      var e = er[i] || {}; val[c] = (val[c] || 0) + bkToKrw((+x.amt || 0) + ((typeof e.pl === "number") ? e.pl : 0), x.ccy || "KRW"); }); }
+  var si = bkSlotInfo(), acct = si.leftK + si.evalK, a = bkGet(), nCls = 0, nAdd = 0, full = false;
+  /* 지금 바스켓에 이미 담은 금액도 그 종류에 든 것으로 센다 */
+  var amtNow = bkAmtOf(a); a.forEach(function(x){ var c = x.cls || bkClassOf(x); if(BK_CLS_OLD[c]) c = BK_CLS_OLD[c]; val[c] = (val[c] || 0) + (amtNow[x.code] || 0); });
+  g.mix.forEach(function(m){
+    var c = m[0]; if(c === "예금·MMF") return;
+    var gap = acct * m[1] / 100 - (val[c] || 0); if(!(gap > acct * 0.0005)) return;           /* 모자란 종류만 */
+    var mine = PZSEL.filter(function(z){ return z.cls === c; });
+    var L = (mine.length ? mine : puzPicks(c)).filter(function(z){ return z && z.code && !a.some(function(q){ return q.code === z.code; }); });
+    if(!L.length) return;
+    nCls++;
+    L.forEach(function(z){
+      if(a.length >= 12){ full = true; return; }
+      a.push({code: z.code, name: z.name, mk: z.mk || "kr", cls: c, amt: Math.round(gap / L.length)}); nAdd++;
+    });
+  });
+  PZSEL = []; PZDRAFT = null; bkSave(a);
+  try{ bkRender(); }catch(e){}
+  try{ svRecoRender(); }catch(e){}
+  try{ bkMsg(nAdd ? (en ? ("Recommended portfolio completed — " + nAdd + " item(s) for " + nCls + " underweight class(es)" + (full ? " (12-item limit)" : "") + ".")
+                         : ("추천 포트폴리오 완성 — 비중미달 " + nCls + "종류에 " + nAdd + "종목을 모자란 금액만큼 담았습니다" + (full ? " (12종목까지)" : "") + "."))
+                  : (en ? "No underweight asset class — nothing to add." : "비중미달인 자산 종류가 없습니다 — 담을 것이 없습니다.")); }catch(e){}
+  var c2 = document.getElementById("bkCard"); if(c2 && c2.scrollIntoView) c2.scrollIntoView({behavior: "smooth", block: "start"});
+}
 function pzDrop(i){ if(!PZDRAFT) return; PZDRAFT.splice(i,1); try{ svRecoRender(); }catch(e){} }
 function pzSave(){
   if(!PZDRAFT || !PZDRAFT.length) return;
@@ -3200,9 +3233,11 @@ function pzDraftHtml(){
   var en=(typeof LANG!=="undefined"&&LANG==="en");
   if(!PZDRAFT){
     var n=PZSEL.length;
-    return '<div class="cvrow" style="margin:6px 0"><button class="svbtn" style="flex:1;margin:0" onclick="pzOpen()">'
-      + (en?("Build basket from picks"+(n?(" ("+n+")"):"")):("고른 것으로 바스켓 만들기"+(n?(" "+n+"개"):"")))
-      + '</button></div>';
+    return '<div class="cvrow" style="margin:6px 0"><button class="svbtn svgo" style="flex:1;margin:0" onclick="pzComplete()">'
+      + (en?("Complete recommended portfolio"+(n?(" ("+n+" picked)"):"")):("추천 포트폴리오 완성"+(n?(" · 고른 "+n+"개"):"")))
+      + '</button>'
+      + (n?('<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="pzClose()">'+(en?"Cancel":"그만하기")+'</button>'):'')
+      + '</div>';
   }
   var h='<div class="svgrpt" style="margin-top:6px">'+(en?"New basket":"새 바스켓")+' <span class="dplbl">'+PZDRAFT.length+(en?"":"종목")+'</span></div>';
   h+='<table class="mhtab">';
@@ -4279,5 +4314,5 @@ function tkPaint(d){
   try{ tkPaint(window._lastD||window.SNAP); }catch(e){}
 })();
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 15:54</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:19</div>
 </body></html>
