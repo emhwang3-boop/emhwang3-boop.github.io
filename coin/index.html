@@ -3197,7 +3197,7 @@ function pzPick(ev, cls, ix){
   ev.stopPropagation();
   var L = puzPicks(cls), it = L[ix]; if(!it || !it.code) return;
   if(pzHas(it.code)) PZSEL = PZSEL.filter(function(z){ return z.code!==it.code; });
-  else { PZSEL.push({code:it.code, name:it.name, mk:it.mk}); pzView(it); }
+  else { PZSEL.push({code:it.code, name:it.name, mk:it.mk, cls:cls}); pzView(it); }
   try{ cvRecoRender(); }catch(e){}
 }
 // 고른 코인을 아래 조회 칸에 띄운다 (사장님 2026-09-24)
@@ -3210,7 +3210,36 @@ function pzView(it){
   }catch(e){}
 }
 function pzOpen(){ PZDRAFT = PZSEL.slice(); try{ cvRecoRender(); }catch(e){} }
-function pzClose(){ PZDRAFT = null; try{ cvRecoRender(); }catch(e){} }
+function pzClose(){ PZDRAFT = null; PZSEL = []; try{ cvRecoRender(); }catch(e){} }   /* 그만하기 = 고른 것까지 비움 (사장님 2026-10-03) */
+function pzComplete(){
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  var clsOf = function(x){ return String(x.cls || bkClassOf(x)).replace(/ (현물|선물)$/, ""); };
+  /* 지금 = 보관한 포트폴리오 + 지금 바스켓 · 목표 = BTC·ETH 비율 — 「목표와의 차이」 표와 같은 셈 */
+  var old = bkOldest(), val = {};
+  if(old){ var er = old.erows || [];
+    (old.items || []).forEach(function(x, i){ var e = er[i] || {}; val[clsOf(x)] = (val[clsOf(x)] || 0) + (+x.amt || 0) + ((typeof e.pl === "number") ? e.pl : 0); }); }
+  var si = bkSlotInfo(), acct = si.left + si.eval, a = bkGet(), nCls = 0, nAdd = 0, full = false;
+  var amtNow = bkAmtOf(a); a.forEach(function(x){ val[clsOf(x)] = (val[clsOf(x)] || 0) + (amtNow[x.code] || 0); });
+  CV_MIX.forEach(function(m){
+    var c = m[0], gap = acct * m[1] / 100 - (val[c] || 0); if(!(gap > acct * 0.0005)) return;   /* 모자란 종류만 */
+    var mine = PZSEL.filter(function(z){ return z.cls === c; });
+    var L = (mine.length ? mine : puzPicks(c).filter(function(z){ return /\|S$/.test(String(z.code)); }))   /* 고른 게 없으면 현물 */
+              .filter(function(z){ return z && z.code && !a.some(function(q){ return q.code === z.code; }); });
+    if(!L.length) return;
+    nCls++;
+    L.forEach(function(z){
+      if(a.length >= 12){ full = true; return; }
+      a.push({code: z.code, name: z.name, mk: z.mk || "coin", cls: bkClassOf(z), amt: Math.round(gap / L.length * 100) / 100}); nAdd++;
+    });
+  });
+  PZSEL = []; PZDRAFT = null; bkSave(a);
+  try{ bkRender(); }catch(e){}
+  try{ cvRecoRender(); }catch(e){}
+  try{ bkMsg(nAdd ? (en ? ("Recommended portfolio completed — " + nAdd + " item(s) for " + nCls + " underweight class(es)" + (full ? " (12-item limit)" : "") + ".")
+                         : ("추천 포트폴리오 완성 — 비중미달 " + nCls + "종류에 " + nAdd + "개를 모자란 금액만큼 담았습니다" + (full ? " (12개까지)" : "") + "."))
+                  : (en ? "No underweight asset class — nothing to add." : "비중미달인 자산 종류가 없습니다 — 담을 것이 없습니다.")); }catch(e){}
+  var c2 = document.getElementById("bkCard"); if(c2 && c2.scrollIntoView) c2.scrollIntoView({behavior: "smooth", block: "start"});
+}
 function pzDrop(i){ if(!PZDRAFT) return; PZDRAFT.splice(i,1); try{ cvRecoRender(); }catch(e){} }
 function pzSave(){
   if(!PZDRAFT || !PZDRAFT.length) return;
@@ -3229,9 +3258,11 @@ function pzDraftHtml(){
   var en=(typeof LANG!=="undefined"&&LANG==="en");
   if(!PZDRAFT){
     var n=PZSEL.length;
-    return '<div class="cvrow" style="margin:6px 0"><button class="svbtn" style="flex:1;margin:0" onclick="pzOpen()">'
-      + (en?("Build basket from picks"+(n?(" ("+n+")"):"")):("고른 것으로 바스켓 만들기"+(n?(" "+n+"개"):"")))
-      + '</button></div>';
+    return '<div class="cvrow" style="margin:6px 0"><button class="svbtn svgo" style="flex:1;margin:0" onclick="pzComplete()">'
+      + (en?("Complete recommended portfolio"+(n?(" ("+n+" picked)"):"")):("추천 포트폴리오 완성"+(n?(" · 고른 "+n+"개"):"")))
+      + '</button>'
+      + (n?('<button class="svbtn" style="flex:0 0 auto;margin:0" onclick="pzClose()">'+(en?"Cancel":"그만하기")+'</button>'):'')
+      + '</div>';
   }
   var h='<div class="svgrpt" style="margin-top:6px">'+(en?"New basket":"새 바스켓")+' <span class="dplbl">'+PZDRAFT.length+(en?"":"종목")+'</span></div>';
   h+='<table class="mhtab">';
@@ -4000,5 +4031,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 15:54</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:19</div>
 </body></html>
