@@ -2022,7 +2022,7 @@ const SV_GRADE = [
   {nm: "위험중립형", mix: []},
   {nm: "적극투자형", mix: []},
   {nm: "공격투자형", mix: []},
-  {nm: "코인전문투자형", mix: [["BTC", 45], ["ETH", 45], ["알트", 10]]},
+  {nm: "코인전문투자형", mix: [["BTC", 50], ["ETH", 50]]},   /* 알트 뺌 (사장님 2026-10-03 · _coin_mix_report.txt) */
 ];
 const SV_COIN_PRO = 5;                 // 코인전문투자형 번호
 // 성향 설명 — 다섯은 주식앱과 같은 문장(은행·증권사 공통 설명), 코인전문투자형은 사장님 문장
@@ -2445,7 +2445,7 @@ function bkSlotAmt() {
 }
 function bkAutoAmt(list) {
   // 🔴 하루 예산은 한 칸(가상 계좌 ÷ 12)뿐이다 (사장님 2026-09-25). 담은 코인이 몇 개든 합계가 한 칸을 넘지 않는다.
-  //    그 한 칸을 목표 비중(BTC 45 · ETH 45 · 알트 10)대로 나눈다 — 담긴 갈래끼리 다시 100 으로, 같은 갈래가 여럿이면 똑같이.
+  //    그 한 칸을 목표 비중(BTC 50 · ETH 50)대로 나눈다 — 담긴 갈래끼리 다시 100 으로, 같은 갈래가 여럿이면 똑같이.
   //    🔴 가상 포트폴리오 안에서만 쓰는 값이다. 실제 매수 금액을 권하는 것이 아니다.
   const out = {}, D = bkSlotAmt(), W = {};
   CV_MIX.forEach(function (m) { W[m[0]] = m[1]; });
@@ -2455,7 +2455,7 @@ function bkAutoAmt(list) {
   list.forEach(function (x) { const c = clsOf(x); out[x.code] = D * (W[c] || 10) / sumW / cnt[c]; });
   return out;
 }
-// 목표와의 차이 — 보관한 포트폴리오(가상 계좌가 세는 것)와 BTC 45 · ETH 45 · 알트 10 을 견준다 (사장님 2026-09-25, 퍼즐맵 앞)
+// 목표와의 차이 — 보관한 포트폴리오(가상 계좌가 세는 것)와 BTC 50 · ETH 50 을 견준다 (사장님 2026-09-25, 퍼즐맵 앞)
 function bkGapHtml() {
   var TGT = {}; CV_MIX.forEach(function (m) { TGT[m[0]] = m[1]; });
   var hd = '<div class="svsub svacct2" style="margin-top:12px;font-weight:800;color:var(--sub)">' + KE("목표와의 차이", "Gap to target") + '</div>';
@@ -3176,12 +3176,12 @@ function cvKindNm(k) { return k === "perp" ? KE("선물", "Perp") : KE("현물",
 //    모두에게 같은 가상 계좌(CV_USDT 10만)를 주고 그 안에서만 보여 준다.
 
 // ── ③ 추천 포트폴리오 — **자산군 중심** (사장님 2026-09-20) ───────────────
-//   자산군은 셋: BTC · ETH · 알트.  비율 45 : 45 : 10.
+//   자산군은 둘: BTC · ETH.  비율 50 : 50 (2026-10-03 알트 뺌).
 //   🔴 이 비율은 잰 값이다(_m_coin_mix.py, 2022-11~2026-09 일봉):
 //      · 알트를 섞을수록 나빠졌다 — 알트만 담으면 낙폭 −44.6%(BTC·ETH 는 −23% 대)
 //      · BTC:ETH 는 앞뒤 절반이 정반대로 나와 우열을 못 가렸다 → 반반
 //   🔴 종목별 비중은 내지 않는다. 어느 코인에 얼마를 넣을지는 고객이 정한다.
-const CV_MIX = [["BTC", 45], ["ETH", 45], ["알트", 10]];
+const CV_MIX = [["BTC", 50], ["ETH", 50]];   /* 알트 뺌 (사장님 2026-10-03) — 알트를 섞을수록 백테스트가 나빠졌다 */
 // 🔴 같은 자산군 안에서도 **현물을 많이** 둔다 (사장님 2026-09-20).
 //    선물은 청산이 있어 원금 전액을 잃을 수 있다. 80:20 은 잰 값이 아니라 정한 값이다.
 const CV_SPOT = 80;
@@ -3497,10 +3497,10 @@ function cvRecoRender() {
   // 제목은 카드 머리에 있다 (2026-09-23)
 
   // USDT 계좌 줄은 뺐다 — 위 가상 계좌 카드에 이미 있다 (사장님 2026-09-23)
-  h += '<div class="svsub">' + KE('BTC 45 · ETH 45 · 알트 10, 그 안에서 <b>현물 ' + CV_SPOT + ' · 선물 '
+  h += '<div class="svsub">' + KE('BTC 50 · ETH 50, 그 안에서 <b>현물 ' + CV_SPOT + ' · 선물 '
      + (100 - CV_SPOT) + '</b>. 선물은 청산이 있어 적게 둡니다. 아래 금액은 모든 이용자에게 '
      + '똑같이 주어지는 가상 금액입니다.',
-     'BTC 45 · ETH 45 · Alts 10, and within each <b>spot ' + CV_SPOT + ' · perpetual ' + (100 - CV_SPOT)
+     'BTC 50 · ETH 50, and within each <b>spot ' + CV_SPOT + ' · perpetual ' + (100 - CV_SPOT)
      + '</b>. Perpetuals can be liquidated, so they get less. The amounts below are virtual amounts '
      + 'given equally to every user.') + '</div>';
   // 🔴 원그래프와 목표 비중 표는 뺐다 (사장님 2026-09-23) — 아래 퍼즐이 같은 것을 보여 준다
@@ -4000,5 +4000,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 11:58</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 15:34</div>
 </body></html>
