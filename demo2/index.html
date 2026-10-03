@@ -711,6 +711,10 @@ function fxKrw(){
   }catch(e){}
   return 0;
 }
+/* 암호화폐 카드 이름 누르면 아래 코인 조회에 띄운다 (사장님 2026-10-03) */
+function coinGoLookup(sym, name){
+  try{ pickCoin(sym, name, "S"); var c = document.getElementById("coin2"); if(c && c.scrollIntoView) c.scrollIntoView({behavior: "smooth", block: "start"}); }catch(e){}
+}
 let _kimpHtml="", _kimpAt=0;          // 마지막으로 잘 받은 김프 줄과 그 시각
 function kimpRow(inner){
   const en=LANG==="en";
@@ -749,7 +753,7 @@ async function loadCoin(){
       _last24[sym]=+d.lastPrice;
       const sp=(coinSpark[sym]||[]).concat([+d.lastPrice]);
       const cnm=(LANG==="en"?sym.replace("USDT",""):nm);
-      out.push('<div class="row"><span class="nm">'+cnm+'</span><span class="rt">'+spark(sp)+'<span class="val">$'+fmt(d.lastPrice)+'</span>'
+      out.push('<div class="row"><span class="nm" style="cursor:pointer" onclick="coinGoLookup(&quot;'+sym+'&quot;,&quot;'+sym.replace("USDT","")+'&quot;)">'+cnm+'</span><span class="rt">'+spark(sp)+'<span class="val">$'+fmt(d.lastPrice)+'</span>'
         +'<span class="pc '+cls+'">'+arw+Math.abs(p).toFixed(2)+'%</span></span></div>');}
     // 🔴 기다리지 않는다 — 들고 있던 김프 줄을 그대로 넣는다(깜빡임 방지)
     out.push(kimpHtml());
@@ -8534,5 +8538,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:43</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:48</div>
 </body></html>
