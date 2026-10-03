@@ -4134,7 +4134,7 @@ function hbBeta(){
     var miss = need.filter(function(k){ return PB.px[k] === undefined; });
     miss.forEach(function(k){ pbSeries(k); });
     if(miss.length) return;
-    var tot = 0, acc = 0, used = 0;
+    var tot = 0, acc = 0, used = 0, GP = [];
     ["kr", "us", "co"].forEach(function(g){
       var gi = it.filter(function(x){ return x.key.indexOf(g + ":") === 0 && PB.px[x.key]; }); if(!gi.length) return;
       var mk = g === "co" ? "coin" : g, br = hbRet(PB.px[bench[g]], mk); if(!Object.keys(br).length) return;
@@ -4144,17 +4144,60 @@ function hbBeta(){
       var days = Object.keys(br).sort().slice(-250), P = [], B = [];
       days.forEach(function(d){ var sw = 0, sr = 0; rr.forEach(function(o){ if(o.r[d] !== undefined){ sw += o.w; sr += o.w * o.r[d]; } }); if(sw > 0.5){ P.push(sr / sw); B.push(br[d]); } });
       if(P.length < 40) return;
+      var pm = {}, bm = {}; days.forEach(function(d){ var sw = 0, sr = 0; rr.forEach(function(o){ if(o.r[d] !== undefined){ sw += o.w; sr += o.w * o.r[d]; } }); if(sw > 0.5){ pm[d] = sr / sw; bm[d] = br[d]; } });
+      GP.push({gv: gv, p: pm, b: bm});
       var mb = B.reduce(function(a, b){ return a + b; }, 0) / B.length, mp = P.reduce(function(a, b){ return a + b; }, 0) / P.length, cv = 0, vb = 0;
       for(var i = 0; i < P.length; i++){ cv += (P[i] - mp) * (B[i] - mb); vb += (B[i] - mb) * (B[i] - mb); }
       if(!(vb > 0)) return;
       acc += (cv / vb) * gv; tot += gv; used++;
     });
     HB_BETA.txt = (tot > 0 && used) ? ("β " + (acc / tot).toFixed(2)) : "";
+    /* α · σ · 샤프 — 시장들을 평가금 비중으로 합친 하루 수익(같이 열린 날) · 연 252일 · 무위험 연 3% (사장님 2026-10-03) */
+    if(GP.length){
+      var gt = GP.reduce(function(a, o){ return a + o.gv; }, 0), D = Object.keys(GP[0].p).filter(function(d){ return GP.every(function(o){ return o.p[d] !== undefined; }); }).sort().slice(-250);
+      if(D.length >= 40){
+        var Pc = D.map(function(d){ return GP.reduce(function(a, o){ return a + o.gv / gt * o.p[d]; }, 0); }),
+            Bc = D.map(function(d){ return GP.reduce(function(a, o){ return a + o.gv / gt * o.b[d]; }, 0); });
+        var n = Pc.length, rf = 0.03 / 252, mP = Pc.reduce(function(a, b){ return a + b; }, 0) / n, mB = Bc.reduce(function(a, b){ return a + b; }, 0) / n, sp = 0, sb = 0, cpb = 0;
+        for(var j = 0; j < n; j++){ sp += (Pc[j] - mP) * (Pc[j] - mP); sb += (Bc[j] - mB) * (Bc[j] - mB); cpb += (Pc[j] - mP) * (Bc[j] - mB); }
+        var bt = sb > 0 ? cpb / sb : 0, sd = Math.sqrt(sp / (n - 1)) * Math.sqrt(252);
+        var al = ((mP - rf) - bt * (mB - rf)) * 252, sh = sd > 0 ? (mP - rf) * 252 / sd : 0;
+        HB_BETA.txt = "α " + (al >= 0 ? "+" : "−") + Math.abs(al * 100).toFixed(1) + "% · β " + bt.toFixed(2)
+                    + " · " + KE("표준편차 ", "σ ") + (sd * 100).toFixed(1) + "% · " + KE("샤프 ", "Sharpe ") + sh.toFixed(2);
+      }
+    }
   }catch(e){ HB_BETA.txt = ""; }
   var el = document.getElementById("hbBeta"); if(el) el.textContent = HB_BETA.txt;
 }
 setInterval(function(){ try{ if(document.getElementById("hbBeta")) hbBeta(); }catch(e){} }, 5000);
 // 합계 수익률 = Σ평가 ÷ Σ산 돈 − 1. 달러 통은 원/달러(fxKrw)로 원화 환산 — 환율이 없으면 1:1(통화별 값 그대로 합침).
+function hbRiskInfo(e){
+  try{ if(e) e.stopPropagation(); }catch(x){}
+  if(document.getElementById("hbRiskPop")) return;
+  var en = (typeof LANG !== "undefined" && LANG === "en");
+  var L = en ? ["📏 Measured on the last 1 year of daily prices, with your current holdings weighted by value. Market: KR→KOSPI · US→S&P 500 · crypto→BTC. Risk-free rate 3%/yr.",
+                "<b>α (alpha)</b> — yearly return beyond what the market explains (β × market). Plus = beat the market for the risk taken.",
+                "<b>β (beta)</b> — how much the portfolio moved when the market moved 1%. 1.0 = like the market, above 1 = bigger swings.",
+                "<b>σ (standard deviation)</b> — yearly volatility: how widely returns swing. Bigger = bumpier ride.",
+                "<b>Sharpe</b> — excess return over the risk-free rate ÷ σ. How much you earned per unit of swing; above 1 is good.",
+                "🔄 Recalculated every 5 seconds — it moves noticeably only when holdings or weights change."]
+             : ["📏 최근 1년 일봉으로, 지금 들고 있는 종목을 평가금 비중대로 합쳐 잽니다. 시장: 국내→코스피 · 미국→S&P 500 · 코인→비트코인. 무위험 수익은 연 3%로 둡니다.",
+                "<b>α (알파)</b> — 시장을 따라간 몫(β × 시장 수익)을 빼고 남은 연 초과 수익. 플러스면 감수한 위험에 비해 시장보다 더 벌었다는 뜻입니다.",
+                "<b>β (베타)</b> — 시장이 1% 움직일 때 내 포트폴리오가 움직인 정도. 1이면 시장과 같고, 1보다 크면 더 크게 출렁입니다.",
+                "<b>표준편차</b> — 1년 기준 변동성. 수익률이 얼마나 넓게 출렁이는지입니다. 클수록 오르내림이 거칩니다.",
+                "<b>샤프</b> — (수익 − 무위험 수익) ÷ 표준편차. 같은 출렁임에 얼마나 벌었는지입니다. 1을 넘으면 좋은 편입니다.",
+                "🔄 5초마다 다시 계산합니다. 크게 바뀌는 건 보유 종목이나 비중이 바뀔 때입니다."];
+  var d = document.createElement("div"); d.id = "hbRiskPop";
+  d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
+  d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
+  var close = "document.getElementById('hbRiskPop').remove()";
+  d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">' + (en ? "Risk & return" : "위험·성과 지표") + '</div>'
+    + '<span onclick="' + close + '" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
+    + L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + l + '</div>'; }).join("")
+    + '<button onclick="' + close + '" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">' + (en ? "OK" : "확인") + '</button></div>';
+  document.body.appendChild(d);
+}
 function dpHoldSumHtml(){
   const en=LANG==="en", a=dpHoldItems(); if(!a.length)return "";
   const fx=(typeof fxKrw==="function"&&fxKrw()>0)?fxKrw():1;
@@ -4174,9 +4217,11 @@ function dpHoldSumHtml(){
     +(en?"Totals · ":"합계 · ")+parts.join(" · ")+'</div>'):"";
   return tot+'<div class="mhsum" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px">'
     +'<span>'+(en?"Portfolio return ":"포트폴리오 수익률 ")+'<b class="'+cls+'">'+(r>0?"+":"")+r.toFixed(2)+'%</b></span>'
-    +'<span id="hbBeta" title="'+(en?"Beta — how much this portfolio moved when its market moved 1% (KR→KOSPI · US→S&P 500 · crypto→BTC), last 1 year daily":"베타 — 시장이 1% 움직일 때 지금 포트폴리오가 움직인 정도 (국내→코스피 · 미국→S&P 500 · 코인→비트코인) · 최근 1년 일봉")+'" style="color:var(--sub)">'+(HB_BETA.txt||"")+'</span>'
     +'<button class="dppct" style="border-color:#2bd4c0;color:#2bd4c0" onclick="holdTower3D()">3D</button>'
-    +'<span onclick="bkTowerInfo(event)" class="icoi" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span></div>';
+    +'<span onclick="bkTowerInfo(event)" class="icoi" style="cursor:pointer;color:#7fd8ff;border:1px solid #7fd8ff;border-radius:50%;width:17px;height:17px;line-height:15px;text-align:center;font-size:11px;font-weight:800;flex:0 0 auto">i</span></div>'
+    /* 위험·성과 한 줄 (사장님 2026-10-03) — α · β · 표준편차 · 샤프 · 5초마다 */
+    +'<div class="mhsum" style="margin-top:4px;font-size:12px;color:var(--sub);display:flex;align-items:center;gap:6px"><span id="hbBeta">'+(HB_BETA.txt||"")+'</span>'
+    +'<span class="c21help" onclick="hbRiskInfo(event)">i</span></div>';
 }
 // ── [자동매매] — 판단·주문은 PC 중계기가 한다 (사장님 2026-09-24). 폰은 켜고 끄기·기준·기록만 ──────────
 //    🔴 기본 꺼짐 · 켜도 기본 '연습'(기록만). '실전'은 한 번 더 묻는다.
@@ -8472,5 +8517,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 15:44</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 15:52</div>
 </body></html>
