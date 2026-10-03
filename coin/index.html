@@ -3463,7 +3463,7 @@ function cvRecoRender() {
         + KE("등락률", "Change") + '</th><th>' + KE("거래대금(24h)", "Turnover (24h)") + '</th></tr>';
   Object.keys(c).forEach(function (k) {
     const x = c[k];
-    h += '<tr><td style="text-align:left">' + cvIcon(k) + '<b>' + k + '</b></td>'
+    h += '<tr><td style="text-align:left"><span style="cursor:pointer" onclick="pzView({code:&quot;' + String(k).replace(/[^A-Za-z0-9]/g, "") + 'USDT&quot;,name:&quot;' + String(k).replace(/[^A-Za-z0-9]/g, "") + '&quot;})">' + cvIcon(k) + '<b>' + k + '</b></span></td>'   /* 이름 누르면 조회로 (사장님 2026-10-03) */
        + '<td>' + cvUsd(x.price) + '</td>'
        + '<td class="' + cvChgCls(x.chg) + '">' + cvChg(x.chg) + '</td>'
        + '<td>' + cvTurn(x.turn) + '</td></tr>';
@@ -4000,5 +4000,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 15:34</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 15:44</div>
 </body></html>
