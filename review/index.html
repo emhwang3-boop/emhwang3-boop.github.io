@@ -3933,12 +3933,12 @@ function mhGroups(real, rh, en){
     var bg = '';                                   // 바탕색은 CSS(.mhgrp) — 다크모드에서 더 밝게 (2026-09-26)
     return '<tr class="mhgrp"><td colspan="' + (CS - 1) + '" style="text-align:left;' + bg + 'padding:7px 6px">'
       + '<div><b>' + name + '</b> <span class="dplbl">' + (en ? "held " : "보유 ") + now.toFixed(1) + '% · ' + (en ? "target " : "목표 ") + tg + '%</span></div>'
-      + '<div style="text-align:right;margin-top:2px"><b style="color:var(--nm,#111)">' + (d > 0.05 ? KE("비중초과 ", "Overweight ") : (d < -0.05 ? KE("비중미달 ", "Underweight ") : "Gap ")) + (d > 0 ? "+" : (d < 0 ? "−" : "")) + Math.abs(d).toFixed(1) + '%p'
+      + '<div style="text-align:right;margin-top:2px"><b style="color:var(--nm,#111)">' + (d > 0.05 ? KE("비중초과 ", "Overweight ") : (d < -0.05 ? KE("비중미달 ", "Underweight ") : KE("비중 맞음 ", "On target "))) + (d > 0 ? "+" : (d < 0 ? "−" : "")) + Math.abs(d).toFixed(1) + '%p'
       + ' <span style="font-weight:400">(' + (amt > 0 ? "+" : (amt < 0 ? "−" : "")) + money(Math.abs(amt)) + ')</span></b></div></td>'
       + '<td style="' + bg + 'text-align:center">' + (d < -0.05 && key !== "예금·MMF" ? '<button class="dpb buy dpsm" onclick="mhGapBuy(event,&quot;' + String(key || name).replace(/"/g, "") + '&quot;)">' + (en ? "BUY" : "매수") + '</button>' : '') + '</td></tr>'; };
   var won = function(v){ return Math.round(v).toLocaleString() + (en ? " KRW" : "원"); }, usdt = function(v){ return v.toLocaleString(undefined, {maximumFractionDigits: 2}) + " USDT"; };
   var h = '<tr><td colspan="' + CS + '" style="text-align:left;padding:4px 2px"><span class="dplbl">' + (en ? "Grouped by asset type · " : "자산 종류별 묶음 · ") + pfEsc(g.nm)
-        + ' · Gap</span> <span class="c21help" onclick="mhGapInfo(event)">i</span></td></tr>';
+        + ' · ' + (en ? "Over/Under" : "비중초과·비중미달") + '</span> <span class="c21help" onclick="mhGapInfo(event)">i</span></td></tr>';
   keys.forEach(function(c){
     h += hd(c, val[c] || 0, tot, TGT[c] || 0, won, c);
     if(c === "예금·MMF") h += '<tr><td colspan="' + CS + '" style="text-align:left" class="dplbl">' + (en ? "Cash " : "예수금 ") + won(+cash.krw || 0) + ((+cash.usd || 0) ? ' · $' + (+cash.usd).toLocaleString(undefined, {maximumFractionDigits: 2}) : '') + '</td></tr>';
@@ -3979,22 +3979,22 @@ function mhGapInfo(e){
   try{ if(e) e.stopPropagation(); }catch(x){}
   if(document.getElementById("mhGapPop")) return;
   var en = (typeof LANG !== "undefined" && LANG === "en");
-  var L = en ? ["📐 Gap = your held share − target share (asset mix ratio), in %p.",
+  var L = en ? ["📐 Overweight / Underweight = your held share − target share (asset mix ratio), in %p.",
                 "➕ Total = cash + holdings value (crypto excluded). Cash counts as Deposit·MMF.",
-                "🔻 Minus: below target — the basket buys this type. 🔺 Plus: above target — no extra buys (Gap alone never sells).",
-                "( ) is the same Gap in money: held amount − target amount.",
+                "🔻 Underweight (−): below target — the basket buys this type. 🔺 Overweight (+): above target — no extra buys (being overweight alone never sells).",
+                "( ) is the same difference in money: held amount − target amount.",
                 "🪙 Crypto is separate: within crypto total (USDT + spot), BTC 50 · ETH 50."]
-             : ["📐 Gap = 보유 비율 − 목표 자산배분비율 (%p).",
+             : ["📐 비중초과·비중미달 = 보유 비율 − 목표 자산배분비율 (%p).",
                 "➕ 총자산 = 예수금 + 평가금액 (코인 제외). 예수금은 예금·MMF로 셉니다.",
-                "🔻 마이너스: 목표보다 모자람 — 바스켓 매매 전략이 이 종류를 삽니다. 🔺 플러스: 목표보다 많음 — 더 사지 않습니다. Gap만으로 팔지는 않습니다.",
-                "( ) 안은 같은 Gap을 금액으로 — 보유 금액 − 목표 금액.",
+                "🔻 비중미달(−): 목표보다 모자람 — 바스켓 매매 전략이 이 종류를 삽니다. 🔺 비중초과(+): 목표보다 많음 — 더 사지 않습니다. 비중초과만으로 팔지는 않습니다.",
+                "( ) 안은 같은 차이를 금액으로 — 보유 금액 − 목표 금액.",
                 "🪙 코인은 따로: 코인 합계(USDT + 현물) 안에서 BTC 50 · ETH 50."];
   var d = document.createElement("div"); d.id = "mhGapPop";
   d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
   d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
   var close = 'document.getElementById(\'mhGapPop\').remove()';
   d.innerHTML = '<div style="background:var(--card);color:var(--nm);border-radius:18px;max-width:440px;width:100%;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(0,0,0,.45);max-height:86vh;overflow:auto">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">Gap</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:19px;font-weight:800">' + (en ? "Over / Underweight" : "비중초과 · 비중미달") + '</div>'
     + '<span onclick="' + close + '" style="cursor:pointer;font-size:22px;color:var(--sub)">✕</span></div>'
     + L.map(function(l){ return '<div style="margin:10px 0;font-size:16px;line-height:1.7">' + l + '</div>'; }).join("")
     + '<button onclick="' + close + '" style="display:block;width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:var(--tint,#1c7ed6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">' + (en ? "OK" : "확인") + '</button></div>';
@@ -8161,11 +8161,11 @@ function s12Info(e){
   var L = en ? ["💰 One slot = crypto total (USDT + holdings) × ratio ÷ 12. Buys one slot a day while below target.",
                 "🔸 <b>Cash short</b>: what is left in USDT can't buy the slot.",
                 "🔴 <b>SELL</b> shows when an item hits the stop-loss (or take-profit, if set) in the auto-trading window.",
-                "🚫 Being above target (Gap) alone never shows a sell."]
+                "🚫 Being overweight (above target) alone never shows a sell."]
              : ["💰 한 칸 = 코인 총자산(USDT + 평가금액) × 비율 ÷ 12. 목표에 모자라는 동안 하루 한 칸씩 삽니다.",
                 "🔸 <b>예수금 부족</b>: 남은 USDT로 한 칸을 살 수 없습니다.",
                 "🔴 <b>매도 버튼</b>은 종목이 손절선(익절선을 넣었으면 익절선)에 닿으면 나옵니다. 값은 자동매매 창 값입니다.",
-                "🚫 목표보다 많다(Gap 플러스)는 것만으로는 매도가 나오지 않습니다."];
+                "🚫 목표보다 많다(비중초과)는 것만으로는 매도가 나오지 않습니다."];
   var d = document.createElement("div"); d.id = "s12Pop";
   d.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:18px");
   d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
@@ -8528,7 +8528,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 15:52</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 15:54</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
