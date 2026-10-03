@@ -1806,6 +1806,9 @@ let _ordKey="";
 function orderCards(){
   try{
     const ids=["stock","coin2"];   // 🔴 myhold 는 빼둔다 — 실계좌 단추가 그 안에 있다
+    /* 「암호화폐」 카드는 늘 코인 조회 바로 위 (사장님 2026-10-03) — 코인 조회가 오르내려도 따라간다 */
+    try{ const cc=document.getElementById("coin-card"), c2=document.getElementById("coin2");
+      if(cc&&c2&&cc.nextElementSibling!==c2) c2.parentNode.insertBefore(cc,c2); }catch(e){}
     const key=ids.map(cardFull).join(",");
     if(key===_ordKey)return;                          // 바뀔 때만 움직인다
     _ordKey=key;
@@ -8531,5 +8534,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:35</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:43</div>
 </body></html>
