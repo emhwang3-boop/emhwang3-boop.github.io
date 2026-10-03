@@ -6086,7 +6086,8 @@ function bmAddRow(r){
 async function bkAddCurrent(){
   if(typeof stkCode==="undefined"||!stkCode){ alert("먼저 종목을 조회해 주세요."); return; }
   var nm=((E("stkq")||{}).value||stkCode).replace(/\s*\(.*\)\s*$/,""), mk=(typeof stkMarket!=="undefined"&&stkMarket==="us")?"us":"kr";
-  var r={side:"B", mk:mk, code:stkCode, name:nm, qty:1, why:"직접 담음"};
+  var r={side:"B", mk:mk, code:stkCode, name:nm, qty:1, why:"직접 담음", manual:true};
+  try{ r.cls = pfClassOf({mk: mk, code: stkCode, name: nm}); }catch(e){}   /* 재계산 때 이 묶음 몫을 나눠 갖는다 (2026-10-03) */
   try{ r.cur = await bmCur(mk, stkCode); }catch(e){ r.cur = 0; }
   if(r.cur > 0) r.px = bmLimit(mk, "B", r.cur, nm); else r.err = "현재가 못 받음";
   bmAddRow(r);
@@ -7948,9 +7949,40 @@ function bmCashFit(rows, cash, sellCash){
 // 바스켓 재계산 — ✕로 뺀 줄·고친 수량을 반영해 매수 수량을 다시 맞춘다 (사장님 2026-09-28)
 function bmRecalc(){
   if(!BM.rows) return;
+  var moved = 0, nob = [];
+  if(BM.budget){
+    /* 묶음 목표 금액 = 바스켓 만들 때 그 묶음에서 사려던 금액 · 남은 종목(지운 것 빼고) + 직접 넣은 종목이 똑같이 나눈다
+       수량 칸에 직접 숫자를 넣은 줄(user)은 그대로 두고 그만큼 뺀다 (사장님 2026-10-03) */
+    var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 1350, G = {};
+    BM.rows.forEach(function(r){ if(r.side === "B" && r.cls) (G[r.cls] = G[r.cls] || []).push(r); });
+    Object.keys(G).forEach(function(c){
+      if(!(BM.budget[c] > 0)){ G[c].forEach(function(r){ if(r.manual) nob.push(r.name); }); return; }
+      /* 남은 추천 줄은 제 금액 그대로 · 지운 줄 몫(묶음 금액 − 남은 줄 금액)을 직접 넣은 종목들이 똑같이 나눈다.
+         직접 넣은 종목이 없으면 그 몫은 바탕(코어) 말고 남은 추천 종목들에 나눈다 (사장님 2026-10-03) */
+      var L = G[c], kept = 0, man = [], sat = [];
+      L.forEach(function(r){
+        var v = r.user ? (r.qty || 0) * (r.px || 0) * (r.mk === "us" ? fx : 1) : (r.manual ? 0 : (r.amt0 || 0));
+        kept += v;
+        if(!r.user && r.px > 0){ if(r.manual) man.push(r); else if(!/바탕|코어/.test(r.why || "")) sat.push(r); }
+      });
+      var pool = Math.max(0, BM.budget[c] - kept), free = man.length ? man : sat;
+      L.forEach(function(r){ if(!r.user && !r.manual && r.px > 0 && free.indexOf(r) < 0){ r.amt = r.amt0 || r.amt; } });
+      if(!free.length || pool <= 0) return;
+      var each = pool / free.length;
+      free.forEach(function(r){
+        r.amt = (r.manual ? 0 : (r.amt0 || 0)) + each; var q = Math.floor((r.mk === "us" ? r.amt / fx : r.amt) / r.px);
+        if(/^(예수금 부족|1순위로 모음|1주 미달)/.test(r.err || "")) r.err = null;
+        r.why = String(r.why || "").replace(/ · 칸이 작아 1순위(로 모음| 1주)/g, "").replace(/ · 1주$/, "");
+        if(q < 1){ q = 1; r.why += " · 1주"; }        /* 1주에 모자라도 1주는 산다 — 바스켓 규칙과 같게 */
+        r.qty = q; r.q0 = q; moved++;
+      });
+    });
+  }
   BM.rows.forEach(function(r){ if(r.side === "B" && r.q0 > 0 && (!r.err || /^예수금 부족/.test(r.err))){ r.err = null; r.qty = r.q0; } });
   bmCashFit(BM.rows, (typeof RL !== "undefined" && RL.cash) || {}, true);
-  BM.msg = "다시 계산했습니다 — 남은 매도 금액과 주문가능금액 안에서 매수 수량을 맞췄습니다.";
+  BM.msg = (moved ? "자산 묶음별 목표 금액을 남은 종목·직접 넣은 종목에 똑같이 다시 나눴습니다. " : "")
+         + "남은 매도 금액과 주문가능금액 안에서 매수 수량을 맞췄습니다."
+         + (nob.length ? " (" + nob.join("·") + " — 이 성향 목표에 없는 자산 종류라 수량을 그대로 둡니다)" : "");
   bmRender();
 }
 // 바스켓 만들기 — 값은 이때 받는다
@@ -7961,7 +7993,8 @@ async function bmBuild(adhoc){
   BM.busy = true; BM.msg = "현재가를 받는 중…"; BM.rows = null; bmRender();
   try{ if(typeof AT !== "undefined" && !AT.st) AT.st = await atCall(null); }catch(e){}   // 파는 기준 = 자동매매 창 값
   try{
-    var P = bmPlan(o, {trim: true, adhoc: !!adhoc}), rows = P.rows, fx = P.fx, cash = P.cash; BM.mode = P.mode || "";   // 목표까지 한 번에(full) 는 안 쓴다 (사장님 2026-09-28)
+    var P = bmPlan(o, {trim: true, adhoc: !!adhoc}), rows = P.rows, fx = P.fx, cash = P.cash; BM.mode = P.mode || "";
+    BM.budget = {}; rows.forEach(function(r){ if(r.side === "B" && r.cls && r.amt > 0){ r.amt0 = r.amt; BM.budget[r.cls] = (BM.budget[r.cls] || 0) + r.amt; } });   /* 재계산 때 다시 나눌 묶음 금액 · 줄마다 원래 금액 (2026-10-03) */   // 목표까지 한 번에(full) 는 안 쓴다 (사장님 2026-09-28)
     await bmPrice(rows, fx, cash, {sellCash: true});
     BM.rows = rows; BM.msg = (P.mode === "stops" ? "이번 달 맞추기는 다음 교체일(매달 1일)에 합니다 — 지금은 손절·전체 기준에 닿은 종목만 보여 줍니다. " : "") + (rows.length ? "" : "오늘 사고팔 것이 없습니다.");
   }catch(e){ BM.msg = "바스켓을 못 만들었습니다: " + (e.message || e); }
@@ -8450,7 +8483,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 07:05</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 11:58</div>
 <style>#stb,.dplive,#atBtn,#installBar,button[onclick*="rlLoad()"]{display:none!important}</style>
 <script>/* 심사용 — 모의 판 고정 (2026-09-27) */
 try{ rlLiveOn=function(){return false;}; rlLiveSet=function(){}; stToggle=function(){};
