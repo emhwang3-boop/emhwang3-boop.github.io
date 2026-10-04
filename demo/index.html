@@ -4449,11 +4449,50 @@ async function ydLoad(force){
         rows.push(o); });
     }catch(e){ note.push(KE("코인 ","Crypto ") + e.message); }
     rows.forEach(function(o){ o.auto = auto ? !!auto[o.mk + ":" + o.code + ":" + o.side] : null; });
+    if(!isToday){ try{ await ydSoldLater(tok, rows, ds); }catch(e){} }   // 지난 날 산 것 — 그 뒤 판 날짜 (사장님 2026-10-04)
     if(isToday) YD.todayRows = rows;                   // 오늘 거래 확인창이 읽는다 (2026-09-26)
     YD.day = ds; YD.at = Date.now(); YD.today = isToday; YD.html = ydHtml(rows, note, auto);
   }finally{ YD.busy = false; }
   var b = E("ydBody"); if(b) b.innerHTML = YD.html;
   var t = E("ydDate"); if(t) t.textContent = isToday ? (KE("오늘 ","Today ") + new Date().toTimeString().slice(0,5) + KE(" 기준"," as of")) : (ds.slice(0,4) + "-" + md);
+}
+// 지난 날 산 종목을 지금 안 들고 있으면 그 뒤 처음 판 날과, 그날 판 값으로 이 묶음의 손익을 붙인다 (사장님 2026-10-04)
+//   손익 = (판 평균값 − 이날 산 평균값) × 이날 산 수량 · 수수료·세금은 안 뺀 어림 · 체결 내역 한도(미국 92일·코인 90일) 밖이면 「—」 그대로
+async function ydSoldLater(tok, rows, ds){
+  var held = function(o){ try{ return rlRows().some(function(q){ return q.mk === o.mk && String(q.code).toUpperCase() === String(o.code).toUpperCase() && (o.mk !== "coin" || q.spot) && +q.cur > 0; }); }catch(e){ return true; } };
+  var B = rows.filter(function(o){ return o.side === "B" && o.qty > 0 && o.amt > 0 && !held(o); });
+  if(!B.length) return;
+  var d1 = new Date(+ds.slice(0,4), +ds.slice(4,6) - 1, +ds.slice(6,8) + 1), now = new Date(), today = ydYmd(now);
+  var lim = new Date(now); lim.setDate(lim.getDate() - 90); if(d1 < lim) d1 = lim;
+  var st = ydYmd(d1);
+  var hit = function(mk, code, L){   // L = [{dt, q, a}] → 가장 이른 날의 평균값
+    var m = L.filter(function(x){ return x.dt > ds; }); if(!m.length) return null;
+    var d0 = m.reduce(function(a, x){ return x.dt < a ? x.dt : a; }, m[0].dt), q = 0, a = 0;
+    m.forEach(function(x){ if(x.dt === d0){ q += x.q; a += x.a; } });
+    return {dt: d0, px: q > 0 ? a / q : 0};
+  };
+  var put = function(o, h){ if(!h) return; o.sold = {dt: h.dt, pl: h.px > 0 ? (h.px - o.amt / o.qty) * o.qty : null}; };
+  if(tok && B.some(function(o){ return o.mk === "kr"; })){
+    try{ var j = await rlKiwoom(tok, "/api/dostk/acnt", "ka10073", {stk_cd: "", strt_dt: st, end_dt: today}), K = {};
+      ((j && j.dt_stk_rlzt_pl) || []).forEach(function(r){ var c = String(r.stk_cd || "").replace(/^A/, ""), q = rlNum(r.cntr_qty);
+        if(q > 0) (K[c] = K[c] || []).push({dt: String(r.dt || ""), q: q, a: q * rlNum(r.cntr_pric)}); });
+      B.forEach(function(o){ if(o.mk === "kr") put(o, hit("kr", o.code, K[o.code] || [])); });
+    }catch(e){}
+  }
+  if(tok && B.some(function(o){ return o.mk === "us"; })){
+    try{ var u = await rlKiwoom(tok, "/api/us/acnt", "ust21180", {strt_dt: st, end_dt: today, slby_tp: "", stex_tp: "", stk_cd: "", oppo_trde_tp: ""}), U = {};
+      ((u && u.result_list) || []).forEach(function(r){ var q = rlNum(r.cntr_qty); if(!(q > 0) || !/매도/.test(r.slby_tp_nm || "")) return;
+        var c = String(r.stk_cd).toUpperCase(); (U[c] = U[c] || []).push({dt: String(r.ord_dt || ""), q: q, a: rlNum(r.cntr_amt)}); });
+      B.forEach(function(o){ if(o.mk === "us") put(o, hit("us", o.code, U[String(o.code).toUpperCase()] || [])); });
+    }catch(e){}
+  }
+  if(B.some(function(o){ return o.mk === "coin"; })){
+    try{ var f = await rlOkx("/api/v5/trade/fills-history?instType=SPOT&begin=" + d1.getTime() + "&end=" + now.getTime()), C = {};
+      ((f && f.data) || []).forEach(function(r){ if(r.side !== "sell") return; var q = rlNum(r.fillSz);
+        (C[r.instId] = C[r.instId] || []).push({dt: ydYmd(new Date(+r.ts)), q: q, a: q * rlNum(r.fillPx)}); });
+      B.forEach(function(o){ if(o.mk === "coin") put(o, hit("coin", o.code, C[o.code] || [])); });
+    }catch(e){}
+  }
 }
 function nyDsEarly(){ try{ var p = {}; new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date()).forEach(function(x){ p[x.type]=x.value; }); return p.year+p.month+p.day; }catch(e){ return ""; } }
 function ydHtml(rows, note, auto){
@@ -4478,11 +4517,13 @@ function ydHtml(rows, note, auto){
       if(ur != null){ plK += ur * k; plN++; }
       var rz = (o.side === "S" && typeof o.pl === "number") ? o.pl : null;     // 매도는 실현손익 (미국·코인은 앞선 매수 평균값으로 어림)
       if(rz != null){ rzK += rz * k; rzN++; }
-      var v = o.side === "S" ? rz : ur;
+      var v = o.side === "S" ? rz : ur, soldTag = "";
+      if(o.side === "B" && ur == null && o.sold){ v = (typeof o.sold.pl === "number") ? o.sold.pl : null;
+        soldTag = o.sold.dt.slice(4,6) + "-" + o.sold.dt.slice(6,8) + KE(" 매도"," sold"); }   // 그 뒤 판 날 (사장님 2026-10-04)
       var tag = o.auto === null ? "" : (o.auto ? '<span class="tag" style="background:#1c7ed6;color:#fff">' + KE("자동","Auto") + '</span>'
                                                 : '<span class="tag" style="background:#868e96;color:#fff">' + KE("수동","Manual") + '</span>');
-      var pl = v == null ? '<span class="dplbl">—</span>' : ((v > 0 ? "+" : "") + money(o.mk, v)
-               + '<br><span class="dplbl">' + (o.side === "S" ? KE("실현","realized") : KE("미실현","open")) + '</span>');   // 설명은 아래 줄 — 표가 카드 밖으로 잘리던 것 (2026-09-28)
+      var pl = v == null ? '<span class="dplbl">' + (soldTag || "—") + '</span>' : ((v > 0 ? "+" : "") + money(o.mk, v)
+               + '<br><span class="dplbl">' + (soldTag || (o.side === "S" ? KE("실현","realized") : KE("미실현","open"))) + '</span>');   // 설명은 아래 줄 — 표가 카드 밖으로 잘리던 것 (2026-09-28)
       // 자동·수동 딱지는 칸 오른쪽 끝에 — 줄마다 같은 자리 (사장님 2026-09-26)
       h += '<tr><td style="text-align:left"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px"><span>' + dpEsc(o.name) + ' <span class="dplbl">' + MK[o.mk] + '</span></span>' + tag + '</div></td>'
         + '<td class="' + (o.side === "B" ? "up" : "dn") + '">' + (o.side === "B" ? KE("매수","Buy") : KE("매도","Sell")) + ' ' + (+o.qty).toLocaleString(undefined, {maximumFractionDigits: o.mk === "coin" ? 4 : 6})
@@ -8549,5 +8590,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-03 16:48</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-04 10:30</div>
 </body></html>
