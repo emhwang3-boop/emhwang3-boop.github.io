@@ -6760,7 +6760,7 @@ try{var _t=document.getElementById("ttl");if(_t)_t.innerHTML=brandMark();}catch(
 function vcSend(){
   var el=document.getElementById("vcTxt"), msg=document.getElementById("vcMsg"), en=(typeof LANG!=="undefined"&&LANG==="en");
   var t=(el&&el.value||"").trim(); if(!t){ if(msg)msg.textContent=en?"Please write something.":"내용을 적어 주세요."; return; }
-  var app=/\/demo\/|live-demo/.test(location.pathname)?"demo":"live";
+  var app=/\/demo2\//.test(location.pathname)?"demo2":(/\/demo\/|live-demo/.test(location.pathname)?"demo":"live");   // demo · demo2 따로 (사장님 2026-10-04)
   var vid=""; try{vid=localStorage.getItem("brief_vid")||"";}catch(e){}
   var base=(typeof HUB!=="undefined"&&HUB)?HUB.replace(/\/$/,""):"";
   if(!base){ if(msg)msg.textContent=en?"Not available here.":"여기서는 보낼 수 없습니다."; return; }
@@ -8590,5 +8590,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-04 10:30</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-04 21:01</div>
 </body></html>
