@@ -129,7 +129,13 @@ async function buildDay(di){
   }
   marks.push({i:S.length - 1, at:t});
   let hs = null;
-  try { const got = await Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, pts.map(p => Cesium.Cartographic.fromDegrees(p.lon, p.lat))); hs = got.map(c => (c.height || 0) + 3); } catch (e) { hs = null; }
+  el("desc").textContent = "지형을 불러오는 중입니다…";
+  try {   /* 5초 안에 안 오면 그냥 간다 — 땅 높이는 달리면서 잰다 */
+    const got = await Promise.race([
+      Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, pts.map(p => Cesium.Cartographic.fromDegrees(p.lon, p.lat))),
+      new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 5000))]);
+    hs = got.map(c => (c.height || 0) + 3);
+  } catch (e) { hs = null; }
   if (dayIdx !== di) return;   // 그사이 다른 날을 눌렀으면 버린다
   const start = Cesium.JulianDate.now(), pos = new Cesium.SampledPositionProperty();
   pts.forEach((p, k) => pos.addSample(Cesium.JulianDate.addSeconds(start, times[k], new Cesium.JulianDate()), Cesium.Cartesian3.fromDegrees(p.lon, p.lat, hs ? hs[k] : 0)));
@@ -151,7 +157,7 @@ async function buildDay(di){
   el("day").textContent = label; el("stop").textContent = S[0][0].n; el("desc").textContent = S[0][1]; el("prog").style.width = "0%";
 }
 
-let lastHead = 0, cur_car = null;
+let lastHead = 0, cur_car = null, lastGh = 60;
 vw.ws3dInitCallBack = function(){
   viewer = ws3d.viewer;
   try { viewer.scene.globe.depthTestAgainstTerrain = true; viewer.scene.fog.enabled = true; } catch (e) {}   // 산이 앞을 가리고 멀리는 흐리게 — 입체감
@@ -169,7 +175,9 @@ vw.ws3dInitCallBack = function(){
     }
     if (driver) {
       const c = Cesium.Cartographic.fromCartesian(p);
-      let gh = cur.hs ? c.height : (viewer.scene.globe.getHeight(c) || 0);
+      let gh = viewer.scene.globe.getHeight(c);                        // 지금 보이는 땅 높이를 직접 잰다
+      if (gh === undefined || gh === null) gh = cur.hs ? c.height : lastGh;
+      if (cur.hs) gh = Math.max(gh, c.height); lastGh = gh;
       viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
       viewer.camera.setView({ destination:Cesium.Cartesian3.fromRadians(c.longitude, c.latitude, gh + EYE),
         orientation:{ heading:lastHead, pitch:Cesium.Math.toRadians(LOOK), roll:0 } });
