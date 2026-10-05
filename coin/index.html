@@ -541,7 +541,7 @@ function grpDelay(gr){
   if(gr.title==="아시아")return asiaLiveNow();
   return false;
 }
-function render(d){
+function render(d){ try{ if(d&&d.kr_status) window._krSt=d.kr_status; }catch(e){}   /* 국내 휴장 여부 — krLiveNow 가 본다 (2026-10-05) */
   window._lastD=d;
   {
     document.getElementById("asof").textContent=d.asof+L("asof")+(d.__snap?L("snap"):"");
@@ -1480,7 +1480,8 @@ function asiaLiveNow(){       // 한국시각 평일 09:00~19:00 (니케이·호
   const m=k.getHours()*60+k.getMinutes();
   return m>=540&&m<1140;
 }
-function krLiveNow(){const k=new Date(Date.now()+new Date().getTimezoneOffset()*60000+324e5);
+function krLiveNow(){if(window._krSt&&window._krSt.open===false)return false;   /* 휴장일엔 실시간 아님 (사장님 2026-10-05) */
+  const k=new Date(Date.now()+new Date().getTimezoneOffset()*60000+324e5);
   const m=k.getHours()*60+k.getMinutes();return k.getDay()>=1&&k.getDay()<=5&&m>=480&&m<1200;} // 평일 08:00~20:00
 // 미국 동부시간(서머타임 자동) → {요일, 분}
 function _etnow(){var p={};
@@ -4040,5 +4041,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-05 13:25</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-05 13:29</div>
 </body></html>
