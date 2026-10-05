@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>코스 미리 달려 보기 · 시니어 프리미엄 투어</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@500;700&display=swap">
+<script src="https://map.vworld.kr/js/webglMapInit.js.do?version=3.0&apiKey=24D68E66-2559-4073-A331-B0A50BBC676F"></script>
+<style>
+/* 시니어 프리미엄 투어와 같은 색 · 지도 전체 화면 + 위 띠(제목·일차·단추) + 아래 카드(지금 지나는 곳) */
+:root{--ink:#14221D;--muted:#3E5149;--accent:#1E6656;--accent-ink:#fff;--warm:#A8402B;--card:#FFFFFF;--line:#C5D3CD;
+  --f-display:"Gowun Batang",Batang,serif;--f-body:"Noto Sans KR","Malgun Gothic",sans-serif}
+html,body{height:100%;margin:0}
+body{font-family:var(--f-body);font-size:19px;color:var(--ink);background:#dfe8e4;overflow:hidden}
+#vmap{position:absolute;inset:0}
+.top{position:absolute;left:0;right:0;top:0;z-index:5;padding:calc(.6rem + env(safe-area-inset-top,0px)) 16px .6rem;
+  background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:.5rem}
+.top h1{font-family:var(--f-display);font-size:1.1rem;margin:0;color:var(--accent)}
+.top h1 small{font-family:var(--f-body);font-size:.8rem;color:var(--muted);font-weight:500;margin-left:.4rem}
+.btns{display:flex;flex-wrap:wrap;gap:.4rem}
+button,a.b{font:inherit;font-weight:700;font-size:.95rem;min-height:2.9rem;padding:0 1rem;border-radius:.75rem;border:0;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.go{background:var(--accent);color:var(--accent-ink)} .sub{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.dayb{background:#fff;color:var(--ink);border:2px solid var(--line)} .dayb[aria-pressed="true"]{background:var(--warm);color:#fff;border-color:var(--warm)}
+.card{position:absolute;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;max-width:34rem;margin-inline:auto;
+  background:var(--card);border-radius:1rem;padding:.9rem 1.1rem;box-shadow:0 6px 24px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:.2rem}
+.card .day{color:var(--warm);font-weight:700;font-size:.85rem;letter-spacing:.04em}
+.card b{font-family:var(--f-display);font-size:1.35rem}
+.card span{color:var(--muted);font-size:.95rem}
+.bar{height:.5rem;border-radius:.3rem;background:#e3ece8;overflow:hidden;margin-top:.4rem}
+.bar i{display:block;height:100%;width:0;background:var(--accent)}
+.err{position:absolute;left:16px;right:16px;top:45%;z-index:6;background:#fff;border-radius:1rem;padding:1rem;font-size:1rem;display:none}
+:focus-visible{outline:3px solid var(--warm);outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="vmap"></div>
+<div class="top">
+  <h1 id="ttl">경주 역사 여정 · 2박 3일<small>코스 미리 달려 보기</small></h1>
+  <div class="btns" id="days"></div>
+  <div class="btns">
+    <button class="go" id="play">▶ 출발</button>
+    <button class="sub" id="again">처음부터</button>
+    <button class="sub" id="speed">속도: 느리게</button>
+    <a class="b sub" href="./">← 여정으로</a>
+  </div>
+</div>
+<div class="card" aria-live="polite">
+  <span class="day" id="day">1일차</span>
+  <b id="stop">신경주역</b>
+  <span id="desc">▶ 출발을 누르시면 자동차가 그날 코스를 따라 달립니다.</span>
+  <div class="bar"><i id="prog"></i></div>
+</div>
+<div class="err" id="err">지도를 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.</div>
+<script>
+/* 코스 — 일차마다 따로 (예시 좌표). 다음 날은 전날 숙소에서 출발한다 */
+const P = {
+  st:  {n:"신경주역", lat:35.7983, lon:129.1386},
+  drw: {n:"대릉원 · 첨성대", lat:35.8360, lon:129.2140},
+  ht:  {n:"보문호 숙소", lat:35.8420, lon:129.2830},
+  bgs: {n:"불국사", lat:35.7900, lon:129.3320},
+  sga: {n:"석굴암", lat:35.7950, lon:129.3490},
+  dg:  {n:"동궁과 월지", lat:35.8347, lon:129.2266},
+  mu:  {n:"국립경주박물관", lat:35.8296, lon:129.2283}
+};
+const COURSES = {
+  gj: { title:"경주 역사 여정 · 2박 3일", days:[
+    [[P.st,"KTX 도착"], [P.drw,"신라 왕릉과 천문대 산책"], [P.ht,"입실 15:00 · 호수 산책"]],
+    [[P.ht,"아침 출발"], [P.bgs,"오전 관람 · 청운교 백운교"], [P.sga,"셔틀로 올라가는 길"], [P.dg,"저녁 야경"], [P.ht,"숙소로 돌아와 휴식"]],
+    [[P.ht,"퇴실 11:00"], [P.mu,"오전 관람 · 성덕대왕신종"], [P.st,"오후 KTX 귀가"]]
+  ]}
+};
+const C = COURSES[(new URLSearchParams(location.search).get("trip")) || "gj"] || COURSES.gj;
+document.getElementById("ttl").firstChild.nodeValue = C.title;
+
+/* 카트처럼 뒤에서 본 귀여운 자동차 (그림으로 그림) */
+function carSprite(){
+  const c = document.createElement("canvas"); c.width = 128; c.height = 112; const g = c.getContext("2d");
+  const rr = (x,y,w,h,r) => { g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); };
+  g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(64,104,52,8,0,0,Math.PI*2); g.fill();
+  g.fillStyle = "#222"; rr(10,70,24,32,7); g.fill(); rr(94,70,24,32,7); g.fill();
+  g.fillStyle = "#1E6656"; rr(20,50,88,44,16); g.fill();
+  g.fillStyle = "#A8402B"; rr(20,78,88,10,4); g.fill();
+  g.fillStyle = "#FFD15C"; rr(26,80,14,6,3); g.fill(); rr(88,80,14,6,3); g.fill();
+  g.fillStyle = "#F4F1EA"; g.beginPath(); g.arc(64,40,22,0,Math.PI*2); g.fill();
+  g.fillStyle = "#1E6656"; g.beginPath(); g.arc(64,36,22,Math.PI,0); g.fill();
+  g.fillStyle = "#fff"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("SPT", 64, 70);
+  return c.toDataURL();
+}
+const CAR = carSprite();
+
+const map = new vw.Map();
+map.setOption({ mapId:"vmap", initPosition:new vw.CameraPosition(new vw.CoordZ(129.24, 35.76, 9000), new vw.Direction(0,-50,0)), logo:true, navigation:false });
+try { map.start(); } catch (e) { document.getElementById("err").style.display = "block"; }
+
+let viewer = null, cur = null, playing = false, slow = true, dayIdx = 0;
+const STEP = 0.0006;
+const $ = id => document.getElementById(id);
+
+/* 두 곳 사이를 살짝 굽은 길로 잇는다 (도로 대신 · 시안) */
+function seg(a, b){
+  const out = [], dx = b.lon - a.lon, dy = b.lat - a.lat, len = Math.hypot(dx, dy), n = Math.max(6, Math.round(len / STEP));
+  const nx = -dy / (len || 1), ny = dx / (len || 1), bend = Math.min(0.006, len * 0.12);
+  for (let i = 0; i <= n; i++){ const f = i / n, w = Math.sin(Math.PI * f) * bend; out.push({lon: a.lon + dx * f + nx * w, lat: a.lat + dy * f + ny * w}); }
+  return out;
+}
+
+/* 그날 코스 그리기 — 앞서 그린 길·차는 지우고 새로 */
+async function buildDay(di){
+  if (!viewer) return;
+  dayIdx = di; playing = false; $("play").textContent = "▶ 출발";
+  if (cur) cur.ents.forEach(e => viewer.entities.remove(e));
+  const S = C.days[di], label = (di + 1) + "일차";
+  const pts = [], times = [], marks = []; let t = 0;
+  for (let i = 0; i < S.length - 1; i++){
+    const p = seg(S[i][0], S[i+1][0]);
+    if (i === 0) { pts.push(p[0]); times.push(t); }
+    marks.push({i, at:t}); t += 4; pts.push(p[0]); times.push(t);
+    for (let k = 1; k < p.length; k++){ t += Math.hypot(p[k].lon - p[k-1].lon, p[k].lat - p[k-1].lat) * 900; pts.push(p[k]); times.push(t); }
+  }
+  marks.push({i:S.length - 1, at:t});
+  let hs = null;
+  try { const got = await Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, pts.map(p => Cesium.Cartographic.fromDegrees(p.lon, p.lat))); hs = got.map(c => (c.height || 0) + 3); } catch (e) { hs = null; }
+  if (dayIdx !== di) return;   // 그사이 다른 날을 눌렀으면 버린다
+  const start = Cesium.JulianDate.now(), pos = new Cesium.SampledPositionProperty();
+  pts.forEach((p, k) => pos.addSample(Cesium.JulianDate.addSeconds(start, times[k], new Cesium.JulianDate()), Cesium.Cartesian3.fromDegrees(p.lon, p.lat, hs ? hs[k] : 0)));
+  const ents = [];
+  ents.push(viewer.entities.add({ polyline:{ positions:pts.map((p, k) => Cesium.Cartesian3.fromDegrees(p.lon, p.lat, hs ? hs[k] : 0)), width:7, clampToGround:true,
+    material:new Cesium.PolylineOutlineMaterialProperty({ color:Cesium.Color.fromCssColorString("#1E6656"), outlineWidth:2, outlineColor:Cesium.Color.WHITE }) }}));
+  const seen = {};
+  S.forEach(s => { if (seen[s[0].n]) return; seen[s[0].n] = 1;
+    ents.push(viewer.entities.add({ position:Cesium.Cartesian3.fromDegrees(s[0].lon, s[0].lat), point:{ pixelSize:14, color:Cesium.Color.fromCssColorString("#A8402B"), outlineColor:Cesium.Color.WHITE, outlineWidth:3, heightReference:Cesium.HeightReference.CLAMP_TO_GROUND, disableDepthTestDistance:Number.POSITIVE_INFINITY },
+      label:{ text:s[0].n, font:"bold 18px 'Noto Sans KR',sans-serif", fillColor:Cesium.Color.fromCssColorString("#14221D"), showBackground:true, backgroundColor:Cesium.Color.WHITE.withAlpha(.9),
+        pixelOffset:new Cesium.Cartesian2(0,-26), heightReference:Cesium.HeightReference.CLAMP_TO_GROUND, disableDepthTestDistance:Number.POSITIVE_INFINITY } })); });
+  ents.push(viewer.entities.add({ position:pos, billboard:{ image:CAR, width:72, height:63, verticalOrigin:Cesium.VerticalOrigin.BOTTOM,
+    heightReference: hs ? Cesium.HeightReference.NONE : Cesium.HeightReference.CLAMP_TO_GROUND, disableDepthTestDistance:Number.POSITIVE_INFINITY } }));
+  const clk = viewer.clock; clk.startTime = start.clone(); clk.currentTime = start.clone();
+  clk.stopTime = Cesium.JulianDate.addSeconds(start, t, new Cesium.JulianDate()); clk.clockRange = Cesium.ClockRange.CLAMP_TO_END;
+  clk.multiplier = slow ? 1 : 2.2; clk.shouldAnimate = false;
+  cur = { ents, pos, total:t, marks, S, label, hs, lastStop:-1 };
+  document.querySelectorAll(".dayb").forEach((b, k) => b.setAttribute("aria-pressed", k === di));
+  $("day").textContent = label; $("stop").textContent = S[0][0].n; $("desc").textContent = S[0][1]; $("prog").style.width = "0%";
+}
+
+let lastHead = 0;
+vw.ws3dInitCallBack = function(){
+  viewer = ws3d.viewer;
+  $("days").innerHTML = C.days.map((d, i) => '<button class="dayb" data-d="' + i + '" aria-pressed="' + (i === 0) + '">' + (i + 1) + '일차</button>').join("");
+  buildDay(0);
+  /* 뒤에서 따라가는 카메라 + 지금 지나는 곳 카드 */
+  viewer.scene.preRender.addEventListener(function(){
+    if (!cur) return;
+    const clk = viewer.clock, now = clk.currentTime, p = cur.pos.getValue(now); if (!p) return;
+    const ahead = cur.pos.getValue(Cesium.JulianDate.addSeconds(now, 1.5, new Cesium.JulianDate()));
+    if (ahead && !Cesium.Cartesian3.equalsEpsilon(p, ahead, 0, 0.5)) {
+      const a = Cesium.Cartographic.fromCartesian(p), b = Cesium.Cartographic.fromCartesian(ahead);
+      const h = Math.atan2((b.longitude - a.longitude) * Math.cos(a.latitude), b.latitude - a.latitude);
+      let d = h - lastHead; while (d > Math.PI) d -= 2*Math.PI; while (d < -Math.PI) d += 2*Math.PI; lastHead += d * 0.08;
+    }
+    viewer.camera.lookAt(p, new Cesium.HeadingPitchRange(lastHead, Cesium.Math.toRadians(-22), cur.hs ? 420 : 1400));
+    const sec = Cesium.JulianDate.secondsDifference(now, clk.startTime);
+    $("prog").style.width = Math.min(100, sec / cur.total * 100) + "%";
+    let si = 0; cur.marks.forEach(m => { if (sec >= m.at) si = m.i; });
+    if (si !== cur.lastStop) { cur.lastStop = si; $("stop").textContent = cur.S[si][0].n; $("desc").textContent = cur.S[si][1]; }
+    if (sec >= cur.total && playing) { playing = false;
+      $("play").textContent = dayIdx < C.days.length - 1 ? "▶ " + (dayIdx + 2) + "일차로" : "▶ 다시 보기"; }
+  });
+};
+
+document.addEventListener("click", function(e){
+  const b = e.target.closest(".dayb"); if (b) buildDay(+b.dataset.d);
+});
+$("play").onclick = function(){
+  if (!viewer || !cur) return; const clk = viewer.clock;
+  if (Cesium.JulianDate.secondsDifference(clk.currentTime, clk.startTime) >= cur.total) {
+    if (dayIdx < C.days.length - 1) { buildDay(dayIdx + 1); return; }
+    clk.currentTime = clk.startTime.clone();
+  }
+  playing = !playing; clk.shouldAnimate = playing; this.textContent = playing ? "⏸ 멈춤" : "▶ 계속";
+};
+$("again").onclick = function(){
+  if (!viewer || !cur) return; viewer.clock.currentTime = viewer.clock.startTime.clone(); playing = true; viewer.clock.shouldAnimate = true; $("play").textContent = "⏸ 멈춤";
+};
+$("speed").onclick = function(){
+  slow = !slow; if (viewer) viewer.clock.multiplier = slow ? 1 : 2.2; this.textContent = slow ? "속도: 느리게" : "속도: 보통";
+};
+</script>
+</body>
+</html>
