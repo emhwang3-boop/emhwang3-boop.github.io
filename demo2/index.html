@@ -7647,7 +7647,12 @@ function pfRender(){
      + '<span style="font-weight:900;color:#1c7ed6">'+g.nm+' ('+o.score+'점)</span><span class="dplbl">'+pfEsc(o.at)+' 분석 · 누르면 결과</span></div>';
   // ② 목표 배분 원형 그래프 + 실계좌와의 차이
   var fx = (typeof fxKrw==="function"&&fxKrw()>0)?fxKrw():0;
-  h += '<div style="position:relative;margin-top:6px">' + pfPie(g.mix.map(function(m){ return [m[0], m[1]]; }))
+  /* 보여 주는 순서만 안전 → 초위험 (보유종목 묶음과 같은 차례, 사장님 2026-10-05) — g.mix 비율·매매 계산은 그대로 */
+  var _PO = ["예금·MMF", "국내 지수형 ETF", "국내 채권형 ETF", "국내 원화 ETF", "해외 원화표시 채권형 ETF", "미국 달러 지수형 ETF", "미국 달러표시 채권형 ETF",
+             "해외(원화) 주식형 ETF", "원화 주식형 레버리지 ETF", "국내 주식", "미국 달러 주식형 ETF", "달러 주식형 레버리지 ETF", "해외 주식"];
+  var _pi = function(c){ var i = _PO.indexOf(c); return i < 0 ? 99 : i; };
+  var gmix = g.mix.slice().sort(function(a, b){ return _pi(a[0]) - _pi(b[0]); });
+  h += '<div style="position:relative;margin-top:6px">' + pfPie(gmix.map(function(m){ return [m[0], m[1]]; }))
      + (fx?'<span style="position:absolute;top:0;right:2px;font-size:11px;color:var(--sub);background:var(--card);padding:1px 5px;border:1px solid var(--bd);border-radius:6px">'+KE('환율 '+fx.toLocaleString(undefined,{maximumFractionDigits:2})+'원','FX ₩'+fx.toLocaleString(undefined,{maximumFractionDigits:2}))+'</span>':'')
      + '</div>';
   var has = (typeof RL!=="undefined") && RL.at;
@@ -7660,7 +7665,8 @@ function pfRender(){
   val["예금·MMF"] = (val["예금·MMF"]||0) + (+cash.krw||0) + (+cash.usd||0)*f;     // 예수금은 예금·MMF 로 본다
   var tot = 0; Object.keys(val).forEach(function(k){ tot += val[k]; });   // 코인은 빼고 센다 — 바스켓 매매·보유종목 Gap 과 같은 셈 (사장님 2026-09-26)
   var TGT = {}; g.mix.forEach(function(m){ TGT[m[0]] = m[1]; });
-  var keys = g.mix.map(function(m){ return m[0]; }); Object.keys(val).forEach(function(k){ if(keys.indexOf(k)<0 && val[k]>0) keys.push(k); });
+  var keys = gmix.map(function(m){ return m[0]; }); Object.keys(val).forEach(function(k){ if(keys.indexOf(k)<0 && val[k]>0) keys.push(k); });
+  keys.sort(function(a, b){ return _pi(a) - _pi(b); });
   h += '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">'+KE('목표와의 차이','Gap from target')+' <span class="dplbl">'+KE('총자산(코인 제외) '+Math.round(tot).toLocaleString()+'원','Total assets (ex-crypto) ₩'+Math.round(tot).toLocaleString())+'</span></div>'
      + '<table class="mhtab"><tr><th>'+KE('자산 종류','Asset class')+'</th><th>'+KE('보유','Held')+'</th><th>'+KE('목표','Target')+'</th><th>'+KE('차이','Gap')+'</th></tr>';
   var row = function(k, now, tg){ var d = now - tg;
@@ -8579,5 +8585,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-04 21:01</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-05 13:25</div>
 </body></html>
