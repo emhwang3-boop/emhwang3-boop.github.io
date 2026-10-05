@@ -91,7 +91,8 @@ const CAR = carSprite();
 
 const map = new vw.Map();
 map.setOption({ mapId:"vmap", initPosition:new vw.CameraPosition(new vw.CoordZ(129.24, 35.76, 9000), new vw.Direction(0,-50,0)), logo:true, navigation:false });
-try { map.start(); } catch (e) { document.getElementById("err").style.display = "block"; }
+try { map.start(); } catch (e) { const er = document.getElementById("err"); er.style.display = "block"; er.textContent = "지도를 불러오지 못했습니다: " + (e && (e.message || e)); }
+window.addEventListener("error", function(ev){ const er = document.getElementById("err"); if (er.style.display === "block") er.textContent += " / " + ev.message; });
 
 let viewer = null, cur = null, playing = false, slow = true, dayIdx = 0;
 const STEP = 0.0006;
