@@ -1,5 +1,5 @@
-// 시니어 프리미엄 투어 — 앱 화면은 새 판 먼저(네트워크), 안 되면 저장본 (202610052110)
-const C = "spt-202610052110";
+// 시니어 프리미엄 투어 — 앱 화면은 새 판 먼저(네트워크), 안 되면 저장본 (202610052111)
+const C = "spt-202610052111";
 self.addEventListener("install", e => { self.skipWaiting(); e.waitUntil(caches.open(C).then(c => c.addAll(["./", "./index.html", "./manifest.webmanifest", "./icon-192.png"]))); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", e => {
