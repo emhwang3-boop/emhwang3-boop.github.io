@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1E6656">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>시니어 프리미엄 투어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 한 줄 세로 흐름(웹툰처럼): 고정 머리 → 질문 하나 → 고른 만큼만 아래로 펼침 → 고정 아래 띠(상담·보내기) */
+:root{
+  --bg:#F1F5F3; --surface:#FFFFFF; --ink:#14221D; --muted:#3E5149; --line:#C5D3CD;
+  --accent:#1E6656; --accent-ink:#FFFFFF; --warm:#A8402B; --warm-ink:#FFFFFF; --chip:#E1ECE8;
+  --f-display:"Gowun Batang","Noto Serif KR",Batang,serif;
+  --f-body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --fs:19px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1613; --surface:#16211D; --ink:#EBF3EF; --muted:#B9C9C2; --line:#2B3B35;
+  --accent:#72C3AE; --accent-ink:#0E1613; --warm:#E8876B; --warm-ink:#1A0E0A; --chip:#1E2C27; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1613; --surface:#16211D; --ink:#EBF3EF; --muted:#B9C9C2; --line:#2B3B35;
+  --accent:#72C3AE; --accent-ink:#0E1613; --warm:#E8876B; --warm-ink:#1A0E0A; --chip:#1E2C27; color-scheme:dark}
+:root.big{--fs:23px}
+html{font-size:var(--fs)}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:1rem;line-height:1.6;padding-inline:16px;padding-block:0 7.5rem}
+.wrap{max-width:40rem;margin-inline:auto;display:flex;flex-direction:column;gap:1.4rem}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.3}
+h2{font-size:1.45rem}
+h3{font-size:1.15rem}
+p{margin:0}
+button,a.btn{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--warm);outline-offset:3px}
+
+/* 머리 */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);margin-inline:-16px;padding:.7rem 16px .6rem;border-bottom:1px solid var(--line)}
+.top-in{max-width:40rem;margin-inline:auto;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .7rem}
+.brand{flex:1 1 12rem;min-width:0}
+.brand h1{font-size:1.15rem;color:var(--accent)}
+.brand .ed{font-size:.85rem;color:var(--muted);font-weight:500}
+.tools{display:flex;flex-wrap:wrap;gap:.4rem}
+.tool{min-height:2.6rem;padding:.2rem .75rem;border-radius:.6rem;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-size:.85rem;font-weight:700}
+.tool[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.note{font-size:.8rem;color:var(--muted);text-align:center;padding-top:.8rem}
+
+/* 큰 질문과 큰 단추 */
+.ask{display:flex;flex-direction:column;gap:.9rem;padding-top:.6rem}
+.big-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.8rem}
+.pick{display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;min-height:5.2rem;padding:1rem 1.1rem;border-radius:1rem;border:2px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
+.pick b{font-family:var(--f-display);font-size:1.3rem}
+.pick span{color:var(--muted);font-size:.9rem}
+.pick[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.nights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
+.night{min-height:3.6rem;border-radius:.8rem;border:2px solid var(--line);background:var(--surface);color:var(--ink);font-size:1.1rem;font-weight:700}
+.night[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+/* 여정 목록 */
+.list{display:flex;flex-direction:column;gap:.7rem}
+.trip{display:grid;grid-template-columns:3.2rem minmax(0,1fr);gap:.2rem .9rem;align-items:center;padding:.9rem 1rem;border-radius:1rem;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;width:100%}
+.trip .mark{grid-row:span 2;width:3.2rem;height:3.2rem;border-radius:.8rem;background:var(--chip);display:grid;place-items:center;font-family:var(--f-display);font-size:1.25rem;color:var(--accent);font-weight:700}
+.trip b{font-size:1.1rem}
+.trip span{color:var(--muted);font-size:.9rem}
+.trip[aria-pressed="true"]{border-color:var(--accent);border-width:2px}
+
+/* 여정 상세 */
+.sheet{background:var(--surface);border:1.5px solid var(--line);border-radius:1.1rem;padding:1.2rem 1.1rem;display:flex;flex-direction:column;gap:1.1rem}
+.sec{display:flex;flex-direction:column;gap:.6rem}
+.sec + .sec{border-top:1px solid var(--line);padding-top:1rem}
+.lead{color:var(--muted)}
+.days{display:flex;flex-direction:column;gap:.55rem;margin:0;padding:0;list-style:none}
+.days li{display:grid;grid-template-columns:4.2rem minmax(0,1fr);gap:.6rem}
+.days .d{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:.3rem 1rem;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem}
+.chip{background:var(--chip);color:var(--ink);border-radius:999px;padding:.15rem .7rem;font-size:.85rem;font-weight:500}
+.verify{display:inline-flex;align-items:center;gap:.35rem;color:var(--accent);font-weight:700;font-size:.9rem}
+.rows{display:flex;flex-direction:column;gap:.6rem}
+.row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem .8rem;padding:.8rem .9rem;border-radius:.9rem;background:var(--chip)}
+.row .txt{min-width:0;flex:1 1 12rem}
+.row .txt b{display:block}
+.row .txt span{color:var(--muted);font-size:.9rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:3rem;padding:.3rem 1.1rem;border-radius:.75rem;border:0;background:var(--accent);color:var(--accent-ink);font-weight:700;text-decoration:none;white-space:nowrap}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
+.hint{font-size:.85rem;color:var(--muted)}
+
+/* 여행 경비 */
+.opt{display:flex;flex-direction:column;gap:.35rem}
+.olbl{font-weight:700;color:var(--muted);font-size:.9rem}
+.seg{min-height:2.8rem;padding:.2rem .9rem;border-radius:.7rem;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700}
+.seg[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.bill{display:flex;flex-direction:column;border:1.5px solid var(--line);border-radius:.9rem;overflow:hidden}
+.bl{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:.4rem .7rem;align-items:center;padding:.7rem .8rem;border-bottom:1px solid var(--line)}
+.bt{min-width:0} .bt b{display:block} .bt span{color:var(--muted);font-size:.85rem}
+.ba{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bx{min-height:2.4rem;padding:0 .6rem;border-radius:.6rem;border:1.5px solid var(--line);background:var(--bg);color:var(--muted);font-size:.85rem;font-weight:700}
+.btot,.bper{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;padding:.7rem .8rem;font-variant-numeric:tabular-nums}
+.btot{background:var(--chip)} .btot b{font-size:1.35rem;color:var(--accent)} .btot span{font-weight:700}
+.bper{color:var(--muted);font-weight:700}
+@media (max-width:26rem){.bl{grid-template-columns:minmax(0,1fr) auto}.bl .bx{grid-column:2;justify-self:end}}
+/* 이달의 여정 · 해외편 */
+.month{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.7rem}
+.mcard{display:flex;flex-direction:column;gap:.2rem;padding:1rem;border-radius:1rem;background:var(--surface);border:1.5px solid var(--line);color:var(--ink);text-align:left}
+.mcard .tag{font-size:.8rem;font-weight:700;color:var(--warm);letter-spacing:.04em}
+.mcard b{font-family:var(--f-display);font-size:1.15rem}
+.mcard span{color:var(--muted);font-size:.9rem}
+.abroad{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.6rem}
+.soon{padding:.8rem .9rem;border-radius:.9rem;border:1.5px dashed var(--line);color:var(--muted)}
+.soon b{display:block;color:var(--ink)}
+
+/* 아래 띠 */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding:.6rem 16px calc(.6rem + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:40rem;margin-inline:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem}
+.bar button{min-height:3.4rem;border-radius:.8rem;border:0;font-weight:700;font-size:.95rem;line-height:1.25}
+.b-call{background:var(--warm);color:var(--warm-ink)}
+.b-send{background:var(--accent);color:var(--accent-ink)}
+.b-home{background:var(--chip);color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:6.2rem;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--ink);color:var(--bg);padding:.7rem 1rem;border-radius:.8rem;font-size:.95rem;z-index:7}
+.panel{background:var(--chip);border-radius:.9rem;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.5rem}
+.panel .num{font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums;user-select:all}
+@media (prefers-reduced-motion:no-preference){.sheet,.list,.nights{animation:rise .25s ease-out both}@keyframes rise{from{transform:translateY(6px)}to{transform:none}}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><h1 id="appTitle"></h1><div class="ed" id="edition"></div></div>
+    <div class="tools">
+      <button class="tool" id="bigBtn" aria-pressed="false"></button>
+      <button class="tool" id="readBtn"></button>
+      <button class="tool" id="langBtn"></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+
+<div class="bar"><div class="bar-in">
+  <button class="b-call" id="callBtn"></button>
+  <button class="b-send" id="sendBtn"></button>
+  <button class="b-home" id="homeBtn"></button>
+</div></div>
+
+<script>
+/* ── 말 ── */
+const T = {
+  title:["시니어 프리미엄 투어","Senior Premium Tour"],
+  edition:["국내여행편","Korea Edition"],
+  big:["가 글자 크게","A Larger text"], small:["가 글자 보통","A Normal text"],
+  read:["🔊 읽어 주기","🔊 Read aloud"], stop:["■ 읽기 멈춤","■ Stop reading"],
+  lang:["English","한국어"],
+  call:["📞 상담 전화","📞 Call us"], send:["💬 자녀에게 보내기","💬 Send to family"], home:["처음으로","Start over"],
+  sample:["시안 화면입니다. 숙소·평점·시간은 모두 예시 정보입니다.","Draft screen. Hotels, ratings and times are sample data."],
+  ask:["어떤 여행을 계획하십니까?","What kind of trip are you planning?"],
+  short:["단기 여행","Short trip"], shortSub:["1박 2일부터 6박 7일까지","From 1 night to 6 nights"],
+  month:["한 달 살기","Month-long stay"], monthSub:["한 지역에서 한 달 머무르기","Stay one month in one place"],
+  howLong:["며칠 일정이십니까?","How long is your trip?"],
+  nightLbl:[n=>n+"박 "+(n+1)+"일", n=>n+" night"+(n>1?"s":"")+" · "+(n+1)+" days"],
+  pickTrip:["추천 여정","Recommended itineraries"], pickTripSub:["마음에 드는 여정을 누르십시오.","Tap the one you like."],
+  near:["이 기간에 맞는 여정이 없어 가까운 일정을 보여 드립니다.","No exact match, showing the closest itineraries."],
+  where:["어디에서 지내시겠습니까?","Where would you like to stay?"],
+  sched:["일정","Daily plan"], stay:["숙박","Where you stay"], inT:["입실","Check-in"], outT:["퇴실","Check-out"],
+  grade:["등급","Grade"], review:["이용 후기","Guest rating"], verified:["✔ 검증 기준 통과","✔ Passed our checks"],
+  verifyRule:["이용 후기 4.5점 이상 · 후기 300건 이상 · 엘리베이터 있음","Rating 4.5+ · 300+ reviews · elevator"],
+  pickup:["역 송영","Station pickup"],
+  trans:["교통편","Getting there"], train:["기차 (KTX · SRT)","Train (KTX · SRT)"], book:["예매하기","Book"],
+  air:["항공 (대형 항공사)","Flight (full-service)"], lcc:["항공 (저가항공)","Flight (low-cost)"], lccSub:["가격이 낮은 대신 좌석 간격·수하물 기준이 다릅니다.","Lower fares; seat pitch and baggage rules differ."], rentCo:["렌터카 (대기업 운영사)","Rental car (major companies)"], rentSub:["롯데렌터카 · SK렌터카만 안내합니다.","Only Lotte and SK rental shown."],
+  mycar:["My Car","My Car"], myDrive:["내 차로 가기","Drive my car"], rent:["차 빌리기","Rent a car"],
+  local:["현지에서","On arrival"], taxi:["택시 부르기","Call a taxi"],
+  care:["건강 · 안전","Health & safety"], hosp:["가까운 종합병원","Nearest general hospital"], pharm:["약국","Pharmacy"],
+  life:["생활","Daily life"], dayTrip:["근교 당일 여정","Day trips nearby"], monthHome:["한 달 숙소","Monthly lodging"], rate:["월 요금","Per month"],
+  thisMonth:["10월 추천 여정","Picks for October"], thisMonthSub:["아래로 내리시면 더 보입니다.","Scroll down for more."],
+  abroad:["다른 여행편","Other editions"], soon:["준비 중","Coming soon"],
+  callPanel:["상담 전화 (평일 09:00 ~ 18:00)","Call us (weekdays 09:00 – 18:00)"], callHint:["번호를 길게 눌러 복사하실 수 있습니다.","Press and hold the number to copy it."],
+  copied:["일정을 복사했습니다. 카카오톡 대화창에 붙여 넣으십시오.","Itinerary copied. Paste it into a chat."],
+  copyFail:["복사가 안 되었습니다. 아래 글을 길게 눌러 복사하십시오.","Copy failed. Press and hold the text below to copy."],
+  nothing:["먼저 여정을 고르시면 일정을 보내 드릴 수 있습니다.","Pick an itinerary first, then you can send it."],
+  linkLater:["카카오T 앱의 해당 화면으로 연결됩니다. 연결 주소는 확인 후 넣습니다.","Opens the matching screen in the Kakao T app. Link will be added after testing."],
+  min:["분","min"], hr:["시간","h"],
+  drive:["🚗 코스 미리 달려 보기","🚗 Preview the route"], driveSub:["입체 지도 위를 자동차가 일차별로 달립니다.","A car drives each day on a 3D map."],
+  cost:["여행 경비","Trip budget"], costSub:["고르신 대로 자동으로 담았습니다. 필요 없는 항목은 빼십시오.","Filled in from your choices. Remove anything you don't need."],
+  people:["인원","Travellers"], ppl:[n=>n+"명", n=>n+(n>1?" people":" person")], how:["가는 방법","How you travel"],
+  hTrain:["기차","Train"], hAir:["항공 (대형)","Flight (full-service)"], hLcc:["항공 (저가)","Flight (low-cost)"], hCar:["My Car","My Car"],
+  rentOn:["렌터카 포함","Rental car included"], rentOff:["렌터카 없음","No rental car"],
+  cTrans:["교통","Transport"], cStay:["숙박","Lodging"], cRent:["렌터카","Rental car"], cTaxi:["현지 택시","Local taxi"], cMeal:["식비","Meals"], cTix:["입장료 · 체험","Admission & activities"], cFuel:["유류비 · 통행료","Fuel & tolls"],
+  remove:["빼기","Remove"], back:["다시 넣기","Add back"], total:["합계","Total"], per:["1인당","Per person"],
+  estimate:["※ 예상 금액(예시 기준가)이며 예약 시 달라질 수 있습니다.","* Estimate from sample base prices; actual prices vary at booking."],
+  won:[v=>v.toLocaleString()+"원", v=>"₩"+v.toLocaleString()]
+};
+let L = 0;  // 0 한국어 · 1 English
+const t = (k, a) => { const v = T[k][L]; return typeof v === "function" ? v(a) : v; };
+const pick = o => (typeof o === "object" && o !== null && "ko" in o) ? (L ? o.en : o.ko) : o;
+
+/* ── 예시 정보 ── */
+const TRIPS = [
+  {id:"gn", n:1, price:{fare:27600, hotel:380000, tix:5000, car:160000}, line:{ko:"KTX 강릉선",en:"KTX Gangneung Line"}, mark:{ko:"강",en:"G"}, name:{ko:"강릉 바다 여정",en:"Gangneung by the sea"}, sub:{ko:"경포 · 안목 커피거리 · 오죽헌",en:"Gyeongpo · Anmok coffee street · Ojukheon"},
+   days:[{ko:"오전 KTX로 강릉 도착 → 오죽헌 → 오후 경포호 산책 → 바다 앞 숙소",en:"Morning KTX to Gangneung → Ojukheon → Gyeongpo Lake walk → seaside hotel"},
+         {ko:"안목 커피거리 → 초당 순두부 점심 → 오후 KTX로 귀가",en:"Anmok coffee street → Chodang tofu lunch → afternoon KTX home"}],
+   hotel:{ko:"경포 해변 5성 호텔 (예시)",en:"Gyeongpo beach 5-star hotel (sample)"}, grade:5, score:4.7, cnt:1840, inT:"15:00", outT:"11:00", pickup:true,
+   chips:[{ko:"엘리베이터",en:"Elevator"},{ko:"욕실 안전손잡이",en:"Bath grab bars"},{ko:"계단 없는 출입구",en:"Step-free entrance"}],
+   train:{ko:"서울역 08:01 → 강릉역 09:55",en:"Seoul 08:01 → Gangneung 09:55"}, drive:{ko:"약 2시간 40분 · 평창휴게소 추천",en:"About 2 h 40 min · rest stop: Pyeongchang"},
+   taxi:{ko:"강릉역 → 숙소 약 15분",en:"Gangneung Stn → hotel, about 15 min"}, hosp:{ko:"강릉 시내 종합병원 · 차로 12분 (예시)",en:"General hospital in Gangneung · 12 min drive (sample)"}, dest:"강릉역,37.7637,128.8995"},
+  {id:"jj", n:1, price:{fare:34000, hotel:300000, tix:8000, car:170000}, line:{ko:"KTX 전라선",en:"KTX Jeolla Line"}, mark:{ko:"전",en:"J"}, name:{ko:"전주 한옥 여정",en:"Jeonju hanok village"}, sub:{ko:"한옥마을 · 경기전 · 전주 비빔밥",en:"Hanok village · Gyeonggijeon · bibimbap"},
+   days:[{ko:"KTX 전주 도착 → 경기전 → 한옥마을 산책 → 한옥 숙소",en:"KTX to Jeonju → Gyeonggijeon → hanok walk → hanok stay"},
+         {ko:"전동성당 → 비빔밥 점심 → 오후 귀가",en:"Jeondong Cathedral → bibimbap lunch → home"}],
+   hotel:{ko:"한옥마을 고급 한옥 스테이 (예시)",en:"Premium hanok stay (sample)"}, grade:5, score:4.8, cnt:620, inT:"15:00", outT:"11:00", pickup:false,
+   chips:[{ko:"좌식 아닌 침대 객실",en:"Bed, not floor mattress"},{ko:"객실 내 욕실",en:"Private bathroom"}],
+   train:{ko:"용산역 08:20 → 전주역 10:05 (익산에서 전라선)",en:"Yongsan 08:20 → Jeonju 10:05 (via Iksan)"}, drive:{ko:"약 2시간 50분 · 정안알밤휴게소 추천",en:"About 2 h 50 min · rest stop: Jeongan"},
+   taxi:{ko:"전주역 → 한옥마을 약 20분",en:"Jeonju Stn → hanok village, about 20 min"}, hosp:{ko:"전주 시내 종합병원 · 차로 10분 (예시)",en:"General hospital in Jeonju · 10 min (sample)"}, dest:"전주역,35.8497,127.1619"},
+  {id:"gj", n:2, price:{fare:49300, hotel:350000, tix:20000, car:230000}, line:{ko:"KTX 경부선",en:"KTX Gyeongbu Line"}, mark:{ko:"경",en:"G"}, name:{ko:"경주 역사 여정",en:"Gyeongju heritage"}, sub:{ko:"불국사 · 석굴암 · 대릉원 · 보문호",en:"Bulguksa · Seokguram · Daereungwon · Bomun Lake"},
+   days:[{ko:"KTX 신경주 도착 → 대릉원 · 첨성대 → 보문호 숙소",en:"KTX to Singyeongju → Daereungwon · Cheomseongdae → Bomun Lake hotel"},
+         {ko:"불국사 → 석굴암 (셔틀) → 오후 휴식 → 동궁과 월지 야경",en:"Bulguksa → Seokguram (shuttle) → rest → Donggung night view"},
+         {ko:"국립경주박물관 → 점심 → 오후 KTX 귀가",en:"Gyeongju National Museum → lunch → afternoon KTX"}],
+   hotel:{ko:"보문호 5성 리조트 호텔 (예시)",en:"Bomun Lake 5-star resort (sample)"}, grade:5, score:4.6, cnt:3120, inT:"15:00", outT:"11:00", pickup:true,
+   chips:[{ko:"엘리베이터",en:"Elevator"},{ko:"휠체어 대여",en:"Wheelchair loan"},{ko:"계단 없는 출입구",en:"Step-free entrance"}],
+   train:{ko:"서울역 08:00 → 신경주역 10:05",en:"Seoul 08:00 → Singyeongju 10:05"}, drive:{ko:"약 4시간 · 칠곡휴게소 · 건천휴게소 추천",en:"About 4 h · rest stops: Chilgok, Geoncheon"},
+   taxi:{ko:"신경주역 → 보문호 숙소 약 25분",en:"Singyeongju Stn → Bomun, about 25 min"}, hosp:{ko:"경주 시내 종합병원 · 차로 15분 (예시)",en:"General hospital in Gyeongju · 15 min (sample)"}, dest:"신경주역,35.7983,129.1386"},
+  {id:"ys", n:2, price:{fare:44000, hotel:330000, tix:25000, car:220000}, line:{ko:"KTX 전라선",en:"KTX Jeolla Line"}, mark:{ko:"여",en:"Y"}, name:{ko:"여수 · 순천 여정",en:"Yeosu & Suncheon"}, sub:{ko:"순천만 정원 · 여수 밤바다 · 해상케이블카",en:"Suncheon Bay garden · Yeosu night sea · cable car"},
+   days:[{ko:"KTX 순천 도착 → 순천만 국가정원 (전동차) → 여수 숙소",en:"KTX to Suncheon → Suncheon Bay garden (cart) → Yeosu hotel"},
+         {ko:"오동도 → 해상케이블카 → 저녁 여수 밤바다",en:"Odongdo → sea cable car → Yeosu night sea"},
+         {ko:"향일암 (차로) → 점심 → 여수엑스포역 KTX 귀가",en:"Hyangiram (by car) → lunch → KTX from Yeosu Expo"}],
+   hotel:{ko:"여수 바다 전망 5성 호텔 (예시)",en:"Yeosu sea-view 5-star hotel (sample)"}, grade:5, score:4.6, cnt:2410, inT:"15:00", outT:"11:00", pickup:false,
+   chips:[{ko:"엘리베이터",en:"Elevator"},{ko:"욕실 안전손잡이",en:"Bath grab bars"}],
+   train:{ko:"용산역 08:30 → 순천역 11:05",en:"Yongsan 08:30 → Suncheon 11:05"}, drive:{ko:"약 4시간 20분 · 여산휴게소 추천",en:"About 4 h 20 min · rest stop: Yeosan"},
+   taxi:{ko:"순천역 → 순천만 정원 약 10분",en:"Suncheon Stn → garden, about 10 min"}, hosp:{ko:"여수 시내 종합병원 · 차로 10분 (예시)",en:"General hospital in Yeosu · 10 min (sample)"}, dest:"순천역,34.9455,127.5036"},
+  {id:"sr", n:3, price:{fare:27600, hotel:360000, tix:30000, car:160000}, line:{ko:"KTX 강릉선",en:"KTX Gangneung Line"}, mark:{ko:"설",en:"S"}, name:{ko:"설악 · 속초 단풍 여정",en:"Seoraksan autumn leaves"}, sub:{ko:"설악산 케이블카 · 속초 바다 · 낙산사",en:"Seorak cable car · Sokcho sea · Naksansa"},
+   days:[{ko:"KTX 강릉 → 숙소 송영 → 속초 해변 산책",en:"KTX to Gangneung → hotel pickup → Sokcho beach walk"},
+         {ko:"설악산 케이블카 (권금성) → 신흥사 → 숙소 휴식",en:"Seorak cable car → Sinheungsa → rest"},
+         {ko:"낙산사 → 하조대 → 저녁 대게",en:"Naksansa → Hajodae → snow crab dinner"},
+         {ko:"아침 산책 → 점심 → 귀가",en:"Morning walk → lunch → home"}],
+   hotel:{ko:"설악 5성 리조트 (예시)",en:"Seorak 5-star resort (sample)"}, grade:5, score:4.5, cnt:1520, inT:"15:00", outT:"11:00", pickup:true,
+   chips:[{ko:"엘리베이터",en:"Elevator"},{ko:"온천",en:"Hot spring"}],
+   train:{ko:"서울역 08:01 → 강릉역 09:55 (숙소 송영)",en:"Seoul 08:01 → Gangneung 09:55 (hotel pickup)"}, drive:{ko:"약 2시간 40분 · 내린천휴게소 추천",en:"About 2 h 40 min · rest stop: Naerincheon"},
+   taxi:{ko:"숙소 → 케이블카 승강장 약 10분",en:"Hotel → cable car, about 10 min"}, hosp:{ko:"속초 시내 종합병원 · 차로 15분 (예시)",en:"General hospital in Sokcho · 15 min (sample)"}, dest:"설악산 소공원,38.1726,128.4895"},
+  {id:"jeju", n:4, price:{air:95000, lcc:65000, hotel:420000, tix:30000}, mark:{ko:"제",en:"J"}, name:{ko:"제주 동서 여정",en:"Jeju east & west"}, sub:{ko:"성산 · 우도 · 협재 · 오설록 (항공)",en:"Seongsan · Udo · Hyeopjae · Osulloc (flight)"},
+   days:[{ko:"김포 → 제주 항공 → 서귀포 숙소",en:"Fly Gimpo → Jeju → Seogwipo hotel"},
+         {ko:"성산일출봉 (입구 산책) → 섭지코지",en:"Seongsan Ilchulbong (foot walk) → Seopjikoji"},
+         {ko:"오설록 → 협재 해변 → 한림공원",en:"Osulloc → Hyeopjae beach → Hallim Park"},
+         {ko:"천지연 폭포 → 숙소 휴식",en:"Cheonjiyeon falls → rest"},
+         {ko:"점심 → 제주 → 김포 항공",en:"Lunch → fly home"}],
+   hotel:{ko:"중문 5성 호텔 (예시)",en:"Jungmun 5-star hotel (sample)"}, grade:5, score:4.7, cnt:4380, inT:"15:00", outT:"11:00", pickup:false,
+   chips:[{ko:"엘리베이터",en:"Elevator"},{ko:"휠체어 대여",en:"Wheelchair loan"}],
+   train:null, air:{ko:"김포 → 제주 약 1시간 10분 · 김해 → 제주 약 55분",en:"Gimpo → Jeju ~1 h 10 min · Gimhae → Jeju ~55 min"}, drive:null,
+   taxi:{ko:"제주공항 → 중문 약 50분",en:"Jeju Airport → Jungmun, about 50 min"}, hosp:{ko:"서귀포 종합병원 · 차로 15분 (예시)",en:"General hospital in Seogwipo · 15 min (sample)"}, dest:"제주국제공항,33.5104,126.4914"}
+];
+const STAYS = [
+  {id:"jeju", price:{rate:2800000, air:95000, lcc:65000}, air:{ko:"김포 → 제주 약 1시간 10분",en:"Gimpo → Jeju ~1 h 10 min"}, noCar:true, name:{ko:"제주 애월",en:"Aewol, Jeju"}, sub:{ko:"바다 앞 조용한 마을 · 공항 30분",en:"Quiet seaside village · 30 min to airport"},
+   home:{ko:"바다 전망 레지던스 (예시)",en:"Sea-view residence (sample)"}, rate:{ko:"월 280만 원부터 (예시)",en:"From ₩2.8M / month (sample)"},
+   life:[{ko:"종합병원 차로 25분",en:"General hospital 25 min"},{ko:"대형마트 차로 15분",en:"Supermarket 15 min"},{ko:"골프장 차로 20분",en:"Golf course 20 min"},{ko:"주민센터 문화강좌",en:"Community classes"}],
+   trips:[{ko:"한림공원 · 협재 해변",en:"Hallim Park · Hyeopjae"},{ko:"오설록 · 산방산",en:"Osulloc · Sanbangsan"},{ko:"우도 (배편)",en:"Udo island (ferry)"}], dest:"애월읍,33.4627,126.3309"},
+  {id:"nh", price:{rate:2200000, car:250000}, name:{ko:"남해",en:"Namhae"}, sub:{ko:"다랭이마을 · 독일마을 · 따뜻한 겨울",en:"Terraced village · German village · mild winter"},
+   home:{ko:"남해 바다 전망 단독 숙소 (예시)",en:"Namhae sea-view house (sample)"}, rate:{ko:"월 220만 원부터 (예시)",en:"From ₩2.2M / month (sample)"},
+   life:[{ko:"병원 차로 20분",en:"Hospital 20 min"},{ko:"하나로마트 차로 10분",en:"Grocery 10 min"},{ko:"골프장 차로 25분",en:"Golf course 25 min"}],
+   trips:[{ko:"통영 케이블카",en:"Tongyeong cable car"},{ko:"하동 화개장터",en:"Hadong Hwagae market"},{ko:"진주성",en:"Jinju fortress"}], dest:"남해군청,34.8377,127.8924"},
+  {id:"gn", price:{rate:2500000, fare:27600, car:160000}, line:{ko:"KTX 강릉선",en:"KTX Gangneung Line"}, train:{ko:"서울역 → 강릉역 약 1시간 55분",en:"Seoul → Gangneung ~1 h 55 min"}, name:{ko:"강릉",en:"Gangneung"}, sub:{ko:"KTX 2시간 · 바다와 커피",en:"2 h by KTX · sea and coffee"},
+   home:{ko:"경포 레지던스 (예시)",en:"Gyeongpo residence (sample)"}, rate:{ko:"월 250만 원부터 (예시)",en:"From ₩2.5M / month (sample)"},
+   life:[{ko:"종합병원 차로 10분",en:"General hospital 10 min"},{ko:"대형마트 차로 8분",en:"Supermarket 8 min"},{ko:"평생학습관 강좌",en:"Lifelong learning classes"}],
+   trips:[{ko:"정동진",en:"Jeongdongjin"},{ko:"양양 낙산사",en:"Naksansa, Yangyang"},{ko:"평창 대관령",en:"Daegwallyeong"}], dest:"강릉역,37.7637,128.8995"},
+  {id:"bs", price:{rate:3200000, fare:59800, car:280000}, line:{ko:"KTX 경부선",en:"KTX Gyeongbu Line"}, train:{ko:"서울역 → 부산역 약 2시간 40분",en:"Seoul → Busan ~2 h 40 min"}, name:{ko:"부산 해운대",en:"Haeundae, Busan"}, sub:{ko:"큰 병원 가까움 · 바다 산책로",en:"Major hospitals close · seaside walks"},
+   home:{ko:"해운대 레지던스 호텔 (예시)",en:"Haeundae residence hotel (sample)"}, rate:{ko:"월 320만 원부터 (예시)",en:"From ₩3.2M / month (sample)"},
+   life:[{ko:"대학병원 차로 15분",en:"University hospital 15 min"},{ko:"백화점 걸어서 10분",en:"Department store 10 min walk"},{ko:"해변 산책로",en:"Beach promenade"}],
+   trips:[{ko:"기장 해동용궁사",en:"Haedong Yonggungsa"},{ko:"경주 (KTX 30분)",en:"Gyeongju (30 min KTX)"},{ko:"태종대",en:"Taejongdae"}], dest:"해운대해수욕장,35.1587,129.1604"}
+];
+const MONTH = [
+  {tag:{ko:"단풍",en:"AUTUMN LEAVES"}, trip:"sr", txt:{ko:"설악산 단풍 3박 4일",en:"Seoraksan, 3 nights"}, sub:{ko:"케이블카로 편하게 오르는 단풍",en:"Leaves by cable car"}},
+  {tag:{ko:"역사",en:"HERITAGE"}, trip:"gj", txt:{ko:"경주 역사 2박 3일",en:"Gyeongju, 2 nights"}, sub:{ko:"선선한 가을 산책",en:"Cool autumn walks"}},
+  {tag:{ko:"한 달 살기",en:"MONTH STAY"}, stay:"jeju", txt:{ko:"제주 애월 한 달",en:"A month in Aewol"}, sub:{ko:"관광객이 줄어드는 계절",en:"Quieter season"}}
+];
+const ABROAD = [["남미여행편","South America"],["유럽여행편","Europe"],["북미여행편","North America"],["아프리카여행편","Africa"]];
+
+/* ── 상태 ── */
+const S = { mode:null, nights:null, trip:null, stay:null, people:2, how:null, rent:null, off:{} };
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const mapLink = d => "https://map.kakao.com/link/to/" + encodeURIComponent(d.split(",")[0]) + "," + d.split(",").slice(1).join(",");
+const stars = g => "★".repeat(g);
+
+function render(){
+  document.documentElement.lang = L ? "en" : "ko";
+  $("appTitle").textContent = t("title"); $("edition").textContent = t("edition");
+  $("bigBtn").textContent = document.documentElement.classList.contains("big") ? t("small") : t("big");
+  $("readBtn").textContent = speaking ? t("stop") : t("read");
+  $("langBtn").textContent = t("lang");
+  $("callBtn").textContent = t("call"); $("sendBtn").textContent = t("send"); $("homeBtn").textContent = t("home");
+
+  let h = '<p class="note">' + t("sample") + '</p>';
+  h += '<section class="ask" aria-labelledby="q1"><h2 id="q1">' + t("ask") + '</h2><div class="big-choice">'
+     + '<button class="pick" data-mode="short" aria-pressed="' + (S.mode==="short") + '"><b>🧳 ' + t("short") + '</b><span>' + t("shortSub") + '</span></button>'
+     + '<button class="pick" data-mode="month" aria-pressed="' + (S.mode==="month") + '"><b>🏡 ' + t("month") + '</b><span>' + t("monthSub") + '</span></button>'
+     + '</div></section>';
+
+  if (S.mode === "short") {
+    h += '<section class="ask" id="secNights"><h2>' + t("howLong") + '</h2><div class="nights">';
+    for (let n = 1; n <= 6; n++) h += '<button class="night" data-n="' + n + '" aria-pressed="' + (S.nights===n) + '">' + t("nightLbl", n) + '</button>';
+    h += '</div></section>';
+    if (S.nights) {
+      let list = TRIPS.filter(x => x.n === S.nights), near = false;
+      if (!list.length) { near = true; const best = Math.min(...TRIPS.map(x => Math.abs(x.n - S.nights))); list = TRIPS.filter(x => Math.abs(x.n - S.nights) === best); }
+      h += '<section class="ask" id="secTrips"><h2>' + t("pickTrip") + '</h2><p class="lead">' + (near ? t("near") : t("pickTripSub")) + '</p><div class="list">'
+         + list.map(x => '<button class="trip" data-trip="' + x.id + '" aria-pressed="' + (S.trip===x.id) + '"><span class="mark">' + esc(pick(x.mark)) + '</span><b>' + esc(pick(x.name)) + ' · ' + t("nightLbl", x.n) + '</b><span>' + esc(pick(x.sub)) + '</span></button>').join("")
+         + '</div></section>';
+    }
+    const tr = TRIPS.find(x => x.id === S.trip);
+    if (tr) h += tripSheet(tr);
+  }
+  if (S.mode === "month") {
+    h += '<section class="ask" id="secStays"><h2>' + t("where") + '</h2><div class="list">'
+       + STAYS.map(x => '<button class="trip" data-stay="' + x.id + '" aria-pressed="' + (S.stay===x.id) + '"><span class="mark">' + esc(pick(x.name)).slice(0,1) + '</span><b>' + esc(pick(x.name)) + '</b><span>' + esc(pick(x.sub)) + '</span></button>').join("")
+       + '</div></section>';
+    const st = STAYS.find(x => x.id === S.stay);
+    if (st) h += staySheet(st);
+  }
+
+  h += '<section class="ask"><h2>' + t("thisMonth") + '</h2><p class="lead">' + t("thisMonthSub") + '</p><div class="month">'
+     + MONTH.map(m => '<button class="mcard" ' + (m.trip ? 'data-go-trip="' + m.trip + '"' : 'data-go-stay="' + m.stay + '"') + '><span class="tag">' + esc(pick(m.tag)) + '</span><b>' + esc(pick(m.txt)) + '</b><span>' + esc(pick(m.sub)) + '</span></button>').join("")
+     + '</div></section>';
+  h += '<section class="ask"><h2>' + t("abroad") + '</h2><div class="abroad">'
+     + ABROAD.map(a => '<div class="soon"><b>' + a[L] + '</b>' + t("soon") + '</div>').join("") + '</div></section>';
+  h += '<div id="panelSlot"></div>';
+  $("app").innerHTML = h;
+}
+
+function linkRow(title, sub, btnTxt, href, kind){
+  const b = href ? '<a class="btn" href="' + href + '" target="_blank" rel="noopener">' + btnTxt + ' ▶</a>'
+                 : '<button class="btn" data-later="' + (kind||"") + '">' + btnTxt + ' ▶</button>';
+  return '<div class="row"><div class="txt"><b>' + title + '</b><span>' + sub + '</span></div>' + b + '</div>';
+}
+
+const RENT = [["롯데렌터카","Lotte Rent-a-car","https://www.lotterentacar.net/"],["SK렌터카","SK Rent-a-car","https://www.skcarrental.com/"]];
+const AIR = [["대한항공","Korean Air","https://www.koreanair.com/"],["아시아나항공","Asiana Airlines","https://flyasiana.com/"]];
+const LCC = [["제주항공","Jeju Air","https://www.jejuair.net/"],["진에어","Jin Air","https://www.jinair.com/"],["티웨이항공","T'way Air","https://www.twayair.com/"],["에어부산","Air Busan","https://www.airbusan.com/"],["이스타항공","Eastar Jet","https://www.eastarjet.com/"]];
+function multiRow(title, sub, list){
+  return '<div class="row"><div class="txt"><b>' + title + '</b><span>' + sub + '</span></div><div class="chips">'
+    + list.map(c => '<a class="btn" href="' + c[2] + '" target="_blank" rel="noopener">' + c[L] + ' ▶</a>').join("") + '</div></div>';
+}
+/* 교통편 — 지역마다 실제로 가는 방법만 (사장님 10-05): 항공 또는 기차 · My Car(있을 때) · 대기업 렌터카 · 현지 택시 */
+function transRows(x, taxiSub){
+  let h = '';
+  if (x.air) h += multiRow("✈ " + t("air"), esc(pick(x.air)), AIR) + multiRow("✈ " + t("lcc"), t("lccSub"), LCC);
+  if (x.train) h += linkRow("🚄 " + (x.line ? esc(pick(x.line)) : t("train")), esc(pick(x.train)), t("book"), "https://www.letskorail.com/");
+  if (x.dest && !x.air && !x.noCar) h += linkRow("🚗 " + t("mycar") + " · " + t("myDrive"), x.drive ? esc(pick(x.drive)) : esc(pick(x.name)), t("myDrive"), mapLink(x.dest));
+  h += multiRow("🚗 " + t("rentCo"), t("rentSub"), RENT);
+  h += linkRow("🚕 " + t("taxi"), taxiSub, t("taxi"), null, "taxi");
+  return h;
+}
+/* ── 여행 경비 바구니 (사장님 10-05) — 고른 대로 자동으로 담고 빼기만 한다 · 요금은 예시 기준가 ── */
+const MEAL = 80000, TAXI = 15000, RENT_D = 120000, RENT_M = 1800000, MEAL_M = 1200000;
+function hows(x){ const p = x.price || {}, a = [];
+  if (p.fare) a.push("train"); if (p.air) a.push("air"); if (p.lcc) a.push("lcc"); if (p.car) a.push("car"); return a; }
+function curHow(x){ const a = hows(x); return a.indexOf(S.how) >= 0 ? S.how : a[0]; }
+function curRent(x){ const h = curHow(x); return S.rent === null ? (h === "air" || h === "lcc") : S.rent; }
+function costItems(x, month){
+  const p = x.price || {}, n = S.people, how = curHow(x), rent = curRent(x), out = [];
+  const days = month ? 30 : x.n + 1, nights = month ? 30 : x.n;
+  const tn = {train: (x.line ? pick(x.line) : t("hTrain")), air: t("hAir"), lcc: t("hLcc")};
+  if (how === "car") out.push({k:"fuel", lab:t("cFuel"), det:(L ? "Round trip by car" : "자가용 왕복"), amt:p.car});
+  else { const one = how === "train" ? p.fare : (how === "air" ? p.air : p.lcc);
+         out.push({k:"trans", lab:t("cTrans"), det:tn[how] + (L ? " round trip × " : " 왕복 × ") + t("ppl", n), amt:one * 2 * n}); }
+  const rooms = n > 2 ? 2 : 1;
+  out.push({k:"stay", lab:t("cStay"),
+            det: month ? pick(x.home).replace(/\s*\((예시|sample)\)/, "") + (L ? " · 1 month" : " · 한 달")
+                       : pick(x.hotel).replace(/\s*\((예시|sample)\)/, "") + " · " + nights + (L ? " nights" : "박") + (rooms > 1 ? (L ? " · 2 rooms" : " · 객실 2개") : ""),
+            amt: month ? p.rate : p.hotel * nights * rooms});
+  if (rent && how !== "car") out.push({k:"rent", lab:t("cRent"), det:(L ? "Lotte / SK · " : "롯데·SK · ") + (month ? (L ? "1 month" : "한 달") : days + (L ? " days" : "일")), amt: month ? RENT_M : RENT_D * days});
+  if (!rent || how === "car") { const c = month ? 8 : x.n * 2 + 2; out.push({k:"taxi", lab:t("cTaxi"), det:(L ? "About " + c + " rides" : "약 " + c + "회"), amt:TAXI * c}); }
+  out.push({k:"meal", lab:t("cMeal"), det:t("ppl", n) + " × " + (month ? (L ? "1 month" : "한 달") : days + (L ? " days" : "일")), amt: month ? MEAL_M * n : MEAL * n * days});
+  if (!month && p.tix) out.push({k:"tix", lab:t("cTix"), det:t("ppl", n), amt:p.tix * n});
+  return out;
+}
+function perHead(tot){ return Math.round(tot / S.people / 100) * 100; }
+function costBox(x, month){
+  const items = costItems(x, month), on = items.filter(i => !S.off[i.k]), offs = items.filter(i => S.off[i.k]);
+  const tot = on.reduce((a, i) => a + i.amt, 0), hs = hows(x), how = curHow(x), rent = curRent(x);
+  const HL = {train:t("hTrain"), air:t("hAir"), lcc:t("hLcc"), car:t("hCar")};
+  let h = '<div class="sec" id="costSec"><h3>💰 ' + t("cost") + '</h3><p class="hint">' + t("costSub") + '</p>';
+  h += '<div class="opt"><span class="olbl">' + t("people") + '</span><div class="chips">' + [1,2,3,4].map(k => '<button class="seg" data-ppl="' + k + '" aria-pressed="' + (S.people===k) + '">' + t("ppl", k) + '</button>').join("") + '</div></div>';
+  h += '<div class="opt"><span class="olbl">' + t("how") + '</span><div class="chips">' + hs.map(k => '<button class="seg" data-how="' + k + '" aria-pressed="' + (how===k) + '">' + HL[k] + '</button>').join("")
+     + (how !== "car" ? '<button class="seg" data-rent="1" aria-pressed="' + rent + '">' + (rent ? t("rentOn") : t("rentOff")) + '</button>' : '') + '</div></div>';
+  h += '<div class="bill">' + on.map(i => '<div class="bl"><div class="bt"><b>' + i.lab + '</b><span>' + esc(i.det) + '</span></div><span class="ba">' + t("won", i.amt) + '</span><button class="bx" data-off="' + i.k + '">' + t("remove") + '</button></div>').join("")
+     + '<div class="btot"><span>' + t("total") + '</span><b>' + t("won", tot) + '</b></div><div class="bper"><span>' + t("per") + '</span><span>' + t("won", perHead(tot)) + '</span></div></div>';
+  if (offs.length) h += '<div class="chips">' + offs.map(i => '<button class="seg" data-on="' + i.k + '">＋ ' + i.lab + ' ' + t("back") + '</button>').join("") + '</div>';
+  return h + '<p class="hint">' + t("estimate") + '</p></div>';
+}
+function costText(x, month){
+  const on = costItems(x, month).filter(i => !S.off[i.k]), tot = on.reduce((a, i) => a + i.amt, 0);
+  return "───────────\n" + on.map(i => i.lab + "  " + i.det + "  " + t("won", i.amt)).join("\n")
+    + "\n───────────\n" + t("total") + " " + t("won", tot) + " (" + t("per") + " " + t("won", perHead(tot)) + ")\n" + t("estimate");
+}
+function tripSheet(x){
+  let h = '<article class="sheet" id="sheet"><div class="sec"><h2>' + esc(pick(x.name)) + '</h2><p class="lead">' + esc(pick(x.sub)) + ' · ' + t("nightLbl", x.n) + '</p></div>';
+  if (x.id === "gj") h += '<div class="sec"><a class="btn" style="min-height:3.6rem;font-size:1.05rem" href="https://emhwang3-boop.github.io/tour/drive.html?trip=gj" target="_blank" rel="noopener">' + t("drive") + '</a><span class="hint">' + t("driveSub") + '</span></div>';
+  h += '<div class="sec"><h3>' + t("sched") + '</h3><ol class="days">'
+     + x.days.map((d, i) => '<li><span class="d">' + (L ? "Day " + (i+1) : (i+1) + "일차") + '</span><span>' + esc(pick(d)) + '</span></li>').join("") + '</ol></div>';
+  h += '<div class="sec"><h3>' + t("stay") + '</h3><b>' + esc(pick(x.hotel)) + '</b>'
+     + '<span class="verify">' + t("verified") + '</span><span class="hint">' + t("verifyRule") + '</span>'
+     + '<dl class="kv"><dt>' + t("grade") + '</dt><dd>' + stars(x.grade) + '</dd>'
+     + '<dt>' + t("review") + '</dt><dd>' + x.score.toFixed(1) + ' / 5 · ' + x.cnt.toLocaleString() + (L ? " reviews" : "건") + '</dd>'
+     + '<dt>' + t("inT") + '</dt><dd>' + x.inT + '</dd><dt>' + t("outT") + '</dt><dd>' + x.outT + '</dd></dl>'
+     + '<div class="chips">' + x.chips.map(c => '<span class="chip">' + esc(pick(c)) + '</span>').join("") + (x.pickup ? '<span class="chip">' + t("pickup") + '</span>' : '') + '</div></div>';
+  h += '<div class="sec"><h3>' + t("trans") + '</h3><div class="rows">' + transRows(x, esc(pick(x.taxi))) + '</div></div>';
+  h += costBox(x, false);
+  h += '<div class="sec"><h3>' + t("care") + '</h3><dl class="kv"><dt>' + t("hosp") + '</dt><dd>' + esc(pick(x.hosp)) + '</dd></dl></div>';
+  return h + '</article>';
+}
+
+function staySheet(x){
+  let h = '<article class="sheet" id="sheet"><div class="sec"><h2>' + esc(pick(x.name)) + ' · ' + t("month") + '</h2><p class="lead">' + esc(pick(x.sub)) + '</p></div>';
+  h += '<div class="sec"><h3>' + t("monthHome") + '</h3><b>' + esc(pick(x.home)) + '</b><dl class="kv"><dt>' + t("rate") + '</dt><dd>' + esc(pick(x.rate)) + '</dd></dl></div>';
+  h += '<div class="sec"><h3>' + t("life") + '</h3><div class="chips">' + x.life.map(c => '<span class="chip">' + esc(pick(c)) + '</span>').join("") + '</div></div>';
+  h += '<div class="sec"><h3>' + t("dayTrip") + '</h3><ol class="days">' + x.trips.map((d, i) => '<li><span class="d">' + (i+1) + '</span><span>' + esc(pick(d)) + '</span></li>').join("") + '</ol></div>';
+  h += '<div class="sec"><h3>' + t("trans") + '</h3><div class="rows">' + transRows(x, L ? "Kakao T taxi" : "카카오T 택시") + '</div></div>';
+  h += costBox(x, true);
+  return h + '</article>';
+}
+
+/* ── 알림 · 패널 ── */
+let toastT = null;
+function toast(msg){ let el = document.querySelector(".toast"); if (!el) { el = document.createElement("div"); el.className = "toast"; el.setAttribute("role","status"); document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 3200); }
+function panel(html){ const s = $("panelSlot"); if (s) { s.innerHTML = '<div class="panel">' + html + '</div>'; s.scrollIntoView({behavior:"smooth", block:"center"}); } }
+
+function shareText(){
+  const tr = S.mode === "short" && TRIPS.find(x => x.id === S.trip);
+  const st = S.mode === "month" && STAYS.find(x => x.id === S.stay);
+  if (tr) return "[" + t("title") + "] " + pick(tr.name) + " · " + t("nightLbl", tr.n) + " · " + t("ppl", S.people) + "\n"
+    + tr.days.map((d, i) => (L ? "Day " + (i+1) : (i+1) + "일차") + ": " + pick(d)).join("\n")
+    + "\n" + t("stay") + ": " + pick(tr.hotel) + " (" + t("inT") + " " + tr.inT + " / " + t("outT") + " " + tr.outT + ")"
+    + (tr.train ? "\n" + t("train") + ": " + pick(tr.train) : "") + "\n" + costText(tr, false);
+  if (st) return "[" + t("title") + "] " + pick(st.name) + " · " + t("month") + "\n" + t("monthHome") + ": " + pick(st.home) + " · " + pick(st.rate)
+    + "\n" + t("dayTrip") + ": " + st.trips.map(pick).join(", ") + "\n" + costText(st, true);
+  return "";
+}
+
+/* ── 읽어 주기 ── */
+let speaking = false;
+function readAloud(){
+  try {
+    if (!("speechSynthesis" in window)) return;
+    if (speaking) { speechSynthesis.cancel(); speaking = false; render(); return; }
+    const txt = ($("sheet") || $("app")).innerText.replace(/[▶✔★🧳🏡🚄🚗🚕]/g, " ");
+    const u = new SpeechSynthesisUtterance(txt); u.lang = L ? "en-US" : "ko-KR"; u.rate = 0.9;
+    u.onend = () => { speaking = false; $("readBtn").textContent = t("read"); };
+    speechSynthesis.speak(u); speaking = true; $("readBtn").textContent = t("stop");
+  } catch (e) {}
+}
+
+/* ── 누르기 ── */
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.mode) { S.mode = b.dataset.mode; S.trip = null; S.stay = null; render(); goTo(S.mode === "short" ? "secNights" : "secStays"); return; }
+  if (b.dataset.n) { S.nights = +b.dataset.n; S.trip = null; render(); goTo("secTrips"); return; }
+  if (b.dataset.trip) { S.trip = b.dataset.trip; S.how = null; S.rent = null; S.off = {}; render(); goTo("sheet"); return; }
+  if (b.dataset.stay) { S.stay = b.dataset.stay; S.how = null; S.rent = null; S.off = {}; render(); goTo("sheet"); return; }
+  if (b.dataset.goTrip) { const tr = TRIPS.find(x => x.id === b.dataset.goTrip); S.mode = "short"; S.nights = tr.n; S.trip = tr.id; render(); goTo("sheet"); return; }
+  if (b.dataset.goStay) { S.mode = "month"; S.stay = b.dataset.goStay; render(); goTo("sheet"); return; }
+  if (b.dataset.ppl) { S.people = +b.dataset.ppl; render(); goTo("costSec"); return; }
+  if (b.dataset.how) { S.how = b.dataset.how; S.rent = null; render(); goTo("costSec"); return; }
+  if (b.dataset.rent) { const x = (S.mode === "short" ? TRIPS.find(y => y.id === S.trip) : STAYS.find(y => y.id === S.stay)); if (x) S.rent = !curRent(x); render(); goTo("costSec"); return; }
+  if (b.dataset.off) { S.off[b.dataset.off] = 1; render(); goTo("costSec"); return; }
+  if (b.dataset.on) { delete S.off[b.dataset.on]; render(); goTo("costSec"); return; }
+  if (b.dataset.later !== undefined) { toast(t("linkLater")); return; }
+  if (b.id === "langBtn") { L = 1 - L; try { localStorage.setItem("spt_lang", L); } catch (_) {} render(); return; }
+  if (b.id === "bigBtn") { const on = document.documentElement.classList.toggle("big"); b.setAttribute("aria-pressed", on); try { localStorage.setItem("spt_big", on ? "1" : ""); } catch (_) {} render(); return; }
+  if (b.id === "readBtn") { readAloud(); return; }
+  if (b.id === "homeBtn") { S.mode = null; S.nights = null; S.trip = null; S.stay = null; render(); window.scrollTo({top:0, behavior:"smooth"}); return; }
+  if (b.id === "callBtn") { panel('<b>' + t("callPanel") + '</b><span class="num">1588-0000</span><span class="hint">' + t("callHint") + ' (' + (L ? "sample number" : "예시 번호") + ')</span>'); return; }
+  if (b.id === "sendBtn") {
+    const txt = shareText(); if (!txt) { toast(t("nothing")); return; }
+    const fallback = () => { panel('<b>' + t("copyFail") + '</b><pre style="white-space:pre-wrap;margin:0;user-select:all;font:inherit">' + esc(txt) + '</pre>'); };
+    try { navigator.clipboard.writeText(txt).then(() => toast(t("copied")), fallback); } catch (_) { fallback(); }
+  }
+});
+function goTo(id){ requestAnimationFrame(() => { const el = $(id); if (el) el.scrollIntoView({behavior:"smooth", block:"start"}); }); }
+
+try { L = +(localStorage.getItem("spt_lang") || 0) === 1 ? 1 : 0; if (localStorage.getItem("spt_big")) { document.documentElement.classList.add("big"); $("bigBtn").setAttribute("aria-pressed","true"); } } catch (_) {}
+render();
+</script>
+
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js?v=202610052108").catch(function(){});}</script>
+</body>
+</html>
