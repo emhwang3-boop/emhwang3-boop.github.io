@@ -524,7 +524,7 @@ function grpDelay(gr){
   if(gr.title==="아시아")return asiaLiveNow();
   return false;
 }
-function render(d){
+function render(d){ try{ if(d&&d.kr_status) window._krSt=d.kr_status; }catch(e){}   /* 국내 휴장 여부 — krLiveNow 가 본다 (2026-10-05) */
   window._lastD=d; try{ if(typeof svRegimeTick==="function") svRegimeTick(); }catch(e){}
   {
     document.getElementById("asof").textContent=d.asof+L("asof")+(d.__snap?L("snap"):"");
@@ -1595,7 +1595,8 @@ function mkSessHtml(st){
     +box(en?"Korea":"국내 증시",mkSessKR(st))+box(en?"US":"미국 증시",mkSessUS())+'</div>';
 }
 setInterval(function(){ try{ var n=document.getElementById("mkSess"); if(n&&window._mkSt) n.innerHTML=mkSessHtml(window._mkSt); }catch(e){} }, 60000);
-function krLiveNow(){const k=new Date(Date.now()+new Date().getTimezoneOffset()*60000+324e5);
+function krLiveNow(){if(window._krSt&&window._krSt.open===false)return false;   /* 휴장일엔 실시간 아님 (사장님 2026-10-05) */
+  const k=new Date(Date.now()+new Date().getTimezoneOffset()*60000+324e5);
   const m=k.getHours()*60+k.getMinutes();return k.getDay()>=1&&k.getDay()<=5&&m>=480&&m<1200;} // 평일 08:00~20:00
 // 미국 동부시간(서머타임 자동) → {요일, 분}
 function _etnow(){var p={};
@@ -4314,5 +4315,5 @@ function tkPaint(d){
   try{ tkPaint(window._lastD||window.SNAP); }catch(e){}
 })();
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-05 13:25</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-05 13:29</div>
 </body></html>
