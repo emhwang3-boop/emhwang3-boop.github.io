@@ -2173,7 +2173,9 @@ function rlSay(t) { RL.msg = t; const e = E("rlMsg"); if (e) e.textContent = t; 
 // ── 키움 토큰 — 국내·해외가 같은 토큰을 쓴다 ──
 async function rlToken() {
   // 🔴 받아 둔 토큰을 다시 쓴다. 키움 토큰은 하루를 간다 — 1분마다 새로 받을 일이 아니다.
-  if (RL.tok && RL.tokAt && (Date.now() - RL.tokAt) < 6 * 3600 * 1000) return RL.tok;
+  // 🔴 키움 토큰은 키당 하나 · 키움이 정한 시각(expires_dt)에 바뀐다 — 그 10분 전엔 새로 받는다 (2026-10-07)
+  if (RL.tok && RL.tokAt && (Date.now() - RL.tokAt) < 6 * 3600 * 1000 &&
+      (!RL.tokExp || Date.now() < RL.tokExp - 600000)) return RL.tok;
   if (!rlReady()) throw new Error(rlNoRelayMsg());
   // 🔴 키는 중계기가 넣는다 — 본문엔 grant_type 만 (2026-09-22)
   const r = rlChk(await fetch(rlHost() + "/oauth2/token", {
@@ -2185,16 +2187,31 @@ async function rlToken() {
   const t = j.token || j.access_token;
   if (!t) throw new Error("토큰 실패: " + (j.return_msg || r.status));
   RL.tok = t; RL.tokAt = Date.now();
+  RL.tokExp = 0;
+  const xd = String(j.expires_dt || "");                       // "20261008070642" (한국 시각)
+  if (/^\d{14}$/.test(xd))
+    RL.tokExp = Date.UTC(+xd.slice(0, 4), +xd.slice(4, 6) - 1, +xd.slice(6, 8), +xd.slice(8, 10) - 9, +xd.slice(10, 12), +xd.slice(12, 14));
   return t;
 }
+// 토큰이 죽었다는 답 — 키움은 HTTP 200 에 rc 3 「인증에 실패했습니다[8005:Token이 유효하지 않습니다]」로 준다 (10-07 실측)
+function rlTokDead(j) {
+  return !!j && String(j.return_code) !== "0" &&
+    (String(j.return_code) === "3" || /8005|token|토큰/i.test(String(j.return_msg || "")));
+}
 async function rlKiwoom(tok, path, apiId, body) {
-  const r = rlChk(await fetch(rlHost() + path, {
-    method: "POST",
-    headers: rlHdr({"Content-Type": "application/json;charset=UTF-8",
-                    "authorization": "Bearer " + tok, "api-id": apiId}),
-    body: JSON.stringify(body || {})
-  }));
-  return r.json();
+  const go = async function (tk) {
+    const r = rlChk(await fetch(rlHost() + path, {
+      method: "POST",
+      headers: rlHdr({"Content-Type": "application/json;charset=UTF-8",
+                      "authorization": "Bearer " + tk, "api-id": apiId}),
+      body: JSON.stringify(body || {})
+    }));
+    return r.json();
+  };
+  let j = await go(tok);
+  // 🔴 토큰이 죽었으면(인증 실패 = 처리 안 됨) 새로 받아 한 번만 더 — 주문도 인증 단계에서 막힌 것이라 두 번 나가지 않는다 (2026-10-07)
+  if (rlTokDead(j)) { RL.tok = null; RL.tokAt = 0; RL.tokExp = 0; j = await go(await rlToken()); }
+  return j;
 }
 
 // ── 미국 일봉 — 키움 usa06012 를 **이용자 본인 키로** (사장님 2026-09-19) ──
@@ -8593,5 +8610,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-06 18:22</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-07 09:34</div>
 </body></html>
