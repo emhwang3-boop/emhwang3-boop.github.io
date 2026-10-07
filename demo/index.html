@@ -2852,7 +2852,7 @@ async function rlLoad(auto) {
     // 🔴 한 번 손으로 부른 뒤부터 1분마다 스스로 다시 부른다(수량·예수금용).
     //    시세는 이걸 안 기다린다 — dpTick 이 10초마다 다시 센다.
     if (!RL.auto) RL.auto = setInterval(function () {
-      if (!RL.busy && rlHas()) rlLoad(true);
+      if (!RL.busy) rlLoad(true);          // 빈 잔고여도 돈다 — 첫 조회가 비어 와도 스스로 채운다 (2026-10-07)
     }, 60000);
     try { dpHoldRender(); } catch (e) {}
     try { dpRender(); } catch (e) {}
@@ -2868,6 +2868,13 @@ function rlHas() { return (RL.kr.length + RL.us.length + RL.co.length) > 0; }
 setTimeout(function () {
   try { if (!RL.at && !RL.busy && ((typeof mkIsMock === "function" && mkIsMock()) || (typeof ST !== "undefined" && ST && ((ST.kr && ST.kr.broker) || (ST.co && ST.co.broker))))) rlLoad(); } catch (e) {}
 }, 1500);
+// 켠 뒤 잔고가 비어 오면(폰 Tailscale 깨는 중 등) 3·8·15·30초 뒤 다시 — 새로고침 한 번으로 끝나게 (사장님 2026-10-07)
+[4500, 9500, 16500, 31500].forEach(function (ms) {
+  setTimeout(function () {
+    try { if (!RL.busy && !rlHas() && ((typeof mkIsMock === "function" && mkIsMock()) || (typeof ST !== "undefined" && ST && ((ST.kr && ST.kr.broker) || (ST.co && ST.co.broker))))) rlLoad(true); } catch (e) {}
+    try { if (typeof pfAcctLoad === "function" && !PF_ACCT) { PF_ACCT_NEXT = 0; pfAcctLoad(); } } catch (e) {}
+  }, ms);
+});
 function rlRows() { return RL.kr.concat(RL.us).concat(RL.co); }
 // 🔴 시세는 앱이 이미 받는 통로로 받는다 — OKX 이름을 바이낸스 심볼로 바꾼다
 function rlBn(instId) { return String(instId || "").split("-").slice(0, 2).join(""); }
@@ -3943,7 +3950,7 @@ function mhGroups(real, rh, en){
   var coinCls = function(p){ var k = String(p.code).split("-")[0].toUpperCase(); return (k === "BTC" || k === "ETH") ? k : (en ? "Alts" : "알트"); };
   real.forEach(function(p, ri){
     var c;
-    if(p.mk === "coin"){ c = "C:" + coinCls(p); if(p.spot){ var v = (+p.qty || 0) * (+p.cur || 0); cval[c] = (cval[c] || 0) + v; ctot += v; } }
+    if(p.mk === "coin"){ c = "C:" + coinCls(p); if(p.spot){ var v = (+p.qty || 0) * (+p.cur || 0); cval[c] = (cval[c] || 0) + v; if(c === "C:BTC" || c === "C:ETH") ctot += v; } }   /* 코인 % 분모 = BTC+ETH+USDT (2026-10-07) */
     else { c = pfClassOf(p); var v2 = (+p.evl || 0) * (p.mk === "us" ? fx : 1); val[c] = (val[c] || 0) + v2; tot += v2; }
     (rows[c] = rows[c] || []).push(rh[ri]); if(order.indexOf(c) < 0) order.push(c);
   });
@@ -7662,7 +7669,7 @@ async function pfAcctLoad(){
   try{ var tok = await rlToken(); var j = await rlKiwoom(tok, "/api/dostk/acnt", "ka00001", {});
        if(j && j.acctNo) PF_ACCT = String(j.acctNo); }catch(e){}
   PF_ACCT_BUSY = false;
-  if(PF_ACCT) pfRender(); else PF_ACCT_NEXT = Date.now() + 60000;
+  if(PF_ACCT) pfRender(); else PF_ACCT_NEXT = Date.now() + 8000;    /* 60초 → 8초 (2026-10-07) */
 }
 function pfBrokerNm(b){ return ({kiwoom:"키움증권", korea_inv:"한국투자증권", okx:"OKX", binance:"바이낸스", upbit:"업비트"})[b] || (b||""); }
 function pfRender(){
@@ -7833,7 +7840,7 @@ function coPlan(R){
   var pos=((RL&&RL.co)||[]).filter(function(p){ return p.spot && (p.qty||0)>0; }), cash=(RL.cash&&+RL.cash.usdt)||0;
   var cls=function(k){ return (k==="BTC"||k==="ETH")?k:"알트"; };
   var tot=cash, val={}, held={};
-  pos.forEach(function(p){ var k=String(p.code).split("-")[0], v=(p.qty||0)*(p.cur||0); tot+=v; val[cls(k)]=(val[cls(k)]||0)+v; held[k]=p; });
+  pos.forEach(function(p){ var k=String(p.code).split("-")[0], v=(p.qty||0)*(p.cur||0); if(cls(k)!=="알트") tot+=v; val[cls(k)]=(val[cls(k)]||0)+v; held[k]=p; });   /* 합계 = BTC+ETH+USDT — 알트는 계산에서 뺌 (2026-10-07) */
   var rows=[], m20=function(k){ var z=C[k]; return (z&&z.mom20!=null)?+z.mom20:null; }, pxOf=function(k){ var z=C[k]; return z&&z.price?+z.price:((held[k]&&held[k].cur)||0); };
   // 팔 것 — 추천이 매도로 바뀐 BTC·ETH 전량 · 종목 익절/손절(자동매매 창 기준)
   Object.keys(held).forEach(function(k){ var p=held[k], z=C[k], why="";
@@ -7864,7 +7871,7 @@ function coPlan(R){
   return rows;
 }
 // 코인 1칸 = (현물 평가 + USDT) ÷ 12 — 알트 줄과 같은 셈
-function coSlot0(){ try{ var co=(RL.co||[]).filter(function(p){ return p.spot; }), v=co.reduce(function(t,p){ return t+(p.qty||0)*(p.cur||0); },0), c=(RL.cash&&RL.cash.usdt)||0; return (v+c)/12; }catch(e){ return 0; } }
+function coSlot0(){ try{ var co=(RL.co||[]).filter(function(p){ var k=String(p.code).split("-")[0].toUpperCase(); return p.spot && (k==="BTC"||k==="ETH"); }),   /* 알트 뺌 (2026-10-07) */ v=co.reduce(function(t,p){ return t+(p.qty||0)*(p.cur||0); },0), c=(RL.cash&&RL.cash.usdt)||0; return (v+c)/12; }catch(e){ return 0; } }
 var CO_MIX = {BTC: 50, ETH: 50, "알트": 0};   /* 알트 뺌 (사장님 2026-10-03) */              // 코인 자산배분 — 코인앱과 같은 45·45·10 (사장님 2026-09-26)
 function coSlotFor(k){ var w = CO_MIX[k] != null ? CO_MIX[k] : CO_MIX["알트"]; return coSlot0() * 12 * w / 100 / 12; }
 function r20Of(code){ try{ var c = String(code).replace(/\.US$/i, "").toUpperCase(), L = [];
@@ -8621,5 +8628,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-07 09:34</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-07 10:06</div>
 </body></html>
