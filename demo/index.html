@@ -5113,19 +5113,20 @@ function puzFlip(ev, mk){
   try{ recoRender(); }catch(e){}
 }
 // 🔴 현금 조각 뒤 = 바스켓(1순위)에 안 나온 자산군별 추천 2등 — 2등을 이미 가졌으면 3등 (사장님 2026-09-28)
-//   가진 종목을 빼고 남은 줄에서 첫째는 바스켓 몫이라 건너뛰고 그다음 하나. 원화=국내 자산군 · 달러=미국 자산군 · USDT=알트
+//   가진 종목을 빼고 남은 줄에서 첫째는 바스켓 몫이라 건너뛰고 그다음 하나. 원화=국내 자산군 · 달러=미국 자산군 · USDT=BTC·ETH 중 모자란 쪽(10-07)
 function puzPicks(mk){
   try{
     var R=(typeof window._RECO!=="undefined")?window._RECO:null;
     var held={}; try{ ((typeof RL!=="undefined"&&RL)?(RL.kr||[]).concat(RL.us||[]).concat(RL.co||[]):[]).forEach(function(p){ held[String(p.code).replace(/\.US$/i,"").split("-")[0].toUpperCase()]=1; }); }catch(e){}
     var second=function(arr, key){ var n=0, out=null; (arr||[]).forEach(function(r){ if(out) return; var c=String(key(r)).toUpperCase(); if(held[c]) return; n++; if(n===2) out=r; }); return out; };
     if(mk==="coin"){
-      var C=(R&&R.coin)||{}, alt=[];
-      Object.keys(C).forEach(function(k){ if(k==="BTC"||k==="ETH") return; var z=C[k]||{};
-        if(z["new"]||z.state==="long") alt.push({k:k, _rk:(+z.rank||999), _turn:(+z.turn||0)}); });
-      alt.sort(function(a,b){ return (a._rk-b._rk) || (b._turn-a._turn); });
-      var a2=second(alt, function(z){ return z.k; });
-      return a2 ? [{name:a2.k, code:a2.k+"-USDT", mk:"coin", spot:true}] : [];
+      // 🔴 알트 뺌 — BTC·ETH 중 50:50 목표에 모자란 쪽 · 추천이 매수(롱)인 것만 (코인 D 규칙과 같음, 사장님 2026-10-07)
+      var C=(R&&R.coin)||{}, v={BTC:0, ETH:0};
+      try{ ((typeof RL!=="undefined"&&RL&&RL.co)||[]).forEach(function(p){ var k=String(p.code).split("-")[0].toUpperCase();
+        if(p.spot && v[k]!=null) v[k]+=(+p.qty||0)*(+p.cur||0); }); }catch(e){}
+      var ks=["BTC","ETH"].filter(function(k){ var z=C[k]; return !z || z.state==="long"; })
+        .sort(function(x,y){ return v[x]-v[y]; });
+      return ks.length ? [{name:ks[0], code:ks[0]+"-USDT", mk:"coin", spot:true}] : [];
     }
     var o=(typeof pfGet==="function")?pfGet():null, g=(o&&typeof PF_GRADE!=="undefined")?PF_GRADE[o.gi]:null;
     var classes=g?g.mix.map(function(m){ return m[0]; }):Object.keys(BM_RECO), out2=[];
@@ -8628,5 +8629,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-07 10:06</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-07 21:03</div>
 </body></html>
