@@ -5860,7 +5860,8 @@ function rkRender(){
     var rc = E("recoCard"); if(!rc) return;
     var card = E("rkCard");
     if(!card){ card = document.createElement("div"); card.className = "card"; card.id = "rkCard"; }
-    if(rc.nextSibling !== card) rc.parentNode.insertBefore(card, rc.nextSibling);
+    var an = E("coCard") || rc;      // 가상자산 12칸 뒤 — 퍼즐맵 → 가상자산 → 순위 (사장님 2026-10-08)
+    if(an.nextSibling !== card) an.parentNode.insertBefore(card, an.nextSibling);
     if(!card.innerHTML) rkPaint();
     rkLoad(false);
   }catch(e){}
@@ -6048,7 +6049,8 @@ function recoRender(){
   try{
     var cc=E("coCard");
     if(!cc){ cc=document.createElement("div"); cc.className="card"; cc.id="coCard"; }
-    var an=E("rkCard")||card; if(an.nextSibling!==cc) an.parentNode.insertBefore(cc, an.nextSibling);   // 퍼즐맵 → 순위 → 가상자산 (2026-09-29)
+    var an=card; if(an.nextSibling!==cc) an.parentNode.insertBefore(cc, an.nextSibling);   // 퍼즐맵 → 가상자산 → 순위 (사장님 2026-10-08)
+    var rk=E("rkCard"); if(rk && cc.nextSibling!==rk) cc.parentNode.insertBefore(rk, cc.nextSibling);
     var _ck=ch.replace(/pz\d+_/g,"pz_"); if(cc._h!==_ck){ cc.innerHTML=ch; cc._h=_ck; }
   }catch(e){}
   var _hk=h.replace(/pz\d+_/g,"pz_"); if(card._h!==_hk){ card.innerHTML=h; card._h=_hk; }   // 퍼즐 그림 번호(pzN_)는 빼고 비교 — 2초마다 통째로 다시 그리던 깜빡임 (2026-09-27)   // 같으면 안 그린다 — PC 깜빡임 (2026-09-26)
@@ -8621,5 +8623,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-08 07:42</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-08 10:52</div>
 </body></html>
