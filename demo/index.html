@@ -2313,7 +2313,8 @@ function rlParseKR(j) {
     const qty = rlNum(r.rmnd_qty), avg = rlNum(r.pur_pric), cur = rlNum(r.cur_prc);
     return {mk: "kr", ccy: "KRW", code: String(r.stk_cd || "").replace(/^A/, ""),
             name: r.stk_nm || r.stk_cd, qty: qty, avg: avg, cur: cur,
-            evl: rlNum(r.evlt_amt), pl: rlNum(r.evltv_prft), rt: rlNum(r.prft_rt)};
+            evl: rlNum(r.evlt_amt), pl: rlNum(r.evltv_prft), rt: rlNum(r.prft_rt),
+            sellCost: rlNum(r.sell_cmsn) + rlNum(r.tax)};      // 팔 때 낼 수수료·세금 — 매매현황 미실현을 키움처럼 (2026-10-08)
   }).filter(p => p.qty > 0);
 }
 // ── 해외주식 (ust21070 미국주식 원장잔고확인) ──
@@ -4432,7 +4433,9 @@ async function ydLoad(force){
           var j = await ydTry("/api/dostk/acnt", "ka10170", {base_dt: ds, ottks_tp: "1", ch_crd_tp: "0"});
           ((j && j.tdy_trde_diary) || []).forEach(function(r){
             var cd = String(r.stk_cd || "").replace(/^A/, ""), bq = rlNum(r.buy_qty), sq = rlNum(r.sell_qty);
-            if(bq > 0) rows.push({mk:"kr", code:cd, name:r.stk_nm||cd, side:"B", qty:bq, amt:rlNum(r.buy_amt), pl:null});
+            var fee = rlNum(r.cmsn_alm_tax), ba = rlNum(r.buy_amt), sa = rlNum(r.sell_amt);
+            if(sq > 0) fee = Math.floor(ba * 0.00015 / 10) * 10;   // 같은 날 팔기도 하면 매도 세금이 섞인다 — 매수 몫은 0.015%·10원 단위 어림 (2026-10-08)
+            if(bq > 0) rows.push({mk:"kr", code:cd, name:r.stk_nm||cd, side:"B", qty:bq, amt:ba, pl:null, fee:fee});
             if(sq > 0) rows.push({mk:"kr", code:cd, name:r.stk_nm||cd, side:"S", qty:sq, amt:rlNum(r.sell_amt), pl:rlNum(r.pl_amt), est:false});
           });
           // 매도 손익은 실현손익(ka10072)으로 — 매매일지는 같은 날 사고판 것만 손익을 준다(전에 산 걸 팔면 0) (사장님 2026-09-30)
@@ -4540,12 +4543,14 @@ function ydHtml(rows, note, auto){
     rows.sort(function(a, b){ return ((b.t || 0) - (a.t || 0)) || (ord[a.mk] - ord[b.mk]) || (a.side < b.side ? -1 : 1); });   // 최근 체결이 위 (사장님 2026-09-27)
     var buyK = 0, sellK = 0, plK = 0, plN = 0, rzK = 0, rzN = 0;
     // 산 것의 지금 값 — 실계좌 보유 줄의 현재가(cur)로 센다. 이미 판 것은 셀 수 없다(—)
+    var holdOf = function(o){ try{ return rlRows().filter(function(q){ return q.mk === o.mk && String(q.code).toUpperCase() === String(o.code).toUpperCase(); })[0] || null; }catch(e){ return null; } };
     var curOf = function(o){ try{ var h = rlRows().filter(function(q){ return q.mk === o.mk && String(q.code).toUpperCase() === String(o.code).toUpperCase() && (o.mk !== "coin" || q.spot); })[0];
       return (h && +h.cur > 0) ? +h.cur : 0; }catch(e){ return 0; } };
     rows.forEach(function(o){
       var k = o.mk === "kr" ? 1 : fx;
       if(o.side === "B") buyK += o.amt * k; else sellK += o.amt * k;
-      var ur = null; if(o.side === "B"){ var c = curOf(o); if(c > 0) ur = c * o.qty - o.amt; }
+      var ur = null; if(o.side === "B"){ var c = curOf(o); if(c > 0){ ur = c * o.qty - o.amt;
+        if(o.mk === "kr"){ var hh = holdOf(o); ur -= (+o.fee || 0) + ((hh && hh.qty > 0 && hh.sellCost) ? hh.sellCost * o.qty / hh.qty : 0); ur = Math.round(ur); } } }   // 키움 평가손익과 같은 셈 (2026-10-08)
       if(ur != null){ plK += ur * k; plN++; }
       var rz = (o.side === "S" && typeof o.pl === "number") ? o.pl : null;     // 매도는 실현손익 (미국·코인은 앞선 매수 평균값으로 어림)
       if(rz != null){ rzK += rz * k; rzN++; }
@@ -8639,5 +8644,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-08 11:00</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-08 18:09</div>
 </body></html>
