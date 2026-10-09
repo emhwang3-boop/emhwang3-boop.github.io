@@ -7829,8 +7829,7 @@ function pnlRender(){
         var cv = function(m){ return m ? (+m.kr || 0) + ((+m.us || 0) + (+m.coin || 0)) * fx : 0; };
         var rzT = 0; D.keys.forEach(function(k){ rzT += cv(D.months[k]); });
         var unT = D.unOk ? cv(D.un) : 0, tot = rzT + unT;
-        h += '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><b class="' + cl(tot) + '" style="font-size:20px">' + won(tot) + '</b>'
-           + '<span class="dplbl">' + KE("실현 ", "Realized ") + won(rzT) + ' · ' + KE("미실현 ", "Unrealized ") + (D.unOk ? won(unT) : "—") + '</span></div>'
+        h += '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><b class="' + cl(tot) + '" style="font-size:20px">' + won(tot) + '</b></div>'
            + '<div class="dplbl">' + (D.mock ? KE("모의 계좌", "Mock account") : KE(D.since + "부터", "Since " + D.since)) + '</div>';
         // 12달이 지나면 그 12달을 한 줄로 접는다
         var last = D.keys.length - 1, cb = Math.floor(last / 12);
@@ -7840,8 +7839,9 @@ function pnlRender(){
              + D.keys[b * 12].replace("-", ".") + '~' + D.keys[b * 12 + 11].replace("-", ".") + '</span><b class="' + cl(s) + '">' + won(s) + '</b></div>';
         }
         var ks = D.keys.slice(cb * 12), sel = (PNL.sel && ks.indexOf(PNL.sel) >= 0) ? PNL.sel : D.cur;
-        var bars = ks.map(function(k){ var r = cv(D.months[k]), u = (k === D.cur && D.unOk) ? unT : 0;
-          return {k: k, r: r, u: u, p: Math.max(r, 0) + Math.max(u, 0), n: Math.max(-r, 0) + Math.max(-u, 0)}; });
+        // 막대 하나 = 그 달 합계 (지난 달 = 실현 · 이번 달 = 실현+미실현, 옅은 색) — 사장님 2026-10-09
+        var bars = ks.map(function(k){ var cur = (k === D.cur && D.unOk), v = cv(D.months[k]) + (cur ? unT : 0);
+          return {k: k, v: v, op: cur ? .4 : 1, p: Math.max(v, 0), n: Math.max(-v, 0)}; });
         var pM = 0, nM = 0; bars.forEach(function(x){ pM = Math.max(pM, x.p); nM = Math.max(nM, x.n); });
         if(!(pM + nM > 0)) pM = 1;
         var H = 90, pH = Math.round(H * pM / (pM + nM)), nH = H - pH;
@@ -7851,17 +7851,15 @@ function pnlRender(){
         h += '<div style="display:flex;gap:2px;margin-top:10px;align-items:stretch">';
         bars.forEach(function(x){
           var up = (pM + nM) / H;
-          h += '<div onclick="pnlSel(\'' + x.k + '\')" style="flex:1;min-width:0;max-width:44px;cursor:pointer;border-radius:4px;padding:2px 0;' + (x.k === sel ? 'background:rgba(127,127,127,.16)' : '') + '">'
+          h += '<div onclick="pnlSel(\'' + x.k + '\')" style="flex:1;min-width:0;max-width:44px;cursor:pointer;padding:2px 0">'
              + '<div style="height:' + pH + 'px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center">'
-             + (x.u > 0 ? seg(x.u, up, .4) : "") + (x.r > 0 ? seg(x.r, up, 1) : "") + '</div>'
+             + (x.v > 0 ? seg(x.v, up, x.op) : "") + '</div>'
              + '<div style="height:1px;background:var(--sub);opacity:.5"></div>'
              + '<div style="height:' + nH + 'px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center">'
-             + (x.r < 0 ? seg(x.r, up, 1) : "") + (x.u < 0 ? seg(x.u, up, .4) : "") + '</div>'
+             + (x.v < 0 ? seg(x.v, up, x.op) : "") + '</div>'
              + '<div class="dplbl" style="text-align:center;font-size:11px;margin-top:2px">' + (en ? MON[+x.k.slice(5, 7) - 1] : (+x.k.slice(5, 7)) + "월") + '</div></div>';
         });
-        h += '</div><div class="dplbl" style="margin-top:4px"><span style="display:inline-block;width:9px;height:9px;background:#00c805;margin-right:3px"></span>'
-           + KE("실현", "Realized") + ' <span style="display:inline-block;width:9px;height:9px;background:#00c805;opacity:.4;margin:0 3px 0 8px"></span>'
-           + KE("미실현", "Unrealized") + '</div>';
+        h += '</div>';
         // 누른 달 — 시장별
         var m = D.months[sel] || {kr: 0, us: 0, coin: 0}, isCur = (sel === D.cur && D.unOk);
         // 표는 원화로만 · 가로(시장별)·세로(실현/미실현) 합계 (사장님 2026-10-09)
@@ -8770,5 +8768,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-09 21:21</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-09 21:40</div>
 </body></html>
