@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>고객 게시판 · 머니퍼즐</title>
+<meta name="description" content="머니퍼즐 고객 게시판 — 앱 사용 의견과 질문을 남겨 주세요.">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#111827;--sub:#5b6474;--line:#e6e9ef;--bg:#ffffff;--soft:#f4f7fb;--blue:#1d5bd8;--green:#1e9e48;--orange:#f08c00;--navy:#1b2a4a;--red:#d63b3b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;line-height:1.6;-webkit-text-size-adjust:100%}
+  a{color:inherit}
+  .wrap{max-width:860px;margin:0 auto;padding:0 16px}
+  header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;max-width:1080px}
+  .logo{font-weight:900;font-size:22px;letter-spacing:-1px;text-decoration:none}
+  nav{display:flex;align-items:center;gap:18px;font-size:14px}
+  nav a{text-decoration:none;color:var(--sub)}
+  nav a:hover,nav a.on{color:var(--ink)}
+  nav a.on{font-weight:700}
+  .lang{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer}
+  main{padding:36px 0 56px}
+  h1{font-size:30px;letter-spacing:-1px;margin:0 0 6px;font-weight:900}
+  .lead{color:var(--sub);margin:0 0 22px}
+  .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+  .btn{display:inline-block;border:0;cursor:pointer;text-decoration:none;font:inherit;font-weight:700;border-radius:10px;padding:10px 18px;font-size:14.5px}
+  .btn.pri{background:var(--ink);color:#fff}
+  .btn.sec{background:#fff;border:1.5px solid var(--ink);color:var(--ink)}
+  .btn.sm{padding:5px 11px;font-size:13px;border-radius:8px;white-space:nowrap;flex-shrink:0}
+  .btn.del{background:#fff;border:1px solid var(--line);color:var(--sub)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .list{border-top:2px solid var(--ink)}
+  .row{display:block;text-decoration:none;padding:14px 4px;border-bottom:1px solid var(--line)}
+  .row:hover{background:var(--soft)}
+  .row .t{font-weight:700;font-size:16px;word-break:break-word}
+  .row .t .cc{color:var(--blue);font-size:13.5px;margin-left:6px}
+  .row .pv{color:var(--sub);font-size:14px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta{color:var(--sub);font-size:12.5px;margin-top:4px}
+  .empty{padding:44px 0;text-align:center;color:var(--sub);border-bottom:1px solid var(--line)}
+  .pager{display:flex;justify-content:center;gap:6px;margin-top:18px;flex-wrap:wrap}
+  .pager button{min-width:36px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 9px;font:inherit;font-size:14px;cursor:pointer}
+  .pager button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
+  .notice{background:#fff8e6;border:1px solid #f5dfa6;color:#6b4e00;border-radius:12px;padding:10px 14px;font-size:13.5px;margin-bottom:14px}
+  label{display:block;font-size:13px;font-weight:700;margin:12px 0 4px}
+  input,textarea{width:100%;font:inherit;font-size:15px;border:1px solid #cfd5df;border-radius:10px;padding:10px 12px;background:#fff;color:var(--ink)}
+  textarea{min-height:180px;resize:vertical}
+  input:focus,textarea:focus{outline:2px solid #bcd0f7;border-color:var(--blue)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .cnt{font-size:12px;color:var(--sub);text-align:right}
+  .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+  .msg{font-size:13.5px;margin-top:10px;min-height:1em}
+  .msg.err{color:var(--red)} .msg.ok{color:var(--green)}
+  .post h2{font-size:22px;margin:0;word-break:break-word;letter-spacing:-.5px}
+  .post .body{white-space:pre-wrap;word-break:break-word;margin-top:16px;font-size:15.5px}
+  .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .cmts{margin-top:26px}
+  .cmts h3{font-size:16px;margin:0 0 6px}
+  .cmt{padding:12px 0;border-bottom:1px solid var(--line)}
+  .cmt .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .cmt .nk{font-weight:700;font-size:14px}
+  .cmt .bd{white-space:pre-wrap;word-break:break-word;font-size:14.5px;margin-top:3px}
+  .delbox{display:flex;gap:6px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap}
+  .delbox input{width:auto;flex:1 1 160px;max-width:240px;padding:6px 10px;font-size:14px}
+  .delbox .msg{flex-basis:100%;text-align:right;margin-top:2px}
+  .cform{margin-top:16px;background:var(--soft);border-radius:14px;padding:14px}
+  .cform textarea{min-height:80px}
+  .back{font-size:14px;color:var(--sub);text-decoration:none}
+  footer{border-top:1px solid var(--line);padding:24px 0 36px;font-size:12.5px;color:var(--sub)}
+  footer p{margin:4px 0}
+  .hidden{display:none!important}
+  .en{display:none} body.lang-en .en{display:revert} body.lang-en .ko{display:none}
+  @media(max-width:600px){h1{font-size:25px}.two{grid-template-columns:1fr}nav{gap:12px}nav .hide{display:none}.card{padding:16px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="logo" href="./"><span class="ko">머니퍼즐</span><span class="en">Money Puzzle</span></a>
+  <nav>
+    <a href="./"><span class="ko">홈</span><span class="en">Home</span></a>
+    <a class="hide" href="./#apps"><span class="ko">앱</span><span class="en">Apps</span></a>
+    <a class="on" href="board.html"><span class="ko">게시판</span><span class="en">Board</span></a>
+    <button class="lang" onclick="tl()" id="lb">EN</button>
+  </nav>
+</div></header>
+
+<main><div class="wrap">
+
+<!-- 목록 -->
+<div id="vList">
+  <h1><span class="ko">고객 게시판</span><span class="en">Customer Board</span></h1>
+  <p class="lead"><span class="ko">앱을 쓰며 궁금한 점, 바라는 점을 자유롭게 남겨 주세요.</span><span class="en">Questions or ideas about our apps? Leave them here.</span></p>
+  <div class="bar">
+    <span class="meta" id="total"></span>
+    <button class="btn pri" id="bWrite"><span class="ko">글쓰기</span><span class="en">Write</span></button>
+  </div>
+  <div class="list" id="list"></div>
+  <div class="pager" id="pager"></div>
+</div>
+
+<!-- 글쓰기 -->
+<div id="vWrite" class="hidden">
+  <a class="back" href="board.html" data-nav="list">← <span class="ko">목록</span><span class="en">Back to list</span></a>
+  <h1 style="margin-top:8px"><span class="ko">글쓰기</span><span class="en">New post</span></h1>
+  <div class="notice">
+    <span class="ko">개인정보(전화번호·계좌번호 등)는 적지 마세요 · 특정 종목 매수·매도 상담은 하지 않습니다</span>
+    <span class="en">Please don't post personal information (phone or account numbers, etc.) · We don't give buy/sell advice on specific stocks</span>
+  </div>
+  <form class="card" id="fPost" autocomplete="off">
+    <div class="two">
+      <div><label for="pNick"><span class="ko">닉네임</span><span class="en">Nickname</span></label><input id="pNick" maxlength="20" required></div>
+      <div><label for="pPw"><span class="ko">비밀번호 (삭제할 때 씀, 4자 이상)</span><span class="en">Password (to delete later, 4+ chars)</span></label><input id="pPw" type="password" minlength="4" maxlength="64" required autocomplete="new-password"></div>
+    </div>
+    <label for="pTitle"><span class="ko">제목</span><span class="en">Title</span></label><input id="pTitle" maxlength="80" required>
+    <label for="pBody"><span class="ko">내용</span><span class="en">Message</span></label><textarea id="pBody" maxlength="2000" required></textarea>
+    <div class="cnt"><span id="pCnt">0</span> / 2000</div>
+    <div class="msg" id="pMsg"></div>
+    <div class="acts">
+      <a class="btn sec" href="board.html" data-nav="list"><span class="ko">취소</span><span class="en">Cancel</span></a>
+      <button class="btn pri" type="submit" id="pSend"><span class="ko">올리기</span><span class="en">Post</span></button>
+    </div>
+  </form>
+</div>
+
+<!-- 글 보기 -->
+<div id="vPost" class="hidden">
+  <a class="back" href="board.html" data-nav="list">← <span class="ko">목록</span><span class="en">Back to list</span></a>
+  <div class="card post" style="margin-top:10px" id="post"></div>
+  <div class="cmts">
+    <h3><span class="ko">댓글</span><span class="en">Comments</span> <span id="cN"></span></h3>
+    <div id="cmts"></div>
+    <form class="cform" id="fCmt" autocomplete="off">
+      <div class="notice" style="margin-bottom:8px">
+        <span class="ko">개인정보(전화번호·계좌번호 등)는 적지 마세요 · 특정 종목 매수·매도 상담은 하지 않습니다</span>
+        <span class="en">Please don't post personal information (phone or account numbers, etc.) · We don't give buy/sell advice on specific stocks</span>
+      </div>
+      <div class="two">
+        <div><label for="cNick"><span class="ko">닉네임</span><span class="en">Nickname</span></label><input id="cNick" maxlength="20" required></div>
+        <div><label for="cPw"><span class="ko">비밀번호 (삭제용, 4자 이상)</span><span class="en">Password (to delete, 4+ chars)</span></label><input id="cPw" type="password" minlength="4" maxlength="64" required autocomplete="new-password"></div>
+      </div>
+      <label for="cBody"><span class="ko">댓글</span><span class="en">Comment</span></label><textarea id="cBody" maxlength="500" required></textarea>
+      <div class="cnt"><span id="cCnt">0</span> / 500</div>
+      <div class="msg" id="cMsg"></div>
+      <div class="acts"><button class="btn pri" type="submit" id="cSend"><span class="ko">댓글 달기</span><span class="en">Add comment</span></button></div>
+    </form>
+  </div>
+</div>
+
+</div></main>
+
+<footer><div class="wrap">
+  <p><b>주식회사 부만</b> · 머니퍼즐(Money Puzzle) · <a href="./"><span class="ko">홈으로</span><span class="en">Home</span></a></p>
+  <p class="ko">게시판 글은 누구나 볼 수 있습니다. 머니퍼즐의 정보는 투자 판단을 위한 참고 자료이며, 투자 판단과 그 결과의 책임은 투자자 본인에게 있습니다.</p>
+  <p class="en">Posts are public. Information from Money Puzzle is for reference only; all investment decisions and their outcomes are the investor's own responsibility.</p>
+  <p>© 2026 주식회사 부만</p>
+</div></footer>
+
+<script>
+function tl(){ var e=document.body.classList.toggle("lang-en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
+try{ if(localStorage.getItem("home_lang")==="en") tl(); }catch(x){}
+
+(function(){
+var API="https://brief-live-hub.emhwang3.workers.dev/board";
+var $=function(id){return document.getElementById(id);};
+var ERR={
+  empty:["빈 칸이 있습니다. 비밀번호는 4자 이상이어야 합니다.","Please fill in every field. The password needs 4+ characters."],
+  long:["글자 수가 너무 많습니다.","Too long."],
+  links:["링크는 3개까지만 넣을 수 있습니다.","No more than 3 links, please."],
+  rate:["잠시 뒤에 다시 올려 주세요 (시간당 글 5개·댓글 20개).","Please try again later (5 posts / 20 comments per hour)."],
+  pw:["비밀번호가 맞지 않습니다.","Wrong password."],
+  notfound:["삭제되었거나 없는 글입니다.","This post doesn't exist or was deleted."],
+  net:["연결에 실패했습니다. 잠시 뒤 다시 해 주세요.","Connection failed. Please try again."]
+};
+// 두 말을 같이 넣어 두고 화면 언어(lang-en)로 갈라 보인다 — 사용자 글은 textContent 로만 넣는다
+function bi(ko,en){var f=document.createDocumentFragment(),a=document.createElement("span"),b=document.createElement("span");a.className="ko";a.textContent=ko;b.className="en";b.textContent=en;f.appendChild(a);f.appendChild(b);return f;}
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function say(box,code,ok){box.textContent="";box.className="msg "+(ok?"ok":"err");if(!code)return;var m=ERR[code]||[String(code),String(code)];box.appendChild(bi(m[0],m[1]));}
+function api(path,body){
+  var o=body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{cache:"no-store"};
+  return fetch(API+path,o).then(function(r){return r.json();}).catch(function(){return {ok:false,err:"net"};});
+}
+function cnt(inp,out){inp.addEventListener("input",function(){out.textContent=inp.value.length;});}
+cnt($("pBody"),$("pCnt"));cnt($("cBody"),$("cCnt"));
+
+var views=["vList","vWrite","vPost"];
+function show(v){views.forEach(function(x){$(x).classList.toggle("hidden",x!==v);});window.scrollTo(0,0);}
+function go(q,push){ if(push) history.pushState(null,"","board.html"+q); route(); }
+function route(){
+  var s=new URLSearchParams(location.search);
+  if(s.get("id")) return openPost(s.get("id"));
+  if(s.get("write")) return show("vWrite");
+  show("vList"); loadList(parseInt(s.get("page")||"1",10)||1);
+}
+window.addEventListener("popstate",route);
+document.addEventListener("click",function(e){
+  var a=e.target.closest&&e.target.closest("[data-nav]"); if(!a) return;
+  e.preventDefault(); go(a.getAttribute("data-nav")==="list"?"":a.getAttribute("data-nav"),true);
+});
+$("bWrite").onclick=function(){ go("?write=1",true); };
+
+function loadList(page){
+  var L=$("list"),P=$("pager"); L.textContent=""; P.textContent="";
+  L.appendChild(el("div","empty")).appendChild(bi("불러오는 중…","Loading…"));
+  api("/list?page="+page).then(function(j){
+    L.textContent="";
+    if(!j.ok){ var d=el("div","empty"); var m=ERR[j.err]||ERR.net; d.appendChild(bi(m[0],m[1])); L.appendChild(d); return; }
+    var t=$("total"); t.textContent=""; t.appendChild(bi("전체 "+j.total+"개","Total "+j.total));
+    if(!j.items.length){ var d2=el("div","empty"); d2.appendChild(bi("아직 글이 없습니다. 첫 글을 남겨 주세요.","No posts yet. Be the first to write one.")); L.appendChild(d2); }
+    j.items.forEach(function(it){
+      var a=el("a","row"); a.href="board.html?id="+encodeURIComponent(it.id); a.setAttribute("data-nav","?id="+encodeURIComponent(it.id));
+      var t1=el("div","t",it.title); if(it.nc) t1.appendChild(el("span","cc","["+it.nc+"]"));
+      a.appendChild(t1); a.appendChild(el("div","pv",it.pv)); a.appendChild(el("div","meta",it.nick+" · "+it.at));
+      L.appendChild(a);
+    });
+    if(j.pages>1) for(var i=1;i<=j.pages;i++){ (function(n){ var b=el("button",n===j.page?"on":"",String(n)); b.onclick=function(){go(n>1?"?page="+n:"",true);}; P.appendChild(b); })(i); }
+  });
+}
+
+// 삭제 단추 → 비밀번호 칸이 그 자리에 열린다
+function delButton(kind,id,host,after){
+  var b=el("button","btn sm del"); b.type="button"; b.appendChild(bi("삭제","Delete"));
+  b.onclick=function(){
+    if(host.querySelector(".delbox")) return;
+    var box=el("div","delbox"), inp=el("input"); inp.type="password"; inp.autocomplete="off";
+    inp.placeholder=document.body.classList.contains("lang-en")?"Password":"비밀번호";
+    var ok=el("button","btn sm pri"); ok.type="button"; ok.appendChild(bi("삭제 확인","Confirm"));
+    var no=el("button","btn sm del"); no.type="button"; no.appendChild(bi("취소","Cancel"));
+    var msg=el("div","msg");
+    no.onclick=function(){box.remove();};
+    var run=function(){ if(!inp.value) return; ok.disabled=true;
+      api("/delete",{kind:kind,id:id,pw:inp.value}).then(function(j){ ok.disabled=false;
+        if(j.ok){ after(); } else say(msg,j.err||"net"); }); };
+    ok.onclick=run; inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();run();}});
+    box.appendChild(inp); box.appendChild(ok); box.appendChild(no); box.appendChild(msg);
+    host.appendChild(box); inp.focus();
+  };
+  return b;
+}
+
+var curId="";
+function openPost(id){
+  curId=id; show("vPost");
+  var P=$("post"),C=$("cmts"); P.textContent=""; C.textContent=""; $("cN").textContent="";
+  P.appendChild(bi("불러오는 중…","Loading…"));
+  api("/post?id="+encodeURIComponent(id)).then(function(j){
+    P.textContent="";
+    if(!j.ok){ var m=ERR[j.err]||ERR.net; P.appendChild(bi(m[0],m[1])); $("fCmt").classList.add("hidden"); return; }
+    $("fCmt").classList.remove("hidden");
+    var p=j.post, head=el("div","phead"), left=el("div");
+    left.appendChild(el("h2",null,p.title)); left.appendChild(el("div","meta",p.nick+" · "+p.at));
+    head.appendChild(left); head.appendChild(delButton("post",p.id,P,function(){go("",true);}));
+    P.appendChild(head); P.appendChild(el("div","body",p.body));
+    $("cN").textContent=j.comments.length?"("+j.comments.length+")":"";
+    if(!j.comments.length){ var e0=el("div","meta"); e0.appendChild(bi("첫 댓글을 남겨 주세요.","No comments yet.")); C.appendChild(e0); }
+    j.comments.forEach(function(c){
+      var d=el("div","cmt"), top=el("div","top"), l=el("div");
+      l.appendChild(el("span","nk",c.nick)); l.appendChild(el("span","meta"," · "+c.at));
+      top.appendChild(l); top.appendChild(delButton("comment",c.id,d,function(){openPost(curId);}));
+      d.appendChild(top); d.appendChild(el("div","bd",c.body)); C.appendChild(d);
+    });
+  });
+}
+
+$("fPost").addEventListener("submit",function(e){
+  e.preventDefault(); var m=$("pMsg"), b=$("pSend");
+  var d={nickname:$("pNick").value.trim(),title:$("pTitle").value.trim(),body:$("pBody").value.trim(),pw:$("pPw").value};
+  if(!d.nickname||!d.title||!d.body||d.pw.length<4) return say(m,"empty");
+  b.disabled=true; say(m,"");
+  api("/post",d).then(function(j){ b.disabled=false;
+    if(!j.ok) return say(m,j.err||"net");
+    $("pTitle").value=""; $("pBody").value=""; $("pPw").value=""; $("pCnt").textContent="0";
+    go("?id="+encodeURIComponent(j.id),true);
+  });
+});
+$("fCmt").addEventListener("submit",function(e){
+  e.preventDefault(); var m=$("cMsg"), b=$("cSend");
+  var d={post:curId,nickname:$("cNick").value.trim(),body:$("cBody").value.trim(),pw:$("cPw").value};
+  if(!d.nickname||!d.body||d.pw.length<4) return say(m,"empty");
+  b.disabled=true; say(m,"");
+  api("/comment",d).then(function(j){ b.disabled=false;
+    if(!j.ok) return say(m,j.err||"net");
+    $("cBody").value=""; $("cPw").value=""; $("cCnt").textContent="0";
+    openPost(curId);
+  });
+});
+route();
+})();
+</script>
+</body>
+</html>
