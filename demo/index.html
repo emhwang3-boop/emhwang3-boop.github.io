@@ -7872,18 +7872,22 @@ function pnlRender(){
         });
         h += '</div><div class="dplbl" style="margin-top:4px"><span style="display:inline-block;width:9px;height:9px;background:#00c805;margin-right:3px"></span>'
            + KE("실현", "Realized") + ' <span style="display:inline-block;width:9px;height:9px;background:#00c805;opacity:.4;margin:0 3px 0 8px"></span>'
-           + KE("미실현(이번 달)", "Unrealized (this month)") + '</div>';
+           + KE("미실현", "Unrealized") + '</div>';
         // 누른 달 — 시장별
         var m = D.months[sel] || {kr: 0, us: 0, coin: 0}, isCur = (sel === D.cur && D.unOk);
-        var cell = function(v, u){ return u ? fc(v, u) + '<br><span class="dplbl">' + won(v * fx) + '</span>' : won(v); };
-        var row = function(nm, a, b2, u){ return '<tr><td style="text-align:left">' + nm + '</td><td class="' + cl(u ? a * fx : a) + '">' + cell(a, u) + '</td>'
-          + (isCur ? '<td class="' + cl(u ? b2 * fx : b2) + '">' + cell(b2, u) + '</td>' : '') + '</tr>'; };
+        // 표는 원화로만 · 가로(시장별)·세로(실현/미실현) 합계 (사장님 2026-10-09)
+        var kw = function(v, u){ return u ? v * fx : v; };
+        var td = function(v, b){ return '<td class="' + cl(v) + '"' + (b ? ' style="font-weight:800"' : '') + '>' + won(v) + '</td>'; };
+        var tR = 0, tU = 0;
+        var row = function(nm, a, b2, u){ var r = kw(a, u), q = isCur ? kw(b2, u) : 0; tR += r; tU += q;
+          return '<tr><td style="text-align:left">' + nm + '</td>' + td(r) + (isCur ? td(q) + td(r + q, 1) : '') + '</tr>'; };
         var yy = sel.slice(0, 4), mm = +sel.slice(5, 7);
-        h += '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">' + (en ? MON[mm - 1] + " " + yy : yy + "년 " + mm + "월")
-           + ' <b class="' + cl(cv(m) + (isCur ? unT : 0)) + '">' + won(cv(m) + (isCur ? unT : 0)) + '</b></div>'
+        var body = row(KE("국내", "KR"), m.kr, D.un.kr, "") + row(KE("미국", "US"), m.us, D.un.us, "$") + row(KE("코인", "Crypto"), m.coin, D.un.coin, "USDT");
+        h += '<div class="dphd" style="margin-top:8px;font-size:14px;color:var(--nm)">' + (en ? MON[mm - 1] + " " + yy : yy + "년 " + mm + "월") + '</div>'
            + '<table class="mhtab" style="width:100%"><tr><th style="text-align:left">' + KE("시장", "Market") + '</th><th>' + KE("실현", "Realized") + '</th>'
-           + (isCur ? '<th>' + KE("미실현", "Unrealized") + '</th>' : '') + '</tr>'
-           + row(KE("국내", "KR"), m.kr, D.un.kr, "") + row(KE("미국", "US"), m.us, D.un.us, "$") + row(KE("코인", "Crypto"), m.coin, D.un.coin, "USDT") + '</table>';
+           + (isCur ? '<th>' + KE("미실현", "Unrealized") + '</th><th>' + KE("합계", "Total") + '</th>' : '') + '</tr>'
+           + body
+           + '<tr style="border-top:2px solid var(--bd)"><td style="text-align:left;font-weight:800">' + KE("합계", "Total") + '</td>' + td(tR, 1) + (isCur ? td(tU, 1) + td(tR + tU, 1) : '') + '</tr></table>';
         if(fx) h += '<div class="dplbl" style="margin-top:4px">' + KE("달러·USDT는 오늘 환율 " + fx.toLocaleString(undefined, {maximumFractionDigits: 2}) + "원으로 환산",
                                                      "USD/USDT at today's rate ₩" + fx.toLocaleString(undefined, {maximumFractionDigits: 2})) + '</div>';
       }
@@ -8777,5 +8781,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-09 21:03</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-09 21:21</div>
 </body></html>
