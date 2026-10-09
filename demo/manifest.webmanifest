@@ -1,8 +1,8 @@
 {
  "id": "/demo/?app=2",
- "name": "데일리 브리프 라이브 데모",
- "short_name": "브리프 데모",
- "description": "데일리 브리프 라이브 데모 — 시세·성향별 추천 (정보 제공)",
+ "name": "머니퍼즐 HTS",
+ "short_name": "머니퍼즐 HTS",
+ "description": "머니퍼즐 HTS — 시세·성향별 추천 (정보 제공)",
  "lang": "ko",
  "start_url": "./?src=pwa",
  "scope": "./",
