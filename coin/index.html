@@ -267,7 +267,6 @@ button{text-align:center !important}
 </div>
 <div class="asof" id="asof">불러오는 중…</div>
 <div id="feedDelay" hidden></div>
-<div class="ophrs" id="ophrs">실시간 운영 05:00 ~ 익일 02:00 (KST) · 그 밖의 시간은 마지막 값</div>
 <div id="installBar" hidden><span id="installTxt">📲 홈 화면에 앱으로 추가하고 바로 여세요</span><button id="installBtn" onclick="doInstall()">앱설치</button><span class="ix" onclick="dismissInstall()">✕</span></div>
 
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
@@ -516,8 +515,6 @@ const T={title:{ko:"일일브리핑",en:"Daily Brief"},stockH:{ko:"종목 조회
  chartLoading:{ko:"차트 불러오는 중…",en:"Loading chart…"},chartNone:{ko:"차트 없음",en:"No chart"},
  stkPH:{ko:"국내·미국 (예: 005930, 삼성, AAPL, Tesla)",en:"KR·US (e.g. 005930, AAPL, Tesla)"},
  coinPH:{ko:"코인 심볼 (예: BTC, ETH, SOL)",en:"Coin symbol (e.g. BTC, ETH, SOL)"},
- ophrs:{ko:"실시간 운영 05:00 ~ 익일 02:00 (KST) · 그 밖의 시간은 마지막 값",
-  en:"Live 05:00–02:00 KST · outside these hours, last values shown"},
  asof:{ko:" 기준",en:""},binance:{ko:"● 바이낸스",en:"● Binance"},snap:{ko:" · 스냅샷",en:" · snapshot"}};
 function L(k){const t=T[k];return t?(t[LANG]||t.ko):k;}
 const TEMPW={ko:["차가움","서늘","미지근","따뜻","뜨거움"],en:["Cold","Cool","Neutral","Warm","Hot"]};
@@ -3668,7 +3665,6 @@ if (typeof svInfoMark !== "function") window.svInfoMark = function svInfoMark(id
   var D = {
     // ── 머리·툴바 ──
     "공유": "Share", "● 실시간": "● Live", "실시간": "Live", "설정": "Settings", "초기화": "Reset", "실주문": "Live orders",
-    "실시간 운영 05:00 ~ 익일 02:00 (KST) · 그 밖의 시간은 마지막 값": "Live 05:00–02:00 next day (KST) · outside these hours, last values",
     "시장온도 · VIX · 공포·탐욕 — 주식시장 기준": "Market temp · VIX · Fear & Greed — stock market basis",
     "🧪 모의 판 — 가상머니(국내 1,000만원 · $10,000 · 10,000 USDT)로만 거래합니다 · 실계좌는 보이지 않습니다": "⚠ Mock order board — no real orders are sent · for review/demo",
     "🧪 모의 판 — 가상머니(국내 1,000만원 · $10,000 · 10,000 USDT)로만 거래합니다 · 실계좌는 보이지 않습니다": "⚠ Mock order board — no real orders are sent · for review/demo",
@@ -4041,5 +4037,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-08 18:09</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-09 19:57</div>
 </body></html>
