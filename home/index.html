@@ -52,7 +52,7 @@
   .contact a.mail{font-size:22px;font-weight:700;text-decoration:none;color:var(--blue)}
   footer{border-top:1px solid var(--line);padding:28px 0 40px;font-size:12.5px;color:var(--sub)}
   footer p{margin:4px 0}
-  .en{display:none} body.en .en{display:revert} body.en .ko{display:none}
+  .en{display:none} body.lang-en .en{display:revert} body.lang-en .ko{display:none}
   @media(max-width:860px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}h1{font-size:32px}.hero{padding:48px 0 24px}nav .hide{display:none}}
   @media(max-width:480px){.g4{grid-template-columns:1fr}h1{font-size:28px}.lead{font-size:16px}h2{font-size:25px}}
 </style>
@@ -149,7 +149,7 @@
 </div></footer>
 
 <script>
-function tl(){ var e=document.body.classList.toggle("en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
+function tl(){ var e=document.body.classList.toggle("lang-en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
 try{ if(localStorage.getItem("home_lang")==="en") tl(); }catch(x){}
 </script>
 </body>
