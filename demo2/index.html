@@ -124,6 +124,7 @@ img.fl{width:20px;height:15px;border:1px solid var(--bd);border-radius:2px;flex:
 @media(max-width:520px){#stkChart,#coinChart{width:calc(100% + 22px);margin-left:-11px;margin-right:-11px}}
 .rlbar{display:flex;align-items:center;gap:6px;margin:2px 0 6px;flex-wrap:wrap}
 .rlbar .dpb{white-space:nowrap}
+.acthd .dpsm,h3 .tag.live{white-space:nowrap}   /* 계좌 머리줄 단추 — 영문에서 두 줄로 꺾이지 않게 (사장님 2026-10-09) */
 .rlmsg{flex:1 0 100%;font-size:11.5px;color:var(--sub);line-height:1.5;word-break:break-all}
 .rlb{background:#0d6efd;color:#fff;border-radius:4px;padding:0 4px;font-size:9.5px;font-weight:700;margin-left:4px}
 .mkb{background:var(--bd);color:var(--sub);border-radius:4px;padding:0 4px;font-size:9.5px;margin-left:4px}
@@ -153,6 +154,7 @@ body.light #mhBody tr.mhgrp td{background:rgba(127,127,127,.10);border-top:0}
   .mhnote{font-size:9.5px}
   #mhBody .mhtab td:nth-child(5),#mhBody .mhtab th:nth-child(5){display:none}
   .rlbar .dpb{font-size:11px;padding:5px 9px}
+  .acthd{gap:5px !important} .acthd .dpsm{font-size:10.5px;padding:5px 7px}
   .rlmsg{font-size:10px}
   .dpnote{font-size:11px;padding:6px 9px}
   .dpin{width:92px;font-size:12px;padding:6px 7px}
@@ -310,7 +312,7 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 </div>
 
 <div class="card" id="demoacct">
-  <h3><span style="display:inline-flex;align-items:center;gap:8px">계좌<button class="dpb flat dpsm" onclick="event.stopPropagation();rlLoad()">잔고 업데이트</button><button class="dpb flat dpsm" id="atBtn" onclick="event.stopPropagation();atOpen()">자동매매</button></span> <span class="tag live">● 실시간</span></h3>
+  <h3><span class="acthd" style="display:inline-flex;align-items:center;gap:8px">계좌<button class="dpb flat dpsm" onclick="event.stopPropagation();rlLoad()">잔고 업데이트</button><button class="dpb flat dpsm" id="atBtn" onclick="event.stopPropagation();atOpen()">자동매매</button></span> <span class="tag live">● 실시간</span></h3>
   <div id="dpBody"></div>
 </div>
 <div id="recoSlot"></div>
@@ -8629,5 +8631,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-09 19:57</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-09 20:06</div>
 </body></html>
