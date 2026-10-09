@@ -363,11 +363,11 @@ body.light #installBar{background:#eaf3ff;border-color:#b9d5f5;color:#1a4b7a}
 <div class="card discCard">
   <h3><span class="kko">투자 유의사항</span><span class="ken">Investment Notice</span></h3>
   <ul class="discList">
-    <li><span class="kko">사전에 정해진 정량 규칙에 따라 산출한 모델 포트폴리오이며, 투자 판단의 책임은 본인에게 있습니다.</span><span class="ken">This is a model portfolio produced by predefined quantitative rules; responsibility for investment decisions rests with you.</span></li>
-    <li><span class="kko">과거의 실적이 미래의 수익을 보장하지 않으며, 본 서비스는 원금 손실의 가능성이 있습니다.</span><span class="ken">Past performance does not guarantee future returns, and this service carries the possibility of loss of principal.</span></li>
-    <li><span class="kko">본 서비스는 1:1 개별 투자 상담을 진행하지 않는 단방향 정보 제공 서비스입니다.</span><span class="ken">This service is a one-way information service and does not provide one-on-one individual investment consultation.</span></li>
-    <li><span class="kko">이 앱은 단기 트레이딩용으로 사용하기에는 적합하지 않으며, 일봉 기준으로 중장기 포트폴리오 투자를 지원하기 위해 설계되었습니다.</span><span class="ken">This app is not suitable for short-term trading; it is designed to support medium- to long-term portfolio investing based on daily charts.</span></li>
-    <li><span class="kko">당사는 정식 금융투자업자가 아닌 유사투자자문업자이며, 개별적인 투자 상담과 자금 운용이 불가능합니다.</span><span class="ken">We are not a licensed financial investment business but a quasi-investment advisory business, and cannot provide individual investment consultation or manage funds.</span></li>
+    <li><span class="kko">머니퍼즐 미니는 시세·차트·기업정보를 보여 주고 고객이 직접 주문하도록 돕는 거래 도구이며, 특정 종목의 매수·매도를 추천하거나 권유하지 않습니다.</span><span class="ken">Money Puzzle mini is a trading tool that shows prices, charts and company data and helps you place your own orders. It does not recommend or solicit buying or selling any security.</span></li>
+    <li><span class="kko">모든 투자 판단과 주문의 책임은 투자자 본인에게 있습니다.</span><span class="ken">All investment decisions and orders are your own responsibility.</span></li>
+    <li><span class="kko">주식·코인 투자는 원금 손실이 발생할 수 있으며, 과거의 실적이 미래의 수익을 보장하지 않습니다.</span><span class="ken">Investing in stocks and crypto can result in loss of principal, and past performance does not guarantee future returns.</span></li>
+    <li><span class="kko">화면의 시세·재무 정보는 늦거나 틀릴 수 있으니, 주문 전 증권사·거래소 화면에서 다시 확인하십시오.</span><span class="ken">Prices and financial data shown may be delayed or inaccurate. Check your broker or exchange before you order.</span></li>
+    <li><span class="kko">증권사·거래소 API 키를 만들 때 출금 권한은 체크하지 마십시오.</span><span class="ken">When you create broker or exchange API keys, do not enable withdrawal permission.</span></li>
   </ul>
   <button onclick="discShow()" style="display:block;width:100%;margin:5px 0;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--nm);font-size:13px;cursor:pointer"><span class="kko">다시 보기</span><span class="ken">Show again</span></button>
 </div>
@@ -8771,6 +8771,7 @@ body>.top{order:-30} #dpNote{order:-29} #asof{order:-28} #installBar{order:-27}
 #ydCard{order:40} #pnlCard{order:50} #voice{order:60} #mnNotice{order:61} #foot{order:70}
 body>.card:not(#pfAcct):not(#demoacct):not(#myhold):not(#mwCard):not(#stock):not(#cpCard):not(#mfCard):not(#coin2):not(#ciCard):not(#ydCard):not(#pnlCard):not(#voice):not(#mnNotice){display:none!important}
 #krstat,#gauges,.gnote,#chgTop,#cards,#tkBar,#ordHead,#news,#recoSlot,#atBtn,#bkAddBtn,#bkAddBtnCo{display:none!important}
+#myhold .mhsum:has(#hbBeta),#myhold .mhsum:has(button[onclick="holdTower3D()"]){display:none!important}   /* 포트폴리오 수익률·3D·α β 줄 — 미니엔 없음 (사장님 10-09) */
 .mnLogo img{height:30px;width:auto;display:block}
 body:not(.light) .mnLogo img{filter:invert(1)}
 .mnLogoEn{font-weight:900;font-size:20px;letter-spacing:-.3px;color:var(--nm);white-space:nowrap}
