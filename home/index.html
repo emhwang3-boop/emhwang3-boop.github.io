@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>머니퍼즐 · Money Puzzle</title>
+<meta name="description" content="머니퍼즐 — 퀀트 기반 로보어드바이저. 성향별 자산배분과 바스켓 매매를 한 화면에서.">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#111827;--sub:#5b6474;--line:#e6e9ef;--bg:#ffffff;--soft:#f4f7fb;--blue:#1d5bd8;--green:#1e9e48;--orange:#f08c00;--navy:#1b2a4a}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;line-height:1.6;-webkit-text-size-adjust:100%}
+  a{color:inherit}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .logo{font-weight:900;font-size:22px;letter-spacing:-1px;text-decoration:none}
+  nav{display:flex;align-items:center;gap:18px;font-size:14px}
+  nav a{text-decoration:none;color:var(--sub)}
+  nav a:hover{color:var(--ink)}
+  .lang{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer}
+  .hero{padding:72px 0 40px;text-align:center}
+  .eyebrow{display:inline-block;font-size:13px;font-weight:700;color:var(--blue);background:#eaf1ff;border-radius:999px;padding:4px 12px;margin-bottom:18px}
+  h1{font-size:44px;line-height:1.25;letter-spacing:-1.5px;margin:0 0 16px;font-weight:900}
+  .lead{font-size:18px;color:var(--sub);margin:0 auto 28px;max-width:640px}
+  .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-block;text-decoration:none;font-weight:700;border-radius:12px;padding:13px 22px;font-size:15px}
+  .btn.pri{background:var(--ink);color:#fff}
+  .btn.sec{border:1.5px solid var(--ink)}
+  .shot{margin:44px auto 0;max-width:1068px}
+  .shot img{width:100%;height:auto;display:block;border-radius:16px}
+  section{padding:64px 0;border-top:1px solid var(--line)}
+  section.soft{background:var(--soft)}
+  h2{font-size:30px;letter-spacing:-1px;margin:0 0 8px;font-weight:900}
+  .sec-lead{color:var(--sub);margin:0 0 32px}
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
+  .card h3{margin:10px 0 6px;font-size:18px}
+  .card p{margin:0;color:var(--sub);font-size:14.5px}
+  .app{display:flex;flex-direction:column;text-decoration:none;transition:transform .15s,box-shadow .15s}
+  .app:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(17,24,39,.08)}
+  .app img{width:64px;height:64px;border-radius:16px}
+  .app .go{margin-top:14px;font-size:13.5px;font-weight:700;color:var(--blue)}
+  .num{font-size:15px;font-weight:900;color:var(--blue)}
+  .stat{text-align:center}
+  .stat b{display:block;font-size:34px;font-weight:900;letter-spacing:-1px}
+  .stat span{color:var(--sub);font-size:14px}
+  .contact{text-align:center}
+  .contact a.mail{font-size:22px;font-weight:700;text-decoration:none;color:var(--blue)}
+  footer{border-top:1px solid var(--line);padding:28px 0 40px;font-size:12.5px;color:var(--sub)}
+  footer p{margin:4px 0}
+  .en{display:none} body.en .en{display:revert} body.en .ko{display:none}
+  @media(max-width:860px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}h1{font-size:32px}.hero{padding:48px 0 24px}nav .hide{display:none}}
+  @media(max-width:480px){.g4{grid-template-columns:1fr}h1{font-size:28px}.lead{font-size:16px}h2{font-size:25px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="logo" href="#"><span class="ko">머니퍼즐</span><span class="en">Money Puzzle</span></a>
+  <nav>
+    <a class="hide" href="#apps"><span class="ko">앱</span><span class="en">Apps</span></a>
+    <a class="hide" href="#why"><span class="ko">특징</span><span class="en">Why</span></a>
+    <a class="hide" href="#contact"><span class="ko">문의</span><span class="en">Contact</span></a>
+    <button class="lang" onclick="tl()" id="lb">EN</button>
+  </nav>
+</div></header>
+
+<main>
+<div class="hero"><div class="wrap">
+  <div class="eyebrow"><span class="ko">퀀트 기반 로보어드바이저</span><span class="en">Quant-based robo-advisor</span></div>
+  <h1><span class="ko">투자는 한 방이 아니라,<br>퍼즐입니다</span><span class="en">Investing isn't one big bet.<br>It's a puzzle.</span></h1>
+  <p class="lead"><span class="ko">투자성향에 맞춘 자산배분, 데이터로 검증한 종목 선정, 포트폴리오 단위의 바스켓 매매까지 — 위아래로 훑기만 하면 한 화면에서 끝납니다.</span><span class="en">Asset allocation matched to your risk profile, data-driven stock selection and portfolio-level basket trading — all on one scrolling screen.</span></p>
+  <div class="btns">
+    <a class="btn pri" href="https://emhwang3-boop.github.io/review/" target="_blank" rel="noopener"><span class="ko">앱 체험하기 (모의판)</span><span class="en">Try the demo</span></a>
+    <a class="btn sec" href="#contact"><span class="ko">투자·제휴 문의</span><span class="en">Partner with us</span></a>
+  </div>
+  <div class="shot"><img src="screens.png" alt="머니퍼즐 앱 화면 — 주식 차트, 코인 차트, 누적 손익" width="1068" height="600"></div>
+</div></div>
+
+<section id="apps" class="soft"><div class="wrap">
+  <h2><span class="ko">앱 네 가지</span><span class="en">Four apps</span></h2>
+  <p class="sec-lead"><span class="ko">보는 앱 둘, 주문하는 앱 둘. 설치 없이 브라우저에서 바로 열립니다.</span><span class="en">Two apps to watch, two to trade. They open right in your browser, no install needed.</span></p>
+  <div class="grid g4">
+    <a class="card app" href="https://emhwang3-boop.github.io/stock/" target="_blank" rel="noopener">
+      <img src="icon_stock.png" alt="">
+      <h3><span class="ko">머니퍼즐 주식</span><span class="en">Money Puzzle Stocks</span></h3>
+      <p><span class="ko">국내·미국 시세, 성향별 자산배분, 가상 포트폴리오</span><span class="en">KR &amp; US quotes, profile-based allocation, virtual portfolio</span></p>
+      <span class="go"><span class="ko">열기 →</span><span class="en">Open →</span></span></a>
+    <a class="card app" href="https://emhwang3-boop.github.io/coin/" target="_blank" rel="noopener">
+      <img src="icon_coin.png" alt="">
+      <h3><span class="ko">머니퍼즐 코인</span><span class="en">Money Puzzle Crypto</span></h3>
+      <p><span class="ko">주요 코인 시세와 차트, BTC·ETH 배분</span><span class="en">Major coin prices and charts, BTC/ETH allocation</span></p>
+      <span class="go"><span class="ko">열기 →</span><span class="en">Open →</span></span></a>
+    <a class="card app" href="https://emhwang3-boop.github.io/review/" target="_blank" rel="noopener">
+      <img src="icon_hts.png" alt="">
+      <h3><span class="ko">머니퍼즐 HTS</span><span class="en">Money Puzzle HTS</span></h3>
+      <p><span class="ko">계좌 연결, 바스켓 매매, 매달 리밸런싱 (체험은 모의판)</span><span class="en">Broker accounts, basket trading, monthly rebalancing (demo uses virtual money)</span></p>
+      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span></span></a>
+    <a class="card app" href="https://emhwang3-boop.github.io/mini/" target="_blank" rel="noopener">
+      <img src="icon_mini.png" alt="">
+      <h3><span class="ko">머니퍼즐 미니</span><span class="en">Money Puzzle mini</span></h3>
+      <p><span class="ko">20~30대를 위한 가벼운 거래 도구 — 관심종목, 차트, 3개년 실적</span><span class="en">A light trading tool for 20s–30s — watchlist, charts, 3-year financials</span></p>
+      <span class="go"><span class="ko">열기 →</span><span class="en">Open →</span></span></a>
+  </div>
+</div></section>
+
+<section id="why"><div class="wrap">
+  <h2><span class="ko">왜 머니퍼즐인가</span><span class="en">Why Money Puzzle</span></h2>
+  <p class="sec-lead"><span class="ko">종목 하나에 몰아 사던 투자를, 위험을 나눈 포트폴리오 투자로.</span><span class="en">From all-in single-stock bets to diversified portfolio investing.</span></p>
+  <div class="grid g3">
+    <div class="card"><span class="num">01</span>
+      <h3><span class="ko">웹툰처럼 한 화면</span><span class="en">One scrolling screen</span></h3>
+      <p><span class="ko">시세, 계좌, 추천, 차트, 기업정보, 뉴스까지 위아래로만 훑으면 됩니다. 앱을 옮겨 다닐 필요가 없습니다.</span><span class="en">Quotes, accounts, picks, charts, company data and news — just scroll. No jumping between apps.</span></p></div>
+    <div class="card"><span class="num">02</span>
+      <h3><span class="ko">퀀트 엔진</span><span class="en">Quant engine</span></h3>
+      <p><span class="ko">대표 ETF를 바탕으로, 데이터로 검증한 모멘텀 규칙이 매달 추가 종목을 고릅니다. 감이 아니라 규칙입니다.</span><span class="en">Index ETFs as the core, with a data-tested momentum model picking the satellite each month. Rules, not hunches.</span></p></div>
+    <div class="card"><span class="num">03</span>
+      <h3><span class="ko">포트폴리오 바스켓 매매</span><span class="en">Portfolio basket trading</span></h3>
+      <p><span class="ko">투자성향별 자산배분비율대로 여러 종목을 한 번에 사고, 매달 1일 비율을 다시 맞춥니다.</span><span class="en">Buy a whole allocation in one go, then rebalance on the 1st of every month.</span></p></div>
+  </div>
+</div></section>
+
+<section class="soft"><div class="wrap">
+  <div class="grid g4">
+    <div class="stat"><b>4</b><span><span class="ko">작동하는 앱</span><span class="en">Live apps</span></span></div>
+    <div class="stat"><b>6<span style="font-size:20px">년</span></b><span><span class="ko">백테스트 검증</span><span class="en">Years of backtests</span></span></div>
+    <div class="stat"><b>1+8</b><span><span class="ko">특허·디자인 출원</span><span class="en">Patent + design filings</span></span></div>
+    <div class="stat"><b>2</b><span><span class="ko">상표 출원</span><span class="en">Trademark filings</span></span></div>
+  </div>
+</div></section>
+
+<section id="contact" class="contact"><div class="wrap">
+  <h2><span class="ko">투자·제휴 문의</span><span class="en">Investment &amp; partnerships</span></h2>
+  <p class="sec-lead"><span class="ko">증권사·자산운용사·핀테크와의 협업, 투자 문의를 기다립니다.</span><span class="en">We welcome brokerages, asset managers, fintechs and investors.</span></p>
+  <a class="mail" href="mailto:reeman_hwang@naver.com">reeman_hwang@naver.com</a>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <p><b>주식회사 부만</b> · 머니퍼즐(Money Puzzle)</p>
+  <p class="ko">경기도 남양주시 진접읍 금곡리 1042 엠타워 707호</p>
+  <p class="en">707, M Tower, 1042 Geumgok-ri, Jinjeop-eup, Namyangju-si, Gyeonggi-do, Korea</p>
+  <p class="ko">머니퍼즐의 정보는 투자 판단을 위한 참고 자료이며, 투자 판단과 그 결과의 책임은 투자자 본인에게 있습니다. 투자는 원금 손실이 발생할 수 있습니다.</p>
+  <p class="en">Information from Money Puzzle is for reference only. All investment decisions and their outcomes are the investor's own responsibility, and investing may result in loss of principal.</p>
+  <p>© 2026 주식회사 부만</p>
+</div></footer>
+
+<script>
+function tl(){ var e=document.body.classList.toggle("en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
+try{ if(localStorage.getItem("home_lang")==="en") tl(); }catch(x){}
+</script>
+</body>
+</html>
