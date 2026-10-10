@@ -50,6 +50,17 @@
   .stat b{display:block;font-size:34px;font-weight:900;letter-spacing:-1px}
   .stat span{color:var(--sub);font-size:14px}
   .contact{text-align:center}
+  .ir{margin:28px auto 0;max-width:900px;text-align:left}
+  .ir-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:15px}
+  .ir-hd a{color:var(--blue);text-decoration:none;font-size:14px}
+  .ir-view{position:relative}
+  .ir-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:10px;border:1px solid rgba(128,128,128,.25);scrollbar-width:none}
+  .ir-track::-webkit-scrollbar{display:none}
+  .ir-track img{flex:0 0 100%;width:100%;height:auto;scroll-snap-align:start;display:block}
+  .ir-btn{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+  .ir-prev{left:8px}.ir-next{right:8px}
+  .ir-pg{text-align:center;font-size:13px;opacity:.7;margin-top:6px}
+  @media (max-width:520px){.ir-btn{width:30px;height:30px;font-size:20px}}
   .contact a.mail{font-size:22px;font-weight:700;text-decoration:none;color:var(--blue)}
   footer{border-top:1px solid var(--line);padding:28px 0 40px;font-size:12.5px;color:var(--sub)}
   footer p{margin:4px 0}
@@ -138,7 +149,52 @@
   <h2><span class="ko">투자·제휴 문의</span><span class="en">Investment &amp; partnerships</span></h2>
   <p class="sec-lead"><span class="ko">증권사·자산운용사·핀테크와의 협업, 투자 문의를 기다립니다.</span><span class="en">We welcome brokerages, asset managers, fintechs and investors.</span></p>
   <a class="mail" href="mailto:reeman_hwang@naver.com">reeman_hwang@naver.com</a>
+  <div class="ir">
+    <div class="ir-hd"><b><span class="ko">회사소개서 (IR)</span><span class="en">Investor deck (IR)</span></b>
+      <a href="moneypuzzle_IR.pdf" target="_blank" rel="noopener"><span class="ko">PDF 내려받기</span><span class="en">Download PDF</span></a></div>
+    <div class="ir-view">
+      <button class="ir-btn ir-prev" aria-label="prev" onclick="irGo(-1)">&#8249;</button>
+      <div class="ir-track" id="irTrack">
+      <img src="ir01.jpg" alt="IR 1" loading="lazy">
+      <img src="ir02.jpg" alt="IR 2" loading="lazy">
+      <img src="ir03.jpg" alt="IR 3" loading="lazy">
+      <img src="ir04.jpg" alt="IR 4" loading="lazy">
+      <img src="ir05.jpg" alt="IR 5" loading="lazy">
+      <img src="ir06.jpg" alt="IR 6" loading="lazy">
+      <img src="ir07.jpg" alt="IR 7" loading="lazy">
+      <img src="ir08.jpg" alt="IR 8" loading="lazy">
+      <img src="ir09.jpg" alt="IR 9" loading="lazy">
+      <img src="ir10.jpg" alt="IR 10" loading="lazy">
+      <img src="ir11.jpg" alt="IR 11" loading="lazy">
+      <img src="ir12.jpg" alt="IR 12" loading="lazy">
+      <img src="ir13.jpg" alt="IR 13" loading="lazy">
+      <img src="ir14.jpg" alt="IR 14" loading="lazy">
+      <img src="ir15.jpg" alt="IR 15" loading="lazy">
+      <img src="ir16.jpg" alt="IR 16" loading="lazy">
+      <img src="ir17.jpg" alt="IR 17" loading="lazy">
+      <img src="ir18.jpg" alt="IR 18" loading="lazy">
+      <img src="ir19.jpg" alt="IR 19" loading="lazy">
+      <img src="ir20.jpg" alt="IR 20" loading="lazy">
+      <img src="ir21.jpg" alt="IR 21" loading="lazy">
+      <img src="ir22.jpg" alt="IR 22" loading="lazy">
+      <img src="ir23.jpg" alt="IR 23" loading="lazy">
+      <img src="ir24.jpg" alt="IR 24" loading="lazy">
+      <img src="ir25.jpg" alt="IR 25" loading="lazy">
+      <img src="ir26.jpg" alt="IR 26" loading="lazy">
+      </div>
+      <button class="ir-btn ir-next" aria-label="next" onclick="irGo(1)">&#8250;</button>
+    </div>
+    <div class="ir-pg" id="irPg">1 / 26</div>
+  </div>
 </div></section>
+<script>
+(function(){
+  var t=document.getElementById("irTrack"), pg=document.getElementById("irPg"), n=t.children.length;
+  function cur(){ return Math.round(t.scrollLeft/t.clientWidth); }
+  window.irGo=function(d){ var i=Math.max(0,Math.min(n-1,cur()+d)); t.scrollTo({left:i*t.clientWidth,behavior:"smooth"}); };
+  t.addEventListener("scroll",function(){ pg.textContent=(cur()+1)+" / "+n; },{passive:true});
+})();
+</script>
 </main>
 
 <footer><div class="wrap">
