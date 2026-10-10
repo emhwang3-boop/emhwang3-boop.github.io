@@ -167,56 +167,13 @@
   <p class="sec-lead"><span class="ko">증권사·자산운용사·핀테크와의 협업, 투자 문의를 기다립니다.</span><span class="en">We welcome brokerages, asset managers, fintechs and investors.</span></p>
   <a class="mail" href="mailto:emhwang3@moneypuzzle.co.kr">emhwang3@moneypuzzle.co.kr</a>
   <div class="ir">
-    <div class="ir-hd"><b><span class="ko">회사소개서 (IR)</span><span class="en">Investor deck (IR)</span></b>
-      <a id="irPdf" href="moneypuzzle_IR.pdf" target="_blank" rel="noopener"><span class="ko">PDF 내려받기</span><span class="en">Download PDF</span></a></div>
-    <div class="ir-view">
-      <button class="ir-btn ir-prev" aria-label="prev" onclick="irGo(-1)">&#8249;</button>
-      <div class="ir-track" id="irTrack">
-      <img src="ir01.jpg" alt="IR 1" loading="lazy">
-      <img src="ir02.jpg" alt="IR 2" loading="lazy">
-      <img src="ir03.jpg" alt="IR 3" loading="lazy">
-      <img src="ir04.jpg" alt="IR 4" loading="lazy">
-      <img src="ir05.jpg" alt="IR 5" loading="lazy">
-      <img src="ir06.jpg" alt="IR 6" loading="lazy">
-      <img src="ir07.jpg" alt="IR 7" loading="lazy">
-      <img src="ir08.jpg" alt="IR 8" loading="lazy">
-      <img src="ir09.jpg" alt="IR 9" loading="lazy">
-      <img src="ir10.jpg" alt="IR 10" loading="lazy">
-      <img src="ir11.jpg" alt="IR 11" loading="lazy">
-      <img src="ir12.jpg" alt="IR 12" loading="lazy">
-      <img src="ir13.jpg" alt="IR 13" loading="lazy">
-      <img src="ir14.jpg" alt="IR 14" loading="lazy">
-      <img src="ir15.jpg" alt="IR 15" loading="lazy">
-      <img src="ir16.jpg" alt="IR 16" loading="lazy">
-      <img src="ir17.jpg" alt="IR 17" loading="lazy">
-      <img src="ir18.jpg" alt="IR 18" loading="lazy">
-      <img src="ir19.jpg" alt="IR 19" loading="lazy">
-      <img src="ir20.jpg" alt="IR 20" loading="lazy">
-      <img src="ir21.jpg" alt="IR 21" loading="lazy">
-      <img src="ir22.jpg" alt="IR 22" loading="lazy">
-      <img src="ir23.jpg" alt="IR 23" loading="lazy">
-      <img src="ir24.jpg" alt="IR 24" loading="lazy">
-      <img src="ir25.jpg" alt="IR 25" loading="lazy">
-      <img src="ir26.jpg" alt="IR 26" loading="lazy">
-      </div>
-      <button class="ir-btn ir-next" aria-label="next" onclick="irGo(1)">&#8250;</button>
-    </div>
-    <div class="ir-pg" id="irPg">1 / 26</div>
+    <div class="ir-hd"><b><span class="ko">회사소개서 (IR)</span><span class="en">Investor deck (IR)</span></b></div>
+    <div class="ir-view"><div class="ir-track" style="overflow:hidden">
+      <img class="ko" src="ir01.jpg" alt="IR"><img class="en" src="iren01.jpg" alt="IR">
+    </div></div>
+    <p class="ir-pg" style="opacity:1;font-size:14px;margin-top:10px"><span class="ko">IR 자료는 요청 시 제공합니다 — <a href="mailto:emhwang3@moneypuzzle.co.kr">emhwang3@moneypuzzle.co.kr</a></span><span class="en">The full investor deck is available on request — <a href="mailto:emhwang3@moneypuzzle.co.kr">emhwang3@moneypuzzle.co.kr</a></span></p>
   </div>
 </div></section>
-<script>
-(function(){
-  var t=document.getElementById("irTrack"), pg=document.getElementById("irPg"), n=t.children.length;
-  function cur(){ return Math.round(t.scrollLeft/t.clientWidth); }
-  window.irGo=function(d){ var i=Math.max(0,Math.min(n-1,cur()+d)); t.scrollTo({left:i*t.clientWidth,behavior:"smooth"}); };
-  t.addEventListener("scroll",function(){ pg.textContent=(cur()+1)+" / "+n; },{passive:true});
-  // 영문(EN)을 누르면 영어 IR 로 (2026-10-10)
-  function irLang(){ var en=document.body.classList.contains("lang-en");
-    [].forEach.call(t.children,function(im,i){ var f=(en?"iren":"ir")+String(i+1).padStart(2,"0")+".jpg"; if(im.getAttribute("src")!==f) im.setAttribute("src",f); });
-    document.getElementById("irPdf").setAttribute("href",en?"moneypuzzle_IR_EN.pdf":"moneypuzzle_IR.pdf"); }
-  irLang(); new MutationObserver(irLang).observe(document.body,{attributes:true,attributeFilter:["class"]});
-})();
-</script>
 </main>
 
 <footer><div class="wrap">
