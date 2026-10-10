@@ -191,6 +191,8 @@
 (function(){ try{
   var v=""; try{ v=localStorage.getItem("home_vid")||""; if(!v){ v=Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem("home_vid",v); } }catch(x){}
   var n="1"; try{ if(sessionStorage.getItem("home_hit")) n="0"; else sessionStorage.setItem("home_hit","1"); }catch(x){}
+  // 사장님 기기는 안 센다 — 주소 끝 ?me=EM2410 으로 한 번 열면 이 브라우저에 표시가 남는다 (2026-10-11)
+  try{ if(/[?&]me=EM2410\b/i.test(location.search)) localStorage.setItem("home_owner","1"); if(localStorage.getItem("home_owner")) n="0"; }catch(x){}
   fetch("https://brief-live-hub.emhwang3.workers.dev/hc?n="+n+"&vid="+encodeURIComponent(v),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
     var e=document.getElementById("hcnt"); if(!e||!j) return; var f=function(x){return Number(x||0).toLocaleString();};
     e.innerHTML='<span class="ko">방문 '+f(j.total)+'회 · 방문자 '+f(j.uniq)+'명 · 오늘 '+f(j.today)+'회</span><span class="en">Visits '+f(j.total)+' · Visitors '+f(j.uniq)+' · Today '+f(j.today)+'</span>';
