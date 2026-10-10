@@ -443,7 +443,8 @@ try{var _vid=localStorage.getItem("brief_vid");if(!_vid){_vid=Date.now().toStrin
     if(/youtu/i.test(_r))_src="yt";else if(/x\.com|twitter|t\.co/i.test(_r))_src="x";
     else if(/naver|blog/i.test(_r))_src="blog";else if(/kakao|kko|daum/i.test(_r))_src="kt";
     else if(/telegram|t\.me/i.test(_r))_src="tg";else _src=_r?"ref":"direct";}
-  if(HUB)fetch(HUB.replace(/\/$/,"")+"/hit?vid="+_vid+"&src="+encodeURIComponent(_src)+"&app=coin",{mode:"no-cors"}).catch(function(){});}catch(e){}  // 방문 카운트+경로
+  var _own=false;try{if(/[?&]me=EM2410/i.test(location.search))localStorage.setItem("mp_owner","1");_own=!!localStorage.getItem("mp_owner");}catch(e){}  /* 사장님 기기는 방문 수에서 뺀다 (2026-10-11) */
+  if(HUB&&!_own)fetch(HUB.replace(/\/$/,"")+"/hit?vid="+_vid+"&src="+encodeURIComponent(_src)+"&app=coin",{mode:"no-cors"}).catch(function(){});}catch(e){}  // 방문 카운트+경로
 // ---- PWA(홈 화면 앱) ----
 if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js").catch(function(){});}catch(e){}}
 // 설치바는 앱으로 실행 중이 아니면 무조건 뜬다. 설치 신호(beforeinstallprompt)가 없는 곳(인앱브라우저·이미 설치·삼성 등)은 버튼이 안내/바깥 브라우저로 넘김
@@ -4070,5 +4071,5 @@ function ciInit(){
 (function tryCi(n){ if(!ciInit() && n>0) setTimeout(function(){ tryCi(n-1); }, 1000); })(20);
 
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-10 22:36</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-11 08:52</div>
 </body></html>
