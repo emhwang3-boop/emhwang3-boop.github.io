@@ -151,7 +151,7 @@
   <a class="mail" href="mailto:emhwang3@moneypuzzle.co.kr">emhwang3@moneypuzzle.co.kr</a>
   <div class="ir">
     <div class="ir-hd"><b><span class="ko">회사소개서 (IR)</span><span class="en">Investor deck (IR)</span></b>
-      <a href="moneypuzzle_IR.pdf" target="_blank" rel="noopener"><span class="ko">PDF 내려받기</span><span class="en">Download PDF</span></a></div>
+      <a id="irPdf" href="moneypuzzle_IR.pdf" target="_blank" rel="noopener"><span class="ko">PDF 내려받기</span><span class="en">Download PDF</span></a></div>
     <div class="ir-view">
       <button class="ir-btn ir-prev" aria-label="prev" onclick="irGo(-1)">&#8249;</button>
       <div class="ir-track" id="irTrack">
@@ -193,6 +193,11 @@
   function cur(){ return Math.round(t.scrollLeft/t.clientWidth); }
   window.irGo=function(d){ var i=Math.max(0,Math.min(n-1,cur()+d)); t.scrollTo({left:i*t.clientWidth,behavior:"smooth"}); };
   t.addEventListener("scroll",function(){ pg.textContent=(cur()+1)+" / "+n; },{passive:true});
+  // 영문(EN)을 누르면 영어 IR 로 (2026-10-10)
+  function irLang(){ var en=document.body.classList.contains("lang-en");
+    [].forEach.call(t.children,function(im,i){ var f=(en?"iren":"ir")+String(i+1).padStart(2,"0")+".jpg"; if(im.getAttribute("src")!==f) im.setAttribute("src",f); });
+    document.getElementById("irPdf").setAttribute("href",en?"moneypuzzle_IR_EN.pdf":"moneypuzzle_IR.pdf"); }
+  irLang(); new MutationObserver(irLang).observe(document.body,{attributes:true,attributeFilter:["class"]});
 })();
 </script>
 </main>
