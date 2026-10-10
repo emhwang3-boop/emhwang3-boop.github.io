@@ -196,6 +196,16 @@
     e.innerHTML='<span class="ko">방문 '+f(j.total)+'회 · 방문자 '+f(j.uniq)+'명 · 오늘 '+f(j.today)+'회</span><span class="en">Visits '+f(j.total)+' · Visitors '+f(j.uniq)+' · Today '+f(j.today)+'</span>';
   }).catch(function(){});
 }catch(x){} })();
+// 메일 주소 누르면 — 주소를 복사하고 알림을 띄운 뒤, 메일 앱이 있으면 그것도 연다 (2026-10-10)
+document.addEventListener("click",function(e){
+  var a=e.target.closest && e.target.closest('a[href^="mailto:"]'); if(!a) return;
+  var m=a.getAttribute("href").slice(7).split("?")[0], en=document.body.classList.contains("lang-en");
+  var done=function(){ var t=document.getElementById("mailToast");
+    if(!t){ t=document.createElement("div"); t.id="mailToast"; t.style.cssText="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25)"; document.body.appendChild(t); }
+    t.textContent=(en?"Email address copied: ":"메일 주소를 복사했습니다: ")+m; t.style.display="block";
+    clearTimeout(t._h); t._h=setTimeout(function(){ t.style.display="none"; },3500); };
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(m).then(done,done); else { var x=document.createElement("textarea"); x.value=m; document.body.appendChild(x); x.select(); try{document.execCommand("copy");}catch(_){} x.remove(); done(); } }catch(_){ done(); }
+},true);
 function tl(){ var e=document.body.classList.toggle("lang-en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
 try{ if(localStorage.getItem("home_lang")==="en") tl(); }catch(x){}
 </script>
