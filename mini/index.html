@@ -8815,10 +8815,10 @@ setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 body{display:flex!important;flex-direction:column}
 body>*{order:100}
 body>.top{order:-30} #dpNote{order:-29} #asof{order:-28} #installBar{order:-27}
-#pfAcct{order:10} #demoacct{order:11} #myhold{order:12} #mwCard{order:13}
+#pfAcct{order:10} #demoacct{order:11} #pnlCard{order:12} #myhold{order:13} #mwCard{order:14}   /* 누적 손익은 보유종목 위 (사장님 10-10) */
 #stock{order:20} #cpCard{order:21} #mfCard{order:22}
 #coin2{order:30} #ciCard{order:31}
-#ydCard{order:40} #pnlCard{order:50} #voice{order:60} #mnNotice{order:61} #foot{order:70}
+#ydCard{order:40} #voice{order:60} #mnNotice{order:61} #foot{order:70}
 body>.card:not(#pfAcct):not(#demoacct):not(#myhold):not(#mwCard):not(#stock):not(#cpCard):not(#mfCard):not(#coin2):not(#ciCard):not(#ydCard):not(#pnlCard):not(#voice):not(#mnNotice){display:none!important}
 #krstat,#gauges,.gnote,#chgTop,#cards,#tkBar,#ordHead,#news,#recoSlot,#atBtn,#bkAddBtn,#bkAddBtnCo{display:none!important}
 #myhold .mhsum:has(#hbBeta),#myhold .mhsum:has(button[onclick="holdTower3D()"]){display:none!important}   /* 포트폴리오 수익률·3D·α β 줄 — 미니엔 없음 (사장님 10-09) */
