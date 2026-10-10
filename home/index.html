@@ -209,9 +209,19 @@
   <p class="ko">머니퍼즐의 정보는 투자 판단을 위한 참고 자료이며, 투자 판단과 그 결과의 책임은 투자자 본인에게 있습니다. 투자는 원금 손실이 발생할 수 있습니다.</p>
   <p class="en">Information from Money Puzzle is for reference only. All investment decisions and their outcomes are the investor's own responsibility, and investing may result in loss of principal.</p>
   <p>© 2026 주식회사 부만</p>
+  <p id="hcnt" style="opacity:.7;font-size:12px"></p>
 </div></footer>
 
 <script>
+// 방문자 수 (2026-10-10) — 세션마다 한 번 센다
+(function(){ try{
+  var v=""; try{ v=localStorage.getItem("home_vid")||""; if(!v){ v=Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem("home_vid",v); } }catch(x){}
+  var n="1"; try{ if(sessionStorage.getItem("home_hit")) n="0"; else sessionStorage.setItem("home_hit","1"); }catch(x){}
+  fetch("https://brief-live-hub.emhwang3.workers.dev/hc?n="+n+"&vid="+encodeURIComponent(v),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
+    var e=document.getElementById("hcnt"); if(!e||!j) return; var f=function(x){return Number(x||0).toLocaleString();};
+    e.innerHTML='<span class="ko">방문 '+f(j.total)+'회 · 방문자 '+f(j.uniq)+'명 · 오늘 '+f(j.today)+'회</span><span class="en">Visits '+f(j.total)+' · Visitors '+f(j.uniq)+' · Today '+f(j.today)+'</span>';
+  }).catch(function(){});
+}catch(x){} })();
 function tl(){ var e=document.body.classList.toggle("lang-en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
 try{ if(localStorage.getItem("home_lang")==="en") tl(); }catch(x){}
 </script>
