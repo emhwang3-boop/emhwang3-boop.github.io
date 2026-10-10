@@ -7748,12 +7748,15 @@ function pfAcctRender(o){
 //   실계좌 = 중계기 GET /pnl (2026-09-24 실전 시작 뒤 달별 실현 손익) + 이번 달 미실현(지금 보유 손익)
 //   모의 = DP.rz (모의 매도 때마다 달별로 쌓음) + 모의 보유 손익. 달러·USDT 는 오늘 환율로 원화 환산.
 var PNL = {j: null, t: 0, busy: false, err: "", sel: "", mode: ""};
+function pnlYmd(d){ d = d || new Date(); return pnlYm(d) + "-" + String(d.getDate()).padStart(2, "0"); }
 function pnlYm(d){ d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
 function pnlRz(kind, v){                 // 모의 실현 손익 쌓기 — kind: kr / us / coin / coinS (그 자산의 통화로)
   try{ if(!DP) return; var ym = pnlYm(); if(!DP.rz) DP.rz = {}; if(!DP.rz0) DP.rz0 = ym;
     v = +v; if(!isFinite(v) || !v) return;
     var k = kind === "kr" ? "kr" : (kind === "us" ? "us" : "coin");
-    var m = DP.rz[ym] || (DP.rz[ym] = {kr: 0, us: 0, coin: 0}); m[k] = (+m[k] || 0) + v; }catch(e){}
+    var m = DP.rz[ym] || (DP.rz[ym] = {kr: 0, us: 0, coin: 0}); m[k] = (+m[k] || 0) + v;
+    if(!DP.rzd) DP.rzd = {}; var dk = pnlYmd();                   // 날짜별 — 달력 (2026-10-10)
+    var d = DP.rzd[dk] || (DP.rzd[dk] = {kr: 0, us: 0, coin: 0}); d[k] = (+d[k] || 0) + v; }catch(e){}
 }
 function pnlLoad(force){
   try{
@@ -7790,10 +7793,56 @@ function pnlData(){
     (RL.kr || []).forEach(function(p){ un.kr += +p.pl || 0; });
     (RL.us || []).forEach(function(p){ un.us += +p.pl || 0; });
     (RL.co || []).forEach(function(p){ un.coin += +p.pl || 0; }); } }catch(e){}
-  return {mock: mock, cur: cur, keys: keys, months: months, un: un, unOk: unOk,
+  var days = mock ? ((DP && DP.rzd) || {}) : ((PNL.j && PNL.j.days) || {});
+  return {mock: mock, cur: cur, keys: keys, months: months, days: days, un: un, unOk: unOk,
           since: mock ? "" : String((PNL.j && PNL.j.start) || "")};
 }
-function pnlSel(k){ PNL.sel = k; pnlRender(); }
+function pnlSel(k){ PNL.sel = k; pnlRender(); pnlCal(k); }
+// ── 손익 달력 — 막대를 누르면 그 달을 날짜별로 (사장님 2026-10-10) ──
+//   날짜 칸 = 그날 실현 손익(원화 환산) · 오늘 칸만 지금 보유 손익을 더해 옅게
+function pnlCal(ym){
+  try{
+    var D = pnlData(); if(!D) return;
+    var en = (typeof LANG !== "undefined" && LANG === "en");
+    var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 0;
+    var cv = function(m){ return m ? (+m.kr || 0) + ((+m.us || 0) + (+m.coin || 0)) * fx : 0; };
+    var y = +ym.slice(0, 4), mo = +ym.slice(5, 7);
+    var first = new Date(y, mo - 1, 1), nd = new Date(y, mo, 0).getDate(), today = pnlYmd();
+    var unT = (D.unOk && ym === D.cur) ? cv(D.un) : 0;
+    var sh = function(v){ var a = Math.abs(v), s = v > 0 ? "+" : "−", t;
+      if(en) t = a >= 1e6 ? (a / 1e6).toFixed(1) + "M" : (a >= 1e4 ? Math.round(a / 1e3) + "k" : Math.round(a).toLocaleString());
+      else t = a >= 1e5 ? (a / 1e4).toFixed(a >= 1e6 ? 0 : 1) + "만" : Math.round(a).toLocaleString();
+      return s + t; };
+    var MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var WK = en ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] : ["일", "월", "화", "수", "목", "금", "토"];
+    var keys = D.keys, i = keys.indexOf(ym), prev = i > 0 ? keys[i - 1] : "", next = (i >= 0 && i < keys.length - 1) ? keys[i + 1] : "";
+    var arr = function(k, t){ return k ? '<span onclick="pnlCal(\'' + k + '\')" style="cursor:pointer;font-size:22px;padding:0 10px;color:var(--nm)">' + t + '</span>'
+                                       : '<span style="font-size:22px;padding:0 10px;opacity:.2">' + t + '</span>'; };
+    var h = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' + arr(prev, "‹")
+          + '<b style="font-size:17px;color:var(--nm)">' + (en ? MON[mo - 1] + " " + y : y + "년 " + mo + "월") + '</b>' + arr(next, "›") + '</div>'
+          + '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center">';
+    WK.forEach(function(w, j){ h += '<div class="dplbl" style="font-size:12px;padding:2px 0;' + (j === 0 ? 'color:#ff433d' : '') + '">' + w + '</div>'; });
+    for(var b = 0; b < first.getDay(); b++) h += '<div></div>';
+    var sum = 0;
+    for(var dd = 1; dd <= nd; dd++){
+      var k = ym + "-" + String(dd).padStart(2, "0"), v = cv(D.days[k]), isT = (k === today && unT);
+      if(isT) v += unT; sum += v;
+      var has = Math.abs(v) > 0.5, c = v > 0.5 ? "#00c805" : "#ff433d";
+      h += '<div style="border-radius:8px;padding:5px 1px 4px;min-height:44px;' + (has ? 'background:' + c + '14;' : '') + (k === today ? 'outline:1px solid var(--sub);' : '') + (isT ? 'opacity:.6;' : '') + '">'
+         + '<div style="font-size:11px;font-weight:700;min-height:15px;color:' + c + '">' + (has ? sh(v) : "") + '</div>'
+         + '<div style="font-size:12px;color:var(--nm);margin-top:3px">' + dd + '</div></div>';
+    }
+    h += '</div><div style="display:flex;justify-content:space-between;margin-top:10px;font-size:14px"><span>' + KE("이달 합계", "Month total") + '</span><b class="'
+       + (sum > 0.5 ? "up" : (sum < -0.5 ? "dn" : "fl")) + '">' + (Math.abs(sum) > 0.5 ? (sum > 0 ? "+" : "−") : "") + (en ? "₩" : "") + Math.round(Math.abs(sum)).toLocaleString() + (en ? "" : "원") + '</b></div>';
+    var ov = document.getElementById("pnlCalOv");
+    if(!ov){ ov = document.createElement("div"); ov.id = "pnlCalOv";
+      ov.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px";
+      ov.onclick = function(e){ if(e.target === ov) ov.remove(); };
+      document.body.appendChild(ov); }
+    ov.innerHTML = '<div style="background:var(--card);border-radius:14px;padding:14px 12px 12px;width:100%;max-width:420px;max-height:90vh;overflow:auto;box-shadow:0 6px 24px rgba(0,0,0,.25)">'
+      + h + '<div style="text-align:center;margin-top:10px"><span onclick="document.getElementById(\'pnlCalOv\').remove()" style="cursor:pointer;padding:6px 18px;border:1px solid var(--bd);border-radius:8px;font-size:14px">' + KE("닫기", "Close") + '</span></div></div>';
+  }catch(e){}
+}
 function pnlRender(){
   try{
     var pf = document.getElementById("pfCard"); if(!pf || !pf.parentNode) return;
@@ -8761,7 +8810,7 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-10 11:58</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-10 14:25</div>
 <style>/* ── 머니퍼즐 미니 (2026-10-09) — 화면 순서·숨김 ── */
 body{display:flex!important;flex-direction:column}
 body>*{order:100}
