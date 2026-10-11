@@ -112,7 +112,7 @@
   <form class="card" id="fPost" autocomplete="off">
     <div class="two">
       <div><label for="pNick"><span class="ko">닉네임</span><span class="en">Nickname</span></label><input id="pNick" maxlength="20" required></div>
-      <div><label for="pPw"><span class="ko">비밀번호 (삭제할 때 씀, 4자 이상)</span><span class="en">Password (to delete later, 4+ chars)</span></label><input id="pPw" type="password" minlength="4" maxlength="64" required autocomplete="new-password"></div>
+      <div><label for="pPw"><span class="ko">비밀번호 (글 보기·삭제할 때 씀, 4자 이상)</span><span class="en">Password (to view or delete later, 4+ chars)</span></label><input id="pPw" type="password" minlength="4" maxlength="64" required autocomplete="new-password"></div>
     </div>
     <label for="pTitle"><span class="ko">제목</span><span class="en">Title</span></label><input id="pTitle" maxlength="80" required>
     <label for="pBody"><span class="ko">내용</span><span class="en">Message</span></label><textarea id="pBody" maxlength="2000" required></textarea>
@@ -153,8 +153,6 @@
 
 <footer><div class="wrap">
   <p><b class="ko">주식회사 부만</b><b class="en">Booman Inc.</b> · <span class="ko">머니퍼즐(Money Puzzle)</span><span class="en">Money Puzzle</span> · <a href="./"><span class="ko">홈으로</span><span class="en">Home</span></a></p>
-  <p class="ko">게시판 글은 누구나 볼 수 있습니다.</p>
-  <p class="en">Posts are public.</p>
   <ul class="ko disc"><li>머니퍼즐은 투자 판단을 위한 정보를 제공하지 않으며, 앱에 표시되는 추천 종목은 모두 가림(마스킹) 처리되어 있습니다.</li><li>머니퍼즐 홈페이지에 게시된 정보를 이용하여 투자하는 행위와 이를 제3자에게 배포하는 행위를 금지합니다.</li><li>당사 홈페이지는 앱 개발을 위한 투자자금 유치를 목적으로 만들어졌으며, 어떠한 투자 정보도 제공하지 않습니다.</li><li>당사는 투자자문업·투자일임업 등록 업체가 아니며, 홈페이지와 앱은 금융투자상품의 매매를 권유하지 않습니다.</li><li>회사소개서와 앱에 나오는 수익률은 과거 자료로 계산한 모의 결과(백테스트)이며, 미래의 수익을 보장하지 않습니다.</li><li>모의판의 계좌, 잔고, 손익은 모두 가상이며 실제 거래가 아닙니다.</li><li>홈페이지와 앱의 화면, 문구, 자료를 허락 없이 복제하거나 사용할 수 없습니다.</li></ul>
   <ul class="en disc"><li>Money Puzzle does not provide information for investment decisions, and all recommended stocks shown in the apps are masked.</li><li>Investing based on information posted on this website, or distributing it to third parties, is prohibited.</li><li>This website was created to raise funds for app development and does not provide any investment information.</li><li>Booman Inc. is not a registered investment advisory or discretionary investment firm, and neither this website nor the apps solicit the purchase or sale of financial products.</li><li>Returns shown in the investor deck and apps are simulated results based on historical data (backtests) and do not guarantee future returns.</li><li>All accounts, balances and P&amp;L in the demo apps are virtual, not real trades.</li><li>The screens, text and materials of this website and the apps may not be copied or used without permission.</li></ul>
   <p>© 2026 <span class="ko">주식회사 부만</span><span class="en">Booman Inc.</span></p>
@@ -173,6 +171,7 @@ var ERR={
   links:["링크는 3개까지만 넣을 수 있습니다.","No more than 3 links, please."],
   rate:["잠시 뒤에 다시 올려 주세요 (시간당 글 5개·댓글 20개).","Please try again later (5 posts / 20 comments per hour)."],
   pw:["비밀번호가 맞지 않습니다.","Wrong password."],
+  locked:["🔒 비밀글입니다. 글쓴이 또는 관리자 비밀번호를 넣어 주세요.","🔒 Private post. Enter the author's or admin password."],
   notfound:["삭제되었거나 없는 글입니다.","This post doesn't exist or was deleted."],
   net:["연결에 실패했습니다. 잠시 뒤 다시 해 주세요.","Connection failed. Please try again."]
 };
@@ -213,8 +212,9 @@ function loadList(page){
     if(!j.items.length){ var d2=el("div","empty"); d2.appendChild(bi("아직 글이 없습니다. 첫 글을 남겨 주세요.","No posts yet. Be the first to write one.")); L.appendChild(d2); }
     j.items.forEach(function(it){
       var a=el("a","row"); a.href="board.html?id="+encodeURIComponent(it.id); a.setAttribute("data-nav","?id="+encodeURIComponent(it.id));
-      var t1=el("div","t",it.title); if(it.nc) t1.appendChild(el("span","cc","["+it.nc+"]"));
-      a.appendChild(t1); a.appendChild(el("div","pv",it.pv)); a.appendChild(el("div","meta",it.nick+" · "+it.at));
+      var t1=el("div","t"); if(it.secret){ t1.appendChild(bi("🔒 비밀글입니다","🔒 Private post")); } else t1.textContent=it.title;
+      if(it.nc) t1.appendChild(el("span","cc","["+it.nc+"]"));
+      a.appendChild(t1); if(it.pv) a.appendChild(el("div","pv",it.pv)); a.appendChild(el("div","meta",it.nick+" · "+it.at));
       L.appendChild(a);
     });
     if(j.pages>1) for(var i=1;i<=j.pages;i++){ (function(n){ var b=el("button",n===j.page?"on":"",String(n)); b.onclick=function(){go(n>1?"?page="+n:"",true);}; P.appendChild(b); })(i); }
@@ -242,13 +242,15 @@ function delButton(kind,id,host,after){
   return b;
 }
 
-var curId="";
+var curId="", curPw="";
 function openPost(id){
+  if(id!==curId) curPw="";
   curId=id; show("vPost");
-  var P=$("post"),C=$("cmts"); P.textContent=""; C.textContent=""; $("cN").textContent="";
+  var P=$("post"),C=$("cmts"); P.textContent=""; C.textContent=""; $("cN").textContent=""; $("fCmt").classList.add("hidden");
   P.appendChild(bi("불러오는 중…","Loading…"));
-  api("/post?id="+encodeURIComponent(id)).then(function(j){
+  (curPw?api("/view",{id:id,pw:curPw}):api("/post?id="+encodeURIComponent(id))).then(function(j){
     P.textContent="";
+    if(!j.ok && (j.err==="locked" || (j.err==="pw" && curPw))){ curPw=""; return lockBox(P,id,j.err); }
     if(!j.ok){ var m=ERR[j.err]||ERR.net; P.appendChild(bi(m[0],m[1])); $("fCmt").classList.add("hidden"); return; }
     $("fCmt").classList.remove("hidden");
     var p=j.post, head=el("div","phead"), left=el("div");
@@ -266,6 +268,19 @@ function openPost(id){
   });
 }
 
+// 비밀글 — 비밀번호 칸 (2026-10-11)
+function lockBox(P,id,err){
+  var m=ERR.locked; P.appendChild(el("div","meta")).appendChild(bi(m[0],m[1]));
+  var box=el("div","delbox"), inp=el("input"); inp.type="password"; inp.autocomplete="off";
+  inp.placeholder=document.body.classList.contains("lang-en")?"Password":"비밀번호";
+  var ok=el("button","btn sm pri"); ok.type="button"; ok.appendChild(bi("글 보기","Open"));
+  var msg=el("div","msg"); if(err==="pw") say(msg,"pw");
+  var run=function(){ if(!inp.value) return; ok.disabled=true;
+    api("/view",{id:id,pw:inp.value}).then(function(j){ ok.disabled=false;
+      if(j.ok){ curPw=inp.value; openPost(id); } else say(msg,j.err||"net"); }); };
+  ok.onclick=run; inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();run();}});
+  box.appendChild(inp); box.appendChild(ok); box.appendChild(msg); P.appendChild(box); inp.focus();
+}
 $("fPost").addEventListener("submit",function(e){
   e.preventDefault(); var m=$("pMsg"), b=$("pSend");
   var d={nickname:$("pNick").value.trim(),title:$("pTitle").value.trim(),body:$("pBody").value.trim(),pw:$("pPw").value};
@@ -273,13 +288,14 @@ $("fPost").addEventListener("submit",function(e){
   b.disabled=true; say(m,"");
   api("/post",d).then(function(j){ b.disabled=false;
     if(!j.ok) return say(m,j.err||"net");
+    curPw=d.pw; curId=j.id;
     $("pTitle").value=""; $("pBody").value=""; $("pPw").value=""; $("pCnt").textContent="0";
     go("?id="+encodeURIComponent(j.id),true);
   });
 });
 $("fCmt").addEventListener("submit",function(e){
   e.preventDefault(); var m=$("cMsg"), b=$("cSend");
-  var d={post:curId,nickname:$("cNick").value.trim(),body:$("cBody").value.trim(),pw:$("cPw").value};
+  var d={post:curId,nickname:$("cNick").value.trim(),body:$("cBody").value.trim(),pw:$("cPw").value,vpw:curPw};
   if(!d.nickname||!d.body||d.pw.length<4) return say(m,"empty");
   b.disabled=true; say(m,"");
   api("/comment",d).then(function(j){ b.disabled=false;
