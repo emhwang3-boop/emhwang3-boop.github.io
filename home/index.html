@@ -53,6 +53,12 @@
   .grid{display:grid;gap:16px}
   .g4{grid-template-columns:repeat(4,1fr)}
   .g3{grid-template-columns:repeat(3,1fr)}
+  .ftc{padding:16px}.ftimg{background:#f4f7fb;border-radius:12px;overflow:hidden;margin-bottom:12px;display:flex;justify-content:center;align-items:center;height:340px}
+  .ftimg img{max-width:100%;max-height:340px;display:block;object-fit:contain}
+  .ftimg img.en{display:none} body.lang-en .ftimg img.en{display:block} body.lang-en .ftimg img.ko{display:none}
+  .ftb{display:inline-block;font-size:12px;font-weight:700;color:#1d5bd8;background:#e8f0ff;border-radius:999px;padding:3px 10px;margin-bottom:6px}
+  .ftnote{font-size:13px;color:var(--sub);margin-top:14px}
+
   .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
   .card h3{margin:10px 0 6px;font-size:18px}
   .card p{margin:0;color:var(--sub);font-size:14.5px}
@@ -151,6 +157,38 @@
       <h3><span class="ko">포트폴리오 바스켓 매매</span><span class="en">Portfolio basket trading</span></h3>
       <p><span class="ko">투자성향별 자산배분비율대로 여러 종목을 한 번에 사고, 매달 1일 비율을 다시 맞춥니다.</span><span class="en">Buy a whole allocation in one go, then rebalance on the 1st of every month.</span></p></div>
   </div>
+</div></section>
+
+<section id="charts"><div class="wrap">
+  <h2><span class="ko">머니퍼즐만의 차트</span><span class="en">Charts only Money Puzzle has</span></h2>
+  <p class="sec-lead"><span class="ko">디자인 출원 3건 · 특허 출원 1건. 숫자 표 대신 그림으로 내 포트폴리오를 봅니다.</span><span class="en">3 design applications · 1 patent application. See your portfolio as pictures, not tables of numbers.</span></p>
+  <div class="grid g3">
+    <div class="card ftc"><div class="ftimg"><img class="ko" src="ft_tower_ko.jpg" alt="3D cubic tower" loading="lazy"><img class="en" src="ft_tower_en.jpg" alt="3D cubic tower" loading="lazy"></div>
+      <span class="ftb"><span class="ko">디자인 출원 30-2026-0036422</span><span class="en">Design application 30-2026-0036422</span></span>
+      <h3><span class="ko">3D 큐빅 타워</span><span class="en">3D Cubic Tower</span></h3>
+      <p><span class="ko">포트폴리오를 큐브로 쌓은 탑입니다. 큐브 크기는 금액, 위아래는 수익, 흔들림은 위험입니다.</span><span class="en">Your portfolio stacked as cubes — size is amount, up and down is return, wobble is risk.</span></p></div>
+    <div class="card ftc"><div class="ftimg"><img class="ko" src="ft_tree_ko.gif" alt="3D tree chart" loading="lazy"><img class="en" src="ft_tree_en.gif" alt="3D tree chart" loading="lazy"></div>
+      <span class="ftb"><span class="ko">디자인 출원 30-2026-0036633</span><span class="en">Design application 30-2026-0036633</span></span>
+      <h3><span class="ko">3D 트리차트</span><span class="en">3D Tree Chart</span></h3>
+      <p><span class="ko">자산군마다 가지가 뻗어, 내 돈이 어디에 어떻게 나뉘었는지 한눈에 보입니다.</span><span class="en">Each asset class grows its own branch, so you see at a glance where your money sits.</span></p></div>
+    <div class="card ftc"><div class="ftimg"><img src="ft_puzzle.jpg" alt="Puzzle heatmap" loading="lazy"></div>
+      <span class="ftb"><span class="ko">디자인 출원 30-2026-0036818</span><span class="en">Design application 30-2026-0036818</span></span>
+      <h3><span class="ko">퍼즐 히트맵</span><span class="en">Puzzle Heatmap</span></h3>
+      <p><span class="ko">보유 비중만큼 퍼즐 조각이 커지고, 오르고 내린 만큼 색이 바뀝니다.</span><span class="en">Each puzzle piece grows with its weight and changes color with its gain or loss.</span></p></div>
+    <div class="card ftc"><div class="ftimg"><img class="ko" src="ft_flip_ko.gif" alt="Chart panel flip" loading="lazy"><img class="en" src="ft_flip_en.gif" alt="Chart panel flip" loading="lazy"></div>
+      <span class="ftb"><span class="ko">특허 출원 10-2026-0179786</span><span class="en">Patent application 10-2026-0179786</span></span>
+      <h3><span class="ko">차트 옆으로 넘기기</span><span class="en">Swipe to flip chart panels</span></h3>
+      <p><span class="ko">차트 끝에서 한 번 더 밀면 볼린저밴드, 일목균형표 같은 다음 판으로 넘어갑니다.</span><span class="en">Swipe past the end of the chart to flip to the next panel — Bollinger Bands, Ichimoku and more.</span></p></div>
+    <div class="card ftc"><div class="ftimg"><img class="ko" src="ft_meas_ko.jpg" alt="Two-finger measure" loading="lazy"><img class="en" src="ft_meas_en.jpg" alt="Two-finger measure" loading="lazy"></div>
+      <span class="ftb"><span class="ko">특허 출원 10-2026-0179786</span><span class="en">Patent application 10-2026-0179786</span></span>
+      <h3><span class="ko">두 손가락으로 구간·각도 재기</span><span class="en">Two-finger range & angle</span></h3>
+      <p><span class="ko">두 손가락을 0.3초 대고 있으면 두 봉 사이의 상승률, 금액, 기간, 각도를 바로 잽니다.</span><span class="en">Hold two fingers for 0.3 s to measure change, amount, bars and angle between two points.</span></p></div>
+    <div class="card ftc"><div class="ftimg"><img class="ko" src="ft_trend_ko.jpg" alt="Trend line" loading="lazy"><img class="en" src="ft_trend_en.jpg" alt="Trend line" loading="lazy"></div>
+      <span class="ftb"><span class="ko">앱 기능</span><span class="en">App feature</span></span>
+      <h3><span class="ko">추세선 긋기</span><span class="en">Draw trend lines</span></h3>
+      <p><span class="ko">차트 위 두 점을 찍으면 추세선이 그어지고, 「선 지우기」로 바로 지웁니다.</span><span class="en">Click two points on the chart to draw a trend line, and clear it in one tap.</span></p></div>
+  </div>
+  <p class="ftnote"><span class="ko">※ 화면 속 종목과 숫자는 무작위로 가져다 쓴 예시이며, 추천이 아닙니다.</span><span class="en">※ Stocks and figures shown are random examples, not recommendations.</span></p>
 </div></section>
 
 <section class="soft"><div class="wrap">
