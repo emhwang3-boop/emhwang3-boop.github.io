@@ -4347,5 +4347,10 @@ function tkPaint(d){
   try{ tkPaint(window._lastD||window.SNAP); }catch(e){}
 })();
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-11 12:30</div>
+<script>/* 공유 — 어디로 공유되는지 판은 보여 주되 실제로는 보내지 않는다 (사장님 2026-10-11, 홈페이지에 걸린 앱 전부) */
+try{ shToggle=function(){ var p=document.getElementById("shPanel"); if(!p) return; if(!p.hidden){ p.hidden=true; return; } shPanel(); };
+  document.addEventListener("click",function(e){ var a=e.target&&e.target.closest&&e.target.closest("#shPanel a,#shPanel button"); if(!a) return;
+    e.preventDefault(); e.stopPropagation(); try{ shMsg((typeof LANG!=="undefined"&&LANG==="en")?"Sharing is turned off in this demo.":"체험판에서는 공유가 되지 않습니다."); }catch(x){} },true);
+}catch(e){}</script>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-11 17:26</div>
 </body></html>
