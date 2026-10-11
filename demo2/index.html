@@ -894,7 +894,8 @@ function renderStkResults(){
     return '<a onclick="pickStock(\''+r.code+'\',\''+dn.replace(/[\'"]/g,"")+'\')"><span>'+dn+' <span class="mkt">KR</span></span><span class="c">'+r.code+'</span></a>';}).join("");
   h+=(usResults||[]).map(r=>{const dn=(r.name||r.tick).replace(/[\'"]/g,"");
     return '<a onclick="pickStockUS(\''+r.code+'\',\''+dn+'\')"><span>'+dn+' <span class="mkt us">US</span></span><span class="c">'+r.tick+'</span></a>';}).join("");
-  E("stkResults").innerHTML=h||'<div class="soonrow">'+(en?"No results":"결과 없음")+'</div>';
+  const ks=window.KR_SRCH||"";
+  E("stkResults").innerHTML=h||'<div class="soonrow">'+(ks==="wait"?(en?"Searching…":"검색 중…"):ks==="late"?(en?"Server is slow — please type it again in a moment":"잠시 뒤 다시 쳐 주세요"):(en?"No results":"결과 없음"))+'</div>';
 }
 E("stkq").addEventListener("input",function(){
   clearTimeout(searchTimer); const q=this.value.trim();
@@ -905,7 +906,8 @@ E("stkq").addEventListener("input",function(){
     const latin=/[A-Za-z]/.test(q)&&!/[가-힣]/.test(q);
     lastResults=[]; usResults=[];
     if(latin||/[가-힣]/.test(q))usFetch("search","q="+encodeURIComponent(q)+(LANG==="en"?"&en=1":"")).then(function(d){if(seq!==searchSeq)return;usResults=(d&&d.data)||[];renderStkResults();});
-    krFetch("search","q="+encodeURIComponent(q),4).then(function(rows){if(seq!==searchSeq)return;lastResults=rows||[];renderStkResults();});
+    window.KR_SRCH="wait";   /* 서버 답을 기다리는 동안은 「검색 중…」 — 처음 쓰는 검색어는 늦다 (2026-10-11) */
+    krFetch("search","q="+encodeURIComponent(q),14).then(function(rows){if(seq!==searchSeq)return;window.KR_SRCH=(rows===null)?"late":"";lastResults=rows||[];renderStkResults();});
   },350);
 });
 E("stkq").addEventListener("keydown",function(e){
@@ -1776,7 +1778,7 @@ async function mhTick(){
       E("mhResults").innerHTML=h||'<div class="soonrow">'+(en?"No results":"결과 없음")+'</div>';};
     if(latin||/[가-힣]/.test(q))usFetch("search","q="+encodeURIComponent(q)+(LANG==="en"?"&en=1":"")).then(function(d){
       if(seq!==mhSeq)return;us=(d&&d.data)||[];paint();});
-    krFetch("search","q="+encodeURIComponent(q),4).then(function(rows){
+    krFetch("search","q="+encodeURIComponent(q),14).then(function(rows){
       if(seq!==mhSeq)return;kr=rows||[];paint();});
     // 코인은 이미 받아 둔 심볼 목록에서 고른다(본앱 코인 검색과 같은 자리)
     if(typeof coinSyms==="function")coinSyms().then(function(all){
@@ -8853,5 +8855,5 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-11 08:52</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-11 12:30</div>
 </body></html>
