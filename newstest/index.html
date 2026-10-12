@@ -89,7 +89,13 @@ function gtx(u){ return "https://translate.google.com/translate?sl=ko&tl=en&u="+
 async function krName(q){
   for(var i=0;i<6;i++){
     try{ var j=await fetch(HUB+"/kr/search?q="+encodeURIComponent(q),{cache:"no-store"}).then(function(r){return r.json();});
-      if(j&&j.ok){ var d=j.data||[]; if(d.length && d[0].name) return d[0].name; return ""; } }catch(e){}
+      if(j&&j.ok){ var d=(j.data||[]).filter(function(x){ return x&&x.name; });
+        if(!d.length) return "";
+        // 여러 회사가 걸리면(Samsung → 삼성화재·삼성전자·삼성물산…) 한국어 이름의 공통 앞부분(삼성)으로 찾는다
+        var ql=q.toLowerCase(), hit=d.filter(function(x){ return String(x.en||"").toLowerCase().indexOf(ql)===0; }); if(hit.length<2) hit=d;
+        if(hit.length===1) return hit[0].name;
+        var p=hit[0].name; hit.forEach(function(x){ var k=0; while(k<p.length&&k<x.name.length&&p[k]===x.name[k]) k++; p=p.slice(0,k); });
+        return p.length>=2 ? p : hit[0].name; } }catch(e){}
     await new Promise(function(r){ setTimeout(r,700); });
   }
   return "";
