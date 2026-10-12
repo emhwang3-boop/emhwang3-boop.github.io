@@ -29,7 +29,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 .sbox input:focus{border-color:var(--blue)}
 .sbox button{border:0;border-radius:999px;padding:11px 28px;background:var(--blue);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
 .all{display:block;margin:12px auto 4px;background:none;border:0;color:var(--blue);font-weight:700;font-size:15px;cursor:pointer}
-.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.cats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
 .cat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;word-break:keep-all}   
 .cat .ic{font-size:24px;display:block;margin-bottom:4px}
 .cat.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue) inset}
@@ -49,7 +49,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 #tbar button{float:right;border:0;background:none;color:#5c4400;font-size:12px;text-decoration:underline;cursor:pointer;margin-left:8px}
 
 
-@media (max-width:520px){body{zoom:1.15}.note{font-size:12.5px}.item .d{font-size:14.5px}}
+@media (max-width:520px){.logo{font-size:20px}.sbox input{font-size:17px}.sbox button{font-size:16px}.cat{font-size:14.5px}.cat .ic{font-size:30px}.hd{font-size:18px}.item .t{font-size:17.5px}.item .d{font-size:15px}.item .m{font-size:13px}.item .m a{font-size:14px}.all{font-size:16px}.note{font-size:12.5px}}   
 </style>
 </head>
 <body>
