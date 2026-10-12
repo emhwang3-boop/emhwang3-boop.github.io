@@ -207,6 +207,10 @@ function thPaint(){ document.getElementById("th").textContent=thDark()?"☀️":
 function thTog(){ var d=!thDark(); document.documentElement.setAttribute("data-theme",d?"dark":"light"); try{ localStorage.setItem("mpn_theme",d?"dark":"light"); }catch(e){} thPaint(); }
 try{ var _t=localStorage.getItem("mpn_theme"); if(_t) document.documentElement.setAttribute("data-theme",_t); }catch(e){}
 thPaint();
+// 폰에서 NEWS 아이콘으로 열면 곧바로 크롬 창으로 넘긴다 — 크롬 창이라야 「한국어 항상 번역」이 먹는다 (사장님 2026-10-12)
+if(isApp()&&/Android/i.test(navigator.userAgent)){
+  location.href="intent://emhwang3-boop.github.io/newstest/?browser=1#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url="+encodeURIComponent("https://emhwang3-boop.github.io/newstest/open/")+";end";
+}
 try{ if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js"); }catch(e){}
 pick(2);   // 첫 화면 — 증시
 </script>
