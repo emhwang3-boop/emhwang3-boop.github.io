@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="google" content="notranslate">
+<title>Money Puzzle - 부동산</title>
+<link rel="mp-manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#3d5af1">
+<script>(function(){try{if(/[?&]me=EM2410/i.test(location.search))localStorage.setItem("mp_owner","1");var e=!!localStorage.getItem("mp_owner")||!!localStorage.getItem("mpr_ok")||/^https:\/\/(www\.)?moneypuzzle\.co\.kr|^https:\/\/emhwang3-boop\.github\.io\/(home|retest)/.test(document.referrer||"");if(localStorage.getItem("mp_owner"))document.addEventListener("DOMContentLoaded",function(){var e=document.querySelector('link[rel="mp-manifest"]');if(e)e.rel="manifest"});if(e){localStorage.setItem("mpr_ok","1");return}location.replace("https://moneypuzzle.co.kr/")}catch(e){}})();try{if(localStorage.getItem("mpr_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
+<style>
+
+:root{--bg:#f4f6fa;--card:#fff;--ink:#111827;--sub:#5b6474;--line:#e6e9ef;--blue:#3d5af1;--soft:#eef1ff;--red:#e03131}
+:root[data-theme="dark"]{--bg:#0f1420;--card:#171d2b;--ink:#e8ecf2;--sub:#9aa4b2;--line:#263044;--soft:#1d2540}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+.top{display:flex;align-items:center;gap:10px;margin:6px 0 18px}
+.logo{display:flex;align-items:center;gap:6px;white-space:nowrap;min-width:0;font-weight:900;font-size:21px;letter-spacing:-.4px;cursor:pointer}
+.logo img{height:28px;width:auto;display:block}
+.logo b{font-weight:600;color:var(--sub)}
+@media (max-width:420px){.logo{font-size:18px}}
+.sbox{display:flex;flex-direction:column;align-items:center;gap:10px}
+.sbox input{width:100%;font-size:17px;padding:13px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none}
+.sbox input:focus{border-color:var(--blue)}
+.sbox button{border:0;border-radius:999px;padding:11px 28px;background:var(--blue);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+.hd{display:flex;align-items:center;gap:8px;margin:18px 2px 8px;font-weight:800;font-size:17px}
+.desc{color:var(--sub);font-size:13.5px;line-height:1.55;margin:4px 2px 10px}
+.grp{font-weight:800;font-size:14px;color:var(--sub);margin:16px 2px 6px}
+.deal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.deal div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;font-weight:800;font-size:15px;cursor:pointer}
+.cats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 4px;text-align:center;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);word-break:keep-all}
+.cat .ic{font-size:22px;display:block;margin-bottom:3px}
+.on{border-color:var(--blue)!important;box-shadow:0 0 0 2px var(--blue) inset;color:var(--blue)!important}
+.off{opacity:.35;pointer-events:none}
+.chip{display:inline-block;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 13px;margin:4px 3px;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--ink)}
+.ag{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:14px;padding:12px 14px;margin:8px 0}
+.ag .n{font-weight:800;font-size:15.5px}.ag .s{color:var(--sub);font-size:12.5px;line-height:1.55;margin-top:3px}
+.ag .t{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.ag .t a{background:var(--blue);color:#fff;text-decoration:none;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
+.adtag{font-size:10.5px;color:var(--sub);border:1px solid var(--line);border-radius:6px;padding:1px 5px;margin-left:6px;font-weight:600;vertical-align:2px}
+.sum{background:var(--soft);border-radius:12px;padding:10px 12px;font-size:13.5px;margin:8px 0}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0}
+.item .r1{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.item .t{font-weight:700;font-size:15px;line-height:1.35}
+.item .p{font-weight:900;font-size:16px;color:var(--blue);white-space:nowrap}
+.item .d{color:var(--sub);font-size:12.5px;line-height:1.5;margin-top:3px}
+.tag{font-size:11px;border-radius:6px;padding:1px 6px;margin-left:4px;font-weight:700;background:var(--soft);color:var(--sub)}
+.tag.x{background:#ffe3e3;color:var(--red)}
+.msg{color:var(--sub);text-align:center;padding:22px 8px;font-size:14px}
+.more{display:block;margin:12px auto;background:none;border:1px solid var(--line);border-radius:999px;padding:9px 22px;color:var(--ink);font-weight:700;cursor:pointer}
+.note{font-size:11.5px;color:var(--sub);text-align:center;margin:22px 0 8px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top" style="position:relative">
+    <div class="logo" onclick="goHome()"><img src="logo.png" alt=""><span style="white-space:nowrap">Money Puzzle<b style="margin-left:4px">- 부동산</b></span></div>
+    <button id="inst" onclick="instGo()" hidden style="margin-left:auto;border:0;border-radius:999px;padding:8px 14px;background:var(--blue);color:#fff;font-weight:700;font-size:13px;cursor:pointer">⬇ 앱 설치</button>
+    <button id="th" onclick="thTog()" aria-label="theme" style="margin-left:auto;border:0;background:none;font-size:20px;line-height:1;padding:4px 6px;cursor:pointer">🌙</button>
+    <button id="mb" onclick="mbTog(event)" aria-label="menu" style="border:0;background:none;font-size:24px;line-height:1;padding:4px 8px;cursor:pointer;color:var(--ink)">⋮</button>
+    <div id="mm" hidden style="position:absolute;right:16px;top:50px;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);min-width:200px;overflow:hidden">
+      <a href="#" id="mcopy" hidden onclick="mbCopy();return false" style="display:block;padding:13px 16px;color:var(--ink);text-decoration:none;font-size:14.5px;border-bottom:1px solid var(--line)">🔗 링크 복사</a>
+      <a href="#" onclick="location.reload();return false" style="display:block;padding:13px 16px;color:var(--ink);text-decoration:none;font-size:14.5px">↻ 새로고침</a>
+    </div>
+  </div>
+
+  <form class="sbox" onsubmit="go();return false">
+    <input id="q" placeholder="동네·단지 검색 (예: 문정동, 송파구 헬리오시티, 하남시)" autocomplete="off">
+    <button type="submit">검색</button>
+  </form>
+
+  <div id="pick" hidden>
+    <div class="hd" id="where"></div>
+    <div class="deal" id="deal"></div>
+    <div class="grp">물건 종류</div>
+    <div class="cats" id="cats"></div>
+    <div id="agents"></div>
+  </div>
+  <div id="out"></div>
+
+  <p class="note">실거래 자료: 국토교통부 실거래가 공개시스템(공공데이터포털) · 최근 3개월 신고분<br>
+  거래는 계약 후 30일 안에 신고되어 최근 거래는 늦게 올라옵니다. 개인정보 보호를 위해 일부 번지는 가려져 있습니다.<br>
+  중개사무소 목록은 입점 광고이며, 머니퍼즐은 부동산 중개를 하지 않습니다.</p>
+</div>
+
+<script>var HUB="https://brief-live-hub.emhwang3.workers.dev";var DEALS=["매매","전세","월세"];var PT=[["아파트","🏢","AptTradeDev","AptRent",""],["연립","🏘️","RHTrade","RHRent","연립"],["다세대","🏠","RHTrade","RHRent","다세대"],["단독","🏡","SHTrade","SHRent","단독"],["다가구","🏨","SHTrade","SHRent","다가구"],["오피스텔","🏙️","OffiTrade","OffiRent",""],["상가·사무실","🏪","NrgTrade","",""],["토지","🌾","LandTrade","",""]];var SIDO={"서울":"서울","서울시":"서울","서울특별시":"서울","부산":"부산","대구":"대구","인천":"인천","광주":"광주","대전":"대전","울산":"울산","세종":"세종","경기":"경기","경기도":"경기","강원":"강원","강원도":"강원","충북":"충북","충남":"충남","전북":"전북","전남":"전남","경북":"경북","경남":"경남","제주":"제주"};var RG=null,AG=[],SG=[],DONG={};var ST={sel:null,deal:0,pt:0,names:[],items:[],shown:0};function esc(e){return String(e==null?"":e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function num(e){return parseFloat(String(e||"").replace(/,/g,""))||0}function won(e){e=Math.round(e);if(!e)return"-";var n=Math.floor(e/1e4),t=e%1e4;return(n?n.toLocaleString()+"억"+(t?" ":""):"")+(t?t.toLocaleString()+"만":"")+"원"}function py(e){return e?Math.round(e/3.3058*10)/10:0}function norm(e){return String(e||"").replace(/\s+/g,"").toLowerCase()}async function boot(){try{RG=await fetch("regions.json").then(function(e){return e.json()})}catch(e){RG={s:{},d:{}}}try{AG=await fetch("agents.json",{cache:"no-store"}).then(function(e){return e.json()})}catch(e){AG=[]}var e=Object.keys(RG.s);e.forEach(function(n){var t=RG.s[n][1];var r=/0$/.test(n)&&t.indexOf(" ")<0&&e.some(function(e){return e!==n&&e.slice(0,4)===n.slice(0,4)});if(!r)SG.push({c:n,sd:RG.s[n][0],nm:t})});Object.keys(RG.d).forEach(function(e){RG.d[e].forEach(function(n){(DONG[n]=DONG[n]||[]).push(e)})});var n=null;try{n=JSON.parse(localStorage.getItem("mpr_last")||"null")}catch(e){}if(n&&n.sg){ST.sel=n;showPick()}else goHome()}function resolve(e){var n=e.trim().split(/\s+/).filter(Boolean),t=null,r=null,i=null,a=[];function o(e){var n=e.replace(/(시|군|구)$/,"");var t=SG.filter(function(t){var r=t.nm.split(" "),i=r[r.length-1];return i===e||i.replace(/(시|군|구)$/,"")===n&&n.length>=2||r[0]===e||r[0].replace(/시$/,"")===n&&n.length>=2});return t.length?t.map(function(e){return e.c}):null}n.forEach(function(e){if(SIDO[e]){t=SIDO[e];return}var n=e.replace(/(\d+)(동|가)$/,"$2").replace(/^(.+?)\d+동$/,"$1동");if(/(동|읍|면|가|리)$/.test(e)&&(DONG[e]||DONG[n])){i=DONG[e]?e:n;return}var s=o(e);if(s&&!/(동|읍|면|가)$/.test(e)){r=r?r.filter(function(e){return s.indexOf(e)>=0}):s;return}if(DONG[e+"동"]&&e.length>=2&&!r){i=e+"동";return}a.push(e)});var s=r||null;if(i){var l=DONG[i].filter(function(e){return SG.some(function(n){return n.c===e})});s=s?l.filter(function(e){return s.indexOf(e)>=0}):l}if(s&&t)s=s.filter(function(e){return RG.s[e][0]===t});if(!s&&t)s=SG.filter(function(e){return e.sd===t}).map(function(e){return e.c});return{sg:s,dong:i,names:a,sd:t,many:!i&&!r&&t}}function label(e){var n=e.sg.map(function(e){return RG.s[e][1]});var t=n.length>1&&n.every(function(e){return e.split(" ")[0]===n[0].split(" ")[0]})?n[0].split(" ")[0]+" 전체":n.join(", ");return"📍 "+RG.s[e.sg[0]][0]+" "+t+(e.dong?" "+e.dong:"")+(e.names.length?" · "+e.names.join(" "):"")}function go(){var e=document.getElementById("q").value.trim();if(!e)return;var n=resolve(e);if(!n.sg||!n.sg.length){if(n.names.length&&ST.sel){ST.sel={sg:ST.sel.sg,dong:ST.sel.dong,names:n.names};showPick();return}document.getElementById("pick").hidden=true;document.getElementById("out").innerHTML='<div class="msg">「'+esc(e)+"」 지역을 찾지 못했습니다.<br>동네 이름을 함께 넣어 주세요. 예: 문정동 "+esc(e)+", 송파구 "+esc(e)+"</div>";return}if(n.many||n.dong&&n.sg.length>1&&!n.sd){if(n.sg.length>1){document.getElementById("pick").hidden=true;document.getElementById("out").innerHTML='<div class="hd">어느 지역인가요?</div><div>'+n.sg.slice(0,60).map(function(e){return'<span class="chip" onclick=\'choose('+JSON.stringify({sg:[e],dong:n.dong,names:n.names})+")'>"+esc(RG.s[e][0]+" "+RG.s[e][1]+(n.dong?" "+n.dong:""))+"</span>"}).join("")+"</div>";return}}if(n.sg.length>8&&!n.dong){n.sg=n.sg.slice(0,8)}choose({sg:n.sg,dong:n.dong,names:n.names})}function choose(e){ST.sel=e;try{localStorage.setItem("mpr_last",JSON.stringify(e))}catch(e){}showPick()}function showPick(){document.getElementById("pick").hidden=false;document.getElementById("where").innerHTML=esc(label(ST.sel));document.getElementById("deal").innerHTML=DEALS.map(function(e,n){return'<div class="'+(n===ST.deal?"on":"")+'" onclick="setDeal('+n+')">'+e+"</div>"}).join("");if(ST.deal>0&&!PT[ST.pt][3])ST.pt=0;document.getElementById("cats").innerHTML=PT.map(function(e,n){var t=ST.deal>0&&!e[3];return'<div class="cat'+(n===ST.pt?" on":"")+(t?" off":"")+'" onclick="setPt('+n+')"><span class="ic">'+e[1]+"</span>"+e[0]+"</div>"}).join("");showAgents();load()}function setDeal(e){ST.deal=e;showPick()}function setPt(e){ST.pt=e;showPick()}function showAgents(){var e=ST.sel,n=AG.filter(function(n){return n.areas.some(function(n){return e.sg.some(function(e){return e.indexOf(n.c.slice(0,5))===0||e.indexOf(n.c)===0})&&(!n.d||!e.dong||n.d===e.dong)})});var t='<div class="grp">이 동네 중개사무소 <span class="adtag">입점</span></div>';if(!n.length)t+='<div class="desc">아직 이 지역에 입점한 중개사무소가 없습니다.</div>';n.forEach(function(e){t+='<div class="ag"><div class="n">'+esc(e.name)+'</div><div class="s">대표 공인중개사 '+esc(e.ceo)+" · 등록번호 "+esc(e.reg)+"<br>"+esc(e.addr)+"<br>중개 지역: "+e.areas.map(function(e){return esc(e.n)}).join(", ")+'</div><div class="t">'+e.tel.map(function(e){return'<a href="tel:'+e.replace(/[^0-9]/g,"")+'">📞 '+esc(e)+"</a>"}).join("")+"</div></div>"});document.getElementById("agents").innerHTML=t}function months(e){var n=new Date,t=[];for(var r=0;r<e;r++){var i=n.getFullYear(),a=n.getMonth()+1-r;while(a<1){a+=12;i--}t.push(String(i)+String(a).padStart(2,"0"))}return t}var LOADSEQ=0;async function load(){var e=++LOADSEQ,n=PT[ST.pt],t=ST.deal===0?n[2]:n[3],r=document.getElementById("out");if(!t){r.innerHTML='<div class="msg">'+n[0]+"은(는) 매매 자료만 있습니다.</div>";return}r.innerHTML='<div class="msg">불러오는 중…</div>';var i=[];ST.sel.sg.forEach(function(e){months(3).forEach(function(n){i.push(fetch(HUB+"/re?t="+t+"&lawd="+e+"&ym="+n).then(function(e){return e.json()}).catch(function(){return{ok:false}}))})});var a=await Promise.all(i);if(e!==LOADSEQ)return;if(a.every(function(e){return!e.ok})){r.innerHTML='<div class="msg">이 자료는 아직 준비 중입니다. 잠시 뒤 다시 시도해 주세요.</div>';return}var o=[];a.forEach(function(e){if(e.ok)o=o.concat(e.items||[])});var s=ST.sel.dong,l=ST.sel.names.map(norm);o=o.filter(function(e){if(n[4]&&e.houseType!==n[4])return false;if(ST.deal===1&&num(e.monthlyRent)>0)return false;if(ST.deal===2&&!(num(e.monthlyRent)>0))return false;if(s&&String(e.umdNm||"").indexOf(s)!==0)return false;if(l.length){var t=norm([e.aptNm,e.mhouseNm,e.offiNm,e.umdNm,e.jibun,e.roadNm,e.roadnm,e.buildingUse].join(" "));if(!l.every(function(e){return t.indexOf(e)>=0}))return false}return true});o.sort(function(e,n){return dt(n)-dt(e)});ST.items=o;ST.shown=0;render()}function dt(e){return+e.dealYear*1e4+ +e.dealMonth*100+ +e.dealDay}function render(){var e=document.getElementById("out"),n=ST.items,t=PT[ST.pt];if(!n.length){e.innerHTML='<div class="msg">최근 3개월 '+DEALS[ST.deal]+" "+t[0]+" 거래가 없습니다.</div>";return}var r="";if(ST.shown===0){var i=n.filter(function(e){return!e.cdealType}).map(function(e){return ST.deal===0?num(e.dealAmount):num(e.deposit)}).filter(Boolean).sort(function(e,n){return e-n});var a=i.length?i[Math.floor(i.length/2)]:0;r+='<div class="sum">최근 3개월 <b>'+n.length.toLocaleString()+"건</b>"+(a?" · "+(ST.deal===0?"거래가":"보증금")+" 중간값 <b>"+won(a)+"</b>":"")+"</div>"}var o=Math.min(n.length,ST.shown+30);for(var s=ST.shown;s<o;s++)r+=card(n[s],t);ST.shown=o;var l=document.getElementById("moreBtn");if(l)l.remove();if(o<n.length)r+='<button id="moreBtn" class="more" onclick="render()">더 보기 ('+(n.length-o).toLocaleString()+"건)</button>";if(o<=30)e.innerHTML=r;else e.insertAdjacentHTML("beforeend",r)}function card(e,n){var t=e.aptNm||e.mhouseNm||e.offiNm||(e.buildingUse?e.buildingUse+(e.buildingType?" ("+e.buildingType+")":""):"")||(e.jimok?"토지 · "+e.jimok:"")||e.houseType||n[0];var r=num(e.excluUseAr),i,a="";if(ST.deal===0){var o=num(e.dealAmount);i=won(o);if(r)a=" · 3.3㎡당 "+won(o/(r/3.3058))}else if(ST.deal===1)i="전세 "+won(num(e.deposit));else i=won(num(e.deposit))+" / 월 "+num(e.monthlyRent).toLocaleString()+"만";var s=r?"전용 "+r+"㎡("+py(r)+"평)":e.buildingAr?"건물 "+e.buildingAr+"㎡"+(e.plottageAr?" · 대지 "+e.plottageAr+"㎡":""):e.totalFloorAr?"연면적 "+e.totalFloorAr+"㎡ · 대지 "+(e.plottageAr||"-")+"㎡":e.dealArea?"면적 "+e.dealArea+"㎡("+py(num(e.dealArea))+"평)"+(e.landUse?" · "+e.landUse:""):"";var l=(e.cdealType?'<span class="tag x">계약해제</span>':"")+(e.dealingGbn==="직거래"?'<span class="tag">직거래</span>':"")+(e.houseType&&!n[4]?'<span class="tag">'+esc(e.houseType)+"</span>":"");return'<div class="item"><div class="r1"><div class="t">'+esc(t)+l+'</div><div class="p">'+i+"</div></div>"+'<div class="d">'+esc((e.umdNm||"")+" "+(e.jibun||""))+(e.buildYear?" · "+e.buildYear+"년":"")+"<br>"+esc(s)+(e.floor?" · "+esc(e.floor)+"층":"")+esc(a)+"<br>"+e.dealYear+"."+String(e.dealMonth).padStart(2,"0")+"."+String(e.dealDay).padStart(2,"0")+" 계약</div></div>"}function goHome(){document.getElementById("q").value="";document.getElementById("pick").hidden=true;var e=["문정동","송파구","하남시","송파구 헬리오시티","잠실동 엘스","학암동","분당구","수원시"];document.getElementById("out").innerHTML='<div class="hd">🏠 우리 동네 실거래가</div><p class="desc">동네 이름, 구·시, 아파트 이름, 도로명, 번지 무엇이든 검색해 보세요. 매매·전세·월세와 물건 종류를 고르면 최근 실거래가 바로 나옵니다.</p>'+"<div>"+e.map(function(e){return"<span class=\"chip\" onclick=\"document.getElementById('q').value='"+e+"';go()\">"+e+"</span>"}).join("")+"</div>";window.scrollTo(0,0)}var instEv=null;function isApp(){return matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: minimal-ui)").matches||navigator.standalone===true}function isOwner(){try{return!!localStorage.getItem("mp_owner")}catch(e){return false}}window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();instEv=e;if(!isApp()&&isOwner()&&!/Android|iPhone|iPad/i.test(navigator.userAgent)){document.getElementById("inst").hidden=false;document.getElementById("th").style.marginLeft="0"}});window.addEventListener("appinstalled",function(){instEv=null;document.getElementById("inst").hidden=true});function instGo(){if(instEv){instEv.prompt();instEv.userChoice.then(function(){instEv=null;document.getElementById("inst").hidden=true})}}function mbTog(e){e.stopPropagation();var n=document.getElementById("mm");n.hidden=!n.hidden}document.addEventListener("click",function(e){var n=document.getElementById("mm");if(n&&!n.hidden&&!e.target.closest("#mm"))n.hidden=true});function mbCopy(){document.getElementById("mm").hidden=true;var e="https://emhwang3-boop.github.io/retest/";try{navigator.clipboard.writeText(e).then(function(){alert("링크를 복사했습니다")})}catch(n){prompt("링크:",e)}}function thDark(){return document.documentElement.getAttribute("data-theme")==="dark"}function thPaint(){document.getElementById("th").textContent=thDark()?"☀️":"🌙"}function thTog(){var e=!thDark();document.documentElement.setAttribute("data-theme",e?"dark":"light");try{localStorage.setItem("mpr_theme",e?"dark":"light")}catch(e){}thPaint()}thPaint();if(window.top!==window.self){try{window.top.location=location.href}catch(e){document.body.innerHTML=""}}try{if(localStorage.getItem("mp_owner"))document.getElementById("mcopy").hidden=false}catch(e){}try{if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js")}catch(e){}boot();</script>
+</body>
+</html>
