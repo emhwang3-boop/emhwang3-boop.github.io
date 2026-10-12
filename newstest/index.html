@@ -194,6 +194,8 @@ function mbTr(){
   document.getElementById("mm").hidden=true;
   var phone=/Android|iPhone|iPad/i.test(navigator.userAgent);
   if(!phone){ alert("Right-click anywhere on the page → “Translate to English”."); return; }   /* PC 앱 창은 오른쪽 클릭 번역이 된다 (2026-10-12) */
+  if(isApp()&&/Android/i.test(navigator.userAgent)){   /* 폰 앱은 번역이 없다 → 크롬 브라우저로 강제로 연다(앱이 가로채지 못하게 크롬을 콕 집어서) */
+    location.href="intent://emhwang3-boop.github.io/newstest/?browser=1#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url="+encodeURIComponent("https://emhwang3-boop.github.io/newstest/open/")+";end"; return; }
   if(isApp()){ window.open("https://emhwang3-boop.github.io/newstest/open/","_blank"); return; }
   alert("Tap your browser menu (⋮ or aA) → Translate → English. Tip: choose “Always translate Korean”.");
 }
