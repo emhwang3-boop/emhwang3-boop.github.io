@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Money Puzzle - News</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#3d5af1">
 <style>
 /* 머니퍼즐 뉴스 — 시험판 (2026-10-12). 기사는 네이버 결과를 그대로 보여 주고, 영어는 사용자 브라우저 번역에 맡긴다. */
 :root{--bg:#f4f6fa;--card:#fff;--ink:#111827;--sub:#5b6474;--line:#e6e9ef;--blue:#3d5af1;--yel:#fbbf24}
@@ -164,6 +168,7 @@ document.addEventListener("click",function(e){
   t.style.display="block";
   setTimeout(function(){ window.open(u,"_blank","noopener"); t.style.display="none"; },1600);
 });
+try{ if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js"); }catch(e){}
 pick(2);   // 첫 화면 — 증시
 </script>
 </body>
