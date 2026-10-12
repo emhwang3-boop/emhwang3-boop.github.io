@@ -1,0 +1,7 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>map test</title>
+<style>body{margin:0;font-family:sans-serif}.m{width:100%;height:330px;margin-bottom:6px}</style></head><body>
+<div>en (ncpKeyId)</div><div id="m1" class="m"></div><div>ko</div><div id="m2" class="m"></div>
+<script>function go(){ var c=new naver.maps.LatLng(37.5759,126.9768); new naver.maps.Map("m1",{center:c,zoom:15}); }
+window.navermap_authFailure=function(){ document.body.insertAdjacentHTML("afterbegin","<b id=af>AUTH FAIL</b>"); };</script>
+<script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=jbwyndpnp3&language=en&callback=go"></script>
+</body></html>
