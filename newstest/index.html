@@ -52,9 +52,15 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
     🌐 News here is in Korean. To read it in English: <b>Chrome</b> — tap <b>⋮ → Translate → English</b>, then choose <b>“Always translate Korean”</b> so articles open in English too · <b>Safari</b> — tap <b>aA → Translate to English</b>.
   </div>
 
-  <div class="top notranslate" translate="no">
+  <div class="top notranslate" translate="no" style="position:relative">
     <div class="logo"><img src="logo.png" alt="" style="height:30px">Money Puzzle <b>- News</b></div>
     <button id="inst" onclick="instGo()" hidden style="margin-left:auto;border:0;border-radius:999px;padding:8px 14px;background:var(--blue);color:#fff;font-weight:700;font-size:13px;cursor:pointer">⬇ Install app</button>
+    <button id="mb" onclick="mbTog(event)" aria-label="menu" style="border:0;background:none;font-size:24px;line-height:1;padding:4px 8px;cursor:pointer;color:var(--ink)">⋮</button>
+    <div id="mm" hidden style="position:absolute;right:16px;top:58px;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);min-width:230px;overflow:hidden">
+      <a href="#" onclick="mbTr();return false" style="display:block;padding:13px 16px;color:var(--ink);text-decoration:none;font-size:14.5px">🌐 Translate to English</a>
+      <a href="#" onclick="mbCopy();return false" style="display:block;padding:13px 16px;color:var(--ink);text-decoration:none;font-size:14.5px;border-top:1px solid var(--line)">🔗 Copy link</a>
+      <a href="#" onclick="location.reload();return false" style="display:block;padding:13px 16px;color:var(--ink);text-decoration:none;font-size:14.5px;border-top:1px solid var(--line)">↻ Refresh</a>
+    </div>
   </div>
 
   <form class="sbox notranslate" translate="no" onsubmit="go();return false">
@@ -179,6 +185,16 @@ function instGo(){
   alert("On iPhone: tap the Share button, then “Add to Home Screen”.");
 }
 if(/iPhone|iPad/.test(navigator.userAgent) && !isApp()) document.getElementById("inst").hidden=false;
+// 우리 ⋮ 메뉴 (2026-10-12) — 앱 창에는 크롬 번역 메뉴가 없어서, 「Translate」는 크롬 탭으로 다시 열어 번역 막대를 띄운다
+function mbTog(e){ e.stopPropagation(); var m=document.getElementById("mm"); m.hidden=!m.hidden; }
+document.addEventListener("click",function(e){ var m=document.getElementById("mm"); if(m&&!m.hidden&&!e.target.closest("#mm")) m.hidden=true; });
+function mbTr(){
+  document.getElementById("mm").hidden=true;
+  if(isApp()){ window.open("https://emhwang3-boop.github.io/newstest/open/","_blank"); return; }
+  alert("Tap your browser menu (⋮ or aA) → Translate → English. Tip: choose “Always translate Korean”.");
+}
+function mbCopy(){ document.getElementById("mm").hidden=true; var u="https://emhwang3-boop.github.io/newstest/";
+  try{ navigator.clipboard.writeText(u).then(function(){ alert("Link copied"); }); }catch(e){ prompt("Copy this link:",u); } }
 try{ if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js"); }catch(e){}
 pick(2);   // 첫 화면 — 증시
 </script>
