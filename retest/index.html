@@ -85,6 +85,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 
 
 @media (max-width:520px){.logo{font-size:19px}.tb{font-size:14px}.sbox input{font-size:17px}.sbox button{font-size:16px}.doors div{font-size:16px}.doors .ic{font-size:32px}.hd{font-size:18px}.deal div{font-size:16.5px}.cat{font-size:14px}.cat .ic{font-size:26px}.grp{font-size:15px}.desc{font-size:14.5px}.item .t{font-size:16.5px}.item .p{font-size:17px}.item .d{font-size:14px}.ag .n{font-size:17px}.ag .s{font-size:14px}.jf label{font-size:14.5px}.jf input,.jf textarea,.jf select{font-size:16px}.chip{font-size:14.5px}.sum{font-size:14.5px}.note{font-size:12.5px}.more{font-size:15.5px}}   
+@media (min-width:600px){#shBox{align-items:center!important}#shIn{border-radius:18px!important}}   
 </style>
 </head>
 <body>
@@ -130,7 +131,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 </div>
 
 <div id="shBox" hidden style="position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)this.hidden=true">
-  <div style="background:var(--card);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px 14px 24px" id="shIn"></div>
+  <div style="background:var(--card);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px 14px 24px;max-height:85vh;overflow:auto" id="shIn"></div>
 </div>
 
 <div id="lBox" hidden style="position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);overflow:auto" onclick="if(event.target===this)this.hidden=true">
