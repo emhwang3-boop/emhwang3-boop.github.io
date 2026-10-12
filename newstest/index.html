@@ -110,8 +110,8 @@ async function load(koQ, title, icon){
   var out=document.getElementById("out");
   out.innerHTML='<div class="hd notranslate" translate="no"><span class="ic">'+icon+'</span>'+esc(title)+'</div><div class="msg notranslate" translate="no">Loading…</div>';
   var j=null; try{ j=await fetch(HUB+"/news?n=100&q="+encodeURIComponent(koQ),{cache:"no-store"}).then(function(r){return r.json();}); }catch(e){}
-  // 조선·중앙·동아·경향·한겨레·한국·국민·문화 + 영자신문만 (사장님 2026-10-12)
-  var PAPERS=/(^|\.)(chosun\.com|joongang\.co\.kr|joins\.com|donga\.com|hani\.co\.kr|khan\.co\.kr|hankookilbo\.com|kmib\.co\.kr|munhwa\.com|koreaherald\.com|koreatimes\.co\.kr|koreajoongangdaily\.joins\.com|en\.yna\.co\.kr)$/i;
+  // 조선·중앙·동아·경향·한겨레·한국·국민·문화 + 연합·한경·매경·서경·머니투데이·이데일리 + 영자신문 (사장님 2026-10-12)
+  var PAPERS=/(^|\.)(chosun\.com|joongang\.co\.kr|joins\.com|donga\.com|hani\.co\.kr|khan\.co\.kr|hankookilbo\.com|kmib\.co\.kr|munhwa\.com|yna\.co\.kr|hankyung\.com|mk\.co\.kr|sedaily\.com|mt\.co\.kr|edaily\.co\.kr|koreaherald\.com|koreatimes\.co\.kr|koreajoongangdaily\.joins\.com|en\.yna\.co\.kr)$/i;
   var it=((j&&j.items)||[]).filter(function(x){ return (!x.t || Date.now()-x.t < 5*864e5) && PAPERS.test(x.src||""); }).slice(0,20);   /* 최근 5일만 (사장님 2026-10-12) */
   var h='<div class="hd notranslate" translate="no"><span class="ic">'+icon+'</span>'+esc(title)+'</div>';
   if(!it.length) h+='<div class="msg notranslate" translate="no">No news found. Try another word.</div>';
