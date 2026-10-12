@@ -110,7 +110,7 @@ async function load(koQ, title, icon){
   var out=document.getElementById("out");
   out.innerHTML='<div class="hd notranslate" translate="no"><span class="ic">'+icon+'</span>'+esc(title)+'</div><div class="msg notranslate" translate="no">Loading…</div>';
   var j=null; try{ j=await fetch(HUB+"/news?q="+encodeURIComponent(koQ),{cache:"no-store"}).then(function(r){return r.json();}); }catch(e){}
-  var it=(j&&j.items)||[];
+  var it=((j&&j.items)||[]).filter(function(x){ return !x.t || Date.now()-x.t < 5*864e5; });   /* 최근 5일만 (사장님 2026-10-12) */
   var h='<div class="hd notranslate" translate="no"><span class="ic">'+icon+'</span>'+esc(title)+'</div>';
   if(!it.length) h+='<div class="msg notranslate" translate="no">No news found. Try another word.</div>';
   it.forEach(function(x){
