@@ -1,7 +1,7 @@
 {
  "id": "/mini/",
- "name": "머니퍼즐 미니",
- "short_name": "머니퍼즐 미니",
+ "name": "Money Puzzle mini",
+ "short_name": "MP mini",
  "description": "머니퍼즐 미니 — 내 계좌·관심종목·주식/코인 조회·주문",
  "lang": "ko",
  "start_url": "/mini/",
