@@ -9,18 +9,9 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#3d5af1">
-<script>
-/* 홈페이지를 거쳐 들어온 사람만 (사장님 2026-10-12) — 앱 주소를 직접 퍼 가면 홈페이지로 보낸다.
-   한 번 홈페이지에서 들어온 기기·사장님 기기(EM2410)는 그다음부터 바로 열린다(홈 화면 아이콘 포함). */
-(function(){ try{
-  if(/[?&]me=EM2410/i.test(location.search)) localStorage.setItem("mp_owner","1");
-  var ok=!!localStorage.getItem("mp_owner")||!!localStorage.getItem("mpn_ok")||/^https:\/\/(www\.)?moneypuzzle\.co\.kr|^https:\/\/emhwang3-boop\.github\.io\/(home|newstest)/.test(document.referrer||"");
-  if(ok){ localStorage.setItem("mpn_ok","1"); return; }
-  location.replace("https://moneypuzzle.co.kr/");
-}catch(e){} })();
-</script>
+<script>(function(){try{if(/[?&]me=EM2410/i.test(location.search))localStorage.setItem("mp_owner","1");var e=!!localStorage.getItem("mp_owner")||!!localStorage.getItem("mpn_ok")||/^https:\/\/(www\.)?moneypuzzle\.co\.kr|^https:\/\/emhwang3-boop\.github\.io\/(home|newstest)/.test(document.referrer||"");if(e){localStorage.setItem("mpn_ok","1");return}location.replace("https://moneypuzzle.co.kr/")}catch(e){}})();</script>
 <style>
-/* 머니퍼즐 뉴스 — 시험판 (2026-10-12). 기사는 네이버 결과를 그대로 보여 주고, 영어는 사용자 브라우저 번역에 맡긴다. */
+
 :root{--bg:#f4f6fa;--card:#fff;--ink:#111827;--sub:#5b6474;--line:#e6e9ef;--blue:#3d5af1;--yel:#fbbf24}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1420;--card:#171d2b;--ink:#e8ecf2;--sub:#9aa4b2;--line:#263044}}
 :root[data-theme="dark"]{--bg:#0f1420;--card:#171d2b;--ink:#e8ecf2;--sub:#9aa4b2;--line:#263044}
@@ -90,144 +81,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
   “Read article” opens the original page; your browser can translate it into English. Money Puzzle does not write, edit or store news articles.</p>
 </div>
 
-<script>
-var HUB = "https://brief-live-hub.emhwang3.workers.dev";
-// 카테고리 — 이름·아이콘은 우리가 만든 것(영어), 기사는 정해 둔 한국어 검색어로 네이버에서 그대로 찾는다
-var CATS = [
-  ["Politics", "🏛️", "정치"], ["Economy", "💹", "경제 금리 환율"], ["Markets & Companies", "📈", "증시 코스피"],
-  ["Real Estate", "🏠", "부동산 아파트"], ["Tech & Science", "🔬", "반도체 AI 과학"], ["Society & Incidents", "🚨", "사건 사고"],
-  ["Life & Culture", "🍜", "생활 문화"], ["K-Culture & Entertainment", "🎤", "케이팝 드라마 연예"], ["Sports", "⚽", "스포츠"],
-  ["World & North Korea", "🌏", "북한 국제"], ["Opinion", "✍️", "사설 칼럼"], ["General", "📰", "속보"]
-];
-// 자주 쓰는 영어 낱말 → 한국어 검색어 (사용자가 친 검색어만 바꾼다. 기사 내용은 손대지 않는다)
-var DICT = {"inflation":"물가","interest rate":"금리","interest rates":"금리","exchange rate":"환율","won":"원화","dollar":"달러","stock":"주식","stocks":"주식",
-  "economy":"경제","election":"선거","president":"대통령","north korea":"북한","semiconductor":"반도체","chip":"반도체","chips":"반도체","battery":"배터리",
-  "real estate":"부동산","apartment":"아파트","housing":"주택","kpop":"케이팝","k-pop":"케이팝","drama":"드라마","weather":"날씨","tourism":"관광","travel":"여행",
-  "bank of korea":"한국은행","kospi":"코스피","kosdaq":"코스닥","exports":"수출","export":"수출","jobs":"고용","bitcoin":"비트코인","crypto":"가상자산"};
-
-function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function ago(t){ if(!t) return ""; var m=Math.round((Date.now()-t)/60000); if(m<60) return m+" min ago"; var h=Math.round(m/60); if(h<24) return h+" h ago"; return Math.round(h/24)+" d ago"; }
-function gtx(u){ return "https://translate.google.com/translate?sl=ko&tl=en&u="+encodeURIComponent(u); }
-
-// 영어 회사 이름 → 한국 종목명 (허브 국내 검색: 영문명으로도 찾는다)
-async function krName(q){
-  for(var i=0;i<6;i++){
-    try{ var j=await fetch(HUB+"/kr/search?q="+encodeURIComponent(q),{cache:"no-store"}).then(function(r){return r.json();});
-      if(j&&j.ok){ var d=(j.data||[]).filter(function(x){ return x&&x.name; });
-        if(!d.length) return "";
-        // 여러 회사가 걸리면(Samsung → 삼성화재·삼성전자·삼성물산…) 한국어 이름의 공통 앞부분(삼성)으로 찾는다
-        var ql=q.toLowerCase(), hit=d.filter(function(x){ return String(x.en||"").toLowerCase().indexOf(ql)===0; }); if(hit.length<2) hit=d;
-        if(hit.length===1) return hit[0].name;
-        var p=hit[0].name; hit.forEach(function(x){ var k=0; while(k<p.length&&k<x.name.length&&p[k]===x.name[k]) k++; p=p.slice(0,k); });
-        return p.length>=2 ? p : hit[0].name; } }catch(e){}
-    await new Promise(function(r){ setTimeout(r,700); });
-  }
-  return "";
-}
-async function toKo(q){
-  var s=q.trim(); if(!s) return "";
-  if(/[가-힣]/.test(s)) return s;
-  var k=s.toLowerCase(); if(DICT[k]) return DICT[k];
-  if(s.length>=2){ var n=await krName(s); if(n) return n; }
-  return s;
-}
-async function load(koQ, title, icon){
-  var out=document.getElementById("out");
-  out.innerHTML='<div class="hd notranslate" translate="no"><span class="ic">'+icon+'</span>'+esc(title)+'</div><div class="msg notranslate" translate="no">Loading…</div>';
-  var j=null; try{ j=await fetch(HUB+"/news?n=100&q="+encodeURIComponent(koQ),{cache:"no-store"}).then(function(r){return r.json();}); }catch(e){}
-  // 조선·중앙·동아·경향·한겨레·한국·국민·문화 + 연합·한경·매경·서경·머니투데이·이데일리 + 영자신문 (사장님 2026-10-12)
-  var PAPERS=/(^|\.)(chosun\.com|joongang\.co\.kr|joins\.com|donga\.com|hani\.co\.kr|khan\.co\.kr|hankookilbo\.com|kmib\.co\.kr|munhwa\.com|yna\.co\.kr|hankyung\.com|mk\.co\.kr|sedaily\.com|mt\.co\.kr|edaily\.co\.kr|koreaherald\.com|koreatimes\.co\.kr|koreajoongangdaily\.joins\.com|en\.yna\.co\.kr)$/i;
-  var it=((j&&j.items)||[]).filter(function(x){ return (!x.t || Date.now()-x.t < 5*864e5) && PAPERS.test(x.src||""); }).slice(0,20);   /* 최근 5일만 (사장님 2026-10-12) */
-  var h='<div class="hd notranslate" translate="no"><span class="ic">'+icon+'</span>'+esc(title)+'</div>';
-  if(!it.length) h+='<div class="msg notranslate" translate="no">No news found. Try another word.</div>';
-  it.forEach(function(x){
-    h+='<div class="item"><div class="t">'+esc(x.title)+'</div>'+(x.desc?'<div class="d">'+esc(x.desc)+'</div>':'')
-      +'<div class="m notranslate" translate="no"><span>'+esc(x.src||"")+' · '+ago(x.t)+'</span>'
-      +'<a class="en" href="'+esc(x.link)+'" target="_blank" rel="noopener">Read article ›</a></div></div>';   /* 원문을 그대로 연다 — 번역은 브라우저가 (구글 번역 주소는 한국에서 막힘, 2026-10-12) */
-  });
-  h+='<button class="all notranslate" translate="no" onclick="goHome()" style="margin:16px auto">🏠 Back to main</button>';
-  out.innerHTML=h;
-}
-async function go(){
-  var q=document.getElementById("q").value.trim(); if(!q) return;
-  document.getElementById("out").innerHTML='<div class="msg notranslate" translate="no">Searching…</div>';
-  var ko=await toKo(q);
-  load(ko, q+(ko!==q?"  ("+ko+")":""), "🔎");
-}
-function showCats(){
-  var c=document.getElementById("cats");
-  if(!c.innerHTML) c.innerHTML=CATS.map(function(x,i){ return '<div class="cat" onclick="pick('+i+')"><span class="ic">'+x[1]+'</span>'+x[0]+'</div>'; }).join("")+'<div class="cat" onclick="goHome()" style="grid-column:1/-1">🏠 Back to main</div>';
-  c.hidden=!c.hidden;
-}
-// 메인 화면으로 (2026-10-12) — 검색어·카테고리 닫고 첫 화면(증시)으로
-function goHome(){ document.getElementById("q").value=""; document.getElementById("cats").hidden=true; pick(2); window.scrollTo(0,0); }
-function pick(i){
-  [].forEach.call(document.querySelectorAll(".cat"),function(e,k){ e.classList.toggle("on",k===i); });
-  load(CATS[i][2], CATS[i][0], CATS[i][1]);
-}
-
-// ── 번역 안 한 외국인 알아보기 — 브라우저 언어가 한국어가 아닌데 몇 초 뒤에도 번역 표시가 없으면 안내 띠 ──
-function translated(){
-  var h=document.documentElement;
-  return h.classList.contains("translated-ltr")||h.classList.contains("translated-rtl")||(h.lang&&!/^ko/i.test(h.lang));
-}
-function tbarHide(forever){ document.getElementById("tbar").style.display="none"; if(forever){ try{ localStorage.setItem("mpn_tbar_off","1"); }catch(e){} } }
-function tbarCheck(){
-  var off=false; try{ off=!!localStorage.getItem("mpn_tbar_off"); }catch(e){}
-  var lang=(navigator.language||"").toLowerCase();
-  if(off || /^ko/.test(lang)) return;
-  document.getElementById("tbar").style.display=translated()?"none":"block";
-}
-setTimeout(tbarCheck,4000);
-new MutationObserver(function(){ if(translated()) tbarHide(0); }).observe(document.documentElement,{attributes:true,attributeFilter:["class","lang"]});
-
-// 기사를 열기 전 안내 — 원문(한국어)이 열리고 브라우저가 영어로 바꿀 때까지 잠깐 기다리라고 (사장님 2026-10-12)
-document.addEventListener("click",function(e){
-  var a=e.target.closest&&e.target.closest("a.en"); if(!a) return;
-  e.preventDefault(); var u=a.href, t=document.getElementById("wait");
-  if(!t){ t=document.createElement("div"); t.id="wait"; t.className="notranslate"; t.setAttribute("translate","no");
-    t.style.cssText="position:fixed;left:16px;right:16px;bottom:24px;z-index:9;background:#111827;color:#fff;border-radius:14px;padding:14px 16px;font-size:14px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.3)";
-    document.body.appendChild(t); }
-  t.innerHTML="📰 Opening the original Korean article.<br>Please wait a moment while your browser translates it into English.";
-  t.style.display="block";
-  setTimeout(function(){ window.open(u,"_blank","noopener"); t.style.display="none"; },1600);
-});
-// 앱 설치 단추 — 설치할 수 있을 때만 보이고, 설치했거나 앱으로 열었으면 숨긴다 (2026-10-12)
-var instEv=null;
-function isApp(){ return matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: minimal-ui)").matches||navigator.standalone===true; }
-window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); instEv=e; if(!isApp()) document.getElementById("inst").hidden=false; });
-window.addEventListener("appinstalled",function(){ instEv=null; document.getElementById("inst").hidden=true; });
-function instGo(){
-  if(/Android/i.test(navigator.userAgent)){ alert("Tap your browser menu ⋮ → “Add to Home screen”. The NEWS icon opens in Chrome, so translation keeps working."); return; }
-  if(instEv){ instEv.prompt(); instEv.userChoice.then(function(){ instEv=null; document.getElementById("inst").hidden=true; }); return; }
-  alert("On iPhone: tap the Share button, then “Add to Home Screen”.");
-}
-if(/iPhone|iPad|Android/i.test(navigator.userAgent) && !isApp()) document.getElementById("inst").hidden=false;   /* 폰은 「홈 화면에 추가」 안내 — 크롬 탭으로 열려야 번역이 된다 */
-// 우리 ⋮ 메뉴 (2026-10-12) — 앱 창에는 크롬 번역 메뉴가 없어서, 「Translate」는 크롬 탭으로 다시 열어 번역 막대를 띄운다
-function mbTog(e){ e.stopPropagation(); var m=document.getElementById("mm"); m.hidden=!m.hidden; }
-document.addEventListener("click",function(e){ var m=document.getElementById("mm"); if(m&&!m.hidden&&!e.target.closest("#mm")) m.hidden=true; });
-function mbTr(){
-  document.getElementById("mm").hidden=true;
-  var phone=/Android|iPhone|iPad/i.test(navigator.userAgent);
-  if(!phone){ alert("Right-click anywhere on the page → “Translate to English”."); return; }   /* PC 앱 창은 오른쪽 클릭 번역이 된다 (2026-10-12) */
-  if(isApp()&&/Android/i.test(navigator.userAgent)){   /* 폰 앱은 번역이 없다 → 크롬 브라우저로 강제로 연다(앱이 가로채지 못하게 크롬을 콕 집어서) */
-    location.href="intent://emhwang3-boop.github.io/newstest/?browser=1#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url="+encodeURIComponent("https://emhwang3-boop.github.io/newstest/open/")+";end"; return; }
-  if(isApp()){ window.open("https://emhwang3-boop.github.io/newstest/open/","_blank"); return; }
-  alert("Tap your browser menu (⋮ or aA) → Translate → English. Tip: choose “Always translate Korean”.");
-}
-function mbCopy(){ document.getElementById("mm").hidden=true; var u="https://emhwang3-boop.github.io/newstest/";
-  try{ navigator.clipboard.writeText(u).then(function(){ alert("Link copied"); }); }catch(e){ prompt("Copy this link:",u); } }
-// 라이트·다크 토글 (2026-10-12) — 고른 값은 이 기기에만 저장
-function thDark(){ var t=document.documentElement.getAttribute("data-theme"); return t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches; }
-function thPaint(){ document.getElementById("th").textContent=thDark()?"☀️":"🌙"; }
-function thTog(){ var d=!thDark(); document.documentElement.setAttribute("data-theme",d?"dark":"light"); try{ localStorage.setItem("mpn_theme",d?"dark":"light"); }catch(e){} thPaint(); }
-try{ var _t=localStorage.getItem("mpn_theme"); if(_t) document.documentElement.setAttribute("data-theme",_t); }catch(e){}
-thPaint();
-// 퍼가기 막기 (2026-10-12) — 다른 사이트 안에 넣어 보여 주기(iframe) 금지 · 링크 복사는 사장님 기기(EM2410)만
-if(window.top!==window.self){ try{ window.top.location=location.href; }catch(e){ document.body.innerHTML=""; } }
-try{ if(/[?&]me=EM2410/i.test(location.search)) localStorage.setItem("mp_owner","1"); if(localStorage.getItem("mp_owner")) document.getElementById("mcopy").hidden=false; }catch(e){}
-try{ if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js"); }catch(e){}
-pick(2);   // 첫 화면 — 증시
-</script>
+<script>var HUB="https://brief-live-hub.emhwang3.workers.dev";var CATS=[["Politics","🏛️","정치"],["Economy","💹","경제 금리 환율"],["Markets & Companies","📈","증시 코스피"],["Real Estate","🏠","부동산 아파트"],["Tech & Science","🔬","반도체 AI 과학"],["Society & Incidents","🚨","사건 사고"],["Life & Culture","🍜","생활 문화"],["K-Culture & Entertainment","🎤","케이팝 드라마 연예"],["Sports","⚽","스포츠"],["World & North Korea","🌏","북한 국제"],["Opinion","✍️","사설 칼럼"],["General","📰","속보"]];var DICT={inflation:"물가","interest rate":"금리","interest rates":"금리","exchange rate":"환율",won:"원화",dollar:"달러",stock:"주식",stocks:"주식",economy:"경제",election:"선거",president:"대통령","north korea":"북한",semiconductor:"반도체",chip:"반도체",chips:"반도체",battery:"배터리","real estate":"부동산",apartment:"아파트",housing:"주택",kpop:"케이팝","k-pop":"케이팝",drama:"드라마",weather:"날씨",tourism:"관광",travel:"여행","bank of korea":"한국은행",kospi:"코스피",kosdaq:"코스닥",exports:"수출",export:"수출",jobs:"고용",bitcoin:"비트코인",crypto:"가상자산"};function esc(t){return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function ago(t){if(!t)return"";var e=Math.round((Date.now()-t)/6e4);if(e<60)return e+" min ago";var n=Math.round(e/60);if(n<24)return n+" h ago";return Math.round(n/24)+" d ago"}function gtx(t){return"https://translate.google.com/translate?sl=ko&tl=en&u="+encodeURIComponent(t)}async function krName(t){for(var e=0;e<6;e++){try{var n=await fetch(HUB+"/kr/search?q="+encodeURIComponent(t),{cache:"no-store"}).then(function(t){return t.json()});if(n&&n.ok){var a=(n.data||[]).filter(function(t){return t&&t.name});if(!a.length)return"";var o=t.toLowerCase(),r=a.filter(function(t){return String(t.en||"").toLowerCase().indexOf(o)===0});if(r.length<2)r=a;if(r.length===1)return r[0].name;var i=r[0].name;r.forEach(function(t){var e=0;while(e<i.length&&e<t.name.length&&i[e]===t.name[e])e++;i=i.slice(0,e)});return i.length>=2?i:r[0].name}}catch(t){}await new Promise(function(t){setTimeout(t,700)})}return""}async function toKo(t){var e=t.trim();if(!e)return"";if(/[가-힣]/.test(e))return e;var n=e.toLowerCase();if(DICT[n])return DICT[n];if(e.length>=2){var a=await krName(e);if(a)return a}return e}async function load(t,e,n){var a=document.getElementById("out");a.innerHTML='<div class="hd notranslate" translate="no"><span class="ic">'+n+"</span>"+esc(e)+'</div><div class="msg notranslate" translate="no">Loading…</div>';var o=null;try{o=await fetch(HUB+"/news?n=100&q="+encodeURIComponent(t),{cache:"no-store"}).then(function(t){return t.json()})}catch(t){}var r=/(^|\.)(chosun\.com|joongang\.co\.kr|joins\.com|donga\.com|hani\.co\.kr|khan\.co\.kr|hankookilbo\.com|kmib\.co\.kr|munhwa\.com|yna\.co\.kr|hankyung\.com|mk\.co\.kr|sedaily\.com|mt\.co\.kr|edaily\.co\.kr|koreaherald\.com|koreatimes\.co\.kr|koreajoongangdaily\.joins\.com|en\.yna\.co\.kr)$/i;var i=(o&&o.items||[]).filter(function(t){return(!t.t||Date.now()-t.t<5*864e5)&&r.test(t.src||"")}).slice(0,20);var s='<div class="hd notranslate" translate="no"><span class="ic">'+n+"</span>"+esc(e)+"</div>";if(!i.length)s+='<div class="msg notranslate" translate="no">No news found. Try another word.</div>';i.forEach(function(t){s+='<div class="item"><div class="t">'+esc(t.title)+"</div>"+(t.desc?'<div class="d">'+esc(t.desc)+"</div>":"")+'<div class="m notranslate" translate="no"><span>'+esc(t.src||"")+" · "+ago(t.t)+"</span>"+'<a class="en" href="'+esc(t.link)+'" target="_blank" rel="noopener">Read article ›</a></div></div>'});s+='<button class="all notranslate" translate="no" onclick="goHome()" style="margin:16px auto">🏠 Back to main</button>';a.innerHTML=s}async function go(){var t=document.getElementById("q").value.trim();if(!t)return;document.getElementById("out").innerHTML='<div class="msg notranslate" translate="no">Searching…</div>';var e=await toKo(t);load(e,t+(e!==t?"  ("+e+")":""),"🔎")}function showCats(){var t=document.getElementById("cats");if(!t.innerHTML)t.innerHTML=CATS.map(function(t,e){return'<div class="cat" onclick="pick('+e+')"><span class="ic">'+t[1]+"</span>"+t[0]+"</div>"}).join("")+'<div class="cat" onclick="goHome()" style="grid-column:1/-1">🏠 Back to main</div>';t.hidden=!t.hidden}function goHome(){document.getElementById("q").value="";document.getElementById("cats").hidden=true;pick(2);window.scrollTo(0,0)}function pick(t){[].forEach.call(document.querySelectorAll(".cat"),function(e,n){e.classList.toggle("on",n===t)});load(CATS[t][2],CATS[t][0],CATS[t][1])}function translated(){var t=document.documentElement;return t.classList.contains("translated-ltr")||t.classList.contains("translated-rtl")||t.lang&&!/^ko/i.test(t.lang)}function tbarHide(t){document.getElementById("tbar").style.display="none";if(t){try{localStorage.setItem("mpn_tbar_off","1")}catch(t){}}}function tbarCheck(){var t=false;try{t=!!localStorage.getItem("mpn_tbar_off")}catch(t){}var e=(navigator.language||"").toLowerCase();if(t||/^ko/.test(e))return;document.getElementById("tbar").style.display=translated()?"none":"block"}setTimeout(tbarCheck,4e3);new MutationObserver(function(){if(translated())tbarHide(0)}).observe(document.documentElement,{attributes:true,attributeFilter:["class","lang"]});document.addEventListener("click",function(t){var e=t.target.closest&&t.target.closest("a.en");if(!e)return;t.preventDefault();var n=e.href,a=document.getElementById("wait");if(!a){a=document.createElement("div");a.id="wait";a.className="notranslate";a.setAttribute("translate","no");a.style.cssText="position:fixed;left:16px;right:16px;bottom:24px;z-index:9;background:#111827;color:#fff;border-radius:14px;padding:14px 16px;font-size:14px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.3)";document.body.appendChild(a)}a.innerHTML="📰 Opening the original Korean article.<br>Please wait a moment while your browser translates it into English.";a.style.display="block";setTimeout(function(){window.open(n,"_blank","noopener");a.style.display="none"},1600)});var instEv=null;function isApp(){return matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: minimal-ui)").matches||navigator.standalone===true}window.addEventListener("beforeinstallprompt",function(t){t.preventDefault();instEv=t;if(!isApp())document.getElementById("inst").hidden=false});window.addEventListener("appinstalled",function(){instEv=null;document.getElementById("inst").hidden=true});function instGo(){if(/Android/i.test(navigator.userAgent)){alert("Tap your browser menu ⋮ → “Add to Home screen”. The NEWS icon opens in Chrome, so translation keeps working.");return}if(instEv){instEv.prompt();instEv.userChoice.then(function(){instEv=null;document.getElementById("inst").hidden=true});return}alert("On iPhone: tap the Share button, then “Add to Home Screen”.")}if(/iPhone|iPad|Android/i.test(navigator.userAgent)&&!isApp())document.getElementById("inst").hidden=false;function mbTog(t){t.stopPropagation();var e=document.getElementById("mm");e.hidden=!e.hidden}document.addEventListener("click",function(t){var e=document.getElementById("mm");if(e&&!e.hidden&&!t.target.closest("#mm"))e.hidden=true});function mbTr(){document.getElementById("mm").hidden=true;var t=/Android|iPhone|iPad/i.test(navigator.userAgent);if(!t){alert("Right-click anywhere on the page → “Translate to English”.");return}if(isApp()&&/Android/i.test(navigator.userAgent)){location.href="intent://emhwang3-boop.github.io/newstest/?browser=1#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url="+encodeURIComponent("https://emhwang3-boop.github.io/newstest/open/")+";end";return}if(isApp()){window.open("https://emhwang3-boop.github.io/newstest/open/","_blank");return}alert("Tap your browser menu (⋮ or aA) → Translate → English. Tip: choose “Always translate Korean”.")}function mbCopy(){document.getElementById("mm").hidden=true;var t="https://emhwang3-boop.github.io/newstest/";try{navigator.clipboard.writeText(t).then(function(){alert("Link copied")})}catch(e){prompt("Copy this link:",t)}}function thDark(){var t=document.documentElement.getAttribute("data-theme");return t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches}function thPaint(){document.getElementById("th").textContent=thDark()?"☀️":"🌙"}function thTog(){var t=!thDark();document.documentElement.setAttribute("data-theme",t?"dark":"light");try{localStorage.setItem("mpn_theme",t?"dark":"light")}catch(t){}thPaint()}try{var _t=localStorage.getItem("mpn_theme");if(_t)document.documentElement.setAttribute("data-theme",_t)}catch(t){}thPaint();if(window.top!==window.self){try{window.top.location=location.href}catch(t){document.body.innerHTML=""}}try{if(/[?&]me=EM2410/i.test(location.search))localStorage.setItem("mp_owner","1");if(localStorage.getItem("mp_owner"))document.getElementById("mcopy").hidden=false}catch(t){}try{if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js")}catch(t){}pick(2);</script>
 </body>
 </html>
