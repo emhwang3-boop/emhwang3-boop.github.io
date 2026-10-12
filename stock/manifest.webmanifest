@@ -1,8 +1,8 @@
 {
  "id": "/morning-brief/stock/",
- "name": "머니퍼즐 주식",
- "short_name": "머니퍼즐 주식",
- "description": "머니퍼즐 주식 — 시세·성향별 추천 (정보 제공)",
+ "name": "Money Puzzle Stock",
+ "short_name": "MP Stock",
+ "description": "Money Puzzle Stock — 시세·성향별 추천 (정보 제공)",
  "lang": "ko",
  "start_url": "./?src=pwa",
  "scope": "./",
