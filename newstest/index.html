@@ -187,10 +187,11 @@ function isApp(){ return matchMedia("(display-mode: standalone)").matches||match
 window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); instEv=e; if(!isApp()) document.getElementById("inst").hidden=false; });
 window.addEventListener("appinstalled",function(){ instEv=null; document.getElementById("inst").hidden=true; });
 function instGo(){
+  if(/Android/i.test(navigator.userAgent)){ alert("Tap your browser menu ⋮ → “Add to Home screen”. The NEWS icon opens in Chrome, so translation keeps working."); return; }
   if(instEv){ instEv.prompt(); instEv.userChoice.then(function(){ instEv=null; document.getElementById("inst").hidden=true; }); return; }
   alert("On iPhone: tap the Share button, then “Add to Home Screen”.");
 }
-if(/iPhone|iPad/.test(navigator.userAgent) && !isApp()) document.getElementById("inst").hidden=false;
+if(/iPhone|iPad|Android/i.test(navigator.userAgent) && !isApp()) document.getElementById("inst").hidden=false;   /* 폰은 「홈 화면에 추가」 안내 — 크롬 탭으로 열려야 번역이 된다 */
 // 우리 ⋮ 메뉴 (2026-10-12) — 앱 창에는 크롬 번역 메뉴가 없어서, 「Translate」는 크롬 탭으로 다시 열어 번역 막대를 띄운다
 function mbTog(e){ e.stopPropagation(); var m=document.getElementById("mm"); m.hidden=!m.hidden; }
 document.addEventListener("click",function(e){ var m=document.getElementById("mm"); if(m&&!m.hidden&&!e.target.closest("#mm")) m.hidden=true; });
@@ -211,10 +212,6 @@ function thPaint(){ document.getElementById("th").textContent=thDark()?"☀️":
 function thTog(){ var d=!thDark(); document.documentElement.setAttribute("data-theme",d?"dark":"light"); try{ localStorage.setItem("mpn_theme",d?"dark":"light"); }catch(e){} thPaint(); }
 try{ var _t=localStorage.getItem("mpn_theme"); if(_t) document.documentElement.setAttribute("data-theme",_t); }catch(e){}
 thPaint();
-// 폰에서 NEWS 아이콘으로 열면 곧바로 크롬 창으로 넘긴다 — 크롬 창이라야 「한국어 항상 번역」이 먹는다 (사장님 2026-10-12)
-if(isApp()&&/Android/i.test(navigator.userAgent)){
-  location.href="intent://emhwang3-boop.github.io/newstest/?browser=1#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url="+encodeURIComponent("https://emhwang3-boop.github.io/newstest/open/")+";end";
-}
 try{ if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js"); }catch(e){}
 pick(2);   // 첫 화면 — 증시
 </script>
