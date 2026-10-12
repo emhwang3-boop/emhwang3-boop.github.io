@@ -62,7 +62,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
     <button id="mb" onclick="mbTog(event)" aria-label="menu" style="border:0;background:none;font-size:24px;line-height:1;padding:4px 8px;cursor:pointer;color:var(--ink)">⋮</button>
     <div id="mm" hidden style="position:absolute;right:16px;top:58px;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);min-width:230px;overflow:hidden">
       <a href="#" onclick="mbTr();return false" style="display:block;padding:13px 16px;color:var(--ink);text-decoration:none;font-size:14.5px">🌐 Translate to English</a>
-      <a href="#" onclick="mbCopy();return false" style="display:block;padding:13px 16px;color:var(--ink);text-decoration:none;font-size:14.5px;border-top:1px solid var(--line)">🔗 Copy link</a>
+      <a href="#" id="mcopy" hidden onclick="mbCopy();return false" style="display:block;padding:13px 16px;color:var(--ink);text-decoration:none;font-size:14.5px;border-top:1px solid var(--line)">🔗 Copy link</a>
       <a href="#" onclick="location.reload();return false" style="display:block;padding:13px 16px;color:var(--ink);text-decoration:none;font-size:14.5px;border-top:1px solid var(--line)">↻ Refresh</a>
     </div>
   </div>
@@ -213,6 +213,9 @@ function thPaint(){ document.getElementById("th").textContent=thDark()?"☀️":
 function thTog(){ var d=!thDark(); document.documentElement.setAttribute("data-theme",d?"dark":"light"); try{ localStorage.setItem("mpn_theme",d?"dark":"light"); }catch(e){} thPaint(); }
 try{ var _t=localStorage.getItem("mpn_theme"); if(_t) document.documentElement.setAttribute("data-theme",_t); }catch(e){}
 thPaint();
+// 퍼가기 막기 (2026-10-12) — 다른 사이트 안에 넣어 보여 주기(iframe) 금지 · 링크 복사는 사장님 기기(EM2410)만
+if(window.top!==window.self){ try{ window.top.location=location.href; }catch(e){ document.body.innerHTML=""; } }
+try{ if(/[?&]me=EM2410/i.test(location.search)) localStorage.setItem("mp_owner","1"); if(localStorage.getItem("mp_owner")) document.getElementById("mcopy").hidden=false; }catch(e){}
 try{ if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js"); }catch(e){}
 pick(2);   // 첫 화면 — 증시
 </script>
