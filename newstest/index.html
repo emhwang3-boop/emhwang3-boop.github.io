@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Money Puzzle - News</title>
+<style>
+/* 머니퍼즐 뉴스 — 시험판 (2026-10-12). 기사는 네이버 결과를 그대로 보여 주고, 영어는 사용자 브라우저 번역에 맡긴다. */
+:root{--bg:#f4f6fa;--card:#fff;--ink:#111827;--sub:#5b6474;--line:#e6e9ef;--blue:#3d5af1;--yel:#fbbf24}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1420;--card:#171d2b;--ink:#e8ecf2;--sub:#9aa4b2;--line:#263044}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+.top{display:flex;align-items:center;gap:10px;margin:6px 0 18px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:21px;letter-spacing:-.4px}
+.logo i{width:28px;height:28px;border-radius:8px;background:var(--blue);position:relative;display:inline-block}
+.logo i:after{content:"";position:absolute;right:-5px;top:-5px;width:13px;height:13px;border-radius:50%;background:var(--yel)}
+.logo b{font-weight:600;color:var(--sub)}
+.sbox{display:flex;gap:8px}
+.sbox input{flex:1;font-size:17px;padding:13px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none}
+.sbox input:focus{border-color:var(--blue)}
+.sbox button{border:0;border-radius:999px;padding:0 18px;background:var(--blue);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+.all{display:block;margin:12px auto 4px;background:none;border:0;color:var(--blue);font-weight:700;font-size:15px;cursor:pointer}
+.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.cat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink)}
+.cat .ic{font-size:24px;display:block;margin-bottom:4px}
+.cat.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue) inset}
+.hd{display:flex;align-items:center;gap:8px;margin:18px 2px 8px;font-weight:800;font-size:16px}
+.hd .ic{font-size:20px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin:8px 0}
+.item .t{font-weight:700;font-size:15.5px;line-height:1.4}
+.item .d{color:var(--sub);font-size:13.5px;line-height:1.5;margin-top:4px}
+.item .m{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--sub)}
+.item .m a{font-size:12.5px;font-weight:700;text-decoration:none;border-radius:999px;padding:5px 11px}
+.en{background:var(--blue);color:#fff}
+.og{border:1px solid var(--line);color:var(--ink)}
+.msg{color:var(--sub);text-align:center;padding:24px 8px;font-size:14px}
+.note{font-size:11.5px;color:var(--sub);text-align:center;margin:22px 0 8px;line-height:1.6}
+#tbar{position:sticky;top:0;z-index:5;background:#fff8db;color:#5c4400;border:1px solid #f2d27a;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:13.5px;line-height:1.5;display:none}
+#tbar b{font-weight:800}
+#tbar button{float:right;border:0;background:none;color:#5c4400;font-size:12px;text-decoration:underline;cursor:pointer;margin-left:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="tbar" class="notranslate" translate="no">
+    <button onclick="tbarHide(1)">Don't show again</button>
+    🌐 News here is in Korean. To read it in English: <b>Chrome</b> — tap <b>⋮ → Translate → English</b> · <b>Safari</b> — tap <b>aA → Translate to English</b>.
+  </div>
+
+  <div class="top notranslate" translate="no">
+    <div class="logo"><i></i>Money Puzzle <b>- News</b></div>
+  </div>
+
+  <form class="sbox notranslate" translate="no" onsubmit="go();return false">
+    <input id="q" placeholder="Search Korean news in English (e.g. Samsung, inflation)" autocomplete="off">
+    <button type="submit">Search</button>
+  </form>
+  <button class="all notranslate" translate="no" onclick="showCats()">Browse all categories ▾</button>
+  <div id="cats" class="cats notranslate" translate="no" hidden></div>
+
+  <div id="out"></div>
+
+  <p class="note notranslate" translate="no">Headlines and summaries are shown as provided by NAVER News, with a link to each original article.
+  “Read in English” opens the original article through Google Translate. Money Puzzle does not write, edit or store news articles.</p>
+</div>
+
+<script>
+var HUB = "https://brief-live-hub.emhwang3.workers.dev";
+// 카테고리 — 이름·아이콘은 우리가 만든 것(영어), 기사는 정해 둔 한국어 검색어로 네이버에서 그대로 찾는다
+var CATS = [
+  ["Politics", "🏛️", "정치"], ["Economy", "💹", "경제 금리 환율"], ["Markets & Companies", "📈", "증시 코스피"],
+  ["Real Estate", "🏠", "부동산 아파트"], ["Tech & Science", "🔬", "반도체 AI 과학"], ["Society & Incidents", "🚨", "사건 사고"],
+  ["Life & Culture", "🍜", "생활 문화"], ["K-Culture & Entertainment", "🎤", "케이팝 드라마 연예"], ["Sports", "⚽", "스포츠"],
+  ["World & North Korea", "🌏", "북한 국제"], ["Opinion", "✍️", "사설 칼럼"], ["General", "📰", "속보"]
+];
+// 자주 쓰는 영어 낱말 → 한국어 검색어 (사용자가 친 검색어만 바꾼다. 기사 내용은 손대지 않는다)
+var DICT = {"inflation":"물가","interest rate":"금리","interest rates":"금리","exchange rate":"환율","won":"원화","dollar":"달러","stock":"주식","stocks":"주식",
+  "economy":"경제","election":"선거","president":"대통령","north korea":"북한","semiconductor":"반도체","chip":"반도체","chips":"반도체","battery":"배터리",
+  "real estate":"부동산","apartment":"아파트","housing":"주택","kpop":"케이팝","k-pop":"케이팝","drama":"드라마","weather":"날씨","tourism":"관광","travel":"여행",
+  "bank of korea":"한국은행","kospi":"코스피","kosdaq":"코스닥","exports":"수출","export":"수출","jobs":"고용","bitcoin":"비트코인","crypto":"가상자산"};
+
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function ago(t){ if(!t) return ""; var m=Math.round((Date.now()-t)/60000); if(m<60) return m+" min ago"; var h=Math.round(m/60); if(h<24) return h+" h ago"; return Math.round(h/24)+" d ago"; }
+function gtx(u){ return "https://translate.google.com/translate?sl=ko&tl=en&u="+encodeURIComponent(u); }
+
+// 영어 회사 이름 → 한국 종목명 (허브 국내 검색: 영문명으로도 찾는다)
+async function krName(q){
+  for(var i=0;i<6;i++){
+    try{ var j=await fetch(HUB+"/kr/search?q="+encodeURIComponent(q),{cache:"no-store"}).then(function(r){return r.json();});
+      if(j&&j.ok){ var d=j.data||[]; if(d.length && d[0].name) return d[0].name; return ""; } }catch(e){}
+    await new Promise(function(r){ setTimeout(r,700); });
+  }
+  return "";
+}
+async function toKo(q){
+  var s=q.trim(); if(!s) return "";
+  if(/[가-힣]/.test(s)) return s;
+  var k=s.toLowerCase(); if(DICT[k]) return DICT[k];
+  if(s.length>=2){ var n=await krName(s); if(n) return n; }
+  return s;
+}
+async function load(koQ, title, icon){
+  var out=document.getElementById("out");
+  out.innerHTML='<div class="hd notranslate" translate="no"><span class="ic">'+icon+'</span>'+esc(title)+'</div><div class="msg notranslate" translate="no">Loading…</div>';
+  var j=null; try{ j=await fetch(HUB+"/news?q="+encodeURIComponent(koQ),{cache:"no-store"}).then(function(r){return r.json();}); }catch(e){}
+  var it=(j&&j.items)||[];
+  var h='<div class="hd notranslate" translate="no"><span class="ic">'+icon+'</span>'+esc(title)+'</div>';
+  if(!it.length) h+='<div class="msg notranslate" translate="no">No news found. Try another word.</div>';
+  it.forEach(function(x){
+    h+='<div class="item"><div class="t">'+esc(x.title)+'</div>'+(x.desc?'<div class="d">'+esc(x.desc)+'</div>':'')
+      +'<div class="m notranslate" translate="no"><span>'+esc(x.src||"")+' · '+ago(x.t)+'</span>'
+      +'<a class="en" href="'+gtx(x.link)+'" target="_blank" rel="noopener">Read in English</a>'
+      +'<a class="og" href="'+esc(x.link)+'" target="_blank" rel="noopener">Original</a></div></div>';
+  });
+  out.innerHTML=h;
+}
+async function go(){
+  var q=document.getElementById("q").value.trim(); if(!q) return;
+  document.getElementById("out").innerHTML='<div class="msg notranslate" translate="no">Searching…</div>';
+  var ko=await toKo(q);
+  load(ko, q+(ko!==q?"  ("+ko+")":""), "🔎");
+}
+function showCats(){
+  var c=document.getElementById("cats");
+  if(!c.innerHTML) c.innerHTML=CATS.map(function(x,i){ return '<div class="cat" onclick="pick('+i+')"><span class="ic">'+x[1]+'</span>'+x[0]+'</div>'; }).join("");
+  c.hidden=!c.hidden;
+}
+function pick(i){
+  [].forEach.call(document.querySelectorAll(".cat"),function(e,k){ e.classList.toggle("on",k===i); });
+  load(CATS[i][2], CATS[i][0], CATS[i][1]);
+}
+
+// ── 번역 안 한 외국인 알아보기 — 브라우저 언어가 한국어가 아닌데 몇 초 뒤에도 번역 표시가 없으면 안내 띠 ──
+function translated(){
+  var h=document.documentElement;
+  return h.classList.contains("translated-ltr")||h.classList.contains("translated-rtl")||(h.lang&&!/^ko/i.test(h.lang));
+}
+function tbarHide(forever){ document.getElementById("tbar").style.display="none"; if(forever){ try{ localStorage.setItem("mpn_tbar_off","1"); }catch(e){} } }
+function tbarCheck(){
+  var off=false; try{ off=!!localStorage.getItem("mpn_tbar_off"); }catch(e){}
+  var lang=(navigator.language||"").toLowerCase();
+  if(off || /^ko/.test(lang)) return;
+  document.getElementById("tbar").style.display=translated()?"none":"block";
+}
+setTimeout(tbarCheck,4000);
+new MutationObserver(function(){ if(translated()) tbarHide(0); }).observe(document.documentElement,{attributes:true,attributeFilter:["class","lang"]});
+
+pick(2);   // 첫 화면 — 증시
+</script>
+</body>
+</html>
