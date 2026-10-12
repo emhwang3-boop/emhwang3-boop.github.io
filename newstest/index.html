@@ -151,6 +151,17 @@ function tbarCheck(){
 setTimeout(tbarCheck,4000);
 new MutationObserver(function(){ if(translated()) tbarHide(0); }).observe(document.documentElement,{attributes:true,attributeFilter:["class","lang"]});
 
+// 기사를 열기 전 안내 — 원문(한국어)이 열리고 브라우저가 영어로 바꿀 때까지 잠깐 기다리라고 (사장님 2026-10-12)
+document.addEventListener("click",function(e){
+  var a=e.target.closest&&e.target.closest("a.en"); if(!a) return;
+  e.preventDefault(); var u=a.href, t=document.getElementById("wait");
+  if(!t){ t=document.createElement("div"); t.id="wait"; t.className="notranslate"; t.setAttribute("translate","no");
+    t.style.cssText="position:fixed;left:16px;right:16px;bottom:24px;z-index:9;background:#111827;color:#fff;border-radius:14px;padding:14px 16px;font-size:14px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.3)";
+    document.body.appendChild(t); }
+  t.innerHTML="📰 Opening the original Korean article.<br>Please wait a moment while your browser translates it into English.";
+  t.style.display="block";
+  setTimeout(function(){ window.open(u,"_blank","noopener"); t.style.display="none"; },1600);
+});
 pick(2);   // 첫 화면 — 증시
 </script>
 </body>
