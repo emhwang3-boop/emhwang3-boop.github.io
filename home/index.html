@@ -55,14 +55,7 @@
   .g3{grid-template-columns:repeat(3,1fr)}
   .ftc{padding:16px}.ftimg{background:#f4f7fb;border-radius:12px;overflow:hidden;margin-bottom:12px;display:flex;justify-content:center;align-items:center;height:340px}
   .ftimg img{max-width:100%;max-height:340px;display:block;object-fit:contain}
-  .amp{background:#0b1220;border-radius:16px;padding:24px 20px;width:92%;max-width:360px;box-shadow:0 10px 30px rgba(11,18,32,.35)}
-  .amp .ah{display:flex;align-items:baseline;gap:8px;color:#9aa4b2;font-size:12.5px;margin-bottom:10px}
-  .amp .ah b{color:#e8ecf2;font-size:15px}.amp .ah i{font-style:normal}.amp .ah .sn{margin-left:auto;font-size:18px!important;color:#e8ecf2;font-weight:800;font-size:14px}
-  .amp .bars{display:grid;grid-template-columns:repeat(12,1fr);gap:5px}
-  .amp .lp{aspect-ratio:1/2.2;border-radius:6px;background:#263044;opacity:.5;transition:all .25s ease}
-  .amp .lp.on{opacity:1;box-shadow:0 0 10px currentColor}
-  .amp .lb{display:flex;justify-content:space-between;color:#5b6474;font-size:11px;margin-top:8px}
-  .ftimg img.en{display:none} body.lang-en .ftimg img.en{display:block} body.lang-en .ftimg img.ko{display:none}
+    .ftimg img.en{display:none} body.lang-en .ftimg img.en{display:block} body.lang-en .ftimg img.ko{display:none}
   .ftb{display:inline-block;font-size:12px;font-weight:700;color:#1d5bd8;background:#e8f0ff;border-radius:999px;padding:3px 10px;margin-bottom:6px}
   .ftnote{font-size:13px;color:var(--sub);margin-top:14px}
 
@@ -195,12 +188,10 @@
       <span class="ftb"><span class="ko">특허 출원 10-2026-0179786</span><span class="en">Patent application 10-2026-0179786</span></span>
       <h3><span class="ko">두 손가락으로 구간·각도 재기</span><span class="en">Two-finger range & angle</span></h3>
       <p><span class="ko">두 손가락을 0.3초 대고 있으면 두 봉 사이의 상승률, 금액, 기간, 각도를 바로 잽니다.</span><span class="en">Hold two fingers for 0.3 s to measure change, amount, bars and angle between two points.</span></p></div>
-    <div class="card ftc"><div class="ftimg" style="background:linear-gradient(160deg,#eef2ff,#f4f7fb)"><div class="amp" id="ampDemo">
-        <div class="ah"><b><span class="ko">코인</span><span class="en">Crypto</span></b><span><span class="ko">1칸</span><span class="en">slot</span> 833 USDT</span><span class="sn"><i id="ampN">12</i> / 12</span></div>
-        <div class="bars"></div><div class="lb"><span>1</span><span>6</span><span>12</span></div></div></div>
-      <span class="ftb"><span class="ko">코인 12칸 투자전략</span><span class="en">12-slot crypto strategy</span></span>
-      <h3><span class="ko">12칸 투자 램프</span><span class="en">12-slot investing lamp</span></h3>
-      <p><span class="ko">자산을 12칸으로 나눠 하루에 한 칸씩 투자합니다. 채운 칸마다 불이 켜져, 얼마나 투자했는지 한눈에 보입니다.</span><span class="en">Your assets are split into 12 slots, invested one slot a day. Each filled slot lights up, so you see your progress at a glance.</span></p></div>
+    <div class="card ftc"><div class="ftimg"><img src="ft_slot12.jpg" alt="Crypto 12-slot card" loading="lazy"></div>
+      <span class="ftb"><span class="ko">시간 분산 투자</span><span class="en">Time-diversified investing</span></span>
+      <h3><span class="ko">코인 12칸 투자 전략</span><span class="en">12-Slot Crypto Strategy</span></h3>
+      <p><span class="ko">코인은 비트코인·이더리움 말고는 자산을 나눌 곳이 마땅치 않습니다. 그래서 자산 대신 시간을 나눴습니다. 투자금을 12칸으로 나눠 하루에 한 칸씩 사들여 위험을 분산하고, 채운 칸마다 불이 켜집니다. 백테스트에서 우수한 성과를 확인했습니다.</span><span class="en">Beyond Bitcoin and Ethereum, crypto offers little room to diversify across assets — so we diversify across time. Your money is split into 12 slots and invested one slot a day, and each filled slot lights up. Backtests show strong results.</span></p></div>
   </div>
   <p class="ftnote"><span class="ko">※ 화면 속 종목과 숫자는 무작위로 가져다 쓴 예시이며, 추천이 아닙니다.</span><span class="en">※ Stocks and figures shown are random examples, not recommendations.</span></p>
 </div></section>
@@ -320,13 +311,6 @@ document.addEventListener("click",function(e){
 },true);
 function tl(){ var e=document.body.classList.toggle("lang-en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
 try{ if(localStorage.getItem("home_lang")==="en") tl(); }catch(x){}
-</script>
-<script>/* 12칸 램프 — 한 칸씩 켜져 12칸을 다 채운다 (사장님 2026-10-12) */
-(function(){ var C=["#7a2600","#a83400","#d64300","#ff5000","#8f9690","#7fa587","#006b03","#008604","#00a105","#00c805","#33da38","#66ec6a"];
-  var box=document.querySelector("#ampDemo .bars"); if(!box) return; var L=[];
-  for(var i=0;i<12;i++){ var d=document.createElement("div"); d.className="lp"; box.appendChild(d); L.push(d); }
-  var n=0, hold=0; function paint(){ L.forEach(function(d,i){ var on=i<n; d.className="lp"+(on?" on":""); d.style.background=on?C[i]:""; d.style.color=on?C[i]:""; }); document.getElementById("ampN").textContent=n; }
-  setInterval(function(){ if(n<12){ n++; paint(); } else if(++hold>10){ hold=0; n=0; paint(); } },300); paint(); })();
 </script>
 </body>
 </html>
