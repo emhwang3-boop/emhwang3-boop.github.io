@@ -14,8 +14,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 .wrap{max-width:720px;margin:0 auto;padding:16px}
 .top{display:flex;align-items:center;gap:10px;margin:6px 0 18px}
 .logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:21px;letter-spacing:-.4px}
-.logo i{width:28px;height:28px;border-radius:8px;background:var(--blue);position:relative;display:inline-block}
-.logo i:after{content:"";position:absolute;right:-5px;top:-5px;width:13px;height:13px;border-radius:50%;background:var(--yel)}
+.logo img{height:30px;width:auto;display:block}
 .logo b{font-weight:600;color:var(--sub)}
 .sbox{display:flex;gap:8px}
 .sbox input{flex:1;font-size:17px;padding:13px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none}
@@ -50,7 +49,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
   </div>
 
   <div class="top notranslate" translate="no">
-    <div class="logo"><i></i>Money Puzzle <b>- News</b></div>
+    <div class="logo"><img src="logo.png" alt="">Money Puzzle <b>- News</b></div>
   </div>
 
   <form class="sbox notranslate" translate="no" onsubmit="go();return false">
