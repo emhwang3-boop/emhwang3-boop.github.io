@@ -28,6 +28,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 .sbox{display:flex;flex-direction:column;align-items:center;gap:10px}
 .sbox input{width:100%;font-size:19px;padding:18px 22px;border-radius:999px;border:2px solid #2f9e44;background:#eefaf0;color:var(--ink);outline:none;box-shadow:0 2px 10px rgba(47,158,68,.12)}   
 .sbox input::placeholder{color:#8a929c}
+@media (max-width:520px){.sbox input::placeholder{font-size:16px}}
 .sbox input:focus{border-color:#2b8a3e;box-shadow:0 0 0 4px rgba(47,158,68,.18)}
 :root[data-theme="dark"] .sbox input{background:#13261a;border-color:#37b24d}
 .sbox button{border:0;border-radius:999px;padding:11px 28px;background:var(--blue);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
@@ -120,7 +121,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
   </div>
 
   <form class="sbox" onsubmit="go();return false">
-    <input id="q" placeholder="예: 역삼자이아파트 또는 역삼동" data-en-ph="e.g. Yeoksam Xi Apartment or Yeoksam-dong" autocomplete="off">
+    <input id="q" placeholder="예: 역삼자이아파트 또는 역삼동" data-en-ph="e.g. Yeoksam Xi Apt or Yeoksam-dong" autocomplete="off">
     <button type="submit" data-en="Search">검색</button>
   </form>
   <div class="doors" id="doors">
