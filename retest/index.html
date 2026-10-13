@@ -26,8 +26,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 .logo b{font-weight:600;color:var(--sub)}
 @media (max-width:420px){.logo{font-size:18px}}
 .sbox{display:flex;flex-direction:column;align-items:center;gap:10px}
-.sbox input{width:100%;font-size:17px;padding:13px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none}
-.sbox input:focus{border-color:var(--blue)}
+.sbox input{width:100%;font-size:19px;padding:18px 22px;border-radius:999px;border:2px solid #2f9e44;background:#eefaf0;color:var(--ink);outline:none;box-shadow:0 2px 10px rgba(47,158,68,.12)}   
+.sbox input::placeholder{color:#8a929c}
+.sbox input:focus{border-color:#2b8a3e;box-shadow:0 0 0 4px rgba(47,158,68,.18)}
+:root[data-theme="dark"] .sbox input{background:#13261a;border-color:#37b24d}
 .sbox button{border:0;border-radius:999px;padding:11px 28px;background:var(--blue);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
 .hd{display:flex;align-items:center;gap:8px;margin:18px 2px 8px;font-weight:800;font-size:17px}
 .desc{color:var(--sub);font-size:13.5px;line-height:1.55;margin:4px 2px 10px}
@@ -93,7 +95,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 .agph{display:flex;gap:6px;overflow-x:auto;margin-top:8px}.agph img{height:96px;max-width:70%;border-radius:8px;object-fit:cover;flex:0 0 auto;display:block}
 .row2 .jf{flex:1;min-width:0}
 
-@media (max-width:520px){.logo{font-size:19px}.tb{font-size:14px}.sbox input{font-size:17px}.sbox button{font-size:16px}.doors div{font-size:16px}.doors .ic{font-size:32px}.hd{font-size:18px}.deal div{font-size:16.5px}.cat{font-size:14px}.cat .ic{font-size:26px}.grp{font-size:15px}.desc{font-size:14.5px}.item .t{font-size:16.5px}.item .p{font-size:17px}.item .d{font-size:14px}.ag .n{font-size:17px}.ag .s{font-size:14px}.jf label{font-size:14.5px}.jf input,.jf textarea,.jf select{font-size:16px}.chip{font-size:14.5px}.sum{font-size:14.5px}.note{font-size:12.5px}.more{font-size:15.5px}}   
+@media (max-width:520px){.logo{font-size:19px}.tb{font-size:14px}.sbox input{font-size:18px}.sbox button{font-size:16px}.doors div{font-size:16px}.doors .ic{font-size:32px}.hd{font-size:18px}.deal div{font-size:16.5px}.cat{font-size:14px}.cat .ic{font-size:26px}.grp{font-size:15px}.desc{font-size:14.5px}.item .t{font-size:16.5px}.item .p{font-size:17px}.item .d{font-size:14px}.ag .n{font-size:17px}.ag .s{font-size:14px}.jf label{font-size:14.5px}.jf input,.jf textarea,.jf select{font-size:16px}.chip{font-size:14.5px}.sum{font-size:14.5px}.note{font-size:12.5px}.more{font-size:15.5px}}   
 @media (min-width:600px){#shBox{align-items:center!important}#shIn{border-radius:18px!important}}   
 </style>
 </head>
@@ -118,7 +120,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
   </div>
 
   <form class="sbox" onsubmit="go();return false">
-    <input id="q" placeholder="동네·단지 검색 (예: 문정동, 송파구 헬리오시티, 하남시)" data-en-ph="Search an area or complex (e.g. Munjeong-dong, Songpa, Hanam)" autocomplete="off">
+    <input id="q" placeholder="예: 역삼자이아파트 또는 역삼동" data-en-ph="e.g. Yeoksam Xi Apartment or Yeoksam-dong" autocomplete="off">
     <button type="submit" data-en="Search">검색</button>
   </form>
   <div class="doors" id="doors">
