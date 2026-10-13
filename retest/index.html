@@ -101,7 +101,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 <div class="wrap">
   <div class="top" style="position:relative">
     <div class="logo" onclick="goHome()"><img src="logo_roof.png" alt="" style="height:32px"><span style="white-space:nowrap">Money Puzzle<b style="margin-left:4px" data-en="- Real Estate">- 부동산</b></span></div>
-    <button id="inst" onclick="instGo()" hidden style="margin-left:auto;border:0;border-radius:999px;padding:8px 14px;background:var(--blue);color:#fff;font-weight:700;font-size:13px;cursor:pointer" data-en="⬇ Install">⬇ 앱 설치</button>
+    <button id="inst" onclick="instGo()" hidden style="white-space:nowrap;margin-left:auto;border:0;border-radius:999px;padding:8px 14px;background:var(--blue);color:#fff;font-weight:700;font-size:13px;cursor:pointer" data-en="⬇ Install">⬇ 앱 설치</button>
     <button id="rs" onclick="resetAll()" class="tb" style="margin-left:auto" data-en="Reset">처음으로</button>
     <button id="lg" onclick="lgTog()" class="tb">EN</button>
     <button id="sh" onclick="shOpen()" aria-label="share" class="tb" data-en="Share">공유</button>
@@ -166,7 +166,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
   </div>
 </div>
 
-<div id="vBox" hidden style="position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.45);overflow:auto" onclick="if(event.target===this)this.hidden=true">
+<div id="vBox" hidden style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);overflow:auto" onclick="if(event.target===this)this.hidden=true">
   <div style="background:var(--card);max-width:620px;margin:30px auto;border-radius:18px;padding:18px 16px">
     <div style="display:flex;align-items:center"><div style="font-weight:800;font-size:17px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="vTitle"></div><button onclick="document.getElementById('vBox').hidden=true" style="margin-left:auto;border:0;background:none;font-size:22px;color:var(--sub);cursor:pointer">✕</button></div>
     <div id="vBody"></div>
