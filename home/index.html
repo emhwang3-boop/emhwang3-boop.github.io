@@ -355,5 +355,8 @@ document.addEventListener("click",function(e){
 function tl(){ var e=document.body.classList.toggle("lang-en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
 try{ if(localStorage.getItem("home_lang")==="en") tl(); }catch(x){}
 </script>
+<script>/* 내비 — 홈페이지 언어 그대로 열기 (2026-10-15) */
+document.addEventListener("click",function(ev){ var a=ev.target.closest&&ev.target.closest('a[href^="https://navi.moneypuzzle.co.kr"]'); if(!a) return;
+  a.href="https://navi.moneypuzzle.co.kr/?lang="+(document.documentElement.lang==="en"?"en":"ko"); },true);</script>
 </body>
 </html>
