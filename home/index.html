@@ -84,6 +84,16 @@
   .ir-pg{text-align:center;font-size:13px;opacity:.7;margin-top:6px}
   @media (max-width:520px){.ir-btn{width:30px;height:30px;font-size:20px}}
   .contact a.mail{font-size:22px;font-weight:700;text-decoration:none;color:var(--blue)}
+  .vbox{max-width:640px;margin:0 auto;text-align:left}
+  .vbox textarea,.vbox input[type=text]{width:100%;font:inherit;font-size:15px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .vbox textarea{height:140px;resize:vertical}
+  .vbox textarea:focus,.vbox input[type=text]:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:transparent}
+  .vrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 12px;font-size:13px;color:var(--sub)}
+  .vbot{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .vbot button{border:0;cursor:pointer;font:inherit;font-size:15px}
+  .vbot button:disabled{opacity:.5;cursor:default}
+  .vmsg{font-size:14px;color:var(--sub)}
+  .vhp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
   footer{border-top:1px solid var(--line);padding:28px 0 40px;font-size:12.5px;color:var(--sub)}
   footer p{margin:4px 0}
   ul.disc{margin:8px 0;padding-left:18px;text-align:left} ul.disc li{margin:2px 0}
@@ -264,6 +274,38 @@
     [].forEach.call(t.children,function(im,i){ var f=(en?"iren":"ir")+String(i+1).padStart(2,"0")+".jpg"; if(im.getAttribute("src")!==f) im.setAttribute("src",f); });
     var a=document.getElementById("irPdf"); a.setAttribute("href",en?"moneypuzzle_IR_EN.pdf":"moneypuzzle_IR.pdf"); a.setAttribute("download",en?"MoneyPuzzle_IR_EN.pdf":"머니퍼즐_IR.pdf"); }
   irLang(); new MutationObserver(irLang).observe(document.body,{attributes:true,attributeFilter:["class"]});
+})();
+</script>
+</div></section>
+
+<section id="voice" class="soft"><div class="wrap">
+  <h2 style="text-align:center"><span class="ko">고객의 소리</span><span class="en">Customer voice</span></h2>
+  <p class="sec-lead" style="text-align:center"><span class="ko">하고 싶은 말씀을 남겨 주세요.</span><span class="en">Leave us a message.</span></p>
+  <form class="vbox card" id="vForm" autocomplete="off" onsubmit="return vSend(event)">
+    <textarea id="vText" maxlength="500" required aria-label="고객의 소리"></textarea>
+    <div class="vrow"><span></span><span id="vCnt">0 / 500</span></div>
+    <input type="text" id="vContact" maxlength="100" placeholder="이메일 또는 전화 (선택)" aria-label="연락처 (선택)">
+    <div class="vhp" aria-hidden="true"><input type="text" id="vHp" name="website" tabindex="-1" autocomplete="off"></div>
+    <div class="vbot"><button type="submit" class="btn pri" id="vBtn">보내기</button><span class="vmsg" id="vMsg"></span></div>
+  </form>
+<script>
+// 고객의 소리 (사장님 2026-10-14) — 500자 · 메일로 받는다 (허브 /hvoice)
+(function(){
+  var t=document.getElementById("vText"), c=document.getElementById("vCnt");
+  t.addEventListener("input",function(){ c.textContent=t.value.length+" / 500"; });
+  window.vSend=function(e){ e.preventDefault();
+    var b=document.getElementById("vBtn"), m=document.getElementById("vMsg"), v=t.value.trim();
+    if(!v){ m.textContent="내용을 적어 주세요."; return false; }
+    b.disabled=true; m.textContent="보내는 중…";
+    fetch("https://brief-live-hub.emhwang3.workers.dev/hvoice",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text:v,contact:document.getElementById("vContact").value.trim(),hp:document.getElementById("vHp").value,page:location.href})})
+    .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); })
+    .then(function(j){
+      if(j&&j.ok){ m.textContent="보내 주셔서 고맙습니다."; t.value=""; document.getElementById("vContact").value=""; c.textContent="0 / 500"; }
+      else m.textContent=(j&&j.err==="rate")?"잠시 뒤에 다시 보내 주세요.":"보내지 못했습니다. 다시 시도해 주세요.";
+    }).catch(function(){ m.textContent="보내지 못했습니다. 다시 시도해 주세요."; })
+    .then(function(){ b.disabled=false; });
+    return false; };
 })();
 </script>
 </div></section>
