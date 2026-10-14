@@ -301,7 +301,7 @@
       body:JSON.stringify({text:v,contact:document.getElementById("vContact").value.trim(),hp:document.getElementById("vHp").value,page:location.href})})
     .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); })
     .then(function(j){
-      if(j&&j.ok){ m.textContent="보내 주셔서 고맙습니다."; t.value=""; document.getElementById("vContact").value=""; c.textContent="0 / 500"; }
+      if(j&&j.ok){ m.textContent=""; t.value=""; document.getElementById("vContact").value=""; c.textContent="0 / 500"; }
       else m.textContent=(j&&j.err==="rate")?"잠시 뒤에 다시 보내 주세요.":"보내지 못했습니다. 다시 시도해 주세요.";
     }).catch(function(){ m.textContent="보내지 못했습니다. 다시 시도해 주세요."; })
     .then(function(){ b.disabled=false; });
