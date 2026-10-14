@@ -285,28 +285,33 @@
     <div class="vrow"><span></span><span id="vCnt">0 / 500</span></div>
     <input type="text" id="vContact" maxlength="100" placeholder="이메일 또는 전화 *" aria-label="이메일 또는 전화 (필수)">
     <div class="vhp" aria-hidden="true"><input type="text" id="vHp" name="website" tabindex="-1" autocomplete="off"></div>
-    <div class="vbot"><button type="submit" class="btn pri" id="vBtn">보내기</button><span class="vmsg" id="vMsg"></span></div>
+    <div class="vbot"><button type="submit" class="btn pri" id="vBtn"><span class="ko">보내기</span><span class="en">Send</span></button><span class="vmsg" id="vMsg"></span></div>
   </form>
 <script>
 // 고객의 소리 (사장님 2026-10-14) — 500자 · 메일로 받는다 (허브 /hvoice)
 (function(){
   var t=document.getElementById("vText"), c=document.getElementById("vCnt");
   t.addEventListener("input",function(){ c.textContent=t.value.length+" / 500"; });
+  // 영어 화면이면 안내·문구도 영어 (2026-10-14)
+  function EN(){ return document.body.classList.contains("lang-en"); }
+  function L(ko,en){ return EN()?en:ko; }
+  function ph(){ var x=document.getElementById("vContact"); x.placeholder=L("이메일 또는 전화 *","Email or phone *"); x.setAttribute("aria-label",L("이메일 또는 전화 (필수)","Email or phone (required)")); t.setAttribute("aria-label",L("고객의 소리","Customer voice")); }
+  ph(); new MutationObserver(ph).observe(document.body,{attributes:true,attributeFilter:["class"]});
   // 연락처 필수 — 이메일(x@y.z) 또는 전화(숫자 9~15자리) (사장님 2026-10-14)
   function vcOk(x){ if(/^[^\s@<>"']+@[^\s@<>"']+\.[A-Za-z]{2,}$/.test(x)) return true; if(/^[\d\s+-]+$/.test(x)){ var n=x.replace(/\D/g,"").length; return n>=9&&n<=15; } return false; }
   window.vSend=function(e){ e.preventDefault();
     var b=document.getElementById("vBtn"), m=document.getElementById("vMsg"), v=t.value.trim();
-    if(!v){ m.textContent="내용을 적어 주세요."; return false; }
+    if(!v){ m.textContent=L("내용을 적어 주세요.","Please write your message."); return false; }
     var cv=document.getElementById("vContact").value.trim();
-    if(!vcOk(cv)){ m.textContent="이메일이나 전화번호를 넣어 주세요."; return false; }
-    b.disabled=true; m.textContent="보내는 중…";
+    if(!vcOk(cv)){ m.textContent=L("이메일이나 전화번호를 넣어 주세요.","Please enter your email or phone number."); return false; }
+    b.disabled=true; m.textContent=L("보내는 중…","Sending…");
     fetch("https://brief-live-hub.emhwang3.workers.dev/hvoice",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({text:v,contact:cv,hp:document.getElementById("vHp").value,page:location.href})})
     .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); })
     .then(function(j){
       if(j&&j.ok){ m.textContent=""; t.value=""; document.getElementById("vContact").value=""; c.textContent="0 / 500"; }
-      else m.textContent=(j&&j.err==="rate")?"잠시 뒤에 다시 보내 주세요.":(j&&j.err==="contact")?"이메일이나 전화번호를 넣어 주세요.":"보내지 못했습니다. 다시 시도해 주세요.";
-    }).catch(function(){ m.textContent="보내지 못했습니다. 다시 시도해 주세요."; })
+      else m.textContent=(j&&j.err==="rate")?L("잠시 뒤에 다시 보내 주세요.","Please try again in a moment."):(j&&j.err==="contact")?L("이메일이나 전화번호를 넣어 주세요.","Please enter your email or phone number."):L("보내지 못했습니다. 다시 시도해 주세요.","Could not send. Please try again.");
+    }).catch(function(){ m.textContent=L("보내지 못했습니다. 다시 시도해 주세요.","Could not send. Please try again."); })
     .then(function(){ b.disabled=false; });
     return false; };
 })();
