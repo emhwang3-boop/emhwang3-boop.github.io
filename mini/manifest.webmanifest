@@ -4,8 +4,8 @@
  "short_name": "MP mini",
  "description": "머니퍼즐 미니 — 내 계좌·관심종목·주식 조회·주문",
  "lang": "ko",
- "start_url": "/mini/",
- "scope": "/mini/",
+ "start_url": "./",
+ "scope": "./",
  "display": "standalone",
  "orientation": "portrait",
  "categories": [
