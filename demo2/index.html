@@ -8855,5 +8855,93 @@ function bmRender(){
 }
 setTimeout(function(){ try{ bmRender(); }catch(e){} }, 2200);
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-12 20:23</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-14 19:29</div>
+<script>/* 누적 손익 — 누른 달의 계좌 전체 수익률(국내+미국 원화) (사장님 2026-10-16). 실계좌만 · 조회만 */
+var ACRT = {m: {}, busy: {}, un: null, unAt: 0, unBusy: false};
+function acrtYmd(d){ return d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0"); }
+function acrtUsAset(j){ var s = 0; ((j && j.result_list) || []).forEach(function(r){ s += rlNum(r.chg_entr) + rlNum(r.chg_evlt_amt); }); return s; }
+function acrtOk(j){ return !!j && String(j.return_code) === "0"; }
+async function acrtFlows(tok, fr, to){                 /* kt00015 입출금+환전 — 이어받기(cont-yn) 포함 */
+  var rows = [], nk = "", body = {strt_dt: fr, end_dt: to, tp: "M", stk_cd: "", crnc_cd: "", gds_tp: "0", frgn_stex_code: "", dmst_stex_tp: "%"};
+  for(var pg = 0; pg < 30; pg++){
+    var h = {"Content-Type": "application/json;charset=UTF-8", "authorization": "Bearer " + tok, "api-id": "kt00015"};
+    if(typeof rlHdr === "function") h = rlHdr(h);          /* 열쇠판(/demo2/·미니·HTS)만 중계기 열쇠 머리 — /demo/ 엔 없다 (2026-10-16) */
+    if(pg){ h["cont-yn"] = "Y"; h["next-key"] = nk; }
+    var r = await fetch(rlHost() + "/api/dostk/acnt", {method: "POST", headers: h, body: JSON.stringify(body)});
+    if(typeof rlChk === "function") r = rlChk(r);
+    var j = await r.json();
+    if(!acrtOk(j)) throw new Error("kt00015 " + j.return_code);
+    rows = rows.concat(j.trst_ovrl_trde_prps_array || []);
+    if((r.headers.get("cont-yn") || "") !== "Y") return rows;
+    nk = r.headers.get("next-key") || ""; if(!nk) return rows;
+  }
+  throw new Error("kt00015 pages");
+}
+async function acrtMonth(ym){
+  var y = +ym.slice(0, 4), mo = +ym.slice(5, 7), now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var a = new Date(y, mo - 1, 1), last = new Date(y, mo, 0), b = last < today ? last : today, prev = new Date(y, mo - 1, 0);
+  var cur = !(last < today), n = Math.round((b - a) / 864e5) + 1;
+  var tok = await rlToken();
+  var k = await rlKiwoom(tok, "/api/dostk/acnt", "kt00016", {fr_dt: acrtYmd(a), to_dt: acrtYmd(b)});
+  if(!acrtOk(k)) throw new Error("kt00016 " + (k && k.return_code));
+  var s = await rlKiwoom(tok, "/api/us/acnt", "ust21132", {base_dt: acrtYmd(prev)});
+  if(!acrtOk(s)) throw new Error("ust21132 " + (s && s.return_code));
+  var e = cur ? await rlKiwoom(tok, "/api/us/acnt", "ust21120", {}) : await rlKiwoom(tok, "/api/us/acnt", "ust21132", {base_dt: acrtYmd(b)});
+  if(!acrtOk(e)) throw new Error("ust " + (e && e.return_code));
+  var fl = await acrtFlows(tok, acrtYmd(a), acrtYmd(b)), F = 0, FW = 0;
+  fl.forEach(function(r){
+    var nm = String(r.rmrk_nm || ""), io = String(r.io_tp_nm || ""), x = rlNum(r.exct_amt), v = 0;
+    if(String(r.trde_kind_nm || "") === "환전") v = /매수/.test(io) ? x : (/매도/.test(io) ? -x : 0);
+    else if(/환전정산/.test(nm)) v = /입금/.test(io) ? -x : (/출금/.test(io) ? x : 0);
+    if(!v) return;
+    var t = String(r.trde_dt || ""); if(t.length !== 8) return;
+    var d = new Date(+t.slice(0, 4), +t.slice(4, 6) - 1, +t.slice(6, 8));
+    F += v; FW += v * (Math.round((b - d) / 864e5) + 1) / n;
+  });
+  var U0 = acrtUsAset(s), U1 = acrtUsAset(e), Pk = rlNum(k.evltv_prft), Bk = rlNum(k.invt_bsamt);
+  var P = Pk + (U1 - U0 - F), den = Bk + U0 + FW;
+  return {rt: den > 0 ? P / den * 100 : null, cur: cur, at: Date.now()};
+}
+async function acrtUnreal(){
+  var tok = await rlToken();
+  var k = await rlKiwoom(tok, "/api/dostk/acnt", "kt00018", {qry_tp: "2", dmst_stex_tp: "KRX"});
+  if(!acrtOk(k)) throw new Error("kt00018");
+  var u = await rlKiwoom(tok, "/api/us/acnt", "ust21170", {strt_dt: "", end_dt: "", stk_cd: "", slby_tp: "", stex_tp: "", oppo_trde_tp: "", fc_krw_tp: "1"});
+  if(!acrtOk(u)) throw new Error("ust21170");
+  var pl = rlNum(k.tot_evlt_pl) + rlNum(u.tot_pl_amt), c = rlNum(k.tot_pur_amt) + rlNum(u.tot_prch_amt);
+  return c > 0 ? pl / c * 100 : null;
+}
+function acrtLoad(ym, cur){
+  var m = ACRT.m[ym];
+  if(!ACRT.busy[ym] && (!m || (m.cur && Date.now() - m.at > 5 * 60e3))){
+    ACRT.busy[ym] = 1;
+    acrtMonth(ym).then(function(r){ ACRT.m[ym] = r; }).catch(function(){ if(!ACRT.m[ym]) ACRT.m[ym] = {rt: null, cur: true, at: Date.now()}; })
+      .then(function(){ ACRT.busy[ym] = 0; try{ acrtPaint(); }catch(x){} });
+  }
+  if(cur && !ACRT.unBusy && Date.now() - ACRT.unAt > 5 * 60e3){
+    ACRT.unBusy = true; ACRT.unAt = Date.now();
+    acrtUnreal().then(function(v){ ACRT.un = v; }).catch(function(){ ACRT.un = null; })
+      .then(function(){ ACRT.unBusy = false; try{ acrtPaint(); }catch(x){} });
+  }
+}
+function acrtPaint(){
+  var card = document.getElementById("pnlCard"); if(!card) return;
+  var hd = card.querySelector(".dphd"), old = document.getElementById("acrtPct");
+  var D = (typeof pnlData === "function") ? pnlData() : null;
+  if(!hd || !D || D.mock || (typeof ST !== "undefined" && ST.us && ST.us.broker === "korea_inv")){ if(old) old.remove(); return; }
+  var ks = D.keys.slice(Math.floor((D.keys.length - 1) / 12) * 12), sel = (PNL.sel && ks.indexOf(PNL.sel) >= 0) ? PNL.sel : D.cur, cur = (sel === D.cur);
+  acrtLoad(sel, cur);
+  var m = ACRT.m[sel], en = (typeof LANG !== "undefined" && LANG === "en");
+  var f = function(v){ if(v == null || !isFinite(v)) return ""; var r = Math.round(v * 100) / 100;
+    return '<b class="' + (r > 0 ? "up" : (r < 0 ? "dn" : "fl")) + '">' + (r > 0 ? "+" : (r < 0 ? "−" : "")) + Math.abs(r).toFixed(2) + '%</b>'; };
+  var t = "";
+  if(m && m.rt != null) t = (cur ? KE("이번 달 ", "This month ") : KE("계좌 ", "Account ")) + f(m.rt);
+  if(cur && ACRT.un != null) t += (t ? " · " : "") + KE("미실현 ", "Unrealized ") + f(ACRT.un);
+  var h = t ? '<span style="font-weight:400;font-size:13px">' + t + '</span>' : "";
+  if(!old){ old = document.createElement("span"); old.id = "acrtPct"; old.style.cssText = "margin-left:8px"; }
+  if(old.parentNode !== hd) hd.appendChild(old);
+  if(old._h !== h){ old.innerHTML = h; old._h = h; }
+}
+try{ var _acrtR = pnlRender; pnlRender = function(){ var r = _acrtR.apply(this, arguments); try{ acrtPaint(); }catch(x){} return r; }; }catch(e){}
+</script>
 </body></html>
