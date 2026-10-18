@@ -73,17 +73,21 @@
   .hidden{display:none!important}
   ul.disc{margin:8px 0;padding-left:18px;text-align:left} ul.disc li{margin:2px 0}
   .en{display:none} body.lang-en .en{display:revert} body.lang-en .ko{display:none}
+  /* 일·중 (2026-10-19) — 일·중 화면은 lang-en 도 같이 켠다 · 글자만 그 말로 */
+  .ja,.zhs,.zht{display:none} body.lang-ja .ja,body.lang-zhs .zhs,body.lang-zht .zht{display:revert}
+  body.lang-ja .en,body.lang-zhs .en,body.lang-zht .en{display:none}
+  select.lang{padding:4px 6px}
   @media(max-width:600px){h1{font-size:25px}.two{grid-template-columns:1fr}nav{gap:12px}nav .hide{display:none}.card{padding:16px}}
 </style>
 </head>
 <body>
 <header><div class="wrap">
-  <a class="logo" href="./"><img src="logo.png" alt="" class="lgimg"><span class="ko">머니퍼즐</span><span class="en">Money Puzzle</span></a>
+  <a class="logo" href="./"><img src="logo.png" alt="" class="lgimg"><span class="ko">머니퍼즐</span><span class="en">Money Puzzle</span><span class="ja">Money Puzzle</span><span class="zhs">Money Puzzle</span><span class="zht">Money Puzzle</span></a>
   <nav>
-    <a href="./"><span class="ko">홈</span><span class="en">Home</span></a>
-    <a class="hide" href="./#apps"><span class="ko">앱</span><span class="en">Apps</span></a>
-    <a class="on" href="board.html"><span class="ko">게시판</span><span class="en">Board</span></a>
-    <button class="lang" onclick="tl()" id="lb">EN</button>
+    <a href="./"><span class="ko">홈</span><span class="en">Home</span><span class="ja">ホーム</span><span class="zhs">首页</span><span class="zht">首頁</span></a>
+    <a class="hide" href="./#apps"><span class="ko">앱</span><span class="en">Apps</span><span class="ja">アプリ</span><span class="zhs">应用</span><span class="zht">應用</span></a>
+    <a class="on" href="board.html"><span class="ko">게시판</span><span class="en">Board</span><span class="ja">掲示板</span><span class="zhs">留言板</span><span class="zht">留言板</span></a>
+    <select class="lang" id="lb" onchange="setLang(this.value)" aria-label="Language"><option value="ko">한국어</option><option value="en">English</option><option value="ja">日本語</option><option value="zhs">简体中文</option><option value="zht">繁體中文</option></select>
   </nav>
 </div></header>
 
@@ -91,11 +95,11 @@
 
 <!-- 목록 -->
 <div id="vList">
-  <h1><span class="ko">고객 게시판</span><span class="en">Customer Board</span></h1>
-  <p class="lead"><span class="ko">문의사항을 남겨 주시면 가능한 신속하게 답변드리겠습니다.</span><span class="en">Leave your question and we will reply as soon as possible.</span></p>
+  <h1><span class="ko">고객 게시판</span><span class="en">Customer Board</span><span class="ja">お客様掲示板</span><span class="zhs">客户留言板</span><span class="zht">客戶留言板</span></h1>
+  <p class="lead"><span class="ko">문의사항을 남겨 주시면 가능한 신속하게 답변드리겠습니다.</span><span class="en">Leave your question and we will reply as soon as possible.</span><span class="ja">お問い合わせを残していただければ、できるだけ早くお返事いたします。</span><span class="zhs">请留下您的问题，我们会尽快回复。</span><span class="zht">請留下您的問題，我們會盡快回覆。</span></p>
   <div class="bar">
     <span class="meta" id="total"></span>
-    <button class="btn pri" id="bWrite"><span class="ko">글쓰기</span><span class="en">Write</span></button>
+    <button class="btn pri" id="bWrite"><span class="ko">글쓰기</span><span class="en">Write</span><span class="ja">投稿する</span><span class="zhs">发帖</span><span class="zht">發文</span></button>
   </div>
   <div class="list" id="list"></div>
   <div class="pager" id="pager"></div>
@@ -103,48 +107,48 @@
 
 <!-- 글쓰기 -->
 <div id="vWrite" class="hidden">
-  <a class="back" href="board.html" data-nav="list">← <span class="ko">목록</span><span class="en">Back to list</span></a>
-  <h1 style="margin-top:8px"><span class="ko">글쓰기</span><span class="en">New post</span></h1>
+  <a class="back" href="board.html" data-nav="list">← <span class="ko">목록</span><span class="en">Back to list</span><span class="ja">一覧へ</span><span class="zhs">返回列表</span><span class="zht">返回列表</span></a>
+  <h1 style="margin-top:8px"><span class="ko">글쓰기</span><span class="en">New post</span><span class="ja">新規投稿</span><span class="zhs">发帖</span><span class="zht">發文</span></h1>
   <div class="notice">
     <span class="ko">개인정보(전화번호·계좌번호 등)는 적지 마세요 · 특정 종목 매수·매도 상담은 하지 않습니다</span>
-    <span class="en">Please don't post personal information (phone or account numbers, etc.) · We don't give buy/sell advice on specific stocks</span>
+    <span class="en">Please don't post personal information (phone or account numbers, etc.) · We don't give buy/sell advice on specific stocks</span><span class="ja">個人情報（電話番号・口座番号など）は書かないでください · 特定銘柄の売買相談には応じておりません</span><span class="zhs">请勿填写个人信息（电话号码、账户号码等）· 不提供特定股票的买卖咨询</span><span class="zht">請勿填寫個人資料（電話號碼、帳戶號碼等）· 不提供特定股票的買賣諮詢</span>
   </div>
   <form class="card" id="fPost" autocomplete="off">
     <div class="two">
-      <div><label for="pNick"><span class="ko">닉네임</span><span class="en">Nickname</span></label><input id="pNick" maxlength="20" required></div>
-      <div><label for="pPw"><span class="ko">비밀번호 (글 보기·삭제할 때 씀, 4자 이상)</span><span class="en">Password (to view or delete later, 4+ chars)</span></label><input id="pPw" type="password" minlength="4" maxlength="64" required autocomplete="new-password"></div>
+      <div><label for="pNick"><span class="ko">닉네임</span><span class="en">Nickname</span><span class="ja">ニックネーム</span><span class="zhs">昵称</span><span class="zht">暱稱</span></label><input id="pNick" maxlength="20" required></div>
+      <div><label for="pPw"><span class="ko">비밀번호 (글 보기·삭제할 때 씀, 4자 이상)</span><span class="en">Password (to view or delete later, 4+ chars)</span><span class="ja">パスワード（閲覧・削除時に使用、4文字以上）</span><span class="zhs">密码（查看·删除时使用，4位以上）</span><span class="zht">密碼（查看·刪除時使用，4位以上）</span></label><input id="pPw" type="password" minlength="4" maxlength="64" required autocomplete="new-password"></div>
     </div>
-    <label for="pTitle"><span class="ko">제목</span><span class="en">Title</span></label><input id="pTitle" maxlength="80" required>
-    <label for="pBody"><span class="ko">내용</span><span class="en">Message</span></label><textarea id="pBody" maxlength="2000" required></textarea>
+    <label for="pTitle"><span class="ko">제목</span><span class="en">Title</span><span class="ja">タイトル</span><span class="zhs">标题</span><span class="zht">標題</span></label><input id="pTitle" maxlength="80" required>
+    <label for="pBody"><span class="ko">내용</span><span class="en">Message</span><span class="ja">内容</span><span class="zhs">内容</span><span class="zht">內容</span></label><textarea id="pBody" maxlength="2000" required></textarea>
     <div class="cnt"><span id="pCnt">0</span> / 2000</div>
     <div class="msg" id="pMsg"></div>
     <div class="acts">
-      <a class="btn sec" href="board.html" data-nav="list"><span class="ko">취소</span><span class="en">Cancel</span></a>
-      <button class="btn pri" type="submit" id="pSend"><span class="ko">올리기</span><span class="en">Post</span></button>
+      <a class="btn sec" href="board.html" data-nav="list"><span class="ko">취소</span><span class="en">Cancel</span><span class="ja">キャンセル</span><span class="zhs">取消</span><span class="zht">取消</span></a>
+      <button class="btn pri" type="submit" id="pSend"><span class="ko">올리기</span><span class="en">Post</span><span class="ja">投稿</span><span class="zhs">发布</span><span class="zht">發布</span></button>
     </div>
   </form>
 </div>
 
 <!-- 글 보기 -->
 <div id="vPost" class="hidden">
-  <a class="back" href="board.html" data-nav="list">← <span class="ko">목록</span><span class="en">Back to list</span></a>
+  <a class="back" href="board.html" data-nav="list">← <span class="ko">목록</span><span class="en">Back to list</span><span class="ja">一覧へ</span><span class="zhs">返回列表</span><span class="zht">返回列表</span></a>
   <div class="card post" style="margin-top:10px" id="post"></div>
   <div class="cmts">
-    <h3><span class="ko">댓글</span><span class="en">Comments</span> <span id="cN"></span></h3>
+    <h3><span class="ko">댓글</span><span class="en">Comments</span><span class="ja">コメント</span><span class="zhs">评论</span><span class="zht">留言</span> <span id="cN"></span></h3>
     <div id="cmts"></div>
     <form class="cform" id="fCmt" autocomplete="off">
       <div class="notice" style="margin-bottom:8px">
         <span class="ko">개인정보(전화번호·계좌번호 등)는 적지 마세요 · 특정 종목 매수·매도 상담은 하지 않습니다</span>
-        <span class="en">Please don't post personal information (phone or account numbers, etc.) · We don't give buy/sell advice on specific stocks</span>
+        <span class="en">Please don't post personal information (phone or account numbers, etc.) · We don't give buy/sell advice on specific stocks</span><span class="ja">個人情報（電話番号・口座番号など）は書かないでください · 特定銘柄の売買相談には応じておりません</span><span class="zhs">请勿填写个人信息（电话号码、账户号码等）· 不提供特定股票的买卖咨询</span><span class="zht">請勿填寫個人資料（電話號碼、帳戶號碼等）· 不提供特定股票的買賣諮詢</span>
       </div>
       <div class="two">
-        <div><label for="cNick"><span class="ko">닉네임</span><span class="en">Nickname</span></label><input id="cNick" maxlength="20" required></div>
-        <div><label for="cPw"><span class="ko">비밀번호 (삭제용, 4자 이상)</span><span class="en">Password (to delete, 4+ chars)</span></label><input id="cPw" type="password" minlength="4" maxlength="64" required autocomplete="new-password"></div>
+        <div><label for="cNick"><span class="ko">닉네임</span><span class="en">Nickname</span><span class="ja">ニックネーム</span><span class="zhs">昵称</span><span class="zht">暱稱</span></label><input id="cNick" maxlength="20" required></div>
+        <div><label for="cPw"><span class="ko">비밀번호 (삭제용, 4자 이상)</span><span class="en">Password (to delete, 4+ chars)</span><span class="ja">パスワード（削除用、4文字以上）</span><span class="zhs">密码（删除用，4位以上）</span><span class="zht">密碼（刪除用，4位以上）</span></label><input id="cPw" type="password" minlength="4" maxlength="64" required autocomplete="new-password"></div>
       </div>
-      <label for="cBody"><span class="ko">댓글</span><span class="en">Comment</span></label><textarea id="cBody" maxlength="500" required></textarea>
+      <label for="cBody"><span class="ko">댓글</span><span class="en">Comment</span><span class="ja">コメント</span><span class="zhs">评论</span><span class="zht">留言</span></label><textarea id="cBody" maxlength="500" required></textarea>
       <div class="cnt"><span id="cCnt">0</span> / 500</div>
       <div class="msg" id="cMsg"></div>
-      <div class="acts"><button class="btn pri" type="submit" id="cSend"><span class="ko">댓글 달기</span><span class="en">Add comment</span></button></div>
+      <div class="acts"><button class="btn pri" type="submit" id="cSend"><span class="ko">댓글 달기</span><span class="en">Add comment</span><span class="ja">コメントする</span><span class="zhs">发表评论</span><span class="zht">發表留言</span></button></div>
     </form>
   </div>
 </div>
@@ -152,15 +156,22 @@
 </div></main>
 
 <footer><div class="wrap">
-  <p><b class="ko">주식회사 부만</b><b class="en">Booman Inc.</b> · <span class="ko">머니퍼즐(Money Puzzle)</span><span class="en">Money Puzzle</span> · <a href="./"><span class="ko">홈으로</span><span class="en">Home</span></a></p>
+  <p><b class="ko">주식회사 부만</b><b class="en">Booman Inc.</b><b class="ja">Booman Inc.</b><b class="zhs">Booman Inc.</b><b class="zht">Booman Inc.</b> · <span class="ko">머니퍼즐(Money Puzzle)</span><span class="en">Money Puzzle</span><span class="ja">Money Puzzle</span><span class="zhs">Money Puzzle</span><span class="zht">Money Puzzle</span> · <a href="./"><span class="ko">홈으로</span><span class="en">Home</span><span class="ja">ホーム</span><span class="zhs">首页</span><span class="zht">首頁</span></a></p>
   <ul class="ko disc"><li>머니퍼즐은 투자 판단을 위한 정보를 제공하지 않으며, 앱에 표시되는 추천 종목은 모두 가림(마스킹) 처리되어 있습니다.</li><li>머니퍼즐 홈페이지에 게시된 정보를 이용하여 투자하는 행위와 이를 제3자에게 배포하는 행위를 금지합니다.</li><li>당사 홈페이지는 앱 개발을 위한 투자자금 유치를 목적으로 만들어졌으며, 어떠한 투자 정보도 제공하지 않습니다.</li><li>당사는 투자자문업·투자일임업 등록 업체가 아니며, 홈페이지와 앱은 금융투자상품의 매매를 권유하지 않습니다.</li><li>회사소개서와 앱에 나오는 수익률은 과거 자료로 계산한 모의 결과(백테스트)이며, 미래의 수익을 보장하지 않습니다.</li><li>모의판의 계좌, 잔고, 손익은 모두 가상이며 실제 거래가 아닙니다.</li><li>홈페이지와 앱의 화면, 문구, 자료를 허락 없이 복제하거나 사용할 수 없습니다.</li></ul>
-  <ul class="en disc"><li>Money Puzzle does not provide information for investment decisions, and all recommended stocks shown in the apps are masked.</li><li>Investing based on information posted on this website, or distributing it to third parties, is prohibited.</li><li>This website was created to raise funds for app development and does not provide any investment information.</li><li>Booman Inc. is not a registered investment advisory or discretionary investment firm, and neither this website nor the apps solicit the purchase or sale of financial products.</li><li>Returns shown in the investor deck and apps are simulated results based on historical data (backtests) and do not guarantee future returns.</li><li>All accounts, balances and P&amp;L in the demo apps are virtual, not real trades.</li><li>The screens, text and materials of this website and the apps may not be copied or used without permission.</li></ul>
-  <p>© 2026 <span class="ko">주식회사 부만</span><span class="en">Booman Inc.</span></p>
+  <ul class="en disc"><li>Money Puzzle does not provide information for investment decisions, and all recommended stocks shown in the apps are masked.</li><li>Investing based on information posted on this website, or distributing it to third parties, is prohibited.</li><li>This website was created to raise funds for app development and does not provide any investment information.</li><li>Booman Inc. is not a registered investment advisory or discretionary investment firm, and neither this website nor the apps solicit the purchase or sale of financial products.</li><li>Returns shown in the investor deck and apps are simulated results based on historical data (backtests) and do not guarantee future returns.</li><li>All accounts, balances and P&amp;L in the demo apps are virtual, not real trades.</li><li>The screens, text and materials of this website and the apps may not be copied or used without permission.</li></ul><ul class="ja disc"><li>Money Puzzleは投資判断のための情報を提供しておらず、アプリに表示されるおすすめ銘柄はすべてマスキング処理されています。</li><li>本ウェブサイトに掲載された情報を利用して投資する行為、およびそれを第三者に配布する行為を禁止します。</li><li>本ウェブサイトはアプリ開発のための投資資金の誘致を目的として作られたもので、いかなる投資情報も提供しません。</li><li>当社は投資助言業・投資一任業の登録業者ではなく、ウェブサイトおよびアプリは金融商品の売買を勧誘するものではありません。</li><li>会社紹介資料およびアプリに表示される収益率は、過去のデータで計算したシミュレーション結果（バックテスト）であり、将来の収益を保証するものではありません。</li><li>デモ版の口座・残高・損益はすべて仮想のもので、実際の取引ではありません。</li><li>ウェブサイトおよびアプリの画面・文言・資料を許可なく複製または使用することはできません。</li></ul><ul class="zhs disc"><li>Money Puzzle不提供用于投资判断的信息，应用中显示的推荐股票均已做遮蔽处理。</li><li>禁止利用本网站发布的信息进行投资，或将其传播给第三方。</li><li>本网站是为筹集应用开发资金而建立的，不提供任何投资信息。</li><li>本公司并非已注册的投资顾问或全权委托投资机构，本网站及应用不劝诱买卖任何金融投资产品。</li><li>公司介绍及应用中显示的收益率是根据历史数据计算的模拟结果（回测），不保证未来收益。</li><li>演示版中的账户、余额和盈亏均为虚拟，并非实际交易。</li><li>未经许可，不得复制或使用本网站及应用的画面、文字和资料。</li></ul><ul class="zht disc"><li>Money Puzzle不提供用於投資判斷的資訊，應用中顯示的推薦股票均已做遮蔽處理。</li><li>禁止利用本網站發布的資訊進行投資，或將其散布給第三方。</li><li>本網站是為籌集應用開發資金而建立的，不提供任何投資資訊。</li><li>本公司並非已註冊的投資顧問或全權委託投資機構，本網站及應用不勸誘買賣任何金融投資商品。</li><li>公司介紹及應用中顯示的收益率是根據歷史資料計算的模擬結果（回測），不保證未來收益。</li><li>示範版中的帳戶、餘額和損益均為虛擬，並非實際交易。</li><li>未經許可，不得複製或使用本網站及應用的畫面、文字和資料。</li></ul>
+  <p>© 2026 <span class="ko">주식회사 부만</span><span class="en">Booman Inc.</span><span class="ja">Booman Inc.</span><span class="zhs">Booman Inc.</span><span class="zht">Booman Inc.</span></p>
 </div></footer>
 
 <script>
-function tl(){ var e=document.body.classList.toggle("lang-en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
-try{ if(localStorage.getItem("home_lang")==="en") tl(); }catch(x){}
+// 언어 다섯 (2026-10-19) — 홈페이지와 같은 저장(home_lang = ko/en, home_lang2 = 실제 말)
+var _HL="ko"; function HL(){ return _HL; }
+function setLang(v){ var b=document.body.classList; _HL=v; ["lang-en","lang-ja","lang-zhs","lang-zht"].forEach(function(c){ b.remove(c); });
+  if(v!=="ko") b.add("lang-en"); if(v==="ja"||v==="zhs"||v==="zht") b.add("lang-"+v);
+  document.documentElement.lang={ko:"ko",en:"en",ja:"ja",zhs:"zh-Hans",zht:"zh-Hant"}[v]||"ko";
+  var s=document.getElementById("lb"); if(s) s.value=v;
+  try{ localStorage.setItem("home_lang",v==="ko"?"ko":"en"); localStorage.setItem("home_lang2",v); }catch(x){} }
+function tl(){ setLang(_HL==="ko"?"en":"ko"); }
+try{ var _l=localStorage.getItem("home_lang2")||localStorage.getItem("home_lang"); if(_l&&_l!=="ko") setLang(_l); }catch(x){}
 
 (function(){
 var API="https://brief-live-hub.emhwang3.workers.dev/board";
@@ -176,7 +187,12 @@ var ERR={
   net:["연결에 실패했습니다. 잠시 뒤 다시 해 주세요.","Connection failed. Please try again."]
 };
 // 두 말을 같이 넣어 두고 화면 언어(lang-en)로 갈라 보인다 — 사용자 글은 textContent 로만 넣는다
-function bi(ko,en){var f=document.createDocumentFragment(),a=document.createElement("span"),b=document.createElement("span");a.className="ko";a.textContent=ko;b.className="en";b.textContent=en;f.appendChild(a);f.appendChild(b);return f;}
+function bi0(ko,en){var f=document.createDocumentFragment(),a=document.createElement("span"),b=document.createElement("span");a.className="ko";a.textContent=ko;b.className="en";b.textContent=en;f.appendChild(a);f.appendChild(b);return f;}
+// 일·중 문구는 영어 문장을 열쇠로 찾는다 (2026-10-19)
+var BT={"Please fill in every field. The password needs 4+ characters.": ["未入力の項目があります。パスワードは4文字以上にしてください。", "有空白栏位。密码须为4位以上。", "有空白欄位。密碼須為4位以上。"], "Too long.": ["文字数が多すぎます。", "字数过多。", "字數過多。"], "No more than 3 links, please.": ["リンクは3つまでです。", "链接最多3个。", "連結最多3個。"], "Please try again later (5 posts / 20 comments per hour).": ["しばらくしてから再度お試しください（1時間に投稿5件・コメント20件まで）。", "请稍后再试（每小时最多5篇帖子、20条评论）。", "請稍後再試（每小時最多5篇文章、20則留言）。"], "Wrong password.": ["パスワードが違います。", "密码错误。", "密碼錯誤。"], "🔒 Private post. Enter the author's or admin password.": ["🔒 非公開の投稿です。投稿者または管理者のパスワードを入力してください。", "🔒 私密帖子。请输入作者或管理员密码。", "🔒 私密文章。請輸入作者或管理員密碼。"], "This post doesn't exist or was deleted.": ["削除されたか、存在しない投稿です。", "该帖子不存在或已删除。", "該文章不存在或已刪除。"], "Connection failed. Please try again.": ["接続に失敗しました。しばらくしてから再度お試しください。", "连接失败，请稍后再试。", "連線失敗，請稍後再試。"], "Loading…": ["読み込み中…", "加载中…", "載入中…"], "No posts yet. Be the first to write one.": ["まだ投稿がありません。最初の投稿をどうぞ。", "还没有帖子，欢迎发布第一篇。", "還沒有文章，歡迎發表第一篇。"], "🔒 Private post": ["🔒 非公開の投稿", "🔒 私密帖子", "🔒 私密文章"], "Delete": ["削除", "删除", "刪除"], "Confirm": ["削除する", "确认删除", "確認刪除"], "Cancel": ["キャンセル", "取消", "取消"], "No comments yet.": ["最初のコメントをどうぞ。", "还没有评论。", "還沒有留言。"], "Open": ["投稿を見る", "查看", "查看"], "Password": ["パスワード", "密码", "密碼"]};
+function bt(en){ var m=/^Total (\d+)$/.exec(en); if(m) return ["全"+m[1]+"件","共"+m[1]+"篇","共"+m[1]+"篇"]; return BT[en]; }
+function bi(ko,en){ var f=bi0(ko,en), x=bt(en)||[en,en,en]; ["ja","zhs","zht"].forEach(function(lg,i){ var s=document.createElement("span"); s.className=lg; s.textContent=x[i]; f.appendChild(s); }); return f; }
+function PWT(){ var x=bt("Password"), i=["ja","zhs","zht"].indexOf(HL()); return i>=0?x[i]:(document.body.classList.contains("lang-en")?"Password":"비밀번호"); }
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
 function say(box,code,ok){box.textContent="";box.className="msg "+(ok?"ok":"err");if(!code)return;var m=ERR[code]||[String(code),String(code)];box.appendChild(bi(m[0],m[1]));}
 function api(path,body){
@@ -227,7 +243,7 @@ function delButton(kind,id,host,after){
   b.onclick=function(){
     if(host.querySelector(".delbox")) return;
     var box=el("div","delbox"), inp=el("input"); inp.type="password"; inp.autocomplete="off";
-    inp.placeholder=document.body.classList.contains("lang-en")?"Password":"비밀번호";
+    inp.placeholder=PWT();
     var ok=el("button","btn sm pri"); ok.type="button"; ok.appendChild(bi("삭제 확인","Confirm"));
     var no=el("button","btn sm del"); no.type="button"; no.appendChild(bi("취소","Cancel"));
     var msg=el("div","msg");
@@ -272,7 +288,7 @@ function openPost(id){
 function lockBox(P,id,err){
   var m=ERR.locked; P.appendChild(el("div","meta")).appendChild(bi(m[0],m[1]));
   var box=el("div","delbox"), inp=el("input"); inp.type="password"; inp.autocomplete="off";
-  inp.placeholder=document.body.classList.contains("lang-en")?"Password":"비밀번호";
+  inp.placeholder=PWT();
   var ok=el("button","btn sm pri"); ok.type="button"; ok.appendChild(bi("글 보기","Open"));
   var msg=el("div","msg"); if(err==="pw") say(msg,"pw");
   var run=function(){ if(!inp.value) return; ok.disabled=true;
