@@ -278,9 +278,11 @@
   window.irGo=function(d){ var i=Math.max(0,Math.min(n-1,cur()+d)); t.scrollTo({left:i*t.clientWidth,behavior:"smooth"}); };
   t.addEventListener("scroll",function(){ pg.textContent=(cur()+1)+" / "+n; },{passive:true});
   // 한글 화면 = 국문 IR · EN = 영문 IR (2026-10-12)
-  function irLang(){ var en=document.body.classList.contains("lang-en");
-    [].forEach.call(t.children,function(im,i){ var f=(en?"iren":"ir")+String(i+1).padStart(2,"0")+".jpg"; if(im.getAttribute("src")!==f) im.setAttribute("src",f); });
-    var a=document.getElementById("irPdf"); a.setAttribute("href",en?"moneypuzzle_IR_EN.pdf":"moneypuzzle_IR.pdf"); a.setAttribute("download",en?"MoneyPuzzle_IR_EN.pdf":"머니퍼즐_IR.pdf"); }
+  // 일·중 IR (2026-10-19) — irja·irzhs·irzht 26장 + PDF
+  function irLang(){ var en=document.body.classList.contains("lang-en"), lg=window.HL?HL():(en?"en":"ko");
+    var pre={ko:"ir",en:"iren",ja:"irja",zhs:"irzhs",zht:"irzht"}[lg]||(en?"iren":"ir"), U={en:"EN",ja:"JA",zhs:"ZHS",zht:"ZHT"}[lg];
+    [].forEach.call(t.children,function(im,i){ var f=pre+String(i+1).padStart(2,"0")+".jpg"; if(im.getAttribute("src")!==f) im.setAttribute("src",f); });
+    var a=document.getElementById("irPdf"); a.setAttribute("href",U?"moneypuzzle_IR_"+U+".pdf":"moneypuzzle_IR.pdf"); a.setAttribute("download",U?"MoneyPuzzle_IR_"+U+".pdf":"머니퍼즐_IR.pdf"); }
   irLang(); new MutationObserver(irLang).observe(document.body,{attributes:true,attributeFilter:["class"]});
 })();
 </script>
