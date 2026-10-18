@@ -98,141 +98,145 @@
   footer p{margin:4px 0}
   ul.disc{margin:8px 0;padding-left:18px;text-align:left} ul.disc li{margin:2px 0}
   .en{display:none} body.lang-en .en{display:revert} body.lang-en .ko{display:none}
+  /* 일·중 (2026-10-19) — 일·중 화면은 lang-en 도 같이 켠다(그림·IR·앱은 영어) · 글자만 그 말로 */
+  .ja,.zhs,.zht{display:none} body.lang-ja .ja,body.lang-zhs .zhs,body.lang-zht .zht{display:revert}
+  body.lang-ja :not(img).en,body.lang-zhs :not(img).en,body.lang-zht :not(img).en,body.lang-ja .yr,body.lang-zhs .yr,body.lang-zht .yr{display:none}
+  select.lang{padding:4px 6px}
   @media(max-width:860px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}h1{font-size:32px}.hero{padding:48px 0 24px}nav .hide{display:none}}
   @media(max-width:480px){.g4{grid-template-columns:1fr}h1{font-size:28px}.lead{font-size:16px}h2{font-size:25px}}
 </style>
 </head>
 <body>
 <header><div class="wrap">
-  <a class="logo" href="#"><img src="logo.png" alt="" class="lgimg"><span class="ko">머니퍼즐 - 랩</span><span class="en">Money Puzzle - Lab</span></a>
+  <a class="logo" href="#"><img src="logo.png" alt="" class="lgimg"><span class="ko">머니퍼즐 - 랩</span><span class="en">Money Puzzle - Lab</span><span class="ja">Money Puzzle - Lab</span><span class="zhs">Money Puzzle - Lab</span><span class="zht">Money Puzzle - Lab</span></a>
   <nav>
-    <a class="hide" href="#apps"><span class="ko">앱</span><span class="en">Apps</span></a>
-    <a class="hide" href="#why"><span class="ko">특징</span><span class="en">Why</span></a>
-    <a class="hide" href="#contact"><span class="ko">문의</span><span class="en">Contact</span></a>
-    <a href="board.html"><span class="ko">게시판</span><span class="en">Board</span></a>
-    <button class="lang" onclick="tl()" id="lb">EN</button>
+    <a class="hide" href="#apps"><span class="ko">앱</span><span class="en">Apps</span><span class="ja">アプリ</span><span class="zhs">应用</span><span class="zht">應用</span></a>
+    <a class="hide" href="#why"><span class="ko">특징</span><span class="en">Why</span><span class="ja">特長</span><span class="zhs">特点</span><span class="zht">特點</span></a>
+    <a class="hide" href="#contact"><span class="ko">문의</span><span class="en">Contact</span><span class="ja">お問い合わせ</span><span class="zhs">联系我们</span><span class="zht">聯絡我們</span></a>
+    <a href="board.html"><span class="ko">게시판</span><span class="en">Board</span><span class="ja">掲示板</span><span class="zhs">留言板</span><span class="zht">留言板</span></a>
+    <select class="lang" id="lb" onchange="setLang(this.value)" aria-label="Language"><option value="ko">한국어</option><option value="en">English</option><option value="ja">日本語</option><option value="zhs">简体中文</option><option value="zht">繁體中文</option></select>
   </nav>
 </div></header>
 
 <main>
 <div class="hero"><div class="wrap">
-  <div class="eyebrow"><span class="ko">퀀트 기반 로보어드바이저</span><span class="en">Quant-based robo-advisor</span></div>
-  <h1><span class="ko">투자는 한 방이 아니라,<br>퍼즐입니다</span><span class="en">Investing isn't one big bet.<br>It's a puzzle.</span></h1>
-  <p class="lead"><span class="ko">투자성향에 맞춘 자산배분, 데이터로 검증한 종목 선정, 포트폴리오 단위의 바스켓 매매까지 — 위아래로 훑기만 하면 한 화면에서 끝납니다.</span><span class="en">Asset allocation matched to your risk profile, data-driven stock selection and portfolio-level basket trading — all on one scrolling screen.</span></p>
+  <div class="eyebrow"><span class="ko">퀀트 기반 로보어드바이저</span><span class="en">Quant-based robo-advisor</span><span class="ja">クオンツ型ロボアドバイザー</span><span class="zhs">基于量化的智能投顾</span><span class="zht">基於量化的智能投顧</span></div>
+  <h1><span class="ko">투자는 한 방이 아니라,<br>퍼즐입니다</span><span class="en">Investing isn't one big bet.<br>It's a puzzle.</span><span class="ja">投資は一発勝負ではなく、<br>パズルです</span><span class="zhs">投资不是孤注一掷，<br>而是一幅拼图</span><span class="zht">投資不是孤注一擲，<br>而是一幅拼圖</span></h1>
+  <p class="lead"><span class="ko">투자성향에 맞춘 자산배분, 데이터로 검증한 종목 선정, 포트폴리오 단위의 바스켓 매매까지 — 위아래로 훑기만 하면 한 화면에서 끝납니다.</span><span class="en">Asset allocation matched to your risk profile, data-driven stock selection and portfolio-level basket trading — all on one scrolling screen.</span><span class="ja">投資タイプに合わせた資産配分、データで検証した銘柄選定、ポートフォリオ単位のバスケット売買まで — 上下にスクロールするだけで、ひとつの画面で完結します。</span><span class="zhs">根据投资倾向进行资产配置、经数据验证的选股、以投资组合为单位的一篮子交易——只需上下滑动，一个画面全部搞定。</span><span class="zht">根據投資傾向進行資產配置、經數據驗證的選股、以投資組合為單位的一籃子交易——只需上下滑動，一個畫面全部搞定。</span></p>
   <div class="btns">
-    <a class="btn pri" href="https://hts.moneypuzzle.co.kr/" target="_blank" rel="noopener"><span class="ko">앱 체험하기 (모의판)</span><span class="en">Try the demo</span></a>
-    <a class="btn sec" href="#contact"><span class="ko">투자·제휴 문의</span><span class="en">Partner with us</span></a>
+    <a class="btn pri" href="https://hts.moneypuzzle.co.kr/" target="_blank" rel="noopener"><span class="ko">앱 체험하기 (모의판)</span><span class="en">Try the demo</span><span class="ja">デモを試す</span><span class="zhs">体验演示版</span><span class="zht">體驗示範版</span></a>
+    <a class="btn sec" href="#contact"><span class="ko">투자·제휴 문의</span><span class="en">Partner with us</span><span class="ja">投資・提携のお問い合わせ</span><span class="zhs">投资与合作咨询</span><span class="zht">投資與合作諮詢</span></a>
   </div>
   <div class="shot"><img src="screens.png" alt="머니퍼즐 앱 화면 — 주식 차트, 기업 정보, 누적 손익" width="1068" height="600"></div>
 </div></div>
 
 <section id="apps" class="soft"><div class="wrap">
-  <h2><span class="ko">앱 여섯 가지</span><span class="en">Six apps</span></h2>
-  <p class="sec-lead"><span class="ko">보는 앱 둘, 주문하는 앱 둘. 설치 없이 브라우저에서 바로 열립니다.</span><span class="en">Two apps to watch, two to trade. They open right in your browser, no install needed.</span></p>
-  <p style="color:#1c4fd8;font-weight:700;font-size:14px;margin:6px 0 14px"><span class="ko">아래 주식 앱 3개(주식·HTS·미니)는 모의판으로서 실제 투자를 유도하기 위한 목적이 아니며 앱 개발을 위한 투자유치 목적으로 게시되었음을 알려드립니다.</span><span class="en">The three stock apps below (Stocks, HTS, mini) are demo versions. They are not intended to encourage actual investment and are posted only to attract investment for app development.</span></p>
+  <h2><span class="ko">앱 여섯 가지</span><span class="en">Six apps</span><span class="ja">6つのアプリ</span><span class="zhs">六款应用</span><span class="zht">六款應用</span></h2>
+  <p class="sec-lead"><span class="ko">보는 앱 둘, 주문하는 앱 둘. 설치 없이 브라우저에서 바로 열립니다.</span><span class="en">Two apps to watch, two to trade. They open right in your browser, no install needed.</span><span class="ja">見るアプリ2つ、注文するアプリ2つ。インストール不要で、ブラウザですぐに開けます。</span><span class="zhs">两款看行情，两款下单。无需安装，在浏览器中直接打开。</span><span class="zht">兩款看行情，兩款下單。無需安裝，在瀏覽器中直接開啟。</span></p>
+  <p style="color:#1c4fd8;font-weight:700;font-size:14px;margin:6px 0 14px"><span class="ko">아래 주식 앱 3개(주식·HTS·미니)는 모의판으로서 실제 투자를 유도하기 위한 목적이 아니며 앱 개발을 위한 투자유치 목적으로 게시되었음을 알려드립니다.</span><span class="en">The three stock apps below (Stocks, HTS, mini) are demo versions. They are not intended to encourage actual investment and are posted only to attract investment for app development.</span><span class="ja">下の株式アプリ3つ（Stocks・HTS・mini）はデモ版です。実際の投資を勧誘する目的ではなく、アプリ開発のための投資誘致のみを目的として掲載しています。</span><span class="zhs">以下3款股票应用（Stocks、HTS、mini）为演示版，并非以诱导实际投资为目的，仅为吸引应用开发投资而发布。</span><span class="zht">以下3款股票應用（Stocks、HTS、mini）為示範版，並非以誘導實際投資為目的，僅為吸引應用開發投資而發布。</span></p>
   <div class="grid g4">
     <a class="card app" href="https://stock.moneypuzzle.co.kr/" target="_blank" rel="noopener">
       <img src="icon_stock.png" alt="">
-      <h3><span class="ko">머니퍼즐 주식</span><span class="en">Money Puzzle Stocks</span></h3>
-      <p><span class="ko">국내·미국 시세, 성향별 자산배분, 가상 포트폴리오</span><span class="en">KR &amp; US quotes, profile-based allocation, virtual portfolio</span></p>
-      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span></span></a>
+      <h3><span class="ko">머니퍼즐 주식</span><span class="en">Money Puzzle Stocks</span><span class="ja">Money Puzzle Stocks</span><span class="zhs">Money Puzzle Stocks</span><span class="zht">Money Puzzle Stocks</span></h3>
+      <p><span class="ko">국내·미국 시세, 성향별 자산배분, 가상 포트폴리오</span><span class="en">KR &amp; US quotes, profile-based allocation, virtual portfolio</span><span class="ja">韓国・米国の相場、投資タイプ別の資産配分、仮想ポートフォリオ</span><span class="zhs">韩美股市行情、按投资倾向的资产配置、虚拟投资组合</span><span class="zht">韓美股市行情、按投資傾向的資產配置、虛擬投資組合</span></p>
+      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span><span class="ja">デモを開く →</span><span class="zhs">打开演示版 →</span><span class="zht">開啟示範版 →</span></span></a>
     <a class="card app" href="https://hts.moneypuzzle.co.kr/" target="_blank" rel="noopener">
       <img src="icon_hts.png" alt="">
-      <h3><span class="ko">머니퍼즐 HTS</span><span class="en">Money Puzzle HTS</span></h3>
-      <p><span class="ko">계좌 연결, 바스켓 매매, 매달 리밸런싱 (체험은 모의판)</span><span class="en">Broker accounts, basket trading, monthly rebalancing (demo uses virtual money)</span></p>
-      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span></span></a>
+      <h3><span class="ko">머니퍼즐 HTS</span><span class="en">Money Puzzle HTS</span><span class="ja">Money Puzzle HTS</span><span class="zhs">Money Puzzle HTS</span><span class="zht">Money Puzzle HTS</span></h3>
+      <p><span class="ko">계좌 연결, 바스켓 매매, 매달 리밸런싱 (체험은 모의판)</span><span class="en">Broker accounts, basket trading, monthly rebalancing (demo uses virtual money)</span><span class="ja">証券口座の連携、バスケット売買、毎月のリバランス（デモは仮想資金）</span><span class="zhs">券商账户连接、一篮子交易、每月再平衡（演示版使用虚拟资金）</span><span class="zht">券商帳戶連接、一籃子交易、每月再平衡（示範版使用虛擬資金）</span></p>
+      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span><span class="ja">デモを開く →</span><span class="zhs">打开演示版 →</span><span class="zht">開啟示範版 →</span></span></a>
     <a class="card app" href="https://mini2.moneypuzzle.co.kr/" target="_blank" rel="noopener">
       <img src="icon_mini.png" alt="">
-      <h3><span class="ko">머니퍼즐 미니</span><span class="en">Money Puzzle mini</span></h3>
-      <p><span class="ko">20~30대를 위한 가벼운 거래 도구 — 관심종목, 차트, 3개년 실적</span><span class="en">A light trading tool for 20s–30s — watchlist, charts, 3-year financials</span></p>
-      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span></span></a>
+      <h3><span class="ko">머니퍼즐 미니</span><span class="en">Money Puzzle mini</span><span class="ja">Money Puzzle mini</span><span class="zhs">Money Puzzle mini</span><span class="zht">Money Puzzle mini</span></h3>
+      <p><span class="ko">20~30대를 위한 가벼운 거래 도구 — 관심종목, 차트, 3개년 실적</span><span class="en">A light trading tool for 20s–30s — watchlist, charts, 3-year financials</span><span class="ja">20〜30代向けの軽い取引ツール — ウォッチリスト、チャート、3年分の業績</span><span class="zhs">面向20~30岁人群的轻量交易工具——自选股、图表、3年业绩</span><span class="zht">面向20~30歲族群的輕量交易工具——自選股、圖表、3年業績</span></p>
+      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span><span class="ja">デモを開く →</span><span class="zhs">打开演示版 →</span><span class="zht">開啟示範版 →</span></span></a>
   </div>
-  <p style="color:#1c4fd8;font-weight:700;font-size:14px;margin:18px 0 0"><span class="ko">아래 앱들은 개인 판매용이며, Sales 표시와 다운로드 단추가 붙은 앱만 이용할 수 있습니다.<br>현재는 데모 버전만 볼 수 있습니다.</span><span class="en">The apps below are for individual sale. Only apps with a Sales tag and a Download button are available.<br>Currently, only demo versions are available to view.</span></p>
+  <p style="color:#1c4fd8;font-weight:700;font-size:14px;margin:18px 0 0"><span class="ko">아래 앱들은 개인 판매용이며, Sales 표시와 다운로드 단추가 붙은 앱만 이용할 수 있습니다.<br>현재는 데모 버전만 볼 수 있습니다.</span><span class="en">The apps below are for individual sale. Only apps with a Sales tag and a Download button are available.<br>Currently, only demo versions are available to view.</span><span class="ja">下のアプリは個人向けの販売用で、Salesタグとダウンロードボタンが付いたアプリのみご利用いただけます。<br>現在はデモ版のみご覧いただけます。</span><span class="zhs">以下应用为个人销售用，仅带有Sales标签和下载按钮的应用可以使用。<br>目前仅可查看演示版。</span><span class="zht">以下應用為個人銷售用，僅帶有Sales標籤和下載按鈕的應用可以使用。<br>目前僅可查看示範版。</span></p>
   <div class="grid g4" style="margin-top:16px">
     <div class="card ftc"><div class="ftimg"><img src="ft_corp.gif" alt="Korean company data in English" loading="lazy"></div>
-      <span class="ftb"><span class="ko">영어 검색 · 기업 정보</span><span class="en">English search · company data</span></span>
-      <h3><span class="ko">한국 기업 정보를 영어로</span><span class="en">Korean company data, in English</span></h3>
-      <p><span class="ko">영어 두세 글자로 한국 종목을 찾고, 회사 소개·PER·PBR과 최근 3년 영업이익 그래프까지 영어로 바로 봅니다. 「doo」만 쳐도 두산에너빌리티가 뜹니다. 머니퍼즐 HTS에 포함된 기능입니다.</span><span class="en">Find a Korean stock with 2–3 English letters, then see its company profile, key ratios and a 3-year operating-income chart — all in English. Type “doo” for Doosan Enerbility. This feature is part of Money Puzzle HTS.</span></p></div>
+      <span class="ftb"><span class="ko">영어 검색 · 기업 정보</span><span class="en">English search · company data</span><span class="ja">英語検索 · 企業情報</span><span class="zhs">英文搜索 · 企业信息</span><span class="zht">英文搜尋 · 企業資訊</span></span>
+      <h3><span class="ko">한국 기업 정보를 영어로</span><span class="en">Korean company data, in English</span><span class="ja">韓国企業の情報を英語で</span><span class="zhs">用英文查看韩国企业信息</span><span class="zht">用英文查看韓國企業資訊</span></h3>
+      <p><span class="ko">영어 두세 글자로 한국 종목을 찾고, 회사 소개·PER·PBR과 최근 3년 영업이익 그래프까지 영어로 바로 봅니다. 「doo」만 쳐도 두산에너빌리티가 뜹니다. 머니퍼즐 HTS에 포함된 기능입니다.</span><span class="en">Find a Korean stock with 2–3 English letters, then see its company profile, key ratios and a 3-year operating-income chart — all in English. Type “doo” for Doosan Enerbility. This feature is part of Money Puzzle HTS.</span><span class="ja">英字2〜3文字で韓国の銘柄を探し、会社概要・PER・PBRから直近3年の営業利益グラフまで英語ですぐに見られます。「doo」と入力するだけでDoosan Enerbilityが表示されます。Money Puzzle HTSに含まれる機能です。</span><span class="zhs">输入2~3个英文字母即可查找韩国股票，并直接以英文查看公司简介、PER·PBR以及近3年营业利润图表。只需输入“doo”就会出现斗山能源（Doosan Enerbility）。此功能包含在Money Puzzle HTS中。</span><span class="zht">輸入2~3個英文字母即可查找韓國股票，並直接以英文查看公司簡介、PER·PBR以及近3年營業利潤圖表。只需輸入「doo」就會出現斗山能源（Doosan Enerbility）。此功能包含在Money Puzzle HTS中。</span></p></div>
     <a class="card ftc app2" href="https://news.moneypuzzle.co.kr/" target="_blank" rel="noopener"><div class="ftimg"><img src="ft_newscat.jpg" alt="Money Puzzle News categories" loading="lazy"></div>
-      <span class="ftb"><span class="ko">새 앱 · 머니퍼즐 뉴스</span><span class="en">New app · Money Puzzle News</span></span>
-      <h3><span class="ko">외국인을 위한 한국 뉴스</span><span class="en">Korean news for global readers</span> <span style="display:inline-block;vertical-align:3px;font-size:11px;font-weight:800;color:#fff;background:#e8590c;border-radius:6px;padding:2px 7px">DEMO</span></h3>
-      <p><span class="ko">영어 검색창 하나와 12개 분야(정치·경제·증시·K-컬처 등)로 주요 일간지·경제지 기사를 모아 보고, 기사 제목과 요약을 영어로 번역해 보여 줍니다.</span><span class="en">One English search box and 12 categories (Politics, Economy, Markets, K-Culture and more) bring together major Korean dailies, with headlines and summaries translated into English.</span></p>
-      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span></span></a>
+      <span class="ftb"><span class="ko">새 앱 · 머니퍼즐 뉴스</span><span class="en">New app · Money Puzzle News</span><span class="ja">新アプリ · Money Puzzle News</span><span class="zhs">新应用 · Money Puzzle News</span><span class="zht">新應用 · Money Puzzle News</span></span>
+      <h3><span class="ko">외국인을 위한 한국 뉴스</span><span class="en">Korean news for global readers</span><span class="ja">外国人のための韓国ニュース</span><span class="zhs">为外国读者打造的韩国新闻</span><span class="zht">為外國讀者打造的韓國新聞</span> <span style="display:inline-block;vertical-align:3px;font-size:11px;font-weight:800;color:#fff;background:#e8590c;border-radius:6px;padding:2px 7px">DEMO</span></h3>
+      <p><span class="ko">영어 검색창 하나와 12개 분야(정치·경제·증시·K-컬처 등)로 주요 일간지·경제지 기사를 모아 보고, 기사 제목과 요약을 영어로 번역해 보여 줍니다.</span><span class="en">One English search box and 12 categories (Politics, Economy, Markets, K-Culture and more) bring together major Korean dailies, with headlines and summaries translated into English.</span><span class="ja">英語の検索窓ひとつと12の分野（政治・経済・株式市場・K-カルチャーなど）で主要日刊紙・経済紙の記事を集め、見出しと要約を英語に翻訳して表示します。</span><span class="zhs">一个英文搜索框和12个分类（政治、经济、股市、K-文化等），汇集韩国主要日报和经济报的文章，并将标题和摘要翻译成英文。</span><span class="zht">一個英文搜尋框和12個分類（政治、經濟、股市、K-文化等），匯集韓國主要日報和經濟報的文章，並將標題和摘要翻譯成英文。</span></p>
+      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span><span class="ja">デモを開く →</span><span class="zhs">打开演示版 →</span><span class="zht">開啟示範版 →</span></span></a>
     <a class="card ftc app2" href="https://land.moneypuzzle.co.kr/" target="_blank" rel="noopener"><div class="ftimg"><img class="ko" src="ft_realestate_ko.jpg" alt="Money Puzzle Real Estate" loading="lazy"><img class="en" src="ft_realestate_en.jpg" alt="Money Puzzle Real Estate" loading="lazy"></div>
-      <span class="ftb"><span class="ko">새 앱 · 머니퍼즐 부동산</span><span class="en">New app · Money Puzzle Real Estate</span></span>
-      <h3><span class="ko">머니퍼즐 부동산</span><span class="en">Money Puzzle Real Estate</span> <span style="display:inline-block;vertical-align:3px;font-size:11px;font-weight:800;color:#fff;background:#e8590c;border-radius:6px;padding:2px 7px"><span class="ko">개발 중</span><span class="en">Under developing</span></span></h3>
-      <p><span class="ko">한국어를 몰라도 집을 찾습니다. 영어로 동네를 검색하면 실거래가와 지도, 외국어로 상담하는 중개사무소가 한 화면에 나옵니다.</span><span class="en">Find a home in Korea without speaking Korean. Search any neighborhood in English and see real transaction prices, a map, and agencies that speak your language — all on one screen.</span></p>
-      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span></span></a>
+      <span class="ftb"><span class="ko">새 앱 · 머니퍼즐 부동산</span><span class="en">New app · Money Puzzle Real Estate</span><span class="ja">新アプリ · Money Puzzle Real Estate</span><span class="zhs">新应用 · Money Puzzle Real Estate</span><span class="zht">新應用 · Money Puzzle Real Estate</span></span>
+      <h3><span class="ko">머니퍼즐 부동산</span><span class="en">Money Puzzle Real Estate</span><span class="ja">Money Puzzle Real Estate</span><span class="zhs">Money Puzzle Real Estate</span><span class="zht">Money Puzzle Real Estate</span> <span style="display:inline-block;vertical-align:3px;font-size:11px;font-weight:800;color:#fff;background:#e8590c;border-radius:6px;padding:2px 7px"><span class="ko">개발 중</span><span class="en">Under developing</span><span class="ja">開発中</span><span class="zhs">开发中</span><span class="zht">開發中</span></span></h3>
+      <p><span class="ko">한국어를 몰라도 집을 찾습니다. 영어로 동네를 검색하면 실거래가와 지도, 외국어로 상담하는 중개사무소가 한 화면에 나옵니다.</span><span class="en">Find a home in Korea without speaking Korean. Search any neighborhood in English and see real transaction prices, a map, and agencies that speak your language — all on one screen.</span><span class="ja">韓国語がわからなくても家が探せます。英語で街を検索すると、実際の取引価格と地図、外国語で相談できる不動産仲介所がひとつの画面に表示されます。</span><span class="zhs">不懂韩语也能找房。用英文搜索街区，即可在一个画面上看到实际成交价、地图，以及可用外语咨询的中介机构。</span><span class="zht">不懂韓語也能找房。用英文搜尋街區，即可在一個畫面上看到實際成交價、地圖，以及可用外語諮詢的仲介機構。</span></p>
+      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span><span class="ja">デモを開く →</span><span class="zhs">打开演示版 →</span><span class="zht">開啟示範版 →</span></span></a>
     <a class="card ftc app2" href="https://navi.moneypuzzle.co.kr/" target="_blank" rel="noopener"><div class="ftimg"><img class="ko" src="ft_navi_ko.jpg" alt="머니퍼즐 - 투어" loading="lazy"><img class="en" src="ft_navi_en.jpg" alt="Money Puzzle - Tour" loading="lazy"></div>
-      <span class="ftb"><span class="ko">새 앱 · 머니퍼즐 - 투어</span><span class="en">New app · Money Puzzle - Tour</span></span>
-      <h3><span class="ko">머니퍼즐 - 투어</span><span class="en">Money Puzzle - Tour</span> <span style="display:inline-block;vertical-align:3px;font-size:11px;font-weight:800;color:#fff;background:#e8590c;border-radius:6px;padding:2px 7px"><span class="ko">개발 중</span><span class="en">Under developing</span></span></h3>
-      <p><span class="ko">외국인 여행자를 위한 그림 관광지도 — 한국어를 몰라도 명소·길찾기를 영어로 안내합니다. 지금 서울과 경기 북부 지도를 만들고 있습니다.</span><span class="en">An illustrated travel map for visitors — sights and directions in English, no Korean needed. Maps of Seoul and northern Gyeonggi are now in the making.</span></p>
+      <span class="ftb"><span class="ko">새 앱 · 머니퍼즐 - 투어</span><span class="en">New app · Money Puzzle - Tour</span><span class="ja">新アプリ · Money Puzzle - Tour</span><span class="zhs">新应用 · Money Puzzle - Tour</span><span class="zht">新應用 · Money Puzzle - Tour</span></span>
+      <h3><span class="ko">머니퍼즐 - 투어</span><span class="en">Money Puzzle - Tour</span><span class="ja">Money Puzzle - Tour</span><span class="zhs">Money Puzzle - Tour</span><span class="zht">Money Puzzle - Tour</span> <span style="display:inline-block;vertical-align:3px;font-size:11px;font-weight:800;color:#fff;background:#e8590c;border-radius:6px;padding:2px 7px"><span class="ko">개발 중</span><span class="en">Under developing</span><span class="ja">開発中</span><span class="zhs">开发中</span><span class="zht">開發中</span></span></h3>
+      <p><span class="ko">외국인 여행자를 위한 그림 관광지도 — 한국어를 몰라도 명소·길찾기를 영어로 안내합니다. 지금 서울과 경기 북부 지도를 만들고 있습니다.</span><span class="en">An illustrated travel map for visitors — sights and directions in English, no Korean needed. Maps of Seoul and northern Gyeonggi are now in the making.</span><span class="ja">外国人旅行者のためのイラスト観光マップ — 韓国語がわからなくても、名所や道順を英語で案内します。現在、ソウルと京畿道北部の地図を制作しています。</span><span class="zhs">为外国游客打造的插画旅游地图——不懂韩语也能用英文查看景点和路线指引。目前正在制作首尔和京畿北部的地图。</span><span class="zht">為外國遊客打造的插畫旅遊地圖——不懂韓語也能用英文查看景點和路線指引。目前正在製作首爾和京畿北部的地圖。</span></p>
      
-      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span></span></a>
+      <span class="go"><span class="ko">모의판 열기 →</span><span class="en">Open demo →</span><span class="ja">デモを開く →</span><span class="zhs">打开演示版 →</span><span class="zht">開啟示範版 →</span></span></a>
 
   </div>
 </div></section>
 
 <section id="why"><div class="wrap">
-  <h2><span class="ko">왜 머니퍼즐인가</span><span class="en">Why Money Puzzle</span></h2>
-  <p class="sec-lead"><span class="ko">종목 하나에 몰아 사던 투자를, 위험을 나눈 포트폴리오 투자로.</span><span class="en">From all-in single-stock bets to diversified portfolio investing.</span></p>
+  <h2><span class="ko">왜 머니퍼즐인가</span><span class="en">Why Money Puzzle</span><span class="ja">なぜMoney Puzzleなのか</span><span class="zhs">为什么选择Money Puzzle</span><span class="zht">為什麼選擇Money Puzzle</span></h2>
+  <p class="sec-lead"><span class="ko">종목 하나에 몰아 사던 투자를, 위험을 나눈 포트폴리오 투자로.</span><span class="en">From all-in single-stock bets to diversified portfolio investing.</span><span class="ja">ひとつの銘柄に集中する投資から、リスクを分散したポートフォリオ投資へ。</span><span class="zhs">从押注单一股票，转向分散风险的投资组合投资。</span><span class="zht">從押注單一股票，轉向分散風險的投資組合投資。</span></p>
   <div class="grid g3">
     <div class="card"><span class="num">01</span>
-      <h3><span class="ko">웹툰처럼 한 화면</span><span class="en">One scrolling screen</span></h3>
-      <p><span class="ko">시세, 계좌, 추천, 차트, 기업정보, 뉴스까지 위아래로만 훑으면 됩니다. 앱을 옮겨 다닐 필요가 없습니다.</span><span class="en">Quotes, accounts, picks, charts, company data and news — just scroll. No jumping between apps.</span></p></div>
+      <h3><span class="ko">웹툰처럼 한 화면</span><span class="en">One scrolling screen</span><span class="ja">ウェブトゥーンのように一画面で</span><span class="zhs">像网络漫画一样一屏看完</span><span class="zht">像網路漫畫一樣一屏看完</span></h3>
+      <p><span class="ko">시세, 계좌, 추천, 차트, 기업정보, 뉴스까지 위아래로만 훑으면 됩니다. 앱을 옮겨 다닐 필요가 없습니다.</span><span class="en">Quotes, accounts, picks, charts, company data and news — just scroll. No jumping between apps.</span><span class="ja">相場、口座、おすすめ、チャート、企業情報、ニュースまで、上下にスクロールするだけ。アプリを行き来する必要はありません。</span><span class="zhs">行情、账户、推荐、图表、企业信息、新闻——上下滑动即可，无需在应用之间来回切换。</span><span class="zht">行情、帳戶、推薦、圖表、企業資訊、新聞——上下滑動即可，無需在應用之間來回切換。</span></p></div>
     <div class="card"><span class="num">02</span>
-      <h3><span class="ko">퀀트 엔진</span><span class="en">Quant engine</span></h3>
-      <p><span class="ko">대표 ETF를 바탕으로, 데이터로 검증한 모멘텀 규칙이 매달 추가 종목을 고릅니다. 감이 아니라 규칙입니다.</span><span class="en">Index ETFs as the core, with a data-tested momentum model picking the satellite each month. Rules, not hunches.</span></p></div>
+      <h3><span class="ko">퀀트 엔진</span><span class="en">Quant engine</span><span class="ja">クオンツエンジン</span><span class="zhs">量化引擎</span><span class="zht">量化引擎</span></h3>
+      <p><span class="ko">대표 ETF를 바탕으로, 데이터로 검증한 모멘텀 규칙이 매달 추가 종목을 고릅니다. 감이 아니라 규칙입니다.</span><span class="en">Index ETFs as the core, with a data-tested momentum model picking the satellite each month. Rules, not hunches.</span><span class="ja">代表的なETFを土台に、データで検証したモメンタム規則が毎月追加銘柄を選びます。勘ではなく規則です。</span><span class="zhs">以代表性ETF为核心，经数据验证的动量规则每月挑选卫星标的。靠规则，不靠直觉。</span><span class="zht">以代表性ETF為核心，經數據驗證的動量規則每月挑選衛星標的。靠規則，不靠直覺。</span></p></div>
     <div class="card"><span class="num">03</span>
-      <h3><span class="ko">포트폴리오 바스켓 매매</span><span class="en">Portfolio basket trading</span></h3>
-      <p><span class="ko">투자성향별 자산배분비율대로 여러 종목을 한 번에 사고, 매달 1일 비율을 다시 맞춥니다.</span><span class="en">Buy a whole allocation in one go, then rebalance on the 1st of every month.</span></p></div>
+      <h3><span class="ko">포트폴리오 바스켓 매매</span><span class="en">Portfolio basket trading</span><span class="ja">ポートフォリオ・バスケット売買</span><span class="zhs">投资组合一篮子交易</span><span class="zht">投資組合一籃子交易</span></h3>
+      <p><span class="ko">투자성향별 자산배분비율대로 여러 종목을 한 번에 사고, 매달 1일 비율을 다시 맞춥니다.</span><span class="en">Buy a whole allocation in one go, then rebalance on the 1st of every month.</span><span class="ja">投資タイプ別の資産配分比率どおりに複数の銘柄を一度に買い、毎月1日に比率を整え直します。</span><span class="zhs">按投资倾向的资产配置比例一次买入多只股票，每月1日重新调整比例。</span><span class="zht">按投資傾向的資產配置比例一次買入多檔股票，每月1日重新調整比例。</span></p></div>
   </div>
 </div></section>
 
 <section id="charts"><div class="wrap">
-  <h2><span class="ko">머니퍼즐만의 차트</span><span class="en">Charts only Money Puzzle has</span></h2>
-  <p class="sec-lead"><span class="ko">디자인 출원 3건 · 특허 출원 1건. 숫자 표 대신 그림으로 내 포트폴리오를 봅니다.</span><span class="en">3 design applications · 1 patent application. See your portfolio as pictures, not tables of numbers.</span></p>
+  <h2><span class="ko">머니퍼즐만의 차트</span><span class="en">Charts only Money Puzzle has</span><span class="ja">Money Puzzleだけのチャート</span><span class="zhs">Money Puzzle独有的图表</span><span class="zht">Money Puzzle獨有的圖表</span></h2>
+  <p class="sec-lead"><span class="ko">디자인 출원 3건 · 특허 출원 1건. 숫자 표 대신 그림으로 내 포트폴리오를 봅니다.</span><span class="en">3 design applications · 1 patent application. See your portfolio as pictures, not tables of numbers.</span><span class="ja">意匠出願3件 · 特許出願1件。数字の表ではなく、絵で自分のポートフォリオを見ます。</span><span class="zhs">外观设计申请3件 · 专利申请1件。用图形而非数字表格查看你的投资组合。</span><span class="zht">設計申請3件 · 專利申請1件。用圖形而非數字表格查看你的投資組合。</span></p>
   <div class="grid g3">
     <div class="card ftc"><div class="ftimg"><img class="ko" src="ft_tower_ko.gif" alt="3D cubic tower" loading="lazy"><img class="en" src="ft_tower_en.gif" alt="3D cubic tower" loading="lazy"></div>
-      <span class="ftb"><span class="ko">디자인 출원 30-2026-0036422</span><span class="en">Design application 30-2026-0036422</span></span>
-      <h3><span class="ko">3D 큐빅 타워</span><span class="en">3D Cubic Tower</span></h3>
-      <p><span class="ko">포트폴리오를 큐브로 쌓은 탑입니다. 큐브 크기는 금액, 위아래는 수익, 흔들림은 위험입니다.</span><span class="en">Your portfolio stacked as cubes — size is amount, up and down is return, wobble is risk.</span></p></div>
+      <span class="ftb"><span class="ko">디자인 출원 30-2026-0036422</span><span class="en">Design application 30-2026-0036422</span><span class="ja">意匠出願 30-2026-0036422</span><span class="zhs">外观设计申请 30-2026-0036422</span><span class="zht">設計申請 30-2026-0036422</span></span>
+      <h3><span class="ko">3D 큐빅 타워</span><span class="en">3D Cubic Tower</span><span class="ja">3Dキュービックタワー</span><span class="zhs">3D立方塔</span><span class="zht">3D立方塔</span></h3>
+      <p><span class="ko">포트폴리오를 큐브로 쌓은 탑입니다. 큐브 크기는 금액, 위아래는 수익, 흔들림은 위험입니다.</span><span class="en">Your portfolio stacked as cubes — size is amount, up and down is return, wobble is risk.</span><span class="ja">ポートフォリオをキューブで積み上げた塔です。キューブの大きさは金額、上下は収益、揺れはリスクです。</span><span class="zhs">把投资组合堆成立方体的塔——大小代表金额，上下代表收益，摇晃代表风险。</span><span class="zht">把投資組合堆成立方體的塔——大小代表金額，上下代表收益，搖晃代表風險。</span></p></div>
     <div class="card ftc"><div class="ftimg"><img class="ko" src="ft_tree_ko.gif" alt="3D tree chart" loading="lazy"><img class="en" src="ft_tree_en.gif" alt="3D tree chart" loading="lazy"></div>
-      <span class="ftb"><span class="ko">디자인 출원 30-2026-0036633</span><span class="en">Design application 30-2026-0036633</span></span>
-      <h3><span class="ko">3D 트리차트</span><span class="en">3D Tree Chart</span></h3>
-      <p><span class="ko">자산군마다 가지가 뻗어, 내 돈이 어디에 어떻게 나뉘었는지 한눈에 보입니다.</span><span class="en">Each asset class grows its own branch, so you see at a glance where your money sits.</span></p></div>
+      <span class="ftb"><span class="ko">디자인 출원 30-2026-0036633</span><span class="en">Design application 30-2026-0036633</span><span class="ja">意匠出願 30-2026-0036633</span><span class="zhs">外观设计申请 30-2026-0036633</span><span class="zht">設計申請 30-2026-0036633</span></span>
+      <h3><span class="ko">3D 트리차트</span><span class="en">3D Tree Chart</span><span class="ja">3Dツリーチャート</span><span class="zhs">3D树状图</span><span class="zht">3D樹狀圖</span></h3>
+      <p><span class="ko">자산군마다 가지가 뻗어, 내 돈이 어디에 어떻게 나뉘었는지 한눈에 보입니다.</span><span class="en">Each asset class grows its own branch, so you see at a glance where your money sits.</span><span class="ja">資産クラスごとに枝が伸び、お金がどこにどう分かれているか一目でわかります。</span><span class="zhs">每个资产类别长出自己的枝杈，资金分布一目了然。</span><span class="zht">每個資產類別長出自己的枝枒，資金分布一目了然。</span></p></div>
     <div class="card ftc"><div class="ftimg"><img src="ft_puzzle.jpg" alt="Puzzle heatmap" loading="lazy"></div>
-      <span class="ftb"><span class="ko">디자인 출원 30-2026-0036818</span><span class="en">Design application 30-2026-0036818</span></span>
-      <h3><span class="ko">퍼즐 히트맵</span><span class="en">Puzzle Heatmap</span></h3>
-      <p><span class="ko">보유 비중만큼 퍼즐 조각이 커지고, 오르고 내린 만큼 색이 바뀝니다.</span><span class="en">Each puzzle piece grows with its weight and changes color with its gain or loss.</span></p></div>
+      <span class="ftb"><span class="ko">디자인 출원 30-2026-0036818</span><span class="en">Design application 30-2026-0036818</span><span class="ja">意匠出願 30-2026-0036818</span><span class="zhs">外观设计申请 30-2026-0036818</span><span class="zht">設計申請 30-2026-0036818</span></span>
+      <h3><span class="ko">퍼즐 히트맵</span><span class="en">Puzzle Heatmap</span><span class="ja">パズル・ヒートマップ</span><span class="zhs">拼图热力图</span><span class="zht">拼圖熱力圖</span></h3>
+      <p><span class="ko">보유 비중만큼 퍼즐 조각이 커지고, 오르고 내린 만큼 색이 바뀝니다.</span><span class="en">Each puzzle piece grows with its weight and changes color with its gain or loss.</span><span class="ja">保有比率に応じてパズルのピースが大きくなり、値上がり・値下がりに応じて色が変わります。</span><span class="zhs">拼图块随持仓比重变大，并随涨跌改变颜色。</span><span class="zht">拼圖塊隨持倉比重變大，並隨漲跌改變顏色。</span></p></div>
     <div class="card ftc"><div class="ftimg"><img class="ko" src="ft_flip_ko.gif" alt="Chart panel flip" loading="lazy"><img class="en" src="ft_flip_en.gif" alt="Chart panel flip" loading="lazy"></div>
-      <span class="ftb"><span class="ko">특허 출원 10-2026-0179786</span><span class="en">Patent application 10-2026-0179786</span></span>
-      <h3><span class="ko">차트 옆으로 넘기기</span><span class="en">Swipe to flip chart panels</span></h3>
-      <p><span class="ko">캔들차트를 6개의 다른 모양의 차트툴로 변경 가능하며 좌우로 넘기면서 20개의 보조지표를 선택할 수 있습니다.</span><span class="en">Switch the candle chart into 6 different chart styles, and swipe left or right to choose from 20 indicators.</span></p></div>
+      <span class="ftb"><span class="ko">특허 출원 10-2026-0179786</span><span class="en">Patent application 10-2026-0179786</span><span class="ja">特許出願 10-2026-0179786</span><span class="zhs">专利申请 10-2026-0179786</span><span class="zht">專利申請 10-2026-0179786</span></span>
+      <h3><span class="ko">차트 옆으로 넘기기</span><span class="en">Swipe to flip chart panels</span><span class="ja">チャートを横にめくる</span><span class="zhs">左右滑动切换图表</span><span class="zht">左右滑動切換圖表</span></h3>
+      <p><span class="ko">캔들차트를 6개의 다른 모양의 차트툴로 변경 가능하며 좌우로 넘기면서 20개의 보조지표를 선택할 수 있습니다.</span><span class="en">Switch the candle chart into 6 different chart styles, and swipe left or right to choose from 20 indicators.</span><span class="ja">ローソク足チャートを6種類の異なるチャートに切り替えられ、左右にめくって20種類の補助指標を選べます。</span><span class="zhs">K线图可切换为6种不同样式的图表，左右滑动可从20种技术指标中选择。</span><span class="zht">K線圖可切換為6種不同樣式的圖表，左右滑動可從20種技術指標中選擇。</span></p></div>
     <div class="card ftc"><div class="ftimg"><img class="ko" src="ft_meas_ko.jpg" alt="Two-finger measure" loading="lazy"><img class="en" src="ft_meas_en.jpg" alt="Two-finger measure" loading="lazy"></div>
-      <span class="ftb"><span class="ko">특허 출원 10-2026-0179786</span><span class="en">Patent application 10-2026-0179786</span></span>
-      <h3><span class="ko">두 손가락으로 구간·각도 재기</span><span class="en">Two-finger range & angle</span></h3>
-      <p><span class="ko">두 손가락을 0.3초 대고 있으면 두 봉 사이의 상승률, 금액, 기간, 각도를 바로 잽니다.</span><span class="en">Hold two fingers for 0.3 s to measure change, amount, bars and angle between two points.</span></p></div>
+      <span class="ftb"><span class="ko">특허 출원 10-2026-0179786</span><span class="en">Patent application 10-2026-0179786</span><span class="ja">特許出願 10-2026-0179786</span><span class="zhs">专利申请 10-2026-0179786</span><span class="zht">專利申請 10-2026-0179786</span></span>
+      <h3><span class="ko">두 손가락으로 구간·각도 재기</span><span class="en">Two-finger range & angle</span><span class="ja">2本指で区間・角度を測る</span><span class="zhs">双指测量区间与角度</span><span class="zht">雙指測量區間與角度</span></h3>
+      <p><span class="ko">두 손가락을 0.3초 대고 있으면 두 봉 사이의 상승률, 금액, 기간, 각도를 바로 잽니다.</span><span class="en">Hold two fingers for 0.3 s to measure change, amount, bars and angle between two points.</span><span class="ja">2本の指を0.3秒当てると、2本のローソク足の間の上昇率・金額・期間・角度をすぐに測ります。</span><span class="zhs">双指按住0.3秒，即可测量两根K线之间的涨幅、金额、期间和角度。</span><span class="zht">雙指按住0.3秒，即可測量兩根K線之間的漲幅、金額、期間和角度。</span></p></div>
       </div>
-  <p class="ftnote"><span class="ko">※ 화면 속 종목과 숫자는 무작위로 가져다 쓴 예시이며, 추천이 아닙니다.</span><span class="en">※ Stocks and figures shown are random examples, not recommendations.</span></p>
+  <p class="ftnote"><span class="ko">※ 화면 속 종목과 숫자는 무작위로 가져다 쓴 예시이며, 추천이 아닙니다.</span><span class="en">※ Stocks and figures shown are random examples, not recommendations.</span><span class="ja">※ 画面内の銘柄と数字は無作為に用いた例であり、推奨ではありません。</span><span class="zhs">※ 画面中的股票和数字均为随机示例，并非推荐。</span><span class="zht">※ 畫面中的股票和數字均為隨機示例，並非推薦。</span></p>
 </div></section>
 
 <section class="soft"><div class="wrap">
   <div class="grid g4">
-    <div class="stat"><b>5</b><span><span class="ko">작동하는 앱</span><span class="en">Live apps</span></span></div>
-    <div class="stat"><b>6<span style="font-size:20px">년</span></b><span><span class="ko">백테스트 검증</span><span class="en">Years of backtests</span></span></div>
-    <div class="stat"><b>1+8</b><span><span class="ko">특허·디자인 출원</span><span class="en">Patent + design filings</span></span></div>
-    <div class="stat"><b>4</b><span><span class="ko">상표 출원</span><span class="en">Trademark filings</span></span></div>
+    <div class="stat"><b>5</b><span><span class="ko">작동하는 앱</span><span class="en">Live apps</span><span class="ja">稼働中のアプリ</span><span class="zhs">可运行的应用</span><span class="zht">可運行的應用</span></span></div>
+    <div class="stat"><b>6<span style="font-size:20px"><span class="yr">년</span><span class="ja zhs zht">年</span></span></b><span><span class="ko">백테스트 검증</span><span class="en">Years of backtests</span><span class="ja">バックテスト検証</span><span class="zhs">回测验证</span><span class="zht">回測驗證</span></span></div>
+    <div class="stat"><b>1+8</b><span><span class="ko">특허·디자인 출원</span><span class="en">Patent + design filings</span><span class="ja">特許・意匠出願</span><span class="zhs">专利·外观设计申请</span><span class="zht">專利·設計申請</span></span></div>
+    <div class="stat"><b>4</b><span><span class="ko">상표 출원</span><span class="en">Trademark filings</span><span class="ja">商標出願</span><span class="zhs">商标申请</span><span class="zht">商標申請</span></span></div>
   </div>
 </div></section>
 
 <section id="contact" class="contact"><div class="wrap">
-  <h2><span class="ko">투자·제휴 문의</span><span class="en">Investment &amp; partnerships</span></h2>
-  <p class="sec-lead"><span class="ko">증권사·자산운용사·핀테크와의 협업, 투자 문의를 기다립니다.</span><span class="en">We welcome brokerages, asset managers, fintechs and investors.</span></p>
+  <h2><span class="ko">투자·제휴 문의</span><span class="en">Investment &amp; partnerships</span><span class="ja">投資・提携のお問い合わせ</span><span class="zhs">投资与合作咨询</span><span class="zht">投資與合作諮詢</span></h2>
+  <p class="sec-lead"><span class="ko">증권사·자산운용사·핀테크와의 협업, 투자 문의를 기다립니다.</span><span class="en">We welcome brokerages, asset managers, fintechs and investors.</span><span class="ja">証券会社・資産運用会社・フィンテックとの協業、投資のお問い合わせをお待ちしています。</span><span class="zhs">欢迎券商、资产管理公司、金融科技企业及投资者洽谈合作与投资。</span><span class="zht">歡迎券商、資產管理公司、金融科技企業及投資者洽談合作與投資。</span></p>
   <a class="mail" href="mailto:emhwang3@moneypuzzle.co.kr">emhwang3@moneypuzzle.co.kr</a>
   <div class="ir">
-    <div class="ir-hd"><b><span class="ko">회사소개서 (IR)</span><span class="en">Investor deck (IR)</span></b>
-      <a id="irPdf" href="moneypuzzle_IR.pdf" download target="_blank" rel="noopener"><span class="ko">PDF 내려받기</span><span class="en">Download PDF</span></a></div>
+    <div class="ir-hd"><b><span class="ko">회사소개서 (IR)</span><span class="en">Investor deck (IR)</span><span class="ja">会社紹介資料（IR）</span><span class="zhs">公司介绍（IR）</span><span class="zht">公司介紹（IR）</span></b>
+      <a id="irPdf" href="moneypuzzle_IR.pdf" download target="_blank" rel="noopener"><span class="ko">PDF 내려받기</span><span class="en">Download PDF</span><span class="ja">PDFダウンロード</span><span class="zhs">下载PDF</span><span class="zht">下載PDF</span></a></div>
     <div class="ir-view">
       <button class="ir-btn ir-prev" aria-label="prev" onclick="irGo(-1)">&#8249;</button>
       <div class="ir-track" id="irTrack">
@@ -283,13 +287,13 @@
 </div></section>
 
 <section id="voice" class="soft"><div class="wrap">
-  <h2 style="text-align:center"><span class="ko">고객의 소리</span><span class="en">Customer voice</span></h2>
+  <h2 style="text-align:center"><span class="ko">고객의 소리</span><span class="en">Customer voice</span><span class="ja">お客様の声</span><span class="zhs">客户意见</span><span class="zht">客戶意見</span></h2>
   <form class="vbox card" id="vForm" autocomplete="off" onsubmit="return vSend(event)">
     <textarea id="vText" maxlength="500" required aria-label="고객의 소리"></textarea>
     <div class="vrow"><span></span><span id="vCnt">0 / 500</span></div>
     <input type="text" id="vContact" maxlength="100" placeholder="이메일 또는 전화 *" aria-label="이메일 또는 전화 (필수)">
     <div class="vhp" aria-hidden="true"><input type="text" id="vHp" name="website" tabindex="-1" autocomplete="off"></div>
-    <div class="vbot"><button type="submit" class="btn pri" id="vBtn"><span class="ko">보내기</span><span class="en">Send</span></button><span class="vmsg" id="vMsg"></span></div>
+    <div class="vbot"><button type="submit" class="btn pri" id="vBtn"><span class="ko">보내기</span><span class="en">Send</span><span class="ja">送信</span><span class="zhs">发送</span><span class="zht">發送</span></button><span class="vmsg" id="vMsg"></span></div>
   </form>
 <script>
 // 고객의 소리 (사장님 2026-10-14) — 500자 · 메일로 받는다 (허브 /hvoice)
@@ -298,7 +302,8 @@
   t.addEventListener("input",function(){ c.textContent=t.value.length+" / 500"; });
   // 영어 화면이면 안내·문구도 영어 (2026-10-14)
   function EN(){ return document.body.classList.contains("lang-en"); }
-  function L(ko,en){ return EN()?en:ko; }
+  var LT={"이메일 또는 전화 *":["メールまたは電話 *","邮箱或电话 *","電子郵件或電話 *"],"이메일 또는 전화 (필수)":["メールまたは電話（必須）","邮箱或电话（必填）","電子郵件或電話（必填）"],"고객의 소리":["お客様の声","客户意见","客戶意見"],"내용을 적어 주세요.":["内容を入力してください。","请填写内容。","請填寫內容。"],"이메일이나 전화번호를 넣어 주세요.":["メールアドレスか電話番号を入力してください。","请输入邮箱或电话号码。","請輸入電子郵件或電話號碼。"],"보내는 중…":["送信中…","发送中…","發送中…"],"잠시 뒤에 다시 보내 주세요.":["しばらくしてからもう一度お送りください。","请稍后再试。","請稍後再試。"],"보내지 못했습니다. 다시 시도해 주세요.":["送信できませんでした。もう一度お試しください。","发送失败，请重试。","發送失敗，請重試。"]};
+  function L(ko,en){ var i=["ja","zhs","zht"].indexOf(window.HL?HL():""); return i>=0&&LT[ko]?LT[ko][i]:(EN()?en:ko); }
   function ph(){ var x=document.getElementById("vContact"); x.placeholder=L("이메일 또는 전화 *","Email or phone *"); x.setAttribute("aria-label",L("이메일 또는 전화 (필수)","Email or phone (required)")); t.setAttribute("aria-label",L("고객의 소리","Customer voice")); }
   ph(); new MutationObserver(ph).observe(document.body,{attributes:true,attributeFilter:["class"]});
   // 연락처 필수 — 이메일(x@y.z) 또는 전화(숫자 9~15자리) (사장님 2026-10-14)
@@ -324,12 +329,12 @@
 </main>
 
 <footer><div class="wrap">
-  <p><b class="ko">주식회사 부만</b><b class="en">Booman Inc.</b> · <span class="ko">머니퍼즐(Money Puzzle)</span><span class="en">Money Puzzle</span></p>
+  <p><b class="ko">주식회사 부만</b><b class="en">Booman Inc.</b><b class="ja">Booman Inc.</b><b class="zhs">Booman Inc.</b><b class="zht">Booman Inc.</b> · <span class="ko">머니퍼즐(Money Puzzle)</span><span class="en">Money Puzzle</span><span class="ja">Money Puzzle</span><span class="zhs">Money Puzzle</span><span class="zht">Money Puzzle</span></p>
   <p class="ko">경기도 남양주시 진접읍 금곡리 1042 엠타워 707호</p>
-  <p class="en">707, M Tower, 1042 Geumgok-ri, Jinjeop-eup, Namyangju-si, Gyeonggi-do, Korea</p>
+  <p class="en">707, M Tower, 1042 Geumgok-ri, Jinjeop-eup, Namyangju-si, Gyeonggi-do, Korea</p><p class="ja">707, M Tower, 1042 Geumgok-ri, Jinjeop-eup, Namyangju-si, Gyeonggi-do, Korea</p><p class="zhs">707, M Tower, 1042 Geumgok-ri, Jinjeop-eup, Namyangju-si, Gyeonggi-do, Korea</p><p class="zht">707, M Tower, 1042 Geumgok-ri, Jinjeop-eup, Namyangju-si, Gyeonggi-do, Korea</p>
   <ul class="ko disc"><li>머니퍼즐은 투자 판단을 위한 정보를 제공하지 않으며, 앱에 표시되는 추천 종목은 모두 가림(마스킹) 처리되어 있습니다.</li><li>머니퍼즐 홈페이지에 게시된 정보를 이용하여 투자하는 행위와 이를 제3자에게 배포하는 행위를 금지합니다.</li><li>당사 홈페이지는 앱 개발을 위한 투자자금 유치를 목적으로 만들어졌으며, 어떠한 투자 정보도 제공하지 않습니다.</li><li>당사는 투자자문업·투자일임업 등록 업체가 아니며, 홈페이지와 앱은 금융투자상품의 매매를 권유하지 않습니다.</li><li>회사소개서와 앱에 나오는 수익률은 과거 자료로 계산한 모의 결과(백테스트)이며, 미래의 수익을 보장하지 않습니다.</li><li>모의판의 계좌, 잔고, 손익은 모두 가상이며 실제 거래가 아닙니다.</li><li>홈페이지와 앱의 화면, 문구, 자료를 허락 없이 복제하거나 사용할 수 없습니다.</li></ul>
-  <ul class="en disc"><li>Money Puzzle does not provide information for investment decisions, and all recommended stocks shown in the apps are masked.</li><li>Investing based on information posted on this website, or distributing it to third parties, is prohibited.</li><li>This website was created to raise funds for app development and does not provide any investment information.</li><li>Booman Inc. is not a registered investment advisory or discretionary investment firm, and neither this website nor the apps solicit the purchase or sale of financial products.</li><li>Returns shown in the investor deck and apps are simulated results based on historical data (backtests) and do not guarantee future returns.</li><li>All accounts, balances and P&amp;L in the demo apps are virtual, not real trades.</li><li>The screens, text and materials of this website and the apps may not be copied or used without permission.</li></ul>
-  <p>© 2026 <span class="ko">주식회사 부만</span><span class="en">Booman Inc.</span></p>
+  <ul class="en disc"><li>Money Puzzle does not provide information for investment decisions, and all recommended stocks shown in the apps are masked.</li><li>Investing based on information posted on this website, or distributing it to third parties, is prohibited.</li><li>This website was created to raise funds for app development and does not provide any investment information.</li><li>Booman Inc. is not a registered investment advisory or discretionary investment firm, and neither this website nor the apps solicit the purchase or sale of financial products.</li><li>Returns shown in the investor deck and apps are simulated results based on historical data (backtests) and do not guarantee future returns.</li><li>All accounts, balances and P&amp;L in the demo apps are virtual, not real trades.</li><li>The screens, text and materials of this website and the apps may not be copied or used without permission.</li></ul><ul class="ja disc"><li>Money Puzzleは投資判断のための情報を提供しておらず、アプリに表示されるおすすめ銘柄はすべてマスキング処理されています。</li><li>本ウェブサイトに掲載された情報を利用して投資する行為、およびそれを第三者に配布する行為を禁止します。</li><li>本ウェブサイトはアプリ開発のための投資資金の誘致を目的として作られたもので、いかなる投資情報も提供しません。</li><li>当社は投資助言業・投資一任業の登録業者ではなく、ウェブサイトおよびアプリは金融商品の売買を勧誘するものではありません。</li><li>会社紹介資料およびアプリに表示される収益率は、過去のデータで計算したシミュレーション結果（バックテスト）であり、将来の収益を保証するものではありません。</li><li>デモ版の口座・残高・損益はすべて仮想のもので、実際の取引ではありません。</li><li>ウェブサイトおよびアプリの画面・文言・資料を許可なく複製または使用することはできません。</li></ul><ul class="zhs disc"><li>Money Puzzle不提供用于投资判断的信息，应用中显示的推荐股票均已做遮蔽处理。</li><li>禁止利用本网站发布的信息进行投资，或将其传播给第三方。</li><li>本网站是为筹集应用开发资金而建立的，不提供任何投资信息。</li><li>本公司并非已注册的投资顾问或全权委托投资机构，本网站及应用不劝诱买卖任何金融投资产品。</li><li>公司介绍及应用中显示的收益率是根据历史数据计算的模拟结果（回测），不保证未来收益。</li><li>演示版中的账户、余额和盈亏均为虚拟，并非实际交易。</li><li>未经许可，不得复制或使用本网站及应用的画面、文字和资料。</li></ul><ul class="zht disc"><li>Money Puzzle不提供用於投資判斷的資訊，應用中顯示的推薦股票均已做遮蔽處理。</li><li>禁止利用本網站發布的資訊進行投資，或將其散布給第三方。</li><li>本網站是為籌集應用開發資金而建立的，不提供任何投資資訊。</li><li>本公司並非已註冊的投資顧問或全權委託投資機構，本網站及應用不勸誘買賣任何金融投資商品。</li><li>公司介紹及應用中顯示的收益率是根據歷史資料計算的模擬結果（回測），不保證未來收益。</li><li>示範版中的帳戶、餘額和損益均為虛擬，並非實際交易。</li><li>未經許可，不得複製或使用本網站及應用的畫面、文字和資料。</li></ul>
+  <p>© 2026 <span class="ko">주식회사 부만</span><span class="en">Booman Inc.</span><span class="ja">Booman Inc.</span><span class="zhs">Booman Inc.</span><span class="zht">Booman Inc.</span></p>
   <p id="hcnt" style="opacity:.7;font-size:12px"></p>
 </div></footer>
 
@@ -342,7 +347,7 @@
   try{ if(/[?&]me=EM2410\b/i.test(location.search)) localStorage.setItem("home_owner","1"); if(localStorage.getItem("home_owner")) n="0"; }catch(x){}
   fetch("https://brief-live-hub.emhwang3.workers.dev/hc?n="+n+"&vid="+encodeURIComponent(v),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
     var e=document.getElementById("hcnt"); if(!e||!j) return; var f=function(x){return Number(x||0).toLocaleString();};
-    e.innerHTML='<span class="ko">방문 '+f(j.total)+'회 · 방문자 '+f(j.uniq)+'명 · 오늘 '+f(j.today)+'회</span><span class="en">Visits '+f(j.total)+' · Visitors '+f(j.uniq)+' · Today '+f(j.today)+'</span>';
+    e.innerHTML='<span class="ko">방문 '+f(j.total)+'회 · 방문자 '+f(j.uniq)+'명 · 오늘 '+f(j.today)+'회</span><span class="en">Visits '+f(j.total)+' · Visitors '+f(j.uniq)+' · Today '+f(j.today)+'</span><span class="ja">訪問 '+f(j.total)+'回 · 訪問者 '+f(j.uniq)+'人 · 今日 '+f(j.today)+'回</span><span class="zhs">访问 '+f(j.total)+'次 · 访客 '+f(j.uniq)+'人 · 今日 '+f(j.today)+'次</span><span class="zht">造訪 '+f(j.total)+'次 · 訪客 '+f(j.uniq)+'人 · 今日 '+f(j.today)+'次</span>';
   }).catch(function(){});
 }catch(x){} })();
 // 메일 주소 누르면 — 주소를 복사하고 알림을 띄운 뒤, 메일 앱이 있으면 그것도 연다 (2026-10-10)
@@ -351,15 +356,22 @@ document.addEventListener("click",function(e){
   var m=a.getAttribute("href").slice(7).split("?")[0], en=document.body.classList.contains("lang-en");
   var done=function(){ var t=document.getElementById("mailToast");
     if(!t){ t=document.createElement("div"); t.id="mailToast"; t.style.cssText="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25)"; document.body.appendChild(t); }
-    t.textContent=(en?"Email address copied: ":"메일 주소를 복사했습니다: ")+m; t.style.display="block";
+    t.textContent=({ja:"メールアドレスをコピーしました: ",zhs:"已复制邮箱地址：",zht:"已複製電子郵件地址："}[HL()]||(en?"Email address copied: ":"메일 주소를 복사했습니다: "))+m; t.style.display="block";
     clearTimeout(t._h); t._h=setTimeout(function(){ t.style.display="none"; },3500); };
   try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(m).then(done,done); else { var x=document.createElement("textarea"); x.value=m; document.body.appendChild(x); x.select(); try{document.execCommand("copy");}catch(_){} x.remove(); done(); } }catch(_){ done(); }
 },true);
-function tl(){ var e=document.body.classList.toggle("lang-en"); document.getElementById("lb").textContent=e?"한":"EN"; document.documentElement.lang=e?"en":"ko"; try{localStorage.setItem("home_lang",e?"en":"ko");}catch(x){} }
-try{ if(localStorage.getItem("home_lang")==="en") tl(); }catch(x){}
+// 언어 다섯 (2026-10-19) — 일·중은 lang-en 도 켜서 그림·IR·앱은 영어 · home_lang 은 게시판이 읽으니 ko/en 만, 실제 말은 home_lang2
+var _HL="ko"; function HL(){ return _HL; }
+function setLang(v){ var b=document.body.classList; _HL=v; ["lang-en","lang-ja","lang-zhs","lang-zht"].forEach(function(c){ b.remove(c); });
+  if(v!=="ko") b.add("lang-en"); if(v==="ja"||v==="zhs"||v==="zht") b.add("lang-"+v);
+  document.documentElement.lang={ko:"ko",en:"en",ja:"ja",zhs:"zh-Hans",zht:"zh-Hant"}[v]||"ko";
+  var s=document.getElementById("lb"); if(s) s.value=v;
+  try{ localStorage.setItem("home_lang",v==="ko"?"ko":"en"); localStorage.setItem("home_lang2",v); }catch(x){} }
+function tl(){ setLang(_HL==="ko"?"en":"ko"); }
+try{ var _l=localStorage.getItem("home_lang2")||localStorage.getItem("home_lang"); if(_l&&_l!=="ko") setLang(_l); }catch(x){}
 </script>
 <script>/* 내비 — 홈페이지 언어 그대로 열기 (2026-10-15) */
 document.addEventListener("click",function(ev){ var a=ev.target.closest&&ev.target.closest('a[href^="https://navi.moneypuzzle.co.kr"]'); if(!a) return;
-  a.href="https://navi.moneypuzzle.co.kr/?lang="+(document.documentElement.lang==="en"?"en":"ko"); },true);</script>
+  a.href="https://navi.moneypuzzle.co.kr/?lang="+(document.body.classList.contains("lang-en")?"en":"ko"); },true);</script>
 </body>
 </html>
