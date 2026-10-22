@@ -285,6 +285,20 @@
       <img src="irm_ko31.jpg" alt="IR 31" loading="lazy">
       <img src="irm_ko32.jpg" alt="IR 32" loading="lazy">
       <img src="irm_ko33.jpg" alt="IR 33" loading="lazy">
+      <img src="irm_ko34.jpg" alt="IR 34" loading="lazy">
+      <img src="irm_ko35.jpg" alt="IR 35" loading="lazy">
+      <img src="irm_ko36.jpg" alt="IR 36" loading="lazy">
+      <img src="irm_ko37.jpg" alt="IR 37" loading="lazy">
+      <img src="irm_ko38.jpg" alt="IR 38" loading="lazy">
+      <img src="irm_ko39.jpg" alt="IR 39" loading="lazy">
+      <img src="irm_ko40.jpg" alt="IR 40" loading="lazy">
+      <img src="irm_ko41.jpg" alt="IR 41" loading="lazy">
+      <img src="irm_ko42.jpg" alt="IR 42" loading="lazy">
+      <img src="irm_ko43.jpg" alt="IR 43" loading="lazy">
+      <img src="irm_ko44.jpg" alt="IR 44" loading="lazy">
+      <img src="irm_ko45.jpg" alt="IR 45" loading="lazy">
+      <img src="irm_ko46.jpg" alt="IR 46" loading="lazy">
+      <img src="irm_ko47.jpg" alt="IR 47" loading="lazy">
       </div>
       <button class="ir-btn ir-next" aria-label="next" onclick="irGo(1)">&#8250;</button>
     </div>
@@ -299,7 +313,7 @@
   // 한글 화면 = 국문 IR · EN = 영문 IR (2026-10-12)
   // 일·중 IR (2026-10-19) — irja·irzhs·irzht 26장 + PDF
   function irLang(){ var en=document.body.classList.contains("lang-en"), lg=window.HL?HL():(en?"en":"ko");
-    if(!/^(ko|en|ja|zhs|zht)$/.test(lg)) lg=en?"en":"ko"; var pre="irm_"+lg, U={en:"EN",ja:"JA",zhs:"ZHS",zht:"ZHT"}[lg];   // 통합 IR 33장 (투자+생활, 10-19)
+    if(!/^(ko|en|ja|zhs|zht)$/.test(lg)) lg=en?"en":"ko"; var pre="irm_"+lg, U={en:"EN",ja:"JA",zhs:"ZHS",zht:"ZHT"}[lg];   // 머니퍼즐 랩 통합 IR 47장 (투자+생활, 투어 확장 10-22)
     [].forEach.call(t.children,function(im,i){ var f=pre+String(i+1).padStart(2,"0")+".jpg"; if(im.getAttribute("src")!==f) im.setAttribute("src",f); });
     var a=document.getElementById("irPdf"); a.setAttribute("href",U?"moneypuzzle_IR_"+U+".pdf":"moneypuzzle_IR.pdf"); a.setAttribute("download",U?"MoneyPuzzle_IR_"+U+".pdf":"머니퍼즐_IR.pdf"); }
   irLang(); new MutationObserver(irLang).observe(document.body,{attributes:true,attributeFilter:["class"]});
