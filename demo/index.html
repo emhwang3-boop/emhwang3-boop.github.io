@@ -461,7 +461,7 @@ const NM={"국내":"KR Indices","미국 지수":"US Indices","미국 야간선�
  "미 10년물":"US 10Y","미 13주":"US 13W","미 30년물":"US 30Y",
  "원/달러":"USD/KRW","달러지수":"Dollar Index","엔/달러":"USD/JPY","위안/달러":"USD/CNY",
  "WTI 원유":"WTI Crude","브렌트":"Brent","금":"Gold","구리":"Copper","천연가스":"Nat Gas",
- "한국 기준금리":"BOK Base Rate","CD 91일":"CD 91D","국고채 3년":"KTB 3Y","국고채 10년":"KTB 10Y",
+ "한국 기준금리":"BOK Base Rate","CD 91일":"CD 91D","장단기 금리차 (10Y−3Y)":"KR Yield Spread (10Y−3Y)","국고채 3년":"KTB 3Y","국고채 10년":"KTB 10Y",
  "미국 10Y−13주":"US 10Y−13W","한국 10Y−3Y":"KR 10Y−3Y",
  "한국":"Korea","미국":"US","중국":"China","일본":"Japan","유로존":"Eurozone","독일":"Germany","영국":"UK","유럽":"Europe"};
 function tr(k){return LANG==="en"?(NM[k]||k):k;}
@@ -554,9 +554,12 @@ function render(d){ try{ if(d&&d.kr_status) window._krSt=d.kr_status; }catch(e){
       const kr={}; (d.krates||[]).forEach(function(k){ kr[k.nm]=k; });
       const PICK=[["코스피","g"],["코스닥","g"],["S&P500","g"],["나스닥100","g"],["다우","g"],["코스피200 야간선물","g"],   // 코스피·코스닥 맨 위 (사장님 2026-09-28)
                   ["나스닥 선물","g"],["반도체(SOX)","g"],["달러지수","g"],["원/달러","g"],["WTI 원유","g"],["금","g"],
-                  ["한국 기준금리","k"],["CD 91일","k"],["미 10년물","y"],["미 30년물","y"]];
+                  ["한국 기준금리","k"],["CD 91일","k"],["장단기 금리차 (10Y−3Y)","s"],["미 10년물","y"],["미 30년물","y"]];   // 장단기 금리차 = 한국은행 국고채 10년 − 3년 (사장님 2026-10-23)
       d = Object.assign({}, d, {changes: PICK.map(function(x){
         if(x[1]==="k"){ const k=kr[x[0]]; return k?{nm:x[0],pct:+k.chg||0,unit:"%p",val:k.val}:null; }
+        if(x[1]==="s"){ const a10=kr["국고채 10년"], a3=kr["국고채 3년"]; if(!a10||!a3) return null;   // 값 = 10년 − 3년, 막대 = 그 차이의 하루 변화(%p) · 음수면 역전
+          const v=parseFloat(a10.val)-parseFloat(a3.val); if(!isFinite(v)) return null;
+          return {nm:x[0], pct:+((+a10.chg||0)-(+a3.chg||0)).toFixed(2), unit:"%p", val:(v>=0?"+":"")+v.toFixed(2)+"%p"+(v<0?(LANG==="ko"?" 역전":" inverted"):"")}; }
         const it=byNm[x[0]]; if(!it) return null;
         if(x[1]==="y"){ const v=parseFloat(String(it.val).replace(/,/g,"")), pc=+it.pct||0;   // 수익률 변화율(%) → %p
           return {nm:x[0], pct: isFinite(v)? +(v - v/(1+pc/100)).toFixed(3) : 0, unit:"%p", val: it.val + "%"}; }
@@ -7552,11 +7555,11 @@ function acrtPaint(){
   var fx = (typeof fxKrw === "function" && fxKrw() > 0) ? fxKrw() : 0;
   var f = function(v){ if(v == null || !isFinite(v)) return ""; var r = Math.round(v * 100) / 100;
     return '<b class="' + (r > 0 ? "up" : (r < 0 ? "dn" : "fl")) + '">' + (r > 0 ? "+" : (r < 0 ? "−" : "")) + Math.abs(r).toFixed(2) + '%</b>'; };
-  var t = "", mm = D.months[sel] || {kr: 0, us: 0}, a = ACRT.m[sel];
-  if(a && a.b > 0 && (fx || !mm.us)) t = KE("실현 ", "Realized ") + f(((+mm.kr || 0) + (+mm.us || 0) * fx) / a.b * 100);
+  var t = "", mm = D.months[sel] || {kr: 0, us: 0, coin: 0}, a = ACRT.m[sel];
+  if(a && a.b > 0 && (fx || !(mm.us || mm.coin))) t = KE("실현 ", "Realized ") + f(((+mm.kr || 0) + ((+mm.us || 0) + (+mm.coin || 0)) * fx) / a.b * 100);
   if(cur && D.unOk && typeof RL !== "undefined"){             /* 표의 미실현과 같은 출처 */
     var pl = 0, c = 0, need = false;
-    [["kr", 1], ["us", 0]].forEach(function(g){ (RL[g[0]] || []).forEach(function(p){
+    [["kr", 1], ["us", 0], ["co", 0]].forEach(function(g){ (RL[g[0]] || []).forEach(function(p){
       var w = g[1] ? 1 : fx; if(!g[1]) need = true; pl += (+p.pl || 0) * w; c += (+p.avg || 0) * (+p.qty || 0) * w; }); });
     if(c > 0 && (fx || !need)) t += (t ? " · " : "") + KE("미실현 ", "Unrealized ") + f(pl / c * 100);
   }
@@ -7567,5 +7570,5 @@ function acrtPaint(){
 }
 try{ var _acrtR = pnlRender; pnlRender = function(){ var r = _acrtR.apply(this, arguments); try{ acrtPaint(); }catch(x){} return r; }; }catch(e){}
 </script>
-<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-20 14:20</div>
+<div class="appver" style="text-align:right;color:#9a9a9a;font-size:11px;margin:0 14px 8px">v 10-23 19:28</div>
 </body></html>
