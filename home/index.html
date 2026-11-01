@@ -303,10 +303,12 @@
       <img src="irm_ko45.jpg" alt="IR 45" loading="lazy">
       <img src="irm_ko46.jpg" alt="IR 46" loading="lazy">
       <img src="irm_ko47.jpg" alt="IR 47" loading="lazy">
+      <img src="irm_ko48.jpg" alt="IR 48" loading="lazy">
+      <img src="irm_ko49.jpg" alt="IR 49" loading="lazy">
       </div>
       <button class="ir-btn ir-next" aria-label="next" onclick="irGo(1)">&#8250;</button>
     </div>
-    <div class="ir-pg" id="irPg">1 / 33</div>
+    <div class="ir-pg" id="irPg">1 / 49</div>
   </div>
 <script>
 (function(){
@@ -314,12 +316,12 @@
   function cur(){ return Math.round(t.scrollLeft/t.clientWidth); }
   window.irGo=function(d){ var i=Math.max(0,Math.min(n-1,cur()+d)); t.scrollTo({left:i*t.clientWidth,behavior:"smooth"}); };
   t.addEventListener("scroll",function(){ pg.textContent=(cur()+1)+" / "+n; },{passive:true});
-  // 한글 화면 = 국문 IR · EN = 영문 IR (2026-10-12)
-  // 일·중 IR (2026-10-19) — irja·irzhs·irzht 26장 + PDF
+  // 한글 화면 = 국문 IR · 그 밖의 모든 언어 = 영문 IR (2026-11-01 사장님 — 일·중 IR 내림)
+  // 노래방 중심 IR 49장 (국문·영문 장수 같음)
   function irLang(){ var en=document.body.classList.contains("lang-en"), lg=window.HL?HL():(en?"en":"ko");
-    if(!/^(ko|en|ja|zhs|zht)$/.test(lg)) lg=en?"en":"ko"; var pre="irm_"+lg, U={en:"EN",ja:"JA",zhs:"ZHS",zht:"ZHT"}[lg];   // 머니퍼즐 랩 통합 IR 47장 (투자+생활, 투어 확장 10-22)
+    if(!/^(ko|en|ja|zhs|zht)$/.test(lg)) lg=en?"en":"ko"; var ko=lg==="ko", pre=ko?"irm_ko":"irm_en";
     [].forEach.call(t.children,function(im,i){ var f=pre+String(i+1).padStart(2,"0")+".jpg"; if(im.getAttribute("src")!==f) im.setAttribute("src",f); });
-    var a=document.getElementById("irPdf"); a.setAttribute("href",U?"moneypuzzle_IR_"+U+".pdf":"moneypuzzle_IR.pdf"); a.setAttribute("download",U?"MoneyPuzzle_IR_"+U+".pdf":"머니퍼즐_IR.pdf"); }
+    var a=document.getElementById("irPdf"); a.setAttribute("href",ko?"moneypuzzle_IR.pdf":"moneypuzzle_IR_EN.pdf"); a.setAttribute("download",ko?"머니퍼즐_IR.pdf":"MoneyPuzzle_IR_EN.pdf"); }
   irLang(); new MutationObserver(irLang).observe(document.body,{attributes:true,attributeFilter:["class"]});
 })();
 </script>
