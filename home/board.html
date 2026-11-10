@@ -10,6 +10,7 @@
   :root{--ink:#111827;--sub:#5b6474;--line:#e6e9ef;--bg:#ffffff;--soft:#f4f7fb;--blue:#1d5bd8;--green:#1e9e48;--orange:#f08c00;--navy:#1b2a4a;--red:#d63b3b}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;line-height:1.6;-webkit-text-size-adjust:100%}
+  html,body{word-break:keep-all;overflow-wrap:break-word}   /* 11-10 투어앱과 같게 — 낱말 중간에서 줄을 안 바꾼다(칸보다 긴 낱말만 넘김) */
   a{color:inherit}
   .wrap{max-width:860px;margin:0 auto;padding:0 16px}
   header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
@@ -34,7 +35,7 @@
   .list{border-top:2px solid var(--ink)}
   .row{display:block;text-decoration:none;padding:14px 4px;border-bottom:1px solid var(--line)}
   .row:hover{background:var(--soft)}
-  .row .t{font-weight:700;font-size:16px;word-break:break-word}
+  .row .t{font-weight:700;font-size:16px;word-break:keep-all;overflow-wrap:anywhere}
   .row .t .cc{color:var(--blue);font-size:13.5px;margin-left:6px}
   .row .pv{color:var(--sub);font-size:14px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .meta{color:var(--sub);font-size:12.5px;margin-top:4px}
@@ -53,15 +54,15 @@
   .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
   .msg{font-size:13.5px;margin-top:10px;min-height:1em}
   .msg.err{color:var(--red)} .msg.ok{color:var(--green)}
-  .post h2{font-size:22px;margin:0;word-break:break-word;letter-spacing:-.5px}
-  .post .body{white-space:pre-wrap;word-break:break-word;margin-top:16px;font-size:15.5px}
+  .post h2{font-size:22px;margin:0;word-break:keep-all;overflow-wrap:anywhere;letter-spacing:-.5px}
+  .post .body{white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;margin-top:16px;font-size:15.5px}
   .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--line);padding-bottom:12px}
   .cmts{margin-top:26px}
   .cmts h3{font-size:16px;margin:0 0 6px}
   .cmt{padding:12px 0;border-bottom:1px solid var(--line)}
   .cmt .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
   .cmt .nk{font-weight:700;font-size:14px}
-  .cmt .bd{white-space:pre-wrap;word-break:break-word;font-size:14.5px;margin-top:3px}
+  .cmt .bd{white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;font-size:14.5px;margin-top:3px}
   .delbox{display:flex;gap:6px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap}
   .delbox input{width:auto;flex:1 1 160px;max-width:240px;padding:6px 10px;font-size:14px}
   .delbox .msg{flex-basis:100%;text-align:right;margin-top:2px}
