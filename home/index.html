@@ -77,13 +77,14 @@
   .stat b{display:block;font-size:34px;font-weight:900;letter-spacing:-1px}
   .stat span{color:var(--sub);font-size:14px}
   .contact{text-align:center}
-  .ir{margin:28px auto 0;max-width:900px;text-align:left}
+  .ir{margin:28px auto 0;max-width:1120px;text-align:left}
   .ir-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:15px}
   .ir-hd a{color:var(--blue);text-decoration:none;font-size:14px}
   .ir-view{position:relative}
   .ir-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:10px;border:1px solid rgba(128,128,128,.25);scrollbar-width:none}
   .ir-track::-webkit-scrollbar{display:none}
-  .ir-track img{flex:0 0 100%;width:100%;height:auto;scroll-snap-align:start;display:block}
+  .ir-track img{flex:0 0 100%;width:100%;height:auto;aspect-ratio:900/1890;scroll-snap-align:start;display:block}
+  @media(min-width:640px){.ir-track img{flex-basis:50%;width:50%}} @media(min-width:960px){.ir-track img{flex-basis:calc(100%/3);width:calc(100%/3)}}   /* 11-22 병풍 팜플렛 — PC 세 폭 · 태블릿 두 폭 · 폰 한 폭 */
   .ir-btn{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:24px;line-height:1;cursor:pointer}
   .ir-prev{left:8px}.ir-next{right:8px}
   .ir-pg{text-align:center;font-size:13px;opacity:.7;margin-top:6px}
@@ -223,7 +224,7 @@
 <section id="life" class="soft"><div class="wrap">
   <div class="eyebrow"><span class="ko">외국인 생활 앱</span><span class="en">For foreigners in Korea</span><span class="ja">外国人向け生活アプリ</span><span class="zhs">外国人生活应用</span><span class="zht">外國人生活應用程式</span></div>
   <h2><span class="ko">한국어를 몰라도 괜찮습니다</span><span class="en">No Korean needed</span><span class="ja">韓国語がわからなくても大丈夫</span><span class="zhs">不懂韩语也没关系</span><span class="zht">不懂韓語也沒關係</span></h2>
-  <p class="sec-lead"><span class="ko">뉴스·부동산·여행을 영어·일본어·<span style="white-space:nowrap">중국어(간체·번체)로.</span> 여행은 스페인어까지.</span><span class="en">News, homes and travel in English, Japanese and Chinese (Simplified &amp; Traditional). Travel in Spanish, too.</span><span class="ja">ニュース・不動産・旅行を英語・日本語・中国語（簡体・繁体）で。旅行はスペイン語にも対応。</span><span class="zhs">新闻、房产、旅行，支持英语、日语、中文（简体·繁体）。旅行还支持西班牙语。</span><span class="zht">新聞、房產、旅行，支援英語、日語、中文（簡體·繁體）。旅行還支援西班牙語。</span></p>
+  <p class="sec-lead"><span class="ko">뉴스·부동산·여행을 영어·일본어·<span style="white-space:nowrap">중국어(간체·번체)로.</span></span><span class="en">News, homes and travel in English, Japanese and Chinese (Simplified &amp; Traditional).</span><span class="ja">ニュース・不動産・旅行を英語・日本語・中国語（簡体・繁体）で。</span><span class="zhs">新闻、房产、旅行，支持英语、日语、中文（简体·繁体）。</span><span class="zht">新聞、房產、旅行，支援英語、日語、中文（簡體·繁體）。</span></p>
   <div class="grid g4 l3">
     <a class="card ftc app2 freec" href="https://navi.moneypuzzle.co.kr/home/" target="_blank" rel="noopener"><span class="freerb" aria-hidden="true">Free</span><div class="ftimg"><img class="ko" src="ft_tourhome_ko.jpg?v=1110" alt="모자이크트립 홈페이지" loading="lazy"><img class="en" src="ft_tourhome_en.jpg?v=1110" alt="MosaicTrip website" loading="lazy"></div>
       <span class="ftb"><span class="ko">새 앱 · 모자이크트립</span><span class="en">New app · MosaicTrip</span><span class="ja">新アプリ · MosaicTrip</span><span class="zhs">新应用 · MosaicTrip</span><span class="zht">新應用 · MosaicTrip</span></span>
@@ -259,42 +260,41 @@
   <h2><span class="ko">투자·제휴 문의</span><span class="en">Investment &amp; partnerships</span><span class="ja">投資・提携のお問い合わせ</span><span class="zhs">投资与合作咨询</span><span class="zht">投資與合作諮詢</span></h2>
   <a class="mail" href="mailto:admin@moneypuzzle.co.kr">admin@moneypuzzle.co.kr</a>
   <div class="ir">
-    <div class="ir-hd"><b>IR</b>
-      <a id="irPdf" href="VIPHola_IR_EN.pdf" download target="_blank" rel="noopener"><span class="ko">PDF 내려받기</span><span class="en">Download PDF</span><span class="ja">PDFダウンロード</span><span class="zhs">下载PDF</span><span class="zht">下載PDF</span></a></div>
+    <div class="ir-hd"><b></b>
+      <a id="irPdf" href="VIPHola_Pamphlet_EN.pdf" download target="_blank" rel="noopener"><span class="ko">PDF 내려받기</span><span class="en">Download PDF</span><span class="ja">PDFダウンロード</span><span class="zhs">下载PDF</span><span class="zht">下載PDF</span></a></div>
     <div class="ir-view">
       <button class="ir-btn ir-prev" aria-label="prev" onclick="irGo(-1)">&#8249;</button>
       <div class="ir-track" id="irTrack">
-      <img src="irv_en01.jpg" alt="IR 1" loading="lazy">
-      <img src="irv_en02.jpg" alt="IR 2" loading="lazy">
-      <img src="irv_en03.jpg" alt="IR 3" loading="lazy">
-      <img src="irv_en04.jpg" alt="IR 4" loading="lazy">
-      <img src="irv_en05.jpg" alt="IR 5" loading="lazy">
-      <img src="irv_en06.jpg" alt="IR 6" loading="lazy">
-      <img src="irv_en07.jpg" alt="IR 7" loading="lazy">
-      <img src="irv_en08.jpg" alt="IR 8" loading="lazy">
-      <img src="irv_en09.jpg" alt="IR 9" loading="lazy">
-      <img src="irv_en10.jpg" alt="IR 10" loading="lazy">
-      <img src="irv_en11.jpg" alt="IR 11" loading="lazy">
-      <img src="irv_en12.jpg" alt="IR 12" loading="lazy">
+      <img src="vpm_en01.jpg" alt="VIPHola pamphlet 1" loading="lazy">
+      <img src="vpm_en02.jpg" alt="VIPHola pamphlet 2" loading="lazy">
+      <img src="vpm_en03.jpg" alt="VIPHola pamphlet 3" loading="lazy">
+      <img src="vpm_en04.jpg" alt="VIPHola pamphlet 4" loading="lazy">
+      <img src="vpm_en05.jpg" alt="VIPHola pamphlet 5" loading="lazy">
+      <img src="vpm_en06.jpg" alt="VIPHola pamphlet 6" loading="lazy">
+      <img src="vpm_en07.jpg" alt="VIPHola pamphlet 7" loading="lazy">
+      <img src="vpm_en08.jpg" alt="VIPHola pamphlet 8" loading="lazy">
+      <img src="vpm_en09.jpg" alt="VIPHola pamphlet 9" loading="lazy">
+      <img src="vpm_en10.jpg" alt="VIPHola pamphlet 10" loading="lazy">
+      <img src="vpm_en11.jpg" alt="VIPHola pamphlet 11" loading="lazy">
+      <img src="vpm_en12.jpg" alt="VIPHola pamphlet 12" loading="lazy">
+      <img src="vpm_en13.jpg" alt="VIPHola pamphlet 13" loading="lazy">
+      <img src="vpm_en14.jpg" alt="VIPHola pamphlet 14" loading="lazy">
       </div>
       <button class="ir-btn ir-next" aria-label="next" onclick="irGo(1)">&#8250;</button>
     </div>
-    <div class="ir-pg" id="irPg">1 / 12</div>
+    <div class="ir-pg" id="irPg">1 / 14</div>
   </div>
 <script>
 (function(){
+  // VIPHola.com 고객 팜플렛 14폭(병풍 접지, 영어) — 2026-11-22 사장님 「고객 팜플렛 형태로 · 세로 접기로 쭈욱 이어지게 · IR 글자도 빼」「사이트에는 영어를 기본으로」「좋아 배포하고」
+  // 그림 vpm_en01~14.jpg · PDF VIPHola_Pamphlet_EN.pdf (원본 마케팅/IR/VIPHola_팜플렛)
   var t=document.getElementById("irTrack"), pg=document.getElementById("irPg"), n=t.children.length;
-  function cur(){ return Math.round(t.scrollLeft/t.clientWidth); }
-  window.irGo=function(d){ var i=Math.max(0,Math.min(n-1,cur()+d)); t.scrollTo({left:i*t.clientWidth,behavior:"smooth"}); };
-  t.addEventListener("scroll",function(){ pg.textContent=(cur()+1)+" / "+n; },{passive:true});
-  // VIPHola.com 프라이빗 관광 IR 12장 — 한국어·영어·일본어·중국어(간체·번체) (2026-11-22 사장님 「viphola.com 의 프라이빗 관광으로 다시 짜서 올려줘」)
-  // 그림 irv_ko01~12 · irv_en · irv_ja · irv_zhs · irv_zht  /  PDF VIPHola_IR_KO/EN/JA/ZHS/ZHT.pdf
-  // 11-22 사장님 「사이트에는 영어를 기본으로 올려」 — 방문자가 언어를 직접 고르기 전에는 영어판 (고르면 그 언어)
-  function irLang(){ var lg=""; try{ lg=localStorage.getItem("home_lang2")||""; }catch(x){}
-    if(!/^(ko|en|ja|zhs|zht)$/.test(lg)) lg="en"; var pre="irv_"+lg, U={ko:"KO",en:"EN",ja:"JA",zhs:"ZHS",zht:"ZHT"}[lg];
-    [].forEach.call(t.children,function(im,i){ var f=pre+String(i+1).padStart(2,"0")+".jpg"; if(im.getAttribute("src")!==f) im.setAttribute("src",f); });
-    var a=document.getElementById("irPdf"); a.setAttribute("href","VIPHola_IR_"+U+".pdf"); a.setAttribute("download","VIPHola_IR_"+U+".pdf"); }
-  irLang(); new MutationObserver(irLang).observe(document.body,{attributes:true,attributeFilter:["class"]});
+  function pw(){ return t.children[0].getBoundingClientRect().width||1; }
+  function vis(){ return Math.max(1,Math.round(t.clientWidth/pw())); }
+  function cur(){ return Math.min(n-vis(),Math.max(0,Math.round(t.scrollLeft/pw()))); }
+  function show(){ var i=cur(), v=vis(); pg.textContent=(v>1?(i+1)+"–"+(i+v):(i+1))+" / "+n; }
+  window.irGo=function(d){ var i=Math.max(0,Math.min(n-vis(),cur()+d*vis())); t.scrollTo({left:i*pw(),behavior:"smooth"}); };
+  t.addEventListener("scroll",show,{passive:true}); window.addEventListener("resize",show); show();
 })();
 </script>
 </div></section>
